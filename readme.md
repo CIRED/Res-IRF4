@@ -19,7 +19,7 @@ specific functions. Use only with care and caution._**
 **Step 2**: **Create a conda environment** from the environment.yml file:
    - The environment.yml file is in the Res-IRF folder.
    - Use the **terminal** and go to the Res-IRF folder stored on your computer.
-   - Type: `conda env create -f res-irf-env.yml`
+   - Type: `conda create --name <env> --file requirements.txt`
 
 **Step 3**: **Activate the new environment**.
    - The first line of the yml file sets the new environment's name.
