@@ -56,7 +56,7 @@ generic_input['consumption_ini'] = pd.Series([33, 117, 36, 79],
 
 generic_input['stock_ini'] = 29037000
 
-with open('input/parameters_thermal_module.pkl', 'rb') as f:
+with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
     generic_input['thermal_parameters'] = pickle.load(f)
 
 investment_preferences = pd.Series([-0.0964, -0.152],
@@ -64,7 +64,7 @@ investment_preferences = pd.Series([-0.0964, -0.152],
                                    name='Housing type')
 subsidy_preferences = 0.167
 subsidy_loan_preferences = 0.473
-bill_saving_preferences = pd.read_csv('input/bill_saving_preferences.csv', index_col=[0, 1], squeeze=True)
+bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1]).squeeze('columns')
 inertia = 0.8299
 
 generic_input['preferences'] = {'investment': investment_preferences, 'subsidy': subsidy_preferences,
@@ -73,7 +73,7 @@ generic_input['preferences'] = {'investment': investment_preferences, 'subsidy':
 generic_input['performance_insulation'] = {'Wall': round(1 / 3.7, 1), 'Floor': round(1 / 3, 1), 'Roof': round(1 / 6, 1),
                                            'Windows': 1.5}
 
-generic_input['surface'] = pd.read_csv('input/surface.csv', index_col=[0, 1, 2], squeeze=True).rename(None)
+generic_input['surface'] = pd.read_csv('project/input/surface.csv', index_col=[0, 1, 2]).squeeze('columns').rename(None)
 
 generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                           'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],

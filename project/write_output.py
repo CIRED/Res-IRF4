@@ -19,7 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-from param import generic_input
+from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots
 
 SMALL_SIZE = 10
@@ -35,7 +35,7 @@ plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
-def write_output(buildings, param):
+def parse_output(buildings, param):
     """Parse output.
 
     Model output

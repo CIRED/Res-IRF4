@@ -44,8 +44,8 @@ class PublicPolicy:
         self.cap = cap
 
 
-def read_input(config):
-    stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8], squeeze=True)
+def read_stock(config):
+    stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8]).squeeze('columns')
     year = config['start']
 
     stock = pd.concat([stock], keys=[True], names=['Existing'])
@@ -60,10 +60,10 @@ def read_input(config):
 def read_policies(config):
     def read_mpr(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0, 1], squeeze=True).unstack('Heating system')
+        heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
         insulation = pd.read_csv(data['insulation'], index_col=[0])
-        bonus_best = pd.read_csv(data['bonus'], index_col=[0], squeeze=True)
-        bonus_worst = pd.read_csv(data['bonus'], index_col=[0], squeeze=True)
+        bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
+        bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
 
         l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
@@ -74,7 +74,7 @@ def read_policies(config):
 
     def read_cee(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0, 1], squeeze=True).unstack('Heating system')
+        heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
         insulation = pd.read_csv(data['insulation'], index_col=[0])
         tax = pd.read_csv(data['tax'], index_col=[0])
 
@@ -84,19 +84,19 @@ def read_policies(config):
         return l
 
     def read_cap(data):
-        cap = pd.read_csv(data['insulation'], index_col=[0], squeeze=True)
+        cap = pd.read_csv(data['insulation'], index_col=[0]).squeeze('columns')
         return [PublicPolicy('subsidies_cap', data['start'], data['end'], cap, 'subsidies_cap', gest='insulation')]
 
     def read_carbon_tax(data):
-        tax = pd.read_csv(data['tax'], index_col=[0], squeeze=True)
-        emission = pd.read_csv(data['emission'], index_col=[0], squeeze=True)
+        tax = pd.read_csv(data['tax'], index_col=[0]).squeeze('columns')
+        emission = pd.read_csv(data['emission'], index_col=[0]).squeeze('columns')
         tax = (tax * emission).fillna(0) / 10 ** 6
         tax = tax.loc[(tax != 0).any(axis=1)]
         return [PublicPolicy('carbon_tax', data['start'], data['end'], tax, 'tax')]
 
     def read_cite(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0, 1], squeeze=True).unstack('Heating system')
+        heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
                               cap=data['cap']))
         l.append(
@@ -126,8 +126,8 @@ def read_policies(config):
 
 
 def read_exogenous(config):
-    cost_heater = pd.read_csv(config['cost_heater'], index_col=[0], squeeze=True).rename(None)
-    cost_insulation = pd.read_csv(config['cost_insulation'], index_col=[0], squeeze=True).rename(None)
+    cost_heater = pd.read_csv(config['cost_heater'], index_col=[0]).squeeze('columns').rename(None)
+    cost_insulation = pd.read_csv(config['cost_insulation'], index_col=[0]).squeeze('columns').rename(None)
 
     energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
 
@@ -135,7 +135,7 @@ def read_exogenous(config):
 
 
 def read_revealed(config):
-    efficiency = pd.read_csv(config['efficiency'], index_col=[0], squeeze=True)
+    efficiency = pd.read_csv(config['efficiency'], index_col=[0]).squeeze('columns')
 
     choice_insulation = {'Wall': [False, True], 'Floor': [False, True], 'Roof': [False, True], 'Windows': [False, True]}
     names = list(choice_insulation.keys())
@@ -158,10 +158,10 @@ def read_revealed(config):
 
     choice_heater = list(ms_heater.columns)
 
-    ms_extensive = pd.read_csv(config["insulation_extensive"], index_col=[0, 1],
-                               squeeze=True).rename(None).round(decimals=3)
-    ms_intensive = pd.read_csv(config["ms_insulation"], index_col=[0, 1, 2, 3],
-                               squeeze=True).rename(None).round(decimals=3)
+    ms_extensive = pd.read_csv(config["insulation_extensive"], index_col=[0, 1]).squeeze('columns').rename(None).round(
+        decimals=3)
+    ms_intensive = pd.read_csv(config["ms_insulation"], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(
+        decimals=3)
 
     return efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, ms_extensive, ms_intensive
 
@@ -181,7 +181,7 @@ def parse_parameters(config, param, stock):
     """
     from dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 
-    population = pd.read_csv(config['population'], header=None, squeeze=True, index_col=[0])
+    population = pd.read_csv(config['population'], header=None, index_col=[0]).squeeze('columns')
     param['population_total'] = population
     param['sizing_factor'] = stock.sum() / param['stock_ini']
     param['population'] = population * param['sizing_factor']
@@ -236,12 +236,12 @@ def parse_parameters(config, param, stock):
     param['flow_built'] = pd.concat([param['flow_built']], keys=[False], names=['Existing']).reorder_levels(
         stock.index.names)
 
-    param['health_cost'] = pd.read_csv(config['health_cost'], index_col=[0, 1], squeeze=True)
-    param['carbon_value'] = pd.read_csv(config['carbon_value'], index_col=[0], squeeze=True)
+    param['health_cost'] = pd.read_csv(config['health_cost'], index_col=[0, 1]).squeeze('columns')
+    param['carbon_value'] = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze('columns')
     param['carbon_emission'] = pd.read_csv(config['carbon_emission'], index_col=[0])
     param['carbon_value_kwh'] = (param['carbon_value'] * param['carbon_emission'].T).T.dropna() / 10**6
 
-    param['data_ceren'] = pd.read_csv(config['data_ceren'], index_col=[0], squeeze=True)
+    param['data_ceren'] = pd.read_csv(config['data_ceren'], index_col=[0]).squeeze('columns')
 
     summary_param = dict()
     summary_param['Sizing factor (%)'] = pd.Series(param['sizing_factor'], index=param['population'].index)

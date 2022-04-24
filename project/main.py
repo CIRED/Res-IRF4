@@ -17,13 +17,11 @@
 
 import pandas as pd
 import os
-from time import time
 
 from building import AgentBuildings
-from output import write_output
-from input import read_input, read_policies, read_exogenous, read_revealed, parse_parameters
-from param import generic_input
-from output import grouped_output
+from input.param import generic_input
+from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
+from write_output import parse_output, grouped_output
 
 # TODO: zero-interest loan, multi-scenario, policy analysis
 
@@ -47,7 +45,7 @@ def res_irf(config, path):
     """
     os.mkdir(path)
 
-    stock, year = read_input(config)
+    stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
     param, summary_param = parse_parameters(config, generic_input, stock)
     energy_prices, cost_heater, cost_insulation = read_exogenous(config)
@@ -79,7 +77,7 @@ def res_irf(config, path):
         buildings.add_flows([flow_retrofit, - buildings.flow_demolition(), param['flow_built'].loc[:, year]])
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
-    stock, output = write_output(buildings, param)
+    stock, output = parse_output(buildings, param)
     output.round(2).to_csv(os.path.join(path, 'output.csv'))
     stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
 
@@ -88,8 +86,9 @@ def res_irf(config, path):
 
 if __name__ == '__main__':
 
-    import json
+    import logging
     import os
+    import json
     from time import time
     from multiprocessing import Pool
     from datetime import datetime
@@ -99,12 +98,13 @@ if __name__ == '__main__':
     if not os.path.isdir('output'):
         os.mkdir('output')
 
-    with open('input/config.json') as file:
+    with open('project/input/config.json') as file:
         configuration = json.load(file)
 
     folder = os.path.join('output', datetime.today().strftime('%Y%m%d_%H%M%S'))
     os.mkdir(folder)
 
+    logging.debug('Launching processes')
     processes = list()
     with Pool() as pool:
         result = pool.starmap(res_irf,
@@ -113,7 +113,8 @@ if __name__ == '__main__':
     result = {i[0]: i[1] for i in result}
     stocks = {i[0]: i[2] for i in result}
 
+    logging.debug('Parsing results')
     grouped_output(result, stocks, folder)
 
-    print('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
+    logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
 
