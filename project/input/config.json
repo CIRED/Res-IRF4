@@ -1,0 +1,129 @@
+{
+  "Reference": {
+    "end": 2021,
+    "prices_constant": false,
+    "demolition_rate": 0.0035,
+    "income_rate": 0.012,
+    "start": 2018,
+    "building_stock": "input/building_stock_sdes2018.csv",
+    "population": "input/population.csv",
+    "insulation_extensive": "input/revealed_data/extensive_margin_insulation.csv",
+    "ms_heater": "input/revealed_data/market_share_heater.csv",
+    "ms_heater_built": "input/revealed_data/market_share_heater_built.csv",
+    "ms_insulation": "input/revealed_data/market_share_insulation.csv",
+    "data_ceren": "input/revealed_data/data_ceren.csv",
+    "cost_heater": "input/cost_heater.csv",
+    "cost_insulation": "input/cost_insulation.csv",
+    "efficiency": "input/efficiency.csv",
+    "energy_prices": "input/energy_prices.csv",
+    "energy_taxes": null,
+    "carbon_emission": "input/policies/carbon_emission.csv",
+    "health_cost": "input/policies/health_cost.csv",
+    "carbon_value": "input/policies/carbon_value.csv",
+    "policies": {
+      "mpr": {
+        "start": 2018,
+        "end": 2030,
+        "heater": "input/policies/mpr_heater.csv",
+        "insulation": "input/policies/mpr_insulation.csv",
+        "bonus": "input/policies/mpr_bonus.csv"
+      },
+      "cee": {
+        "start": 2018,
+        "end": 2030,
+        "heater": "input/policies/cee_heater.csv",
+        "insulation": "input/policies/cee_insulation.csv",
+        "policy": "subsidy_targeted",
+        "tax": "input/policies/cee_tax.csv"
+
+      },
+      "cap": {
+        "start": 2018,
+        "end": 2030,
+        "insulation": "input/policies/subsidies_cap.csv"
+      },
+      "carbon_tax": {
+        "start": 2018,
+        "end": 2030,
+        "tax": "input/policies/carbon_tax.csv",
+        "emission": "input/policies/carbon_tax_emission.csv"
+      },
+      "cite": {
+        "start": 2018,
+        "end": 2021,
+        "heater": "input/policies/cite_heater.csv",
+        "insulation": 0.3,
+        "cap": 16000
+      },
+      "reduced_tax": {
+        "start": 2018,
+        "end": 2030,
+        "value": 0.05
+      }
+    }
+  },
+  "Scenario": {
+    "end": 2021,
+    "prices_constant": true,
+    "demolition_rate": 0.0035,
+    "income_rate": 0.012,
+    "start": 2018,
+    "building_stock": "input/building_stock_sdes2018.csv",
+    "population": "input/population.csv",
+    "insulation_extensive": "input/revealed_data/extensive_margin_insulation.csv",
+    "ms_heater": "input/revealed_data/market_share_heater.csv",
+    "ms_heater_built": "input/revealed_data/market_share_heater_built.csv",
+    "ms_insulation": "input/revealed_data/market_share_insulation.csv",
+    "data_ceren": "input/revealed_data/data_ceren.csv",
+    "cost_heater": "input/cost_heater.csv",
+    "cost_insulation": "input/cost_insulation.csv",
+    "efficiency": "input/efficiency.csv",
+    "energy_prices": "input/energy_prices.csv",
+    "energy_taxes": null,
+    "carbon_emission": "input/policies/carbon_emission.csv",
+    "health_cost": "input/policies/health_cost.csv",
+    "carbon_value": "input/policies/carbon_value.csv",
+    "policies": {
+      "mpr": {
+        "start": 2018,
+        "end": 2030,
+        "heater": "input/policies/mpr_heater.csv",
+        "insulation": "input/policies/mpr_insulation.csv",
+        "bonus": "input/policies/mpr_bonus.csv"
+      },
+      "cee": {
+        "start": 2018,
+        "end": 2030,
+        "heater": "input/policies/cee_heater.csv",
+        "insulation": "input/policies/cee_insulation.csv",
+        "policy": "subsidy_targeted",
+        "tax": "input/policies/cee_tax.csv"
+
+      },
+      "cap": {
+        "start": 2018,
+        "end": 2030,
+        "insulation": "input/policies/subsidies_cap.csv"
+      },
+      "carbon_tax": {
+        "start": 2018,
+        "end": 2030,
+        "tax": "input/policies/carbon_tax.csv",
+        "emission": "input/policies/carbon_tax_emission.csv"
+      },
+      "cite": {
+        "start": 2018,
+        "end": 2021,
+        "heater": "input/policies/cite_heater.csv",
+        "insulation": 0.3,
+        "cap": 16000
+      },
+      "reduced_tax": {
+        "start": 2018,
+        "end": 2030,
+        "value": 0.05
+      }
+    }
+  }
+
+}
