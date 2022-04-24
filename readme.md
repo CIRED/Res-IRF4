@@ -9,7 +9,6 @@ specific functions. Use only with care and caution._**
 
 > The Res-IRF model is a tool for simulating energy consumption and energy efficiency improvements in the French residential building sector. It currently focuses on space heating as the main usage. The rationale for its development is to integrate a detailed description of the energy performance of the dwelling stock with a rich description of household behaviour. Res-IRF has been developed to improve the behavioural realism that is typically lacking in integrated models of energy demand.
 
-
 ## Installation
 
 **Step 1**: Git **clone Res-IRF folder** in your computer.
@@ -81,5 +80,3 @@ If you find `Res-IRF` useful, please kindly cite our last paper:
 Lucas Vivier – [@VivierLucas](https://twitter.com/VivierLucas) – vivier@centre-cired.fr
 
 Distributed under the GNU GENERAL PUBLIC LICENSE. See ``LICENSE`` for more information.
-
-[https://github.com/CIRED

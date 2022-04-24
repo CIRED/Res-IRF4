@@ -20,6 +20,18 @@ import pandas as pd
 
 def certificate(conso, certificate_bounds):
     """Returns energy performance certificate based on space heating energy consumption.
+
+    Parameters
+    ----------
+    conso: float or pd.Series or pd.DataFrame
+        Space heating energy consumption.
+    certificate_bounds: dict
+        Energy consumption bounds that define certificate.
+
+    Returns
+    -------
+    float or pd.Series or pd.DataFrame
+        Energy performance certificate.
     """
 
     if isinstance(conso, pd.Series):
@@ -43,24 +55,30 @@ def certificate(conso, certificate_bounds):
 
 
 def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
-    """Calculate space heating consumption in kWh/m2.
+    """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
+
+    Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
 
     Parameters
     ----------
-    u_wall: float, pd.Series
-    u_floor: float, pd.Series
-    u_roof: float, pd.Series
-    u_windows: float, pd.Series
-    dh: float, pd.Series
-    efficiency: float, pd.Series
+    u_wall: float or pd.Series
+    u_floor: float or pd.Series
+    u_roof: float or pd.Series
+    u_windows: float or pd.Series
+    dh: float or pd.Series
+    efficiency: float or pd.Series
     param: dict
 
     Returns
     -------
-    float, pd.Series,
-    float, pd.Series,
-    float, pd.Series,
-    float, pd.Series
+    float or pd.Series
+        Partial losses.
+    float or pd.Series
+        Envelope losses.
+    float or pd.Series
+        Heating need.
+    float or pd.Series
+        Standard space heating consumption.
     """
 
     partial_losses = param['ratio_surface_wall'] * u_wall + param['ratio_surface_roof'] * u_roof + param[
@@ -84,6 +102,24 @@ def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, para
 
 
 def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, param, conversion=2.58):
+    """Convert final to primary heating consumption.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    dh
+    efficiency
+    energy
+    param
+    conversion
+
+    Returns
+    -------
+
+    """
     heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param)[3]
 
     if isinstance(heat_consumption, pd.Series):
@@ -113,6 +149,28 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficien
 
 
 def certificate_buildings(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, param, conversion=2.58):
+    """Returns energy performance certificate.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    dh
+    efficiency
+    energy
+    param
+    conversion
+
+    Returns
+    -------
+    pd.Series
+        Primary heating consumption for all buildings in the stock.
+    pd.Series
+        Certificates for all buildings in the stock.
+
+    """
     primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency,
                                                            energy, param, conversion=conversion)
     return primary_heat_consumption, certificate(primary_heat_consumption, param['certificate_bounds'])

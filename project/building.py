@@ -82,6 +82,16 @@ class ThermalBuildings:
 
     @stock.setter
     def stock(self, stock):
+        """Update stock property.
+
+        Parameters
+        ----------
+        stock: pd.Series
+
+        Returns
+        -------
+
+        """
 
         self._stock = stock
         self.stock_mobile = stock - self._stock_residual.reindex(stock.index, fill_value=0)
@@ -132,6 +142,20 @@ class ThermalBuildings:
         return wall, floor, roof, windows, efficiency, energy
 
     def heating_consumption_sd(self, wall=None, floor=None, roof=None, windows=None, efficiency=None):
+        """Return standard heating consumption.
+
+        Parameters
+        ----------
+        wall: pd
+        floor
+        roof
+        windows
+        efficiency
+
+        Returns
+        -------
+        pd.Series
+        """
         wall, floor, roof, windows, efficiency, _ = self.prepare(wall=wall, floor=floor, roof=roof, windows=windows,
                                                                  efficiency=efficiency)
         return thermal.heating_consumption(wall, floor, roof, windows, self._dh, efficiency, self._param)[3]
