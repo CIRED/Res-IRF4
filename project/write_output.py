@@ -313,7 +313,7 @@ def grouped_output(result, stocks, folder):
 
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
-                 'Health cost (Billion euro)', 'Renovation rate 1 (%)']
+                 'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
     years = [2020]
     for year in years:
         temp = pd.DataFrame(

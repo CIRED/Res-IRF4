@@ -60,6 +60,7 @@ def res_irf(config, path):
         energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
                                   axis=1).T
 
+    print('Calibration {}'.format(year))
     buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],
                                param['consumption_ini'], path, param['preferences'],
                                restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
@@ -68,7 +69,7 @@ def res_irf(config, path):
     buildings.calculate(energy_prices.loc[year, :], taxes)
 
     for year in range(config['start'] + 1, config['end']):
-        print(year)
+        print('Run {}'.format(year))
         buildings.year = year
         flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
                                                 ms_intensive, ms_extensive,
@@ -95,13 +96,13 @@ if __name__ == '__main__':
 
     start = time()
 
-    if not os.path.isdir('output'):
-        os.mkdir('output')
+    if not os.path.isdir('project/output'):
+        os.mkdir('project/output')
 
     with open('project/input/config.json') as file:
         configuration = json.load(file)
 
-    folder = os.path.join('output', datetime.today().strftime('%Y%m%d_%H%M%S'))
+    folder = os.path.join('project/output', datetime.today().strftime('%Y%m%d_%H%M%S'))
     os.mkdir(folder)
 
     logging.debug('Launching processes')
