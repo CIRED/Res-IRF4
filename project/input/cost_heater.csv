@@ -1,7 +1,6 @@
 ﻿Heating system final,
-Air/air heat pump,8000
-Direct electric,4100
-Water/air heat pump,15000
-Gas boiler,4000
-Oil boiler,5000
-Wood boiler,12000
+Electricity-Heat pump,15000
+Electricity-Performance boiler,4100
+Natural gas-Performance boiler,4000
+Oil fuel-Performance boiler,5000
+Wood fuel-Performance boiler,12000

@@ -110,9 +110,10 @@ class ThermalBuildings:
 
         self.housing_type = pd.Series(stock.index.get_level_values('Housing type'), index=stock.index)
 
-        self.heater = pd.Series(stock.index.get_level_values('Heating system'), index=stock.index)
-        self.efficiency = self.heater.replace(self._efficiency)
-        self.energy = self.heater.replace(self._system2energy).rename('Energy')
+        self.heating_system = pd.Series(stock.index.get_level_values('Heating system'), index=stock.index)
+        self.energy = self.heating_system.str.split('-').str[0].rename('Energy')
+        self.heater = self.heating_system.str.split('-').str[1]
+        self.efficiency = pd.to_numeric(self.heater.replace(self._efficiency))
 
         self.heat_consumption_sd = self.heating_consumption_sd()
         self.certificate = self.certificates()
@@ -121,9 +122,6 @@ class ThermalBuildings:
         self.surface_yrs.update({self.year: self.stock * self.surface})
         self.heat_consumption_sd_yrs.update({self.year: self.stock * self.surface * self.heat_consumption_sd})
         self.certificate_nb.update({self.year: self.stock.groupby(self.certificate).sum()})
-
-    def system2energy(self, data):
-        return pd.Series(data.index.get_level_values('Heating system'), index=data.index).replace(self._system2energy)
 
     def prepare(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
         if wall is None:
@@ -146,11 +144,11 @@ class ThermalBuildings:
 
         Parameters
         ----------
-        wall: pd
-        floor
-        roof
-        windows
-        efficiency
+        wall: pd.Series
+        floor: pd.Series
+        roof: pd.Series
+        windows: pd.Series
+        efficiency: pd.Series
 
         Returns
         -------
@@ -158,7 +156,7 @@ class ThermalBuildings:
         """
         wall, floor, roof, windows, efficiency, _ = self.prepare(wall=wall, floor=floor, roof=roof, windows=windows,
                                                                  efficiency=efficiency)
-        return thermal.heating_consumption(wall, floor, roof, windows, self._dh, efficiency, self._param)[3]
+        return thermal.heating_consumption(wall, floor, roof, windows, self._dh, efficiency, self._param)
 
     def primary_heating_consumption_sd(self, wall=None, floor=None, roof=None, windows=None, efficiency=None,
                                        energy=None):
@@ -319,16 +317,21 @@ class AgentBuildings(ThermalBuildings):
         self._demolition_rate = demolition_rate
         self._demolition_total = (stock * self._demolition_rate).sum()
 
-        self._choice_heater = list(restrict_heater.index)
+        self._choice_heater = list(ms_heater.columns)
         self._restrict_heater = restrict_heater
         self._ms_heater = ms_heater
 
         self._choice_insulation = choice_insulation
         self._performance_insulation = performance_insulation
 
-        self.surface_insulation = pd.Series({'Wall': param['ratio_surface_wall'], 'Floor': param['ratio_surface_floor'],
-                                             'Roof': param['ratio_surface_roof'],
-                                             'Windows': param['ratio_surface_windows']})
+        # TODO: clean assign by housing type (mean is done)
+        self.surface_insulation = pd.Series({'Wall': param['ratio_surface']['Wall'].mean(),
+                                             'Floor': param['ratio_surface']['Floor'].mean(),
+                                             'Roof': param['ratio_surface']['Roof'].mean(),
+                                             'Windows': param['ratio_surface']['Windows'].mean()})
+
+        # self.surface_insulation = param['ratio_surface']
+
         self.utility_insulation_extensive, self.utility_insulation_intensive, self.constant_heater = None, None, None
         self.heater_replaced = {}
 
@@ -388,17 +391,17 @@ class AgentBuildings(ThermalBuildings):
         self.cost_heater.update({self.year: cost_heater})
         choice_heater_idx = pd.Index(choice_heater, name='Heating system final')
 
-        efficiency = pd.Series(choice_heater).replace(self._efficiency)
+        efficiency = pd.to_numeric(pd.Series(choice_heater).str.split('-').str[1].replace(self._efficiency))
         efficiency.index = choice_heater_idx
 
-        energy = pd.Series(choice_heater).replace(self._system2energy)
+        energy = pd.Series(choice_heater).str.split('-').str[0]
         energy.index = choice_heater_idx
 
         heat_consumption_sd = self.heating_consumption_sd(efficiency=efficiency)
         levels = [i for i in heat_consumption_sd.index.names if i != 'Income tenant']
         heat_consumption_sd = heat_consumption_sd.groupby(levels).first()
 
-        prices_re = prices.reindex([self._system2energy[i] for i in energy.index]).copy()
+        prices_re = prices.reindex(energy).copy()
         prices_re.index = heat_consumption_sd.columns
 
         energy_bill_sd = ((heat_consumption_sd * prices_re).T * self.surface.groupby(levels).first()).T
@@ -461,7 +464,7 @@ class AgentBuildings(ThermalBuildings):
 
         utility = utility_inertia + utility_investment + utility_bill_saving + utility_subsidies
 
-        restrict_heater = reindex_mi(self._restrict_heater.reindex(utility.columns, axis=1), utility.index)
+        restrict_heater = reindex_mi(self._restrict_heater.reindex(utility.columns, axis=1), utility.index).astype(bool)
         utility[restrict_heater] = float('nan')
 
         if self.constant_heater is None:

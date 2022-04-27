@@ -16,6 +16,7 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import pandas as pd
+from utils import reindex_mi
 
 
 def certificate(conso, certificate_bounds):
@@ -55,6 +56,47 @@ def certificate(conso, certificate_bounds):
 
 
 def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
+    """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
+
+    Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
+
+    Parameters
+    ----------
+    u_wall: float or pd.Series
+    u_floor: float or pd.Series
+    u_roof: float or pd.Series
+    u_windows: float or pd.Series
+    dh: float or pd.Series
+    efficiency: float or pd.Series
+    param: dict
+
+    Returns
+    -------
+    float or pd.Series or pd.DataFrame
+        Standard space heating consumption.
+    """
+    data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    partial_losses = (reindex_mi(param['ratio_surface'], data.index) * data).sum(axis=1)
+
+    if isinstance(partial_losses, (pd.Series, pd.DataFrame)):
+        if partial_losses.index.equals(efficiency.index):
+            indicator_losses = partial_losses / efficiency * dh / 1000
+            consumption = (reindex_mi(param['coefficient'], indicator_losses.index) * indicator_losses).rename('Consumption')
+
+        else:
+            indicator_losses = (partial_losses * dh / 1000).to_frame().dot(
+                (1 / efficiency).to_frame().T)
+
+            consumption = (reindex_mi(param['coefficient'], indicator_losses.index) * indicator_losses.T).T
+
+    else:
+        indicator_losses = partial_losses / efficiency * dh / 1000
+        consumption = (reindex_mi(param['coefficient'], indicator_losses.index) * indicator_losses).rename('Consumption')
+
+    return consumption
+
+
+def _heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
     """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
 
     Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
@@ -120,7 +162,7 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficien
     -------
 
     """
-    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param)[3]
+    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param)
 
     if isinstance(heat_consumption, pd.Series):
         primary_heat_consumption = heat_consumption.copy()

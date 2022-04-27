@@ -1,31 +1,21 @@
 ﻿Income owner,Heating system,CEE
-D1,Water/air heat pump,4364
-D2,Water/air heat pump,4364
-D3,Water/air heat pump,4364
-D4,Water/air heat pump,4364
-D5,Water/air heat pump,2727
-D6,Water/air heat pump,2727
-D7,Water/air heat pump,2727
-D8,Water/air heat pump,2727
-D9,Water/air heat pump,2727
-D10,Water/air heat pump,2727
-D1,Air/air heat pump,900
-D2,Air/air heat pump,900
-D3,Air/air heat pump,900
-D4,Air/air heat pump,450
-D5,Air/air heat pump,450
-D6,Air/air heat pump,450
-D7,Air/air heat pump,450
-D8,Air/air heat pump,450
-D9,Air/air heat pump,450
-D10,Air/air heat pump,450
-D1,Wood boiler,873
-D2,Wood boiler,873
-D3,Wood boiler,873
-D4,Wood boiler,873
-D5,Wood boiler,545
-D6,Wood boiler,545
-D7,Wood boiler,545
-D8,Wood boiler,545
-D9,Wood boiler,545
-D10,Wood boiler,545
+D1,Electricity-Heat pump,4364
+D2,Electricity-Heat pump,4364
+D3,Electricity-Heat pump,4364
+D4,Electricity-Heat pump,4364
+D5,Electricity-Heat pump,2727
+D6,Electricity-Heat pump,2727
+D7,Electricity-Heat pump,2727
+D8,Electricity-Heat pump,2727
+D9,Electricity-Heat pump,2727
+D10,Electricity-Heat pump,2727
+D1,Wood fuel-Performance boiler,873
+D2,Wood fuel-Performance boiler,873
+D3,Wood fuel-Performance boiler,873
+D4,Wood fuel-Performance boiler,873
+D5,Wood fuel-Performance boiler,545
+D6,Wood fuel-Performance boiler,545
+D7,Wood fuel-Performance boiler,545
+D8,Wood fuel-Performance boiler,545
+D9,Wood fuel-Performance boiler,545
+D10,Wood fuel-Performance boiler,545

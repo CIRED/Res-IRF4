@@ -45,13 +45,16 @@ class PublicPolicy:
 
 
 def read_stock(config):
-    stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8]).squeeze('columns')
+    stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze('columns')
     year = config['start']
 
     stock = pd.concat([stock], keys=[True], names=['Existing'])
 
-    idx_names = ['Existing', 'Occupancy status', 'Income owner', 'Income tenant', 'Housing type', 'Heating system',
-                 'Wall', 'Floor', 'Roof', 'Windows']
+    idx_names = ['Existing', 'Occupancy status', 'Income owner', 'Income tenant', 'Housing type',
+                 'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
+    stock = stock.reset_index(level=['Heating energy', 'Heating system'])
+    stock['Heating system'] = stock['Heating energy'] + '-' + stock['Heating system']
+    stock = stock.set_index(['Heating system'], append=True).loc[:, 'Stock buildings']
     stock = stock.reorder_levels(idx_names)
 
     return stock, year
@@ -144,14 +147,13 @@ def read_revealed(config):
     choice_insulation = pd.MultiIndex.from_tuples(choice_insulation, names=names)
 
     ms_heater = pd.read_csv(config['ms_heater'], index_col=[0])
+    ms_heater.columns.set_names('Heating system final', inplace=True)
 
     restrict_heater = ms_heater < 0.01
-    restrict_heater.loc['Air/air heat pump', ['Direct electric', 'Oil boiler']] = True
-    restrict_heater.loc[
-        'Water/air heat pump', ['Direct electric', 'Oil boiler', 'Air/air heat pump', 'Gas boiler']] = True
-    restrict_heater.loc['Direct electric', ['Oil boiler']] = True
-    restrict_heater.loc['Gas boiler', ['Oil boiler']] = True
-    restrict_heater.loc['Wood boiler', ['Oil boiler']] = True
+    restrict_heater.loc['Electricity-Heat pump', ['Electricity-Performance boiler', 'Natural gas-Performance boiler', 'Oil fuel-Performance boiler']] = True
+    restrict_heater.loc['Electricity-Performance boiler', ['Oil fuel-Performance boiler']] = True
+    restrict_heater.loc['Natural gas-Performance boiler', ['Oil fuel-Performance boiler']] = True
+    restrict_heater.loc['Wood fuel-Performance boiler', ['Oil fuel-Performance boiler']] = True
 
     ms_heater[restrict_heater] = float('nan')
     ms_heater = (ms_heater.T / ms_heater.sum(axis=1)).T
@@ -220,12 +222,12 @@ def parse_parameters(config, param, stock):
     construction = (reindex_mi(type_built, share_decision_maker.columns, axis=1) * share_decision_maker).stack(
         ['Occupancy status', 'Income owner', 'Income tenant']).fillna(0)
 
-    ms_heater_built = pd.read_csv(config['ms_heater_built'], index_col=[0])
+    ms_heater_built = pd.read_csv(config['ms_heater_built'], index_col=[0], header=[0])
     ms_heater_built.columns.set_names(['Heating system'], inplace=True)
     ms_heater_built.index.set_names(['Housing type'], inplace=True)
-    ms_heater_built = pd.concat([ms_heater_built] * construction.shape[1], axis=1, keys=construction.columns)
-    construction = (reindex_mi(ms_heater_built, construction.index) * reindex_mi(construction, ms_heater_built.columns,
-                                                                                 axis=1)).stack('Heating system')
+
+    ms_heater_built = reindex_mi(ms_heater_built, construction.index).stack()
+    construction = (reindex_mi(construction, ms_heater_built.index).T * ms_heater_built).T
     construction = construction.loc[(construction != 0).any(axis=1)]
 
     performance_insulation = pd.concat([pd.Series(param['performance_insulation'])] * construction.shape[0], axis=1,

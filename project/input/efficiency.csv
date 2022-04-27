@@ -1,7 +1,4 @@
 ,0
-Air/air heat pump,1.7
-Direct electric,1.0
-Water/air heat pump,2.2
-Gas boiler,0.8
-Oil boiler,0.8
-Wood boiler,0.8
+Heat pump,2
+Performance boiler,0.9
+Standard boiler,0.65
