@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2020,
     "prices_constant": false,
     "demolition_rate": 0.0035,
     "income_rate": 0.012,
@@ -63,8 +63,8 @@
     }
   },
   "Scenario": {
-    "end": 2021,
-    "prices_constant": true,
+    "end": 2020,
+    "prices_constant": false,
     "demolition_rate": 0.0035,
     "income_rate": 0.012,
     "start": 2018,
@@ -86,14 +86,14 @@
     "policies": {
       "mpr": {
         "start": 2018,
-        "end": 2030,
+        "end": 2019,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
         "start": 2018,
-        "end": 2030,
+        "end": 2019,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -102,25 +102,25 @@
       },
       "cap": {
         "start": 2018,
-        "end": 2030,
+        "end": 2019,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
         "start": 2018,
-        "end": 2030,
+        "end": 2019,
         "tax": "project/input/policies/carbon_tax.csv",
         "emission": "project/input/policies/carbon_tax_emission.csv"
       },
       "cite": {
         "start": 2018,
-        "end": 2021,
+        "end": 2019,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": 0.3,
         "cap": 16000
       },
       "reduced_tax": {
         "start": 2018,
-        "end": 2030,
+        "end": 2019,
         "value": 0.05
       }
     }

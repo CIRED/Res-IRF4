@@ -896,26 +896,7 @@ class AgentBuildings(ThermalBuildings):
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
 
-        self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
-
-        rslt = {}
-        for i in range(6):
-            rslt.update({i: ((self.certificate_jump == i) * replaced_by).sum(axis=1)})
-        self.certificate_jump_yrs.update({self.year: pd.DataFrame(rslt)})
-
-        surface = self.surface.groupby(replaced_by.index.names).first()
-
-        self.replacement_insulation.update({self.year: replaced_by})
-        self.investment_insulation.update(
-            {self.year: (replaced_by.T * surface).T.dropna() * self.cost_insulation[self.year]})
-        self.tax_insulation.update(
-            {self.year: (replaced_by.T * surface).T.dropna() * self.tax_insulation[self.year]})
-        self.subsidies_insulation.update(
-            {self.year: self.subsidies_total_insulation[self.year] * replaced_by.copy()})
-
-        for key in self.subsidies_details_insulation[self.year].keys():
-            self.subsidies_details_insulation[self.year][key] = replaced_by * reindex_mi(
-                self.subsidies_details_insulation[self.year][key], replaced_by.index)
+        self.store_information_retrofit(replaced_by)
         t3 = time()
         print('store {:.0f}'.format((t3 - t2)))
 
@@ -951,6 +932,35 @@ class AgentBuildings(ThermalBuildings):
         print('store {:.0f}'.format((t4 - t3)))
         return flow_retrofit
 
+    def store_information_retrofit(self, replaced_by):
+        """Calculate and store main outputs based on yearly retrofit.
+
+        Parameters
+        ----------
+        replaced_by: pd.DataFrame
+        """
+
+        self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
+
+        rslt = {}
+        for i in range(6):
+            rslt.update({i: ((self.certificate_jump == i) * replaced_by).sum(axis=1)})
+        self.certificate_jump_yrs.update({self.year: pd.DataFrame(rslt)})
+
+        surface = self.surface.groupby(replaced_by.index.names).first()
+
+        self.replacement_insulation.update({self.year: replaced_by})
+        self.investment_insulation.update(
+            {self.year: (replaced_by.T * surface).T.dropna() * self.cost_insulation[self.year]})
+        self.tax_insulation.update(
+            {self.year: (replaced_by.T * surface).T.dropna() * self.tax_insulation[self.year]})
+        self.subsidies_insulation.update(
+            {self.year: self.subsidies_total_insulation[self.year] * replaced_by.copy()})
+
+        for key in self.subsidies_details_insulation[self.year].keys():
+            self.subsidies_details_insulation[self.year][key] = replaced_by * reindex_mi(
+                self.subsidies_details_insulation[self.year][key], replaced_by.index)
+
     def flow_demolition(self):
         """Demolition of E, F and G buildings based on their share in the mobile stock.
 
@@ -962,5 +972,38 @@ class AgentBuildings(ThermalBuildings):
         stock_demolition = stock_demolition / stock_demolition.sum()
         flow_demolition = (stock_demolition * self._demolition_total).dropna()
         return flow_demolition.reorder_levels(self.index.names)
+
+    def flow_retrofit_simplified(self, number=300000, targets=None):
+        """Exogenous retrofit function. Targeting F and G buildings.
+
+        Parameters
+        ----------
+        number: int, default 300000
+        targets: list, default ['F', 'G']
+
+        Returns
+        -------
+        """
+        if targets is None:
+            targets = ['F', 'G']
+        to_replace = self.stock[self.certificate.isin(targets)]
+        to_replace = to_replace / to_replace.sum() * number
+
+        replaced_by = to_replace.copy()
+        for i in ['Wall', 'Floor', 'Roof', 'Windows']:
+            val = to_replace.index.get_level_values(i).unique()
+            replaced_by = replaced_by.rename(index={v: self._performance_insulation[i] for v in val}, level=i)
+
+        heater = {'Wood fuel-Standard boiler': 'Wood fuel-Performance boiler',
+                  'Oil fuel-Standard boiler': 'Oil fuel-Performance boiler',
+                  'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
+                  'Electricity-Performance boiler': 'Electricity-Heat pump'}
+
+        replaced_by = replaced_by.rename(index=heater, level='Heating system')
+        replaced_by = replaced_by.groupby(replaced_by.index.names).sum()
+
+        self.store_information_retrofit(replaced_by)
+
+        return pd.concat((replaced_by, to_replace), axis=0)
 
 

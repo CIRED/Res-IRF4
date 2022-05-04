@@ -71,10 +71,14 @@ def res_irf(config, path):
     for year in range(config['start'] + 1, config['end']):
         print('Run {}'.format(year))
         buildings.year = year
-        flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
-                                                ms_intensive, ms_extensive,
-                                                [p for p in policies_heater if (year >= p.start) and (year < p.end)],
-                                                [p for p in policies_insulation if (year >= p.start) and (year < p.end)])
+        if True:
+            flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
+                                                    ms_intensive, ms_extensive,
+                                                    [p for p in policies_heater if (year >= p.start) and (year < p.end)],
+                                                    [p for p in policies_insulation if (year >= p.start) and (year < p.end)])
+        else:
+            flow_retrofit = buildings.flow_retrofit_simplified()
+
         buildings.add_flows([flow_retrofit, - buildings.flow_demolition(), param['flow_built'].loc[:, year]])
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
