@@ -388,7 +388,6 @@ class AgentBuildings(ThermalBuildings):
         """
 
         choice_heater = self._choice_heater
-        self.cost_heater.update({self.year: cost_heater})
         choice_heater_idx = pd.Index(choice_heater, name='Heating system final')
 
         efficiency = pd.to_numeric(pd.Series(choice_heater).str.split('-').str[1].replace(self._efficiency))
@@ -455,9 +454,6 @@ class AgentBuildings(ThermalBuildings):
         if p:
             subsidies_total += subsidies_details['reduced_tax']
 
-        self.subsidies_total_heater.update({self.year: subsidies_total})
-        self.subsidies_details_heater.update({self.year: subsidies_details})
-
         utility_inertia = pd.DataFrame(0, index=utility_bill_saving.index, columns=utility_bill_saving.columns)
         for hs in choice_heater:
             utility_inertia.loc[self.heater.groupby(levels).first() == hs, hs] = self.pref_inertia
@@ -477,15 +473,6 @@ class AgentBuildings(ThermalBuildings):
         probability_replacement = 1 / 17
         replacement = (market_share.T * probability_replacement * self.stock_mobile.groupby(levels).sum()).T
 
-        self.replacement_heater.update({self.year: replacement})
-        self.investment_heater.update({self.year: replacement * cost_heater})
-        self.tax_heater.update({self.year: replacement * tax_heater})
-
-        self.subsidies_heater.update({self.year: replacement * subsidies_total})
-
-        for key in self.subsidies_details_heater[self.year].keys():
-            self.subsidies_details_heater[self.year][key] *= replacement
-
         to_replace = replacement.sum(axis=1)
         replaced_by = replacement.stack()
         replaced_by = replaced_by.groupby([c for c in replaced_by.index.names if c != 'Heating system']).sum()
@@ -496,8 +483,42 @@ class AgentBuildings(ThermalBuildings):
         stock = self.stock_mobile.groupby(levels).sum() - to_replace
         stock_replacement = pd.concat((stock, replaced_by), axis=0, keys=[False, True], names=['Heater replacement'])
 
-        self.heater_replaced.update({self.year: replaced_by})
+        self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, tax_heater,
+                                      replaced_by)
+
         return stock_replacement
+
+    def store_information_heater(self, cost_heater, subsidies_total, subsidies_details, replacement, tax_heater,
+                                 replaced_by):
+        """Store information yearly heater replacement.
+
+        Parameters
+        ----------
+        cost_heater: pd.Series
+            Cost of each heating system (€).
+        subsidies_total: pd.DataFrame
+            Total amount of eligible subsidies by dwelling and heating system (€).
+        subsidies_details: dict
+            Amount of eligible subsidies by dwelling and heating system (€).
+        replacement: pd.DataFrame
+            Number of heating system replacement by dwelling and heating system chosen.
+        tax_heater: pd.Series
+            VTA tax of each heating system (€).
+        replaced_by: pd.Series
+            Dwelling updated with a new heating system.
+        """
+        # information stored during
+        self.cost_heater.update({self.year: cost_heater})
+        self.subsidies_total_heater.update({self.year: subsidies_total})
+        self.subsidies_details_heater.update({self.year: subsidies_details})
+        self.replacement_heater.update({self.year: replacement})
+        self.investment_heater.update({self.year: replacement * cost_heater})
+        self.tax_heater.update({self.year: replacement * tax_heater})
+        self.subsidies_heater.update({self.year: replacement * subsidies_total})
+
+        for key in self.subsidies_details_heater[self.year].keys():
+            self.subsidies_details_heater[self.year][key] *= replacement
+        self.heater_replaced.update({self.year: replaced_by})
 
     def calibration_constant_heater(self, utility, ms_heater):
         """Constant to match the observed market-share.
@@ -664,9 +685,6 @@ class AgentBuildings(ThermalBuildings):
         epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
         certificate_jump = - certificate.replace(epc2int).sub(certificate_before.replace(epc2int), axis=0)
 
-        self.certificate_jump = certificate_jump
-        self.efficient_renovation = certificate.isin(['A', 'B'])
-
         global_retrofit = certificate_jump >= 2
         out_worst = ~certificate.isin(['G', 'F']).astype(int).mul(certificate_before.isin(['G', 'F']).astype(int),
                                                                   axis=0).astype(bool)
@@ -689,11 +707,8 @@ class AgentBuildings(ThermalBuildings):
                                                      axis=1, keys=utility_bill_saving.index).T
             subsidies_total += subsidies_details[p[0].name]
 
-        self.cost_component.update({self.year: cost_insulation * self.surface_insulation * (1 + tax)})
-        tax = investment * tax
-        investment += tax
-        self.cost_insulation.update({self.year: investment})
-        self.tax_insulation.update({self.year: tax})
+        tax_insulation = investment * tax
+        investment += tax_insulation
         investment.reindex(utility_bill_saving.columns)
         investment = surface.rename(None).to_frame().dot(investment.to_frame().T).reindex(utility_bill_saving.index)
 
@@ -727,8 +742,7 @@ class AgentBuildings(ThermalBuildings):
             subsidies_details['over_cap'] = (subsidies_total - cap)[over_cap].fillna(0)
 
             subsidies_total -= subsidies_details['over_cap']
-        self.subsidies_details_insulation.update({self.year: subsidies_details})
-        self.subsidies_total_insulation.update({self.year: subsidies_total})
+
         utility_subsidies = (self.pref_subsidy * subsidies_total) / 1000
 
         utility = utility_bill_saving + utility_investment + utility_subsidies
@@ -764,7 +778,43 @@ class AgentBuildings(ThermalBuildings):
         utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
         utility += self.utility_insulation_extensive
         retrofit_rate = 1 / (1 + np.exp(- utility))
+
+        self.store_information_insulation(certificate, certificate_jump, cost_insulation, tax, investment,
+                                          tax_insulation, subsidies_details, subsidies_total)
+
         return retrofit_rate, market_share
+
+    def store_information_insulation(self, certificate, certificate_jump, cost_insulation, tax, investment,
+                                     tax_insulation, subsidies_details, subsidies_total):
+        """Store insulation information.
+
+        Parameters
+        ----------
+        certificate: pd.DataFrame
+            Energy performance certificate after retrofitting insulation.
+        certificate_jump: pd.DataFrame
+            Number of epc jump.
+        cost_insulation: pd.Series
+            Cost of insulation for each envelope component (€/m2).
+        tax: float
+            VTA to apply (%).
+        investment: pd.DataFrame
+            Investment to realize for each dwelling and each insulation gesture (€).
+        tax_insulation: pd.Series
+            VTA applied to each insulation gesture cost (€).
+        subsidies_details: dict
+            Amount of subsidies for each dwelling and each insulation gesture (€).
+        subsidies_total: pd.DataFrame
+            Total mount of subsidies for each dwelling and each insulation gesture (€).
+        """
+        self.efficient_renovation = certificate.isin(['A', 'B'])
+        self.certificate_jump = certificate_jump
+        self.cost_component.update({self.year: cost_insulation * self.surface_insulation * (1 + tax)})
+
+        self.subsidies_details_insulation.update({self.year: subsidies_details})
+        self.subsidies_total_insulation.update({self.year: subsidies_total})
+        self.cost_insulation.update({self.year: investment})
+        self.tax_insulation.update({self.year: tax_insulation})
 
     def calibration_constant_intensive(self, utility, ms_insulation):
         """Calibrate alternative-specific constant to match observed market-share.
@@ -938,6 +988,7 @@ class AgentBuildings(ThermalBuildings):
         Parameters
         ----------
         replaced_by: pd.DataFrame
+            Retrofitting for each dwelling and each insulation gesture.
         """
 
         self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
@@ -1005,5 +1056,4 @@ class AgentBuildings(ThermalBuildings):
         self.store_information_retrofit(replaced_by)
 
         return pd.concat((replaced_by, to_replace), axis=0)
-
 
