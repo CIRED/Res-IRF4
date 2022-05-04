@@ -119,9 +119,9 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
     # ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
 
     ax.yaxis.set_tick_params(which=u'both', length=0)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
 
     # format_y = lambda y, _: '{:,.0f}%'.format(y * 100)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
 
     try:
         box = ax.get_position()
@@ -151,7 +151,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
         df_dict values are pd.DataFrame (index=years, columns=scenario)
     format_y: function, optional
     n_columns: int, default 3
-    n_bins: int
+    n_bins: int, default None
     save: str, default None
     """
     list_keys = list(dict_df.keys())
@@ -177,11 +177,11 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
             ax.spines['right'].set_visible(False)
             ax.spines['left'].set_visible(False)
 
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=90)
             ax.xaxis.set_tick_params(which=u'both', length=0)
             ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-            """if n_bins is not None:
-                plt.locator_params(axis='x', nbins=n_bins)"""
+            if n_bins is not None:
+                plt.locator_params(axis='x', nbins=n_bins)
 
             ax.yaxis.set_tick_params(which=u'both', length=0)
             ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
@@ -199,6 +199,39 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
 
     fig.legend(handles, labels, loc='lower center', frameon=False, ncol=3,
                bbox_to_anchor=(0.5, -0.05))
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def make_area_plot(df, y_label, save=None):
+
+    df.index = df.index.astype(int)
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    df.plot.area(ax=ax, stacked=True)
+    df.sum(axis=1).rename('Total').plot(ax=ax)
+    ax.set_ylabel(y_label)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.xaxis.set_tick_params(which=u'both', length=0)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.yaxis.set_tick_params(which=u'both', length=0)
+
+    try:
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                  frameon=False, shadow=True, ncol=2)
+    except AttributeError:
+        pass
 
     if save is not None:
         fig.savefig(save, bbox_inches='tight')

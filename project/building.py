@@ -930,16 +930,11 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
-        t0 = time()
         stock_replacement = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
-        t1 = time()
-        print('heater_replacement {:.0f}'.format((t1 - t0)))
+
         retrofit_rate, market_share = self.insulation_retrofit(prices, cost_insulation, ms_insulation,
                                                                ms_extensive, policies_insulation)
         retrofit_rate = reindex_mi(retrofit_rate, stock_replacement.index)
-
-        t2 = time()
-        print('insulation_retrofit {:.0f}'.format((t2 - t1)))
 
         # TODO: intersection entre stock_replacement et stock_mobile
         retrofit_stock = (retrofit_rate * stock_replacement).dropna().groupby(
@@ -948,8 +943,6 @@ class AgentBuildings(ThermalBuildings):
         replaced_by = (retrofit_stock * market_share.T).T.copy()
 
         self.store_information_retrofit(replaced_by)
-        t3 = time()
-        print('store {:.0f}'.format((t3 - t2)))
 
         share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
         temp = pd.concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
@@ -979,8 +972,7 @@ class AgentBuildings(ThermalBuildings):
         flow_retrofit = flow_retrofit[flow_retrofit != 0]
         flow_retrofit = flow_retrofit.groupby(flow_retrofit.index).sum()
         flow_retrofit.index = pd.MultiIndex.from_tuples(flow_retrofit.index, names=replaced_by.index.names)
-        t4 = time()
-        print('store {:.0f}'.format((t4 - t3)))
+
         return flow_retrofit
 
     def store_information_retrofit(self, replaced_by):
@@ -1025,7 +1017,7 @@ class AgentBuildings(ThermalBuildings):
         flow_demolition = (stock_demolition * self._demolition_total).dropna()
         return flow_demolition.reorder_levels(self.index.names)
 
-    def flow_retrofit_simplified(self, number=300000, targets=None):
+    def flow_retrofit_simplified(self, cost_heater, number=300000, targets=None):
         """Exogenous retrofit function. Targeting F and G buildings.
 
         Parameters
@@ -1053,6 +1045,21 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by = replaced_by.rename(index=heater, level='Heating system')
         replaced_by = replaced_by.groupby(replaced_by.index.names).sum()
+
+        replacement = to_replace.rename(None).to_frame().dot(cost_heater.to_frame().T)
+        replacement = pd.DataFrame(0, index=replacement.index, columns=replacement.columns)
+
+        for initial, final in heater.items():
+            replacement.loc[replacement.index.get_level_values('Heating system') == initial, final] = to_replace.loc[to_replace.index.get_level_values('Heating system') == initial]
+
+        subsidies_total = pd.DataFrame(0, index=replacement.index, columns=replacement.columns)
+
+        tax = 0.05
+        tax_heater = cost_heater * tax
+        subsidies_total = None
+        replacement = None
+        self.store_information_heater(cost_heater, subsidies_total, {}, replacement, tax_heater,
+                                      replaced_by)
 
         self.store_information_retrofit(replaced_by)
 
