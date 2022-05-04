@@ -23,7 +23,7 @@ from input.param import generic_input
 from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
 from write_output import parse_output, grouped_output
 
-# TODO: zero-interest loan, multi-scenario, policy analysis
+# TODO: zero-interest loan, policy analysis
 
 
 def res_irf(config, path):
@@ -66,12 +66,12 @@ def res_irf(config, path):
                                restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
                                year=year, demolition_rate=param['demolition_rate'],
                                data_calibration=param['data_ceren'])
-    buildings.calculate(energy_prices.loc[year, :], taxes)
 
-    for year in range(config['start'] + 1, config['end']):
+    for year in range(config['start'], config['end']):
         print('Run {}'.format(year))
-        buildings.year = year
-        if False:
+        buildings.calculate(energy_prices.loc[year, :], taxes)
+
+        if True:
             flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
                                                     ms_intensive, ms_extensive,
                                                     [p for p in policies_heater if (year >= p.start) and (year < p.end)],
@@ -79,8 +79,8 @@ def res_irf(config, path):
         else:
             flow_retrofit = buildings.flow_retrofit_simplified()
 
+        buildings.year = year
         buildings.add_flows([flow_retrofit, - buildings.flow_demolition(), param['flow_built'].loc[:, year]])
-        buildings.calculate(energy_prices.loc[year, :], taxes)
 
     stock, output = parse_output(buildings, param)
     output.round(2).to_csv(os.path.join(path, 'output.csv'))

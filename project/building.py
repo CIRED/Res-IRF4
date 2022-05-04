@@ -278,9 +278,10 @@ class ThermalBuildings:
         for tax in taxes:
             if tax.name not in self.taxes_expenditure_details.keys():
                 self.taxes_expenditure_details[tax.name] = {}
-            amount = tax.value.loc[self.year, :] * heat_consumption_energy
-            self.taxes_expenditure_details[tax.name].update({self.year: amount})
-            total_taxes += amount
+            if self.year in tax.value.index:
+                amount = tax.value.loc[self.year, :] * heat_consumption_energy
+                self.taxes_expenditure_details[tax.name].update({self.year: amount})
+                total_taxes += amount
 
         self.taxes_expenditure.update({self.year: total_taxes})
 

@@ -81,7 +81,7 @@ def read_policies(config):
         insulation = pd.read_csv(data['insulation'], index_col=[0])
         tax = pd.read_csv(data['tax'], index_col=[0])
 
-        l.append(PublicPolicy('cee', data['start'], data['end'], tax, 'tax'))
+        l.append(PublicPolicy('cee', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax'))
         l.append(PublicPolicy('cee', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('cee', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
         return l
@@ -95,7 +95,7 @@ def read_policies(config):
         emission = pd.read_csv(data['emission'], index_col=[0]).squeeze('columns')
         tax = (tax * emission).fillna(0) / 10 ** 6
         tax = tax.loc[(tax != 0).any(axis=1)]
-        return [PublicPolicy('carbon_tax', data['start'], data['end'], tax, 'tax')]
+        return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax')]
 
     def read_cite(data):
         l = list()

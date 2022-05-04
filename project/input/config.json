@@ -93,7 +93,7 @@
       },
       "cee": {
         "start": 2018,
-        "end": 2019,
+        "end": 2030,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -107,7 +107,7 @@
       },
       "carbon_tax": {
         "start": 2018,
-        "end": 2019,
+        "end": 2030,
         "tax": "project/input/policies/carbon_tax.csv",
         "emission": "project/input/policies/carbon_tax_emission.csv"
       },
