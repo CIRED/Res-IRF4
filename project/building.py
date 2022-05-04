@@ -24,7 +24,55 @@ from time import time
 
 
 class ThermalBuildings:
-    def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, year=2018, data_calibration=None):
+    """
+
+    Parameters:
+    ----------
+    stock: pd.Series
+        Building stock.
+    surface: pd.Series
+        Surface by dwelling type.
+    param: dict
+        Generic input.
+    efficiency: pd.Series
+        Heating system efficiency.
+    income: pd.Series
+    consumption_ini: pd.Series
+    path: str
+    year: int, default 2018
+    data_calibration: default None
+
+    Attributes:
+    ----------
+
+    stock_yrs: dict
+        Dwellings by segment.
+    surface_yrs: dict
+        Surface by segment.
+    heat_consumption_sd_yrs: dict
+        Standard consumption (kWh) by segment.
+    heat_consumption_yrs: dict
+        Consumption (kWh) by segment before calibration.
+    heat_consumption_energy_yrs: dict
+        Consumption (kWh) by energy after calibration.
+    budget_share_yrs: dict
+        Budget share (%) by segment.
+    heating_intensity_yrs: dict
+        Heating intensity (%) by segment.
+    heating_intensity_tenant: dict
+        Weighted average heating intensity (%) by decile.
+    heating_intensity_avg: dict
+        Weighted average heating intensity (%).
+    energy_poverty: dict
+        Number of energy poverty dwelling.
+
+    taxes_expenditure: dict
+    energy_expenditure: dict
+    taxes_expenditure_details: dict
+
+    """
+    def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, year=2018,
+                 data_calibration=None):
 
         system2energy = {'Wood boiler': 'Wood fuel', 'Water/air heat pump': 'Electricity',
                          'Air/air heat pump': 'Electricity', 'Direct electric': 'Electricity',
@@ -54,15 +102,12 @@ class ThermalBuildings:
 
         self.first_year = year
         self._year = year
-        self.stock_yrs, self.surface_yrs, self.heat_consumption_sd_yrs, self.heat_consumption_yrs = {}, {}, {}, {}
+        self.stock_yrs, self.surface_yrs, self.heat_consumption_sd_yrs = {}, {}, {}
         self.budget_share_yrs, self.heating_intensity_yrs = {}, {}
-        self.heating_intensity_avg, self.energy_poverty = {}, {}
-        self.heating_intensity_tenant = {}
-        self.heat_consumption_yrs = {}
-
-        self.heat_consumption_energy_yrs, self.energy_expenditure, self.taxes_expenditure = {}, {}, {}
-        self.taxes_expenditure_details = {}
-
+        self.heating_intensity_tenant, self.heating_intensity_avg, self.energy_poverty = {}, {}, {}
+        self.heat_consumption_yrs, self.heat_consumption_calib_yrs, self.heat_consumption_energy_yrs = {}, {}, {}
+        self.energy_expenditure_yrs, self.energy_expenditure_energy_yrs = {}, {}
+        self.taxes_expenditure_details, self.taxes_expenditure = {}, {}
         self.certificate_nb = {}
 
         self.stock = stock
@@ -115,12 +160,11 @@ class ThermalBuildings:
         self.heater = self.heating_system.str.split('-').str[1]
         self.efficiency = pd.to_numeric(self.heater.replace(self._efficiency))
 
-        self.heat_consumption_sd = self.heating_consumption_sd()
         self.certificate = self.certificates()
 
         self.stock_yrs.update({self.year: self.stock})
         self.surface_yrs.update({self.year: self.stock * self.surface})
-        self.heat_consumption_sd_yrs.update({self.year: self.stock * self.surface * self.heat_consumption_sd})
+        self.heat_consumption_sd_yrs.update({self.year: self.stock * self.surface * self.heating_consumption_sd()})
         self.certificate_nb.update({self.year: self.stock.groupby(self.certificate).sum()})
 
     def prepare(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
@@ -270,9 +314,14 @@ class ThermalBuildings:
 
             validation.round(2).to_csv(os.path.join(self._path, 'validation_stock.csv'))
 
-        heat_consumption_energy = heat_consumption_energy * self.coefficient_consumption
-        self.heat_consumption_energy_yrs.update({self.year: heat_consumption_energy})
-        self.energy_expenditure.update({self.year: prices * heat_consumption_energy})
+        # self.heat_consumption_calib_yrs
+        coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.index, axis=0)
+        self.heat_consumption_calib_yrs.update({self.year: coefficient * self.heat_consumption_yrs[self.year]})
+        self.heat_consumption_energy_yrs.update({self.year: self.heat_consumption_calib_yrs[self.year].groupby(self.energy).sum()})
+
+        prices_reindex = prices.reindex(self.energy).set_axis(self.index, axis=0)
+        self.energy_expenditure_yrs.update({self.year: prices_reindex * self.heat_consumption_calib_yrs[self.year]})
+        self.energy_expenditure_energy_yrs.update({self.year: self.energy_expenditure_yrs[self.year].groupby(self.energy).sum()})
 
         total_taxes = pd.Series(0, index=prices.index)
         for tax in taxes:

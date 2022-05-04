@@ -67,12 +67,18 @@ def parse_output(buildings, param):
     detailed['Consumption standard (TWh)'] = pd.Series({year: buildings.heat_consumption_sd_yrs[year].sum() for year in
                                                         buildings.heat_consumption_sd_yrs.keys()}) / 10**9
 
-    consumption = pd.DataFrame(buildings.heat_consumption_energy_yrs)
+    consumption = pd.DataFrame(buildings.heat_consumption_calib_yrs)
     detailed['Consumption (TWh)'] = consumption.sum() / 10**9
-    for i in consumption.index:
-        detailed['Consumption - {} (TWh)'.format(i)] = consumption.loc[i, :] / 10**9
 
-    emission = (consumption * param['carbon_emission'].T).dropna(axis=1, how='all')
+    temp = consumption.groupby(buildings.energy).sum()
+    temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+    detailed.update(temp.T / 10 ** 9)
+
+    temp = consumption.groupby(buildings.certificate).sum()
+    temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+    detailed.update(temp.T / 10 ** 9)
+
+    emission = (consumption.groupby(buildings.energy).sum() * param['carbon_emission'].T).dropna(axis=1, how='all')
     detailed['Emission (MtCO2)'] = emission.sum() / 10**12
     detailed['Cumulated emission (MtCO2)'] = detailed['Emission (MtCO2)'].cumsum()
     detailed['Stock (Million)'] = stock.sum() / 10**6
@@ -150,8 +156,6 @@ def parse_output(buildings, param):
         # only work because existing surface does not change over time
         detailed['Replacement component {} (Thousand)'.format(i)] = temp.sum() / 10**3
 
-    detailed['Energy expenditures (Billion euro)'] = pd.Series(
-        {year: item.sum() for year, item in buildings.energy_expenditure.items()}) / 10**9
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
@@ -222,6 +226,12 @@ def parse_output(buildings, param):
     detailed.update((taxes_expenditures / 10**9).T)
     detailed['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / 10**9
 
+    energy_expenditures = pd.DataFrame(buildings.energy_expenditure_yrs)
+    detailed['Energy expenditures (Billion euro)'] = energy_expenditures.sum() / 10**9
+    temp = energy_expenditures.groupby('Income tenant').sum()
+    temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
+    detailed.update(temp.T / 10**9)
+
     detailed['VTA heater (Billion euro)'] = pd.DataFrame(
         {year: item.sum() for year, item in buildings.tax_heater.items()}).sum() / 10**9
 
@@ -238,8 +248,6 @@ def parse_output(buildings, param):
     detailed['Investment cost (Billion euro)'] = detailed['Investment insulation (Billion euro)'] + detailed[
         'Investment heater (Billion euro)']
 
-    detailed['Energy expenditure (Billion euro)'] = pd.Series({year: item.sum() for year, item in
-                                                               buildings.energy_expenditure.items()}) / 10 ** 9
     detailed['Carbon value (Billion euro)'] = (pd.DataFrame(buildings.heat_consumption_energy_yrs).T * param[
         'carbon_value_kwh']).sum(axis=1) / 10 ** 9
 
@@ -248,7 +256,9 @@ def parse_output(buildings, param):
 
     # graph subsidies
     subset = pd.concat((subsidies_details, taxes_expenditures), axis=0).T
-    subset['over_cap'] = -subset['over_cap']
+    if 'over_cap' in subset.columns:
+        subset['over_cap'] = -subset['over_cap']
+
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     subset.dropna(inplace=True)
     make_area_plot(subset, 'Billion euro', save='policies.png')
@@ -360,23 +370,20 @@ def grouped_output(result, stocks, folder):
         return {k: i for k, i in temp.items() if not i.empty}
 
     variables_detailed = {
-        'Consumption {} (TWh)': ['Heating energy', lambda y, _: '{:,.0f}'.format(y)],
-        'Stock {} (Million)': ['Performance', lambda y, _: '{:,.0f}'.format(y)],
-        'Heating intensity {} (%)': ['Income tenant', lambda y, _: '{:,.0%}'.format(y)],
-        'Subsidies {} (Billion euro)': ['Income owner', lambda y, _: '{:,.0f}'.format(y)],
-        'Subsidies {} (Billion euro)': ['Decision maker', lambda y, _: '{:,.0f}'.format(y)]
-
+        'Consumption {} (TWh)': [('Heating energy', lambda y, _: '{:,.0f}'.format(y))],
+        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
+        'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
     }
-
+    #  'Subsidies {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y))]
     for var, infos in variables_detailed.items():
-        name = (var.split(' {}')[0] + '_' + infos[0] + '.png').replace(' ', '_').lower()
-        temp = grouped(result, [var.format(i) for i in generic_input['index'][infos[0]]])
-        replace = {var.format(i): i for i in generic_input['index'][infos[0]]}
-        temp = {replace[key]: item for key, item in temp.items()}
-        make_grouped_subplots(temp, format_y=infos[1], n_columns=len(temp.keys()),
-                              save=os.path.join(folder, name))
-
-
+        for info in infos:
+            print(var)
+            name = (var.split(' {}')[0] + '_' + info[0] + '.png').replace(' ', '_').lower()
+            temp = grouped(result, [var.format(i) for i in generic_input['index'][info[0]]])
+            replace = {var.format(i): i for i in generic_input['index'][info[0]]}
+            temp = {replace[key]: item for key, item in temp.items()}
+            make_grouped_subplots(temp, format_y=info[1], n_columns=len(temp.keys()),
+                                  save=os.path.join(folder, name))
 
     scenarios = [s for s in result.keys() if s != 'Reference']
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
