@@ -377,7 +377,6 @@ def grouped_output(result, stocks, folder):
     #  'Subsidies {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y))]
     for var, infos in variables_detailed.items():
         for info in infos:
-            print(var)
             name = (var.split(' {}')[0] + '_' + info[0] + '.png').replace(' ', '_').lower()
             temp = grouped(result, [var.format(i) for i in generic_input['index'][info[0]]])
             replace = {var.format(i): i for i in generic_input['index'][info[0]]}
@@ -387,7 +386,7 @@ def grouped_output(result, stocks, folder):
 
     scenarios = [s for s in result.keys() if s != 'Reference']
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
-                 'Energy expenditure (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
+                 'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
 
     agg = pd.DataFrame({var: pd.Series(
         [double_difference(result['Reference'].loc[var, :], result[s].loc[var, :]) for s in scenarios], index=scenarios)
