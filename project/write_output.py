@@ -152,9 +152,10 @@ def parse_output(buildings, param):
         temp = pd.DataFrame(
             {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
         t = (pd.DataFrame(buildings.cost_component).loc[i, :] * temp)
-        detailed['Investment {} (Million euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**6
-        # only work because existing surface does not change over time
         detailed['Replacement component {} (Thousand)'.format(i)] = temp.sum() / 10**3
+
+        # only work because existing surface does not change over time
+        detailed['Investment {} (Million euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**6
 
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
@@ -236,7 +237,7 @@ def parse_output(buildings, param):
         {year: item.sum() for year, item in buildings.tax_heater.items()}).sum() / 10**9
 
     detailed['VTA insulation (Billion euro)'] = pd.Series(
-        {year: item.sum().sum() for year, item in buildings.tax_insulation.items()}) / 10**9
+        {year: item.sum().sum() for year, item in buildings.taxed_insulation.items()}) / 10**9
     detailed['VTA (Billion euro)'] = detailed['VTA heater (Billion euro)'] + detailed['VTA insulation (Billion euro)']
 
     detailed['Income state (Billion euro)'] = detailed['VTA (Billion euro)'] + detailed['Taxes expenditure (Billion euro)']
