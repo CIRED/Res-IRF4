@@ -66,11 +66,10 @@ subsidy_preferences = 0.167
 subsidy_loan_preferences = 0.473
 bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1]).squeeze('columns')
 inertia = 0.8299
-zero_interest_loan = 2
 
 generic_input['preferences'] = {'investment': investment_preferences, 'subsidy': subsidy_preferences,
                                 'bill_saved': bill_saving_preferences, 'inertia': inertia,
-                                'zero_interest_loan': zero_interest_loan}
+                                'zero_interest_loan': subsidy_loan_preferences}
 
 generic_input['performance_insulation'] = {'Wall': round(1 / 3.7, 1), 'Floor': round(1 / 3, 1), 'Roof': round(1 / 6, 1),
                                            'Windows': 1.5}
