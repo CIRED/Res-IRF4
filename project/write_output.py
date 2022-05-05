@@ -100,6 +100,8 @@ def parse_output(buildings, param):
 
     detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
 
+    detailed['Retrofit (Thousand)'] = pd.Series(
+        {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10 ** 3
     detailed['Retrofit >= 1 EPC (Thousand)'] = pd.Series(
         {year: item.loc[:, [i for i in item.columns if i > 0]].sum().sum() for year, item in
          buildings.certificate_jump_yrs.items()}) / 10 ** 3
@@ -163,19 +165,12 @@ def parse_output(buildings, param):
     temp.index = temp.index.map(lambda x: 'Investment {} (Billion euro)'.format(x))
     detailed.update(temp.T / 10**9)
     investment_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_heater.items()})
-    """temp = investment_heater.groupby('Income owner').sum()
-    temp.index = temp.index.map(lambda x: 'Investment heater {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10**9)"""
 
     investment_insulation = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_insulation.items()})
     detailed['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10**9
-    """temp = investment_insulation.groupby('Income owner').sum()
-    temp.index = temp.index.map(lambda x: 'Investment insulation {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10**9)
-    temp = investment_insulation.groupby(['Housing type', 'Occupancy status']).sum()
-    temp.index = temp.index.map(lambda x: 'Investment insulation {} - {} (Billion euro)'.format(x[0], x[1]))
-    detailed.update(temp.T / 10**9)"""
-    investment_total = investment_heater.reindex(buildings.index, fill_value=0) + investment_insulation.reindex(buildings.index, fill_value=0)
+
+    index = investment_heater.index.union(investment_insulation.index)
+    investment_total = investment_heater.reindex(index, fill_value=0) + investment_insulation.reindex(index, fill_value=0)
     detailed['Investment total (Billion euro)'] = investment_total.sum() / 10**9
     temp = investment_total.groupby('Income owner').sum()
     temp.index = temp.index.map(lambda x: 'Investment total {} (Billion euro)'.format(x))
@@ -186,20 +181,12 @@ def parse_output(buildings, param):
 
     subsidies_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.subsidies_heater.items()})
     detailed['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10**9
-    """temp = subsidies_heater.groupby('Income owner').sum()
-    temp.index = temp.index.map(lambda x: 'Subsidies heater {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10**9)"""
 
     subsidies_insulation = pd.DataFrame({year: item.sum(axis=1)for year, item in buildings.subsidies_insulation.items()})
     detailed['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10**9
-    """temp = subsidies_insulation.groupby('Income owner').sum()
-    temp.index = temp.index.map(lambda x: 'Subsidies insulation {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10**9)
-    temp = subsidies_insulation.groupby(['Housing type', 'Occupancy status']).sum()
-    temp.index = temp.index.map(lambda x: 'Subsidies insulation {} - {} (Billion euro)'.format(x[0], x[1]))
-    detailed.update(temp.T / 10**9)"""
 
-    subsidies_total = subsidies_heater.reindex(buildings.index, fill_value=0) + subsidies_insulation.reindex(buildings.index, fill_value=0)
+    index = subsidies_heater.index.union(subsidies_insulation.index)
+    subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index, fill_value=0)
     detailed['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10**9
     temp = subsidies_total.groupby('Income owner').sum()
     temp.index = temp.index.map(lambda x: 'Subsidies total {} (Billion euro)'.format(x))

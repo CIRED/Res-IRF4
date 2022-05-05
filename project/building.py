@@ -361,6 +361,8 @@ class AgentBuildings(ThermalBuildings):
         Investment realized by segment and by insulation choice (€).
     tax_insulation: pd.DataFrame
         Tax by segment and by insulation choice (€).
+
+    retrofit_rate: dict
     """
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
@@ -406,7 +408,8 @@ class AgentBuildings(ThermalBuildings):
         self.cost_component, self.cost_heater = {}, {}
         self.replacement_insulation, self.investment_insulation, self.subsidies_insulation = {}, {}, {}
 
-        self.taxed_insulation ={}
+        self.taxed_insulation = {}
+        self.retrofit_rate = {}
 
         self._share_decision_maker = stock.groupby(
             ['Occupancy status', 'Housing type', 'Income owner', 'Income tenant']).sum().unstack(
@@ -859,7 +862,6 @@ class AgentBuildings(ThermalBuildings):
 
         if self.utility_insulation_intensive is None:
             self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation)
-
         utility += self.utility_insulation_intensive
 
         # restrict to coherent renovation work
@@ -868,7 +870,7 @@ class AgentBuildings(ThermalBuildings):
         utility.loc[self.floor.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Floor'], idx[:, True, :, :]] = float('nan')
         utility.loc[self.roof.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Roof'], idx[:, :, True, :]] = float('nan')
         utility.loc[self.windows.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Windows'], idx[:, :, :, True]] = float('nan')
-        utility.dropna(inplace=True)
+        utility.dropna(how='all', inplace=True)
 
         market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
 
@@ -880,7 +882,10 @@ class AgentBuildings(ThermalBuildings):
         pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
         utility_investment = (pref_investment * investment_insulation) / 1000
 
-        utility = utility_investment + utility_bill_saving
+        subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
+        utility_subsidies = (self.pref_subsidy * subsidies_insulation) / 1000
+
+        utility = utility_investment + utility_bill_saving + utility_subsidies
 
         if self.utility_insulation_extensive is None:
             self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
@@ -889,8 +894,11 @@ class AgentBuildings(ThermalBuildings):
         utility += self.utility_insulation_extensive
         retrofit_rate = 1 / (1 + np.exp(- utility))
 
+        # r = retrofit_rate.xs(False, level='Heater replacement')
+        # s = self.stock.groupby([c for c in self.stock.index.names if c != 'Income tenant']).sum()
+
         self.store_information_insulation(certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
-                                          tax_insulation, subsidies_details, subsidies_total)
+                                          tax_insulation, subsidies_details, subsidies_total, retrofit_rate)
 
         return retrofit_rate, market_share
 
@@ -956,7 +964,7 @@ class AgentBuildings(ThermalBuildings):
         return subsidies_details, subsidies_total, certificate_jump
 
     def store_information_insulation(self, certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
-                                     tax_insulation, subsidies_details, subsidies_total):
+                                     tax_insulation, subsidies_details, subsidies_total, retrofit_rate):
         """Store insulation information.
 
         Parameters
@@ -977,6 +985,7 @@ class AgentBuildings(ThermalBuildings):
             Amount of subsidies for each dwelling and each insulation gesture (€).
         subsidies_total: pd.DataFrame
             Total mount of subsidies for each dwelling and each insulation gesture (€).
+        retrofit_rate: pd.Series
         """
         self.efficient_renovation = certificate.isin(['A', 'B'])
         self.certificate_jump = certificate_jump
@@ -986,6 +995,7 @@ class AgentBuildings(ThermalBuildings):
         self.subsidies_total_insulation.update({self.year: subsidies_total})
         self.cost_insulation.update({self.year: cost_insulation})
         self.tax_insulation.update({self.year: tax_insulation})
+        self.retrofit_rate.update({self.year: retrofit_rate})
 
     def calibration_constant_intensive(self, utility, ms_insulation):
         """Calibrate alternative-specific constant to match observed market-share.
@@ -1103,8 +1113,9 @@ class AgentBuildings(ThermalBuildings):
         stock_replacement = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
 
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
-                                                               ms_extensive, policies_insulation)
+                                                                  ms_extensive, policies_insulation)
         retrofit_rate = reindex_mi(retrofit_rate, stock_replacement.index)
+        stock_replacement[retrofit_rate.index].sum()
 
         # TODO: intersection entre stock_replacement et stock_mobile
         retrofit_stock = (retrofit_rate * stock_replacement).dropna().groupby(
