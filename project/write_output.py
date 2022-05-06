@@ -249,7 +249,7 @@ def parse_output(buildings, param):
 
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     subset.dropna(inplace=True)
-    make_area_plot(subset, 'Billion euro', save='policies.png')
+    make_area_plot(subset, 'Billion euro', save=os.path.join(buildings._path, 'policies.png'))
 
     # graph public finance
     subset = detailed.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
@@ -258,7 +258,7 @@ def parse_output(buildings, param):
     subset['Subsidies insulation (Billion euro)'] = -subset['Subsidies insulation (Billion euro)']
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
-    make_area_plot(subset, 'Billion euro', save='public_finance.png')
+    make_area_plot(subset, 'Billion euro', save=os.path.join(buildings._path, 'public_finance.png'))
 
     return stock, detailed
 

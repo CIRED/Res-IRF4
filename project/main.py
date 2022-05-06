@@ -65,13 +65,13 @@ def res_irf(config, path):
                                param['consumption_ini'], path, param['preferences'],
                                restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
                                year=year, demolition_rate=param['demolition_rate'],
-                               data_calibration=param['data_ceren'])
+                               data_calibration=param['data_ceren'], endogenous=True)
 
     for year in range(config['start'], config['end']):
         print('Run {}'.format(year))
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
-        if False:
+        if True:
             flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
                                                     ms_intensive, ms_extensive,
                                                     [p for p in policies_heater if (year >= p.start) and (year < p.end)],

@@ -149,7 +149,8 @@ class ThermalBuildings:
         self.surface = reindex_mi(self._surface, stock.index)
         self.stock_surface = self.stock * self.surface
         self.income_owner = reindex_mi(self._income_owner, stock.index)
-        self.income_tenant = reindex_mi(self._income_tenant, stock.index)
+        if 'Income tenant' in stock.index.names:
+            self.income_tenant = reindex_mi(self._income_tenant, stock.index)
 
         self.wall = pd.Series(stock.index.get_level_values('Wall'), index=stock.index)
         self.floor = pd.Series(stock.index.get_level_values('Floor'), index=stock.index)
@@ -163,7 +164,6 @@ class ThermalBuildings:
         self.heater = self.heating_system.str.split('-').str[1]
         self.efficiency = pd.to_numeric(self.heater.replace(self._efficiency))
 
-
         self.certificate = self.certificates()
 
         self.stock_yrs.update({self.year: self.stock})
@@ -171,7 +171,7 @@ class ThermalBuildings:
         self.heat_consumption_sd_yrs.update({self.year: self.stock * self.surface * self.heating_consumption_sd()})
         self.certificate_nb.update({self.year: self.stock.groupby(self.certificate).sum()})
 
-    def prepare(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
+    def self_prepare(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
         if wall is None:
             wall = self.wall
         if floor is None:
@@ -202,15 +202,15 @@ class ThermalBuildings:
         -------
         pd.Series
         """
-        wall, floor, roof, windows, efficiency, _ = self.prepare(wall=wall, floor=floor, roof=roof, windows=windows,
-                                                                 efficiency=efficiency)
+        wall, floor, roof, windows, efficiency, _ = self.self_prepare(wall=wall, floor=floor, roof=roof,
+                                                                      windows=windows, efficiency=efficiency)
         return thermal.heating_consumption(wall, floor, roof, windows, self._dh, efficiency, self._param)
 
     def primary_heating_consumption_sd(self, wall=None, floor=None, roof=None, windows=None, efficiency=None,
                                        energy=None):
-        wall, floor, roof, windows, efficiency, energy = self.prepare(wall=wall, floor=floor, roof=roof,
-                                                                      windows=windows, efficiency=efficiency,
-                                                                      energy=energy)
+        wall, floor, roof, windows, efficiency, energy = self.self_prepare(wall=wall, floor=floor, roof=roof,
+                                                                           windows=windows, efficiency=efficiency,
+                                                                           energy=energy)
         return thermal.primary_heating_consumption(wall, floor, roof, windows, self._dh, efficiency, energy, self._param)
     
     def heating_consumption(self, prices):
@@ -339,7 +339,7 @@ class ThermalBuildings:
         self.taxes_expenditure.update({self.year: total_taxes})
 
     def certificates(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
-        wall, floor, roof, windows, efficiency, energy = self.prepare(wall=wall, floor=floor, roof=roof,
+        wall, floor, roof, windows, efficiency, energy = self.self_prepare(wall=wall, floor=floor, roof=roof,
                                                                       windows=windows, efficiency=efficiency,
                                                                       energy=energy)
         return thermal.certificate_buildings(wall, floor, roof, windows, self._dh, efficiency, energy, self._param)[1]
@@ -351,6 +351,30 @@ class ThermalBuildings:
 
     def energy_bill_sd(self, prices):
         return self.heating_consumption_sd() * self.surface * self.energy_prices(prices)
+
+    def certificates_exogenous(self, index):
+        """
+
+        Parameters
+        ----------
+        index: pd.MultiIndex
+
+        Returns
+        -------
+
+        """
+
+        wall = pd.Series(index.get_level_values('Wall'), index=index)
+        floor = pd.Series(index.get_level_values('Floor'), index=index)
+        roof = pd.Series(index.get_level_values('Roof'), index=index)
+        windows = pd.Series(index.get_level_values('Windows'), index=index)
+
+        heating_system = pd.Series(index.get_level_values('Heating system'), index=index)
+        energy = heating_system.str.split('-').str[0].rename('Energy')
+        heater = heating_system.str.split('-').str[1]
+        efficiency = pd.to_numeric(heater.replace(self._efficiency))
+
+        return thermal.certificate_buildings(wall, floor, roof, windows, self._dh, efficiency, energy, self._param)[1]
 
 
 class AgentBuildings(ThermalBuildings):
@@ -375,7 +399,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
                  ms_heater, choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
-                 data_calibration=None):
+                 data_calibration=None, endogenous=True):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration)
 
@@ -392,6 +416,7 @@ class AgentBuildings(ThermalBuildings):
         self._choice_heater = list(ms_heater.columns)
         self._restrict_heater = restrict_heater
         self._ms_heater = ms_heater
+        self._endogenous = endogenous
 
         self._choice_insulation = choice_insulation
         self._performance_insulation = performance_insulation
@@ -445,7 +470,51 @@ class AgentBuildings(ThermalBuildings):
         union = flow_total.index.union(self.index)
         self.stock = flow_total.reindex(union, fill_value=0) + self.stock.reindex(union, fill_value=0)
 
-    def heater_replacement(self, prices, cost_heater, ms_heater, policies_heater):
+    def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater):
+
+        choice_heater = self._choice_heater
+        choice_heater_idx = pd.Index(choice_heater, name='Heating system final')
+        agent = self.new(pd.Series(index=index, dtype=float))
+
+        efficiency = pd.to_numeric(
+            pd.Series(choice_heater).str.split('-').str[1].replace(self._efficiency)).set_axis(
+            choice_heater_idx)
+        energy = pd.Series(choice_heater).str.split('-').str[0].set_axis(choice_heater_idx)
+        heat_consumption_sd = agent.heating_consumption_sd(efficiency=efficiency)
+        prices_re = prices.reindex(energy).set_axis(heat_consumption_sd.columns)
+        energy_bill_sd = ((heat_consumption_sd * prices_re).T * agent.surface).T
+        bill_saved = - energy_bill_sd.sub(agent.energy_bill_sd(prices), axis=0)
+        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill, bill_saved.index)).T / 1000
+        utility_bill_saving = utility_bill_saving.loc[:, choice_heater]
+
+        utility_subsidies = subsidies_total * self.pref_subsidy / 1000
+
+        cost_heater = cost_heater.reindex(utility_bill_saving.columns)
+        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
+        utility_investment = pref_investment.to_frame().dot(cost_heater.to_frame().T) / 1000
+
+        utility_inertia = pd.DataFrame(0, index=utility_bill_saving.index, columns=utility_bill_saving.columns)
+        for hs in choice_heater:
+            utility_inertia.loc[
+                utility_inertia.index.get_level_values('Heating system') == hs, hs] = self.pref_inertia
+
+        utility = utility_inertia + utility_investment + utility_bill_saving + utility_subsidies
+
+        restrict_heater = reindex_mi(self._restrict_heater.reindex(utility.columns, axis=1), utility.index).astype(
+            bool)
+        utility[restrict_heater] = float('nan')
+
+        if self.constant_heater is None:
+            self.constant_heater = self.calibration_constant_heater(utility, ms_heater)
+        utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
+
+        utility += utility_constant
+        market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
+
+        return market_share
+
+    def heater_replacement(self, prices, cost_heater, ms_heater, policies_heater, probability_replacement=1/17,
+                           index=None):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -460,86 +529,45 @@ class AgentBuildings(ThermalBuildings):
         pd.Series
         """
 
-        choice_heater = self._choice_heater
-        choice_heater_idx = pd.Index(choice_heater, name='Heating system final')
+        if index is None:
+            index = self.index
+            index = index.droplevel('Income tenant')
+            index = index[~index.duplicated()]
 
-        efficiency = pd.to_numeric(pd.Series(choice_heater).str.split('-').str[1].replace(self._efficiency))
-        efficiency.index = choice_heater_idx
+        choice_heater_idx = pd.Index(self._choice_heater, name='Heating system final')
+        frame = pd.Series(dtype=float, index=index).to_frame().dot(pd.Series(dtype=float, index=choice_heater_idx).to_frame().T)
+        cost_heater, tax_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(policies_heater,
+                                                                                                  cost_heater, frame)
+        if self._endogenous:
+            subsidies_utility = subsidies_total.copy()
+            if 'reduced_tax' in subsidies_details.keys():
+                subsidies_utility -= subsidies_details['reduced_tax']
+            market_share = self.endogenous_market_share_heater(index, prices, subsidies_utility, cost_heater, ms_heater)
 
-        energy = pd.Series(choice_heater).str.split('-').str[0]
-        energy.index = choice_heater_idx
+        if isinstance(probability_replacement, pd.Series):
+            probability_replacement = reindex_mi(probability_replacement, market_share.index)
 
-        heat_consumption_sd = self.heating_consumption_sd(efficiency=efficiency)
-        levels = [i for i in heat_consumption_sd.index.names if i != 'Income tenant']
-        heat_consumption_sd = heat_consumption_sd.groupby(levels).first()
-
-        prices_re = prices.reindex(energy).copy()
-        prices_re.index = heat_consumption_sd.columns
-
-        energy_bill_sd = ((heat_consumption_sd * prices_re).T * self.surface.groupby(levels).first()).T
-        bill_saved = - energy_bill_sd.sub(self.energy_bill_sd(prices).groupby(levels).first(), axis=0)
-
-        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill, bill_saved.index)).T / 1000
-        utility_bill_saving = utility_bill_saving.loc[:, choice_heater]
-
-        tax = self.vta
-        p = [p for p in policies_heater if 'reduced_tax' == p.policy]
-        sub = None
-        if p:
-            tax = p[0].value
-            sub = cost_heater * (self.vta - tax)
-            sub = {p[0].name: pd.concat([sub] * utility_bill_saving.shape[0], keys=utility_bill_saving.index, axis=1).T}
-
-        tax_heater = cost_heater * tax
-        cost_heater += tax_heater
-
-        subsidies_details, subsidies_total = self.apply_subsidies_heater(policies_heater, cost_heater, utility_bill_saving)
-        utility_subsidies = subsidies_total * self.pref_subsidy / 1000
-        if p:
-            subsidies_details.update(sub)
-            subsidies_total += subsidies_details['reduced_tax']
-
-        cost_heater = cost_heater.reindex(utility_bill_saving.columns)
-        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index)
-        pref_investment.name = None
-        utility_investment = pref_investment.to_frame().dot(cost_heater.to_frame().T) / 1000
-
-        utility_inertia = pd.DataFrame(0, index=utility_bill_saving.index, columns=utility_bill_saving.columns)
-        for hs in choice_heater:
-            utility_inertia.loc[self.heater.groupby(levels).first() == hs, hs] = self.pref_inertia
-
-        utility = utility_inertia + utility_investment + utility_bill_saving + utility_subsidies
-
-        restrict_heater = reindex_mi(self._restrict_heater.reindex(utility.columns, axis=1), utility.index).astype(bool)
-        utility[restrict_heater] = float('nan')
-
-        if self.constant_heater is None:
-            self.constant_heater = self.calibration_constant_heater(utility, ms_heater)
-        utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
-
-        utility += utility_constant
-        market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
-
-        probability_replacement = 1 / 17
-        replacement = (market_share.T * probability_replacement * self.stock_mobile.groupby(levels).sum()).T
+        replacement = (market_share.T * probability_replacement * self.stock_mobile.groupby(
+            market_share.index.names).sum()).T
 
         to_replace = replacement.sum(axis=1)
+
         replaced_by = replacement.stack()
         replaced_by = replaced_by.groupby([c for c in replaced_by.index.names if c != 'Heating system']).sum()
         replaced_by.index.set_names({'Heating system final': 'Heating system'}, inplace=True)
         replaced_by = replaced_by.groupby([c for c in replaced_by.index.names if c != 'Heating energy']).sum()
         replaced_by = replaced_by.reorder_levels(to_replace.index.names)
 
-        stock = self.stock_mobile.groupby(levels).sum() - to_replace
-        stock_replacement = pd.concat((stock, replaced_by), axis=0, keys=[False, True], names=['Heater replacement'])
+        stock = self.stock_mobile.groupby(to_replace.index.names).sum() - to_replace
+        stock_after_replacement = pd.concat((stock, replaced_by), axis=0, keys=[False, True], names=['Heater replacement'])
+        stock_before_replacement = pd.concat((stock, to_replace), axis=0, keys=[False, True], names=['Heater replacement'])
 
         self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, tax_heater,
                                       replaced_by)
 
-        return stock_replacement
+        return stock_before_replacement, stock_after_replacement
 
-    @staticmethod
-    def apply_subsidies_heater(policies_heater, cost_heater, frame):
+    def apply_subsidies_heater(self, policies_heater, cost_heater, frame):
         """Calculate subsidies for each dwelling and each heating system.
 
         Parameters
@@ -556,6 +584,18 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_total = pd.DataFrame(0, index=frame.index, columns=frame.columns)
         subsidies_details = {}
+
+        tax = self.vta
+        p = [p for p in policies_heater if 'reduced_tax' == p.policy]
+        sub = None
+        if p:
+            tax = p[0].value
+            sub = cost_heater * (self.vta - tax)
+            subsidies_details.update({'reduced_tax': pd.concat([sub] * frame.shape[0], keys=frame.index, axis=1).T})
+            subsidies_total += subsidies_details['reduced_tax']
+
+        tax_heater = cost_heater * tax
+        cost_heater += tax_heater
 
         sub = None
         for policy in policies_heater:
@@ -579,7 +619,7 @@ class AgentBuildings(ThermalBuildings):
 
             subsidies_details[policy.name] = sub
             subsidies_total += subsidies_details[policy.name]
-        return subsidies_details, subsidies_total
+        return cost_heater, tax_heater, subsidies_details, subsidies_total
 
     def store_information_heater(self, cost_heater, subsidies_total, subsidies_details, replacement, tax_heater,
                                  replaced_by):
@@ -637,7 +677,7 @@ class AgentBuildings(ThermalBuildings):
         # initializing constant to 0
         constant = ms_heater.copy()
         constant[constant > 0] = 0
-
+        market_share_ini, market_share_agg = None, None
         for i in range(100):
             constant.loc[:, 'Wood boiler'] = 0
             utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
@@ -657,12 +697,12 @@ class AgentBuildings(ThermalBuildings):
 
         constant.loc[:, 'Wood boiler'] = 0
         details = pd.concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
-                            axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed'])
+                            axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
         details.to_csv(os.path.join(self._path, 'calibration_constant_heater.csv'))
 
         return constant
 
-    def prepare_consumption(self, choice_insulation=None, performance_insulation=None):
+    def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None):
         """Constitute building components' performance.
 
         Returns
@@ -671,13 +711,16 @@ class AgentBuildings(ThermalBuildings):
         pd.DataFrame
         """
 
+        if index is None:
+            index = self.index
+
         if not isinstance(choice_insulation, pd.MultiIndex):
             choice_insulation = self._choice_insulation
 
         if not isinstance(performance_insulation, pd.MultiIndex):
             performance_insulation = self._performance_insulation
 
-        s = pd.concat([self.stock] * len(choice_insulation), axis=1).set_axis(choice_insulation, axis=1)
+        s = pd.concat([pd.Series(index=index, dtype=float)] * len(choice_insulation), axis=1).set_axis(choice_insulation, axis=1)
 
         wall_buildings, floor_buildings, roof_buildings, windows_buildings = {}, {}, {}, {}
         for name, series in s.iteritems():
@@ -702,26 +745,32 @@ class AgentBuildings(ThermalBuildings):
             else:
                 windows_buildings[name] = pd.Series(series.index.get_level_values('Windows'), index=series.index)
 
+        heating_system = pd.Series(index.get_level_values('Heating system'), index=index)
+        energy = heating_system.str.split('-').str[0].rename('Energy')
+        heater = heating_system.str.split('-').str[1]
+        efficiency = pd.to_numeric(heater.replace(self._efficiency))
+
         consumption_sd, certificate = {}, {}
         for name in choice_insulation:
             consumption_sd[name] = self.heating_consumption_sd(wall=wall_buildings[name],
                                                                floor=floor_buildings[name],
                                                                roof=roof_buildings[name],
-                                                               windows=windows_buildings[name])
+                                                               windows=windows_buildings[name],
+                                                               efficiency=efficiency)
 
             certificate[name] = self.certificates(wall=wall_buildings[name],
                                                   floor=floor_buildings[name],
                                                   roof=roof_buildings[name],
-                                                  windows=windows_buildings[name])
+                                                  windows=windows_buildings[name],
+                                                  energy=energy,
+                                                  efficiency=efficiency
+                                                  )
 
         consumption_sd = pd.DataFrame(consumption_sd).rename_axis(choice_insulation.names, axis=1)
-        # consumption_sd.columns.set_names(choice_insulation.names, inplace=True)
         certificate = pd.DataFrame(certificate).rename_axis(choice_insulation.names, axis=1)
-        # certificate.columns.set_names(choice_insulation.names, inplace=True)
-
         return consumption_sd, certificate
 
-    def prepare_cost(self, cost_insulation):
+    def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
 
         Parameters
@@ -741,7 +790,7 @@ class AgentBuildings(ThermalBuildings):
         cost.loc[idx[:, :, :, True]] = cost.loc[idx[:, :, :, True]] + cost_insulation['Windows']
         return cost
 
-    def prepare_subsidy_component(self, subsidies_insulation):
+    def prepare_subsidy_insulation(self, subsidies_insulation):
         """Constitute insulation choice set subsidies. Subsidies are equal to the sum of each individual subsidy.
 
         Parameters
@@ -765,7 +814,124 @@ class AgentBuildings(ThermalBuildings):
             subsidies_insulation['Windows'], axis=0) * self.surface_insulation['Windows']
         return subsidy
 
-    def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, ms_extensive, policies_insulation):
+    def _prepare_input_insulation(self, prices, cost_insulation_raw, policies_insulation,
+                                 index=None):
+        """Parse and prepare input for the behavioral model.
+
+        Parameters
+        ----------
+        prices: pd.Series
+        cost_insulation_raw: pd.Series
+        policies_insulation: list
+        index: pd.MultiIndex
+        """
+
+        if index is None:
+            index = self.index
+
+        agent = self.new(pd.Series(index=index, dtype=float))
+
+
+        certificate_before = agent.certificate
+        index = certificate_before[certificate_before > 'B'].index
+        agent = self.new(pd.Series(index=index, dtype=float))
+
+        surface = agent.surface
+        energy_prices = agent.energy_prices(prices)
+        energy_bill_sd_before = agent.energy_bill_sd(prices)
+
+        choice_insulation = self._choice_insulation
+        consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
+
+        cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
+        # cost_insulation.reindex(utility_bill_saving.columns)
+        cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
+        cost_insulation = cost_insulation.reindex(certificate.index)
+
+        cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump = self.apply_subsidies_insulation(
+            policies_insulation,
+            cost_insulation, surface,
+            certificate,
+            certificate_before)
+
+        return consumption_sd, certificate, energy_prices, surface, energy_bill_sd_before, cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
+
+    def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive):
+
+        agent = self.new(pd.Series(index=index, dtype=float))
+        certificate_before = agent.certificate
+        index = certificate_before[certificate_before > 'B'].index
+        agent = self.new(pd.Series(index=index, dtype=float))
+
+        surface = agent.surface
+        energy_prices = agent.energy_prices(prices)
+        energy_bill_sd_before = agent.energy_bill_sd(prices)
+
+        choice_insulation = self._choice_insulation
+        consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
+
+        utility_subsidies = (self.pref_subsidy * subsidies_total) / 1000
+
+        pref_investment = reindex_mi(self.pref_investment, cost_insulation.index).rename(None)
+        utility_investment = (cost_insulation.T * pref_investment).T / 1000
+
+        energy_bill_sd = (consumption_sd.T * energy_prices * surface).T
+        bill_saved = - energy_bill_sd.sub(energy_bill_sd_before, axis=0).dropna()
+        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill, bill_saved.index)).T / 1000
+
+        utility = utility_bill_saving + utility_investment + utility_subsidies
+
+        if self.utility_insulation_intensive is None:
+            self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation)
+        utility += self.utility_insulation_intensive
+
+        # restrict to coherent renovation work
+        idx = pd.IndexSlice
+        utility.loc[utility.index.get_level_values('Wall') <= self._performance_insulation['Wall'], idx[True, :, :, :]] = float('nan')
+        utility.loc[utility.index.get_level_values('Floor') <= self._performance_insulation['Floor'], idx[:, True, :, :]] = float('nan')
+        utility.loc[utility.index.get_level_values('Roof') <= self._performance_insulation['Roof'], idx[:, :, True, :]] = float('nan')
+        utility.loc[utility.index.get_level_values('Windows') <= self._performance_insulation['Windows'], idx[:, :, :, True]] = float('nan')
+        utility.dropna(how='all', inplace=True)
+
+        market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
+
+        # extensive margin
+        bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
+        utility_bill_saving = reindex_mi(self.pref_bill, bill_saved_insulation.index) * bill_saved_insulation / 1000
+
+        investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
+        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
+        utility_investment = (pref_investment * investment_insulation) / 1000
+
+        subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
+        utility_subsidies = (self.pref_subsidy * subsidies_insulation) / 1000
+
+        utility = utility_investment + utility_bill_saving + utility_subsidies
+
+        if self.utility_insulation_extensive is None:
+            self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
+
+        utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
+        utility += self.utility_insulation_extensive
+        retrofit_rate = 1 / (1 + np.exp(- utility))
+
+        return retrofit_rate, market_share
+
+    def exogenous_retrofit(self, index, choice_insulation, number=300000):
+        targets = ['F', 'G']
+        to_replace = self.stock_mobile[self.certificate.isin(targets)]
+        to_replace = to_replace / to_replace.sum() * number
+        to_replace = to_replace.groupby(index.names).sum()
+        retrofit_rate = (to_replace / self.stock.groupby(index.names).sum()).fillna(0)
+        retrofit_rate = pd.concat([retrofit_rate], keys=[True], names='Heater replacement')
+
+        market_share = pd.DataFrame(0, index=retrofit_rate.index, columns=choice_insulation)
+        market_share.loc[:, (True, True, True, True)] = 1
+
+        return retrofit_rate, market_share
+
+    def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, ms_extensive, policies_insulation,
+                               index=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -791,90 +957,38 @@ class AgentBuildings(ThermalBuildings):
         pd.DataFrame
             Market-share insulation
         """
+        if index is None:
+            index = self.index
+
+        agent = self.new(pd.Series(index=index, dtype=float))
+
+        certificate_before = agent.certificate
+        index = certificate_before[certificate_before > 'B'].index
+        agent = self.new(pd.Series(index=index, dtype=float))
+        surface = agent.surface
+
         choice_insulation = self._choice_insulation
-        consumption_sd, certificate = self.prepare_consumption(choice_insulation)
+        consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
 
-        certificate_before = self.certificate
+        cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
+        # cost_insulation.reindex(utility_bill_saving.columns)
+        cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
+        cost_insulation = cost_insulation.reindex(certificate.index)
 
-        # remove redundant rows (Income tenant)
-        levels = [c for c in consumption_sd.index.names if c != 'Income tenant']
-        consumption_sd = consumption_sd[certificate_before > 'B']
-        consumption_sd = consumption_sd.groupby(levels).first()
-        certificate = certificate[certificate_before > 'B']
-        certificate = certificate.groupby(levels).first()
-        certificate_before = certificate_before[certificate_before > 'B']
-        certificate_before = certificate_before.groupby(levels).first()
+        cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump = self.apply_subsidies_insulation(
+            policies_insulation,
+            cost_insulation, surface,
+            certificate,
+            certificate_before)
 
-        surface = self.surface.groupby(levels).first()
-        energy_prices = self.energy_prices(prices).groupby(levels).first()
-        energy_bill_sd_before = self.energy_bill_sd(prices).groupby(levels).first()
-
-        energy_bill_sd = (consumption_sd.T * energy_prices * surface).T
-        bill_saved = - energy_bill_sd.sub(energy_bill_sd_before, axis=0).dropna()
-        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill, bill_saved.index)).T / 1000
-
-        cost_insulation = self.prepare_cost(cost_insulation_raw * self.surface_insulation)
-        cost_insulation.reindex(utility_bill_saving.columns)
-        cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T).reindex(utility_bill_saving.index)
-
-        tax = self.vta
-        p = [p for p in policies_insulation if 'reduced_tax' == p.policy]
-        sub = None
-        if p:
-            tax = p[0].value
-            sub = {p[0].name: cost_insulation * (self.vta - tax)}
-
-        tax_insulation = cost_insulation * tax
-        cost_insulation += tax_insulation
-
-        subsidies_details, subsidies_total, certificate_jump = self.apply_subsidies_insulation(policies_insulation,
-                                                                                               cost_insulation, surface,
-                                                                                               certificate,
-                                                                                               certificate_before)
-        utility_subsidies = (self.pref_subsidy * subsidies_total) / 1000
-
-        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
-        utility_investment = (cost_insulation.reindex(pref_investment.index).T * pref_investment).T / 1000
-
-        utility = utility_bill_saving + utility_investment + utility_subsidies
-
-        if p:
-            subsidies_details.update(sub)
-            subsidies_total += subsidies_details['reduced_tax']
-
-        if self.utility_insulation_intensive is None:
-            self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation)
-        utility += self.utility_insulation_intensive
-
-        # restrict to coherent renovation work
-        idx = pd.IndexSlice
-        utility.loc[self.wall.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Wall'], idx[True, :, :, :]] = float('nan')
-        utility.loc[self.floor.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Floor'], idx[:, True, :, :]] = float('nan')
-        utility.loc[self.roof.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Roof'], idx[:, :, True, :]] = float('nan')
-        utility.loc[self.windows.groupby(levels).first().reindex(utility.index) <= self._performance_insulation['Windows'], idx[:, :, :, True]] = float('nan')
-        utility.dropna(how='all', inplace=True)
-
-        market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
-
-        # extensive margin
-        bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
-        utility_bill_saving = reindex_mi(self.pref_bill, bill_saved_insulation.index) * bill_saved_insulation / 1000
-
-        investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
-        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
-        utility_investment = (pref_investment * investment_insulation) / 1000
-
-        subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
-        utility_subsidies = (self.pref_subsidy * subsidies_insulation) / 1000
-
-        utility = utility_investment + utility_bill_saving + utility_subsidies
-
-        if self.utility_insulation_extensive is None:
-            self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
-
-        utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
-        utility += self.utility_insulation_extensive
-        retrofit_rate = 1 / (1 + np.exp(- utility))
+        if self._endogenous:
+            utility_subsidies = subsidies_total.copy()
+            if 'reduced_tax' in subsidies_details.keys():
+                utility_subsidies -= subsidies_details['reduced_tax']
+            retrofit_rate, market_share = self.endogenous_retrofit(index, prices, subsidies_total, cost_insulation,
+                                                                   ms_insulation, ms_extensive)
+        else:
+            retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
 
         self.store_information_insulation(certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                           tax_insulation, subsidies_details, subsidies_total, retrofit_rate)
@@ -898,11 +1012,28 @@ class AgentBuildings(ThermalBuildings):
 
         Returns
         -------
+        pd.DataFrame
+        pd.DataFrame
+        float
         dict
         pd.DataFrame
         pd.DataFrame
         """
+
         frame = certificate.copy()
+        subsidies_total = pd.DataFrame(0, index=frame.index, columns=frame.columns)
+        subsidies_details = {}
+
+        tax = self.vta
+        p = [p for p in policies_insulation if 'reduced_tax' == p.policy]
+        if p:
+            tax = p[0].value
+            subsidies_details.update({p[0].name: cost_insulation * (self.vta - tax)})
+            subsidies_total += subsidies_details['reduced_tax']
+
+        tax_insulation = cost_insulation * tax
+        cost_insulation += tax_insulation
+
         out_worst = ~certificate.isin(['G', 'F']).astype(int).mul(certificate_before.isin(['G', 'F']).astype(int),
                                                                   axis=0).astype(bool)
         in_best = certificate.isin(['A', 'B']).astype(int).mul(~certificate_before.isin(['A', 'B']).astype(int),
@@ -912,11 +1043,9 @@ class AgentBuildings(ThermalBuildings):
         certificate_jump = - certificate.replace(epc2int).sub(certificate_before.replace(epc2int), axis=0)
         global_retrofit = certificate_jump >= 2
 
-        subsidies_total = pd.DataFrame(0, index=frame.index, columns=frame.columns)
-        subsidies_details = {}
         for policy in policies_insulation:
             if policy.policy == 'subsidy_target':
-                subsidies_details[policy.name] = (reindex_mi(self.prepare_subsidy_component(policy.value),
+                subsidies_details[policy.name] = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                                   frame.index).T * surface).T
                 subsidies_total += subsidies_details[policy.name]
 
@@ -942,7 +1071,7 @@ class AgentBuildings(ThermalBuildings):
 
             subsidies_total -= subsidies_details['over_cap']
 
-        return subsidies_details, subsidies_total, certificate_jump
+        return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
 
     def store_information_insulation(self, certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                      tax_insulation, subsidies_details, subsidies_total, retrofit_rate):
@@ -960,7 +1089,7 @@ class AgentBuildings(ThermalBuildings):
             VTA to apply (%).
         cost_insulation: pd.DataFrame
             Cost insulation for each dwelling and each insulation gesture (€).
-        tax_insulation: pd.Series
+        tax_insulation: pd.DataFrame
             VTA applied to each insulation gesture cost (€).
         subsidies_details: dict
             Amount of subsidies for each dwelling and each insulation gesture (€).
@@ -1001,6 +1130,7 @@ class AgentBuildings(ThermalBuildings):
 
         constant = ms_insulation.reindex(utility.columns, axis=0).copy()
         constant[constant > 0] = 0
+        market_share_ini, market_share_agg = None, None
         for i in range(150):
             utility = (utility_ref + constant).copy()
             constant.iloc[0] = 0
@@ -1017,7 +1147,7 @@ class AgentBuildings(ThermalBuildings):
 
         constant.iloc[0] = 0
         details = pd.concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
-                            keys=['constant', 'calcul ini', 'calcul', 'observed'])
+                            keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
         details.to_csv(os.path.join(self._path, 'calibration_constant_insulation.csv'))
 
         return constant
@@ -1054,7 +1184,8 @@ class AgentBuildings(ThermalBuildings):
             utility = (utility_ref + utility_constant).copy()
 
             market_share = 1 / (1 + np.exp(- utility))
-            market_share_agg = (market_share * stock).groupby(ms_extensive.index.names).sum() / stock.groupby(
+            agg = (market_share * stock).groupby(ms_extensive.index.names).sum()
+            market_share_agg = agg/ stock.groupby(
                 ms_extensive.index.names).sum()
             if i == 0:
                 market_share_ini = market_share_agg.copy()
@@ -1066,8 +1197,8 @@ class AgentBuildings(ThermalBuildings):
                 break
 
         utility_constant = reindex_mi(constant, idx)
-        details = pd.concat((constant, market_share_ini, market_share_agg, ms_extensive), axis=1,
-                            keys=['constant', 'calcul ini', 'calcul', 'observed'])
+        details = pd.concat((constant, market_share_ini, market_share_agg, ms_extensive, agg / 10**3), axis=1,
+                            keys=['constant', 'calcul ini', 'calcul', 'observed', 'thousand']).round(decimals=3)
         details.to_csv(os.path.join(self._path, 'calibration_constant_extensive.csv'))
 
         return utility_constant
@@ -1091,16 +1222,20 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
-        stock_replacement = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
+        stock_before_replacement, stock_after_replacement = self.heater_replacement(prices, cost_heater, ms_heater,
+                                                                                    policies_heater)
 
+        index = stock_after_replacement.droplevel('Heater replacement').index
+        index = index[~index.duplicated()]
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
-                                                                  ms_extensive, policies_insulation)
-        retrofit_rate = reindex_mi(retrofit_rate, stock_replacement.index)
-        # stock_replacement[retrofit_rate.index].sum()
+                                                                  ms_extensive, policies_insulation,
+                                                                  index=index)
+
+        retrofit_rate = reindex_mi(retrofit_rate, stock_after_replacement.index)
 
         # TODO: intersection entre stock_replacement et stock_mobile
-        retrofit_stock = (retrofit_rate * stock_replacement).dropna().groupby(
-            [c for c in stock_replacement.index.names if c != 'Heater replacement']).sum()
+        retrofit_stock = (retrofit_rate * stock_after_replacement).dropna().groupby(
+            [c for c in stock_after_replacement.index.names if c != 'Heater replacement']).sum()
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
 
@@ -1207,11 +1342,27 @@ class AgentBuildings(ThermalBuildings):
             replacement.loc[replacement.index.get_level_values('Heating system') == initial, final] = to_replace.loc[
                 to_replace.index.get_level_values('Heating system') == initial]
 
+
+        tax = self.vta
+        p = [p for p in policies_heater if 'reduced_tax' == p.policy]
+        sub = None
+        if p:
+            tax = p[0].value
+            sub = cost_heater * (self.vta - tax)
+            sub = {p[0].name: pd.concat([sub] * replacement.shape[0], keys=replacement.index, axis=1).T}
+
         subsidies_details_heater, subsidies_total_heater = self.apply_subsidies_heater(policies_heater, cost_heater,
                                                                                        replacement)
+        tax_heater = cost_heater * tax
+        cost_heater += tax_heater
+
+        if p:
+            subsidies_details_heater.update(sub)
+            subsidies_total_heater += subsidies_details_heater['reduced_tax']
+            p = None
 
         self.store_information_heater(cost_heater, subsidies_total_heater, subsidies_details_heater, replacement,
-                                      cost_heater * 0.05, replaced_by)
+                                      tax_heater, replaced_by)
 
         components = ['Wall', 'Floor', 'Roof', 'Windows']
         choice_insulation = pd.MultiIndex.from_arrays([[True] for i in components], names=components)
@@ -1238,10 +1389,14 @@ class AgentBuildings(ThermalBuildings):
                                                                                                certificate_before
                                                                                                )
 
+        if p:
+            subsidies_details.update(sub)
+            subsidies_total += subsidies_details['reduced_tax']
+
         self.store_information_insulation(certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                           tax_insulation, subsidies_details, subsidies_total, None)
 
-        self.store_information_retrofit(replaced_by.to_frame().set_axis(choice_insulation, axis=1))
+        self.store_information_retrofit(to_replace.to_frame().set_axis(choice_insulation, axis=1))
 
         replaced_by_insulation = replaced_by.copy()
         for i in ['Wall', 'Floor', 'Roof', 'Windows']:
