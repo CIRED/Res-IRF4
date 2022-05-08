@@ -56,7 +56,7 @@
         "start": 2018,
         "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
-        "insulation": 0.3,
+        "insulation": 0.17,
         "cap": 16000
       },
       "reduced_tax": {

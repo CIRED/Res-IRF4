@@ -247,7 +247,10 @@ def parse_parameters(config, param, stock):
     param['flow_built'] = pd.concat([param['flow_built']], keys=[False], names=['Existing']).reorder_levels(
         stock.index.names)
 
-    param['health_cost'] = pd.read_csv(config['health_cost'], index_col=[0, 1]).squeeze('columns')
+    df = pd.read_csv(config['health_cost'], index_col=[0, 1])
+    param['health_expenditure'] = df['Health expenditure']
+    param['mortality_cost'] = df['Social cost of mortality']
+    param['loss_well_being'] = df['Loss of well-being']
     param['carbon_value'] = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze('columns')
     param['carbon_emission'] = pd.read_csv(config['carbon_emission'], index_col=[0])
     param['carbon_value_kwh'] = (param['carbon_value'] * param['carbon_emission'].T).T.dropna() / 10**6
@@ -256,12 +259,12 @@ def parse_parameters(config, param, stock):
 
     summary_param = dict()
     summary_param['Sizing factor (%)'] = pd.Series(param['sizing_factor'], index=param['population'].index)
-    summary_param['Total population (Millions)'] = param['population'] / 10 ** 6
-    summary_param['Income (Billions euro)'] = param['available_income'] * param['sizing_factor'] / 10 ** 9
-    summary_param['Buildings stock (Millions)'] = param['stock_need'] / 10 ** 6
-    summary_param['Buildings additional (Thousands)'] = param['flow_need'] / 10 ** 6
-    summary_param['Buildings built (Thousands)'] = param['flow_construction'] / 10 ** 3
-    summary_param['Buildings demolished (Thousands)'] = param['flow_demolition'] / 10 ** 3
+    summary_param['Total population (Millions)'] = param['population'] / 10**6
+    summary_param['Income (Billions euro)'] = param['available_income'] * param['sizing_factor'] / 10**9
+    summary_param['Buildings stock (Millions)'] = param['stock_need'] / 10**6
+    summary_param['Buildings additional (Thousands)'] = param['flow_need'] / 10**6
+    summary_param['Buildings built (Thousands)'] = param['flow_construction'] / 10**3
+    summary_param['Buildings demolished (Thousands)'] = param['flow_demolition'] / 10**3
     summary_param['Person by housing'] = param['pop_housing']
     summary_param['Share multi-family (%)'] = param['share_multi_family']
     summary_param = pd.DataFrame(summary_param)

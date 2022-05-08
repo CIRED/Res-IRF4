@@ -94,7 +94,7 @@ class ThermalBuildings:
         self._efficiency = efficiency
         self._param = param
         self._dh = 55706
-        self._path = path
+        self.path = path
 
         self._consumption_ini = consumption_ini
         self.coefficient_consumption = None
@@ -184,7 +184,7 @@ class ThermalBuildings:
 
     def new(self, stock):
         return ThermalBuildings(stock, self._surface_yrs, self._param, self._efficiency, self._income,
-                                self._consumption_ini, self._path)
+                                self._consumption_ini, self.path)
 
     def self_prepare(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
         if wall is None:
@@ -331,7 +331,7 @@ class ThermalBuildings:
                 validation = pd.concat((validation, self._data_calibration), keys=['Calcul', 'Data'], axis=1)
                 validation['Error'] = (validation['Calcul'] - validation['Data']) / validation['Data']
 
-            validation.round(2).to_csv(os.path.join(self._path, 'validation_stock.csv'))
+            validation.round(2).to_csv(os.path.join(self.path, 'validation_stock.csv'))
 
         # self.heat_consumption_calib_yrs
         coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.index, axis=0)
@@ -744,7 +744,7 @@ class AgentBuildings(ThermalBuildings):
         constant.loc[:, 'Wood boiler'] = 0
         details = pd.concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-        details.to_csv(os.path.join(self._path, 'calibration_constant_heater.csv'))
+        details.to_csv(os.path.join(self.path, 'calibration_constant_heater.csv'))
 
         return constant
 
@@ -1221,7 +1221,7 @@ class AgentBuildings(ThermalBuildings):
         constant.iloc[0] = 0
         details = pd.concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
                             keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-        details.to_csv(os.path.join(self._path, 'calibration_constant_insulation.csv'))
+        details.to_csv(os.path.join(self.path, 'calibration_constant_insulation.csv'))
 
         return constant
 
@@ -1272,7 +1272,7 @@ class AgentBuildings(ThermalBuildings):
         utility_constant = reindex_mi(constant, idx)
         details = pd.concat((constant, market_share_ini, market_share_agg, ms_extensive, agg / 10**3), axis=1,
                             keys=['constant', 'calcul ini', 'calcul', 'observed', 'thousand']).round(decimals=3)
-        details.to_csv(os.path.join(self._path, 'calibration_constant_extensive.csv'))
+        details.to_csv(os.path.join(self.path, 'calibration_constant_extensive.csv'))
 
         return utility_constant
 

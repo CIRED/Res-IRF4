@@ -227,29 +227,37 @@ def parse_output(buildings, param):
         {year: item.sum().sum() for year, item in buildings.taxed_insulation.items()}) / 10**9
     detailed['VTA (Billion euro)'] = detailed['VTA heater (Billion euro)'] + detailed['VTA insulation (Billion euro)']
 
-    detailed['Income state (Billion euro)'] = detailed['VTA (Billion euro)'] + detailed['Taxes expenditure (Billion euro)']
-    detailed['Expenditure state (Billion euro)'] = detailed['Subsidies heater (Billion euro)'] + detailed[
-                                                    'Subsidies insulation (Billion euro)']
-    detailed['Balance state (Billion euro)'] = detailed['Income state (Billion euro)'] - detailed[
-        'Expenditure state (Billion euro)']
-
     detailed['Investment cost (Billion euro)'] = detailed['Investment insulation (Billion euro)'] + detailed[
         'Investment heater (Billion euro)']
 
     detailed['Carbon value (Billion euro)'] = (pd.DataFrame(buildings.heat_consumption_energy_yrs).T * param[
         'carbon_value_kwh']).sum(axis=1) / 10 ** 9
 
-    detailed['Health cost (Billion euro)'] = (stock.T * reindex_mi(param['health_cost'], stock.index)).T.sum() / 10**9
+    health_cost = {'health_expenditure': 'Health expenditure (Billion euro)',
+                   'mortality_cost': 'Social cost of mortality (Billion euro)',
+                   'loss_well_being': 'Loss of well-being (Billion euro)'}
+    for key, item in health_cost.items():
+        detailed[item] = (stock.T * reindex_mi(param[key], stock.index)).T.sum() / 10**9
+    detailed['Health cost (Billion euro)'] = detailed['Health expenditure (Billion euro)'] + detailed[
+        'Social cost of mortality (Billion euro)'] + detailed['Loss of well-being (Billion euro)']
+
+    detailed['Income state (Billion euro)'] = detailed['VTA (Billion euro)'] + detailed[
+        'Taxes expenditure (Billion euro)']
+    detailed['Expenditure state (Billion euro)'] = detailed['Subsidies heater (Billion euro)'] + detailed[
+                                                    'Subsidies insulation (Billion euro)']
+    detailed['Balance state (Billion euro)'] = detailed['Income state (Billion euro)'] - detailed[
+        'Expenditure state (Billion euro)']
+
     detailed = pd.DataFrame(detailed).loc[buildings.stock_yrs.keys(), :].T
 
     # graph subsidies
-    subset = pd.concat((subsidies_details, taxes_expenditures), axis=0).T
+    subset = pd.concat((subsidies_details, -taxes_expenditures), axis=0).T
     if 'over_cap' in subset.columns:
         subset['over_cap'] = -subset['over_cap']
 
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     subset.dropna(inplace=True)
-    make_area_plot(subset, 'Billion euro', save=os.path.join(buildings._path, 'policies.png'))
+    make_area_plot(subset / 10**9, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'))
 
     # graph public finance
     subset = detailed.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
@@ -258,7 +266,7 @@ def parse_output(buildings, param):
     subset['Subsidies insulation (Billion euro)'] = -subset['Subsidies insulation (Billion euro)']
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
-    make_area_plot(subset, 'Billion euro', save=os.path.join(buildings._path, 'public_finance.png'))
+    make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'))
 
     return stock, detailed
 
