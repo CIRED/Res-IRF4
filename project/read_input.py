@@ -34,14 +34,17 @@ class PublicPolicy:
     policy : {'energy_taxes', 'subsidies'}
 
     """
-    def __init__(self, name, start, end, value, policy, gest=None, cap=None):
+    def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None):
         self.name = name
         self.start = start
         self.end = end
-        self.policy = policy
         self.value = value
+        self.policy = policy
         self.gest = gest
         self.cap = cap
+        self.target = target
+        self.cost_max = cost_max
+        self.cost_min = cost_min
 
 
 def read_stock(config):
@@ -107,6 +110,12 @@ def read_policies(config):
                          cap=data['cap']))
         return l
 
+    def read_zil(data):
+        data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
+        return [
+            PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
+                         gest='insulation', target=True, cost_max=data_max, cost_min=data['min'])]
+
     def read_reduced_tax(data):
         l = list()
         l.append(PublicPolicy('reduced_tax', data['start'], data['end'], data['value'], 'reduced_tax', gest='heater'))
@@ -115,7 +124,7 @@ def read_policies(config):
         return l
 
     read = {'mpr': read_mpr, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
-            'cite': read_cite, 'reduced_tax': read_reduced_tax}
+            'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil}
 
     list_policies = list()
     for key, item in config['policies'].items():
