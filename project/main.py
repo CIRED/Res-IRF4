@@ -68,8 +68,14 @@ def res_irf(config, path):
                                data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                number_exogenous=config['exogenous_detailed']['number'])
 
+    flow_retrofit = None
     for year in range(config['start'], config['end']):
         print('Run {}'.format(year))
+
+        buildings.year = year
+        if flow_retrofit is not None:
+            buildings.add_flows([flow_retrofit, - buildings.flow_demolition(), param['flow_built'].loc[:, year]])
+
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
         flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
@@ -77,8 +83,6 @@ def res_irf(config, path):
                                                 [p for p in policies_heater if (year >= p.start) and (year < p.end)],
                                                 [p for p in policies_insulation if (year >= p.start) and (year < p.end)])
 
-        buildings.year = year
-        buildings.add_flows([flow_retrofit, - buildings.flow_demolition(), param['flow_built'].loc[:, year]])
     buildings.calculate(energy_prices.loc[year, :], taxes)
 
     stock, output = parse_output(buildings, param)

@@ -274,7 +274,7 @@ class ThermalBuildings:
         if self.coefficient_consumption is None:
 
             consumption = pd.concat((self.heat_consumption_yrs[self.year], self.energy), axis=1).groupby(
-                ['Housing type', 'Energy']).sum().iloc[:, 0] / 10 ** 9
+                ['Housing type', 'Energy']).sum().iloc[:, 0] / 10**9
 
             # considering 20% of electricity got wood stove - 50% electricity
             electricity_wood = 0.2 * consumption[('Single-family', 'Electricity')] * 1
@@ -335,7 +335,7 @@ class ThermalBuildings:
 
         # self.heat_consumption_calib_yrs
         coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.index, axis=0)
-        self.heat_consumption_calib_yrs.update({self.year: coefficient * self.heat_consumption_yrs[self.year]})
+        self.heat_consumption_calib_yrs.update({self.year: (coefficient * self.heat_consumption_yrs[self.year]).copy()})
         self.heat_consumption_energy_yrs.update({self.year: self.heat_consumption_calib_yrs[self.year].groupby(self.energy).sum()})
 
         prices_reindex = prices.reindex(self.energy).set_axis(self.index, axis=0)

@@ -72,7 +72,7 @@ def parse_output(buildings, param):
 
     temp = consumption.groupby(buildings.energy).sum()
     temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
 
     temp = consumption.groupby(buildings.certificate).sum()
     temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
