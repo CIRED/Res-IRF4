@@ -408,6 +408,7 @@ class AgentBuildings(ThermalBuildings):
         self._restrict_heater = restrict_heater
         self._ms_heater = ms_heater
         self._endogenous = endogenous
+        self._probability_replacement = None
 
         self._target_exogenous = None
         self._market_share_exogenous = None
@@ -415,7 +416,6 @@ class AgentBuildings(ThermalBuildings):
 
         self._choice_insulation = choice_insulation
         self._performance_insulation = performance_insulation
-
         # TODO: clean assign by housing type (mean is done)
         self.surface_insulation = pd.Series({'Wall': param['ratio_surface']['Wall'].mean(),
                                              'Floor': param['ratio_surface']['Floor'].mean(),
@@ -568,6 +568,8 @@ class AgentBuildings(ThermalBuildings):
         -------
         pd.Series
         """
+
+        self._probability_replacement = probability_replacement
 
         if index is None:
             index = self.index
@@ -870,7 +872,7 @@ class AgentBuildings(ThermalBuildings):
         index: pd.MultiIndex
         prices: pd.Series
         subsidies_total: pd.DataFrame
-        cost_insulation: pd.Series
+        cost_insulation: pd.DataFrame
         ms_insulation: pd.Series
         ms_extensive: pd.Series
 
@@ -905,19 +907,24 @@ class AgentBuildings(ThermalBuildings):
 
         utility = utility_bill_saving + utility_investment + utility_subsidies
 
-        if self.utility_insulation_intensive is None:
-            self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation)
-        utility += self.utility_insulation_intensive
-
+        """
         # restrict to coherent renovation work
         idx = pd.IndexSlice
+        utility = utility.reorder_levels(['Wall', 'Floor', 'Roof', 'Windows'], axis=1)
         utility.loc[utility.index.get_level_values('Wall') <= self._performance_insulation['Wall'], idx[True, :, :, :]] = float('nan')
         utility.loc[utility.index.get_level_values('Floor') <= self._performance_insulation['Floor'], idx[:, True, :, :]] = float('nan')
         utility.loc[utility.index.get_level_values('Roof') <= self._performance_insulation['Roof'], idx[:, :, True, :]] = float('nan')
         utility.loc[utility.index.get_level_values('Windows') <= self._performance_insulation['Windows'], idx[:, :, :, True]] = float('nan')
-        utility.dropna(how='all', inplace=True)
+        utility = utility.dropna(how='all')
+        """
+
+        if self.utility_insulation_intensive is None:
+            self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation, ms_extensive)
+        utility += self.utility_insulation_intensive
 
         market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
+        stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
+        market_share_test = (stock * market_share.T).T.sum() / stock.sum()
 
         # extensive margin
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
@@ -1179,7 +1186,7 @@ class AgentBuildings(ThermalBuildings):
         self.tax_insulation.update({self.year: tax_insulation})
         self.retrofit_rate.update({self.year: retrofit_rate})
 
-    def calibration_constant_intensive(self, utility, ms_insulation):
+    def calibration_constant_intensive(self, utility, ms_insulation, ms_extensive):
         """Calibrate alternative-specific constant to match observed market-share.
 
         Parameters
@@ -1187,27 +1194,35 @@ class AgentBuildings(ThermalBuildings):
         utility: pd.Series
         ms_insulation: pd.Series
             Observed market-share.
-
+        ms_extensive: pd.Series
+            Observed renovation rate.
         Returns
         -------
         pd.Series
         """
 
+        stock_single = self.stock.xs('Single-family', level='Housing type', drop_level=False)
+        flow_retrofit = pd.concat((stock_single * self._probability_replacement,
+                                   stock_single * (1 - self._probability_replacement)), axis=0, keys=[True, False],
+                                  names=['Heater replacement'])
+        flow_retrofit = flow_retrofit * reindex_mi(ms_extensive, flow_retrofit.index)
+
         # removing unnecessary level
-        utility_ref = utility.droplevel(['Occupancy status']).copy()
+        # utility_ref = utility.droplevel(['Occupancy status']).copy()
+        # utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
+        # stock = self.stock.groupby(utility_ref.index.names).sum().reindex(utility_ref.index)
+        # stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
 
-        utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
+        utility_ref = reindex_mi(utility.copy(), flow_retrofit.index)
 
-        stock = self.stock.groupby(utility_ref.index.names).sum().reindex(utility_ref.index)
-
-        constant = ms_insulation.reindex(utility.columns, axis=0).copy()
+        constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
         constant[constant > 0] = 0
         market_share_ini, market_share_agg = None, None
         for i in range(150):
             utility = (utility_ref + constant).copy()
             constant.iloc[0] = 0
             market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
-            agg = (market_share.T * stock).T
+            agg = (market_share.T * flow_retrofit).T
             market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
             if i == 0:
                 market_share_ini = market_share_agg.copy()
@@ -1241,23 +1256,22 @@ class AgentBuildings(ThermalBuildings):
         utility_ref = utility.copy()
         utility_ref = pd.concat([utility_ref, utility_ref], keys=[True, False], names=['Heater replacement'])
         idx = utility_ref.index.copy()
-        # utility_ref = utility_ref.droplevel(['Income tenant'])
-        # utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
 
         stock = pd.concat([self.stock, self.stock], keys=[True, False], names=['Heater replacement']).groupby(
             utility_ref.index.names).sum().reindex(utility_ref.index)
         stock = stock.groupby(utility_ref.index.names).sum()
+        stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
 
         constant = ms_extensive.copy()
         constant[ms_extensive > 0] = 0
-
+        market_share_ini, market_share_agg, agg = None, None, None
         for i in range(100):
             utility_constant = reindex_mi(constant, utility_ref.index)
             utility = (utility_ref + utility_constant).copy()
 
             market_share = 1 / (1 + np.exp(- utility))
-            agg = (market_share * stock).groupby(ms_extensive.index.names).sum()
-            market_share_agg = agg/ stock.groupby(
+            agg = (market_share * stock_single).groupby(ms_extensive.index.names).sum()
+            market_share_agg = agg / stock_single.groupby(
                 ms_extensive.index.names).sum()
             if i == 0:
                 market_share_ini = market_share_agg.copy()
@@ -1303,6 +1317,9 @@ class AgentBuildings(ThermalBuildings):
                                                                   ms_extensive, policies_insulation,
                                                                   index=index)
 
+        stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
+        market_share_test = (stock * market_share.T).T.sum() / stock.sum()
+
         retrofit_rate = reindex_mi(retrofit_rate, stock_after_replacement.index)
 
         # TODO: intersection entre stock_replacement et stock_mobile
@@ -1310,6 +1327,8 @@ class AgentBuildings(ThermalBuildings):
             [c for c in stock_after_replacement.index.names if c != 'Heater replacement']).sum()
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
+
+        # market_share_test = replaced_by.sum() / replaced_by.sum().sum()
 
         self.store_information_retrofit(replaced_by)
 

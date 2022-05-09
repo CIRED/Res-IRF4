@@ -145,10 +145,15 @@ def parse_output(buildings, param):
     detailed['Insulation actions (Thousand)'] = temp.sum() / 10 ** 3
     t = temp.groupby('Income owner').sum()
     t.index = t.index.map(lambda x: 'Insulation actions {} (Thousand)'.format(x))
-    detailed.update(t.T / 10 ** 3)
+    detailed.update(t.T / 10**3)
     t = temp.groupby(['Housing type', 'Occupancy status']).sum()
     t.index = t.index.map(lambda x: 'Insulation actions {} - {} (Thousand)'.format(x[0], x[1]))
-    detailed.update((t / 10 ** 3).T)
+    detailed.update((t / 10**3).T) #TODO: insulation  actions % stock
+    t.index = t.index.str.replace('Thousand', '%')
+    s = stock.groupby(['Housing type', 'Occupancy status']).sum()
+    s.index = s.index.map(lambda x: 'Insulation actions {} - {} (%)'.format(x[0], x[1]))
+    t = t / s
+    detailed.update(t.T)
 
     for i in ['Wall', 'Floor', 'Roof', 'Windows']:
         temp = pd.DataFrame(
@@ -379,8 +384,13 @@ def grouped_output(result, stocks, folder):
                                         ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                         ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Investment total {} (Billion euro)': [
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Insulation {} (Thousand)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['retrofit_hist'])],
-
+        'Insulation actions {} (Thousand)': [
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Insulation actions {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
     }
     #
 
