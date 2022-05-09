@@ -53,6 +53,16 @@ generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
 generic_input['consumption_ini'] = pd.Series([33, 117, 36, 79],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
+generic_input['consumption_hist'] = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0],
+                                                header=[0])
+generic_input['consumption_hist'] = {k: pd.Series(item).set_axis(pd.Series(item).index.astype(int)).rename('Historic') for k, item in
+                                     generic_input['consumption_hist'].T.to_dict().items()}
+
+generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_retrofit.csv', index_col=[0],
+                                             header=[0])
+generic_input['retrofit_hist'] = {k: pd.DataFrame({2018: item}).T / 10**3 for k, item in
+                                     generic_input['retrofit_hist'].T.to_dict().items()}
+
 
 generic_input['stock_ini'] = 29037000
 
@@ -83,7 +93,8 @@ generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 
                           'Performance': ['G', 'F', 'E', 'D', 'C', 'B', 'A'],
                           'Heating energy': ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                           'Decision maker': ['Single-family - Owner-occupied', 'Single-family - Privately rented',
-                                    'Single-family - Social-housing', 'Multi-family - Owner-occupied',
-                                    'Multi-family - Privately rented', 'Multi-family - Social-housing',
-                                    ]
+                                             'Single-family - Social-housing', 'Multi-family - Owner-occupied',
+                                             'Multi-family - Privately rented', 'Multi-family - Social-housing',
+                                             ],
+                          'Insulation': ['Wall', 'Floor', 'Roof', 'Windows']
                           }

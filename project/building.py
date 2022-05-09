@@ -532,7 +532,6 @@ class AgentBuildings(ThermalBuildings):
                                         'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
                                         'Electricity-Performance boiler': 'Electricity-Heat pump'}
 
-
         market_share = pd.Series(index=index, dtype=float).to_frame().dot(
             pd.Series(index=choice_heater_idx, dtype=float).to_frame().T)
 
