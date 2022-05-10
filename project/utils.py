@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from collections import defaultdict
 
-STYLES = ['-', '--', 's-', 'o-', '^-', '*-', ':'] * 10
+STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
 
 
 def reverse_dict(data):
@@ -141,7 +141,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
         plt.show()
 
 
-def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=None,
+def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2,
                           save=None):
     """ Plot a line for each index in a subplot.
 

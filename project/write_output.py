@@ -266,7 +266,7 @@ def parse_output(buildings, param):
         subset['over_cap'] = -subset['over_cap']
 
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
-    subset.dropna(inplace=True)
+    subset.dropna(inplace=True, how='all')
     if not subset.empty:
         make_area_plot(subset / 10**9, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
                        colors=generic_input['colors'])

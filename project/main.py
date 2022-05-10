@@ -51,14 +51,14 @@ def res_irf(config, path):
     energy_prices, cost_heater, cost_insulation = read_exogenous(config)
     efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, ms_extensive, ms_intensive = read_revealed(config)
 
+    if config['prices_constant']:
+        energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
+                                  axis=1).T
+
     total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
     for t in taxes:
         total_taxes = total_taxes.add(t.value, fill_value=0)
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
-
-    if config['prices_constant']:
-        energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
-                                  axis=1).T
 
     print('Calibration {}'.format(year))
     buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],
@@ -68,23 +68,21 @@ def res_irf(config, path):
                                data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                number_exogenous=config['exogenous_detailed']['number'])
 
-    flow_retrofit = None
-    for year in range(config['start'], config['end']):
+    buildings.calculate(energy_prices.loc[year, :], taxes)
+    for year in range(config['start'] + 1, config['end']):
         print('Run {}'.format(year))
 
         buildings.year = year
-        if flow_retrofit is not None:
-            buildings.add_flows([flow_retrofit, - buildings.flow_demolition(), param['flow_built'].loc[:, year]])
-
-        buildings.calculate(energy_prices.loc[year, :], taxes)
-
+        buildings.add_flows([- buildings.flow_demolition()])
         flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
                                                 ms_intensive, ms_extensive,
                                                 [p for p in policies_heater if (year >= p.start) and (year < p.end)],
                                                 [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
                                                 )
+        buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
+        buildings.calculate(energy_prices.loc[year, :], taxes)
 
-    buildings.calculate(energy_prices.loc[year, :], taxes)
+    # buildings.calculate(energy_prices.loc[year, :], taxes)
 
     stock, output = parse_output(buildings, param)
     output.round(2).to_csv(os.path.join(path, 'output.csv'))

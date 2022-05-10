@@ -402,10 +402,17 @@ class AgentBuildings(ThermalBuildings):
 
         self.vta = 0.2
 
-        self.pref_investment = preferences['investment']
-        self.pref_subsidy = preferences['subsidy']
-        self.pref_bill = preferences['bill_saved']
-        self.pref_inertia = preferences['inertia']
+        self.pref_investment_heater = preferences['heater']['investment']
+        self.pref_investment_insulation = preferences['insulation']['investment']
+
+        self.pref_subsidy_heater = preferences['heater']['subsidy']
+        self.pref_subsidy_insulation = preferences['insulation']['subsidy']
+
+        self.pref_bill_heater = preferences['heater']['bill_saved']
+        self.pref_bill_insulation = preferences['insulation']['bill_saved']
+
+        self.pref_inertia = preferences['heater']['inertia']
+        self.pref_zil = preferences['insulation']['zero_interest_loan']
 
         self._demolition_rate = demolition_rate
         self._demolition_total = (stock * self._demolition_rate).sum()
@@ -416,7 +423,7 @@ class AgentBuildings(ThermalBuildings):
         self._endogenous = endogenous
         self._probability_replacement = None
 
-        self._target_exogenous = None
+        self._target_exogenous = ['F', 'G']
         self._market_share_exogenous = None
         self._number_exogenous = number_exogenous
 
@@ -469,7 +476,9 @@ class AgentBuildings(ThermalBuildings):
                     flow_total = flow.reindex(union, fill_value=0) + flow_total.reindex(union, fill_value=0)
 
         union = flow_total.index.union(self.index)
-        self.stock = flow_total.reindex(union, fill_value=0) + self.stock.reindex(union, fill_value=0)
+        stock = flow_total.reindex(union, fill_value=0) + self.stock.reindex(union, fill_value=0)
+        stock[stock < 0] = 0
+        self.stock = stock
 
     def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater):
 
@@ -485,13 +494,13 @@ class AgentBuildings(ThermalBuildings):
         prices_re = prices.reindex(energy).set_axis(heat_consumption_sd.columns)
         energy_bill_sd = ((heat_consumption_sd * prices_re).T * agent.surface).T
         bill_saved = - energy_bill_sd.sub(agent.energy_bill_sd(prices), axis=0)
-        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill, bill_saved.index)).T / 1000
+        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill_heater, bill_saved.index)).T / 1000
         utility_bill_saving = utility_bill_saving.loc[:, choice_heater]
 
-        utility_subsidies = subsidies_total * self.pref_subsidy / 1000
+        utility_subsidies = subsidies_total * self.pref_subsidy_heater / 1000
 
         cost_heater = cost_heater.reindex(utility_bill_saving.columns)
-        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
+        pref_investment = reindex_mi(self.pref_investment_heater, utility_bill_saving.index).rename(None)
         utility_investment = pref_investment.to_frame().dot(cost_heater.to_frame().T) / 1000
 
         utility_inertia = pd.DataFrame(0, index=utility_bill_saving.index, columns=utility_bill_saving.columns)
@@ -532,7 +541,6 @@ class AgentBuildings(ThermalBuildings):
         pd.Series
             Probability replacement.
         """
-        self._target_exogenous = ['F', 'G']
         self._market_share_exogenous = {'Wood fuel-Standard boiler': 'Wood fuel-Performance boiler',
                                         'Oil fuel-Standard boiler': 'Oil fuel-Performance boiler',
                                         'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
@@ -544,13 +552,16 @@ class AgentBuildings(ThermalBuildings):
         for initial, final in self._market_share_exogenous.items():
             market_share.loc[market_share.index.get_level_values('Heating system') == initial, final] = 1
 
-        to_replace = self.stock[self.certificate.isin(self._target_exogenous)]
-        to_replace = to_replace / to_replace.sum() * self._number_exogenous
+        to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
 
-        if to_replace.sum().round() != self._number_exogenous:
+        if to_replace.sum() < self._number_exogenous:
             self._target_exogenous = ['E', 'F', 'G']
-            to_replace = self.stock[self.certificate.isin(self._target_exogenous)]
-            to_replace = to_replace / to_replace.sum() * self._number_exogenous
+            to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
+            if to_replace.sum() < self._number_exogenous:
+                self._target_exogenous = ['D', 'E', 'F', 'G']
+                to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
+
+        to_replace = to_replace / to_replace.sum() * self._number_exogenous
 
         to_replace = to_replace.groupby(index.names).sum()
         probability_replacement = (to_replace / self.stock_mobile.groupby(index.names).sum()).fillna(0)
@@ -899,14 +910,15 @@ class AgentBuildings(ThermalBuildings):
         choice_insulation = self._choice_insulation
         consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
 
-        utility_subsidies = (self.pref_subsidy * subsidies_total) / 1000
+        pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies_total.index).rename(None)
+        utility_subsidies = (subsidies_total.T * pref_subsidies).T / 1000
 
-        pref_investment = reindex_mi(self.pref_investment, cost_insulation.index).rename(None)
+        pref_investment = reindex_mi(self.pref_investment_insulation, cost_insulation.index).rename(None)
         utility_investment = (cost_insulation.T * pref_investment).T / 1000
 
         energy_bill_sd = (consumption_sd.T * energy_prices * surface).T
         bill_saved = - energy_bill_sd.sub(energy_bill_sd_before, axis=0).dropna()
-        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill, bill_saved.index)).T / 1000
+        utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill_insulation, bill_saved.index)).T / 1000
 
         utility = utility_bill_saving + utility_investment + utility_subsidies
 
@@ -931,14 +943,15 @@ class AgentBuildings(ThermalBuildings):
 
         # extensive margin
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
-        utility_bill_saving = reindex_mi(self.pref_bill, bill_saved_insulation.index) * bill_saved_insulation / 1000
+        utility_bill_saving = reindex_mi(self.pref_bill_insulation, bill_saved_insulation.index) * bill_saved_insulation / 1000
 
         investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
-        pref_investment = reindex_mi(self.pref_investment, utility_bill_saving.index).rename(None)
+        pref_investment = reindex_mi(self.pref_investment_insulation, investment_insulation.index).rename(None)
         utility_investment = (pref_investment * investment_insulation) / 1000
 
         subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
-        utility_subsidies = (self.pref_subsidy * subsidies_insulation) / 1000
+        pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies_insulation.index).rename(None)
+        utility_subsidies = (pref_subsidies * subsidies_insulation) / 1000
 
         utility = utility_investment + utility_bill_saving + utility_subsidies
 
@@ -1263,7 +1276,7 @@ class AgentBuildings(ThermalBuildings):
         stock = pd.concat([self.stock, self.stock], keys=[True, False], names=['Heater replacement']).groupby(
             utility_ref.index.names).sum().reindex(utility_ref.index)
         stock = stock.groupby(utility_ref.index.names).sum()
-        stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
+        # stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
 
         constant = ms_extensive.copy()
         constant[ms_extensive > 0] = 0
@@ -1273,8 +1286,8 @@ class AgentBuildings(ThermalBuildings):
             utility = (utility_ref + utility_constant).copy()
 
             market_share = 1 / (1 + np.exp(- utility))
-            agg = (market_share * stock_single).groupby(ms_extensive.index.names).sum()
-            market_share_agg = agg / stock_single.groupby(
+            agg = (market_share * stock).groupby(ms_extensive.index.names).sum()
+            market_share_agg = agg / stock.groupby(
                 ms_extensive.index.names).sum()
             if i == 0:
                 market_share_ini = market_share_agg.copy()

@@ -63,7 +63,7 @@ generic_input['consumption_total_hist'] = pd.Series([297, 281, 265, 261], index=
 
 generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_retrofit.csv', index_col=[0],
                                              header=[0])
-generic_input['retrofit_hist'] = {k: pd.DataFrame({2018: item}).T / 10**3 for k, item in
+generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k, item in
                                      generic_input['retrofit_hist'].T.to_dict().items()}
 
 
@@ -72,17 +72,45 @@ generic_input['stock_ini'] = 29037000
 with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
     generic_input['thermal_parameters'] = pickle.load(f)
 
-investment_preferences = pd.Series([-0.0964, -0.152],
-                                   index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-                                   name='Housing type')
-subsidy_preferences = 0.167
-subsidy_loan_preferences = 0.473
-bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1]).squeeze('columns')
+investment_preferences_heater = pd.Series([-0.0964, -0.152],
+                                          index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+                                          name='Housing type')
+
+investment_preferences_insulation = pd.Series([-0.0646, -0.151],
+                                              index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+                                              name='Housing type')
+
+subsidy_preferences_heater = 0.167
+
+subsidy_preferences_insulation = pd.Series([0.0486, 0.236],
+                                              index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+                                              name='Housing type')
+
+
+subsidy_loan_preferences_heater = 0.473
+subsidy_loan_preferences_insulation = 0.343
+bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
 inertia = 0.8299
 
-generic_input['preferences'] = {'investment': investment_preferences, 'subsidy': subsidy_preferences,
-                                'bill_saved': bill_saving_preferences, 'inertia': inertia,
-                                'zero_interest_loan': subsidy_loan_preferences}
+generic_input['preferences'] = {}
+generic_input['preferences']['heater'] = {'investment': investment_preferences_heater,
+                                          'subsidy': subsidy_preferences_heater,
+                                          'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
+                                          'inertia': inertia}
+
+
+"""generic_input['preferences']['insulation'] = {'investment': investment_preferences_heater,
+                                              'subsidy': subsidy_preferences_heater,
+                                              'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
+                                              'zero_interest_loan': subsidy_loan_preferences_heater
+                                              }"""
+
+
+generic_input['preferences']['insulation'] = {'investment': investment_preferences_insulation,
+                                              'subsidy': subsidy_preferences_insulation,
+                                              'bill_saved': bill_saving_preferences.loc[:, 'Insulation'],
+                                              'zero_interest_loan': subsidy_loan_preferences_insulation
+                                              }
 
 generic_input['performance_insulation'] = {'Wall': round(1 / 3.7, 1), 'Floor': round(1 / 3, 1), 'Roof': round(1 / 6, 1),
                                            'Windows': 1.5}
@@ -133,12 +161,13 @@ colors = {
     "Taxes expenditure": "darkorange",
     "Subsidies heater": "orangered",
     "Subsidies insulation": "darksalmon",
-    "Reduced tax": "darkred",
+    "Reduced tax": "darkolivegreen",
     "Cee": "tomato",
-    "Cite": "orangered",
-    "Zero interest loan": "darksalmon",
+    "Cite": "maroon",
+    "Zero interest loan": "darkred",
     "Over cap": "grey",
-    "Carbon tax": "darkorange",
+    "Carbon tax": "rebeccapurple",
+    "Mpr": "darkmagenta",
     "Existing": "tomato",
     "Construction": "grey"
 }

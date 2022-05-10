@@ -169,7 +169,7 @@ def read_revealed(config):
 
     choice_heater = list(ms_heater.columns)
 
-    ms_extensive = pd.read_csv(config["insulation_extensive"], index_col=[0, 1]).squeeze('columns').rename(None).round(
+    ms_extensive = pd.read_csv(config["insulation_extensive"], index_col=[0, 1, 2]).squeeze('columns').rename(None).round(
         decimals=3)
     ms_intensive = pd.read_csv(config["ms_insulation"], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(
         decimals=3)
