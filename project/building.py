@@ -548,6 +548,7 @@ class AgentBuildings(ThermalBuildings):
 
         to_replace = to_replace.groupby(index.names).sum()
         probability_replacement = (to_replace / self.stock_mobile.groupby(index.names).sum()).fillna(0)
+        # (probability_replacement * self.stock_mobile.groupby(index.names).sum()).sum()
         probability_replacement = probability_replacement.reindex(market_share.index)
         return market_share, probability_replacement
 
@@ -596,24 +597,19 @@ class AgentBuildings(ThermalBuildings):
         replacement = (market_share.T * probability_replacement * self.stock_mobile.groupby(
             market_share.index.names).sum()).T
 
+        stock_replacement = replacement.stack('Heating system final')
         to_replace = replacement.sum(axis=1)
-
-        replaced_by = replacement.stack()
-        replaced_by = replaced_by.groupby([c for c in replaced_by.index.names if c != 'Heating system']).sum()
-        replaced_by.index.set_names({'Heating system final': 'Heating system'}, inplace=True)
-        replaced_by = replaced_by.groupby([c for c in replaced_by.index.names if c != 'Heating energy']).sum()
-        replaced_by = replaced_by.reorder_levels(to_replace.index.names)
-
         stock = self.stock_mobile.groupby(to_replace.index.names).sum() - to_replace
-        stock_after_replacement = pd.concat((stock, replaced_by), axis=0, keys=[False, True],
-                                            names=['Heater replacement'])
-        stock_before_replacement = pd.concat((stock, to_replace), axis=0, keys=[False, True],
-                                             names=['Heater replacement'])
+        stock = pd.concat([stock], keys=stock.index.get_level_values('Heating system'), names=['Heating system final'])
+        stock = pd.concat((stock.reorder_levels(stock_replacement.index.names), stock_replacement),
+                          axis=0, keys=[False, True], names=['Heater replacement'])
+
+        replaced_by = stock.droplevel('Heating system').rename_axis(index={'Heating system final': 'Heating system'})
 
         self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, tax_heater,
                                       replaced_by)
 
-        return stock_before_replacement, stock_after_replacement
+        return stock
 
     def apply_subsidies_heater(self, policies_heater, cost_heater, frame):
         """Calculate subsidies for each dwelling and each heating system.
@@ -1308,36 +1304,36 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
-        stock_before_replacement, stock_after_replacement = self.heater_replacement(prices, cost_heater, ms_heater,
-                                                                                    policies_heater)
+        stock = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
 
-        index = stock_after_replacement.droplevel('Heater replacement').index
+        index = stock.droplevel(['Heater replacement', 'Heating system final']).index
         index = index[~index.duplicated()]
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
                                                                   index=index)
 
-        stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
-        market_share_test = (stock * market_share.T).T.sum() / stock.sum()
-
-        retrofit_rate = reindex_mi(retrofit_rate, stock_after_replacement.index)
-
-        # TODO: intersection entre stock_replacement et stock_mobile
-        retrofit_stock = (retrofit_rate * stock_after_replacement).dropna().groupby(
-            [c for c in stock_after_replacement.index.names if c != 'Heater replacement']).sum()
+        """stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
+        market_share_test = (stock * market_share.T).T.sum() / stock.sum()"""
+        retrofit_rate = reindex_mi(retrofit_rate, stock.index)
+        retrofit_stock = (retrofit_rate * stock).dropna().groupby(
+            [c for c in stock.index.names if c != 'Heater replacement']).sum()
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
 
-        # market_share_test = replaced_by.sum() / replaced_by.sum().sum()
+        temp = replaced_by.droplevel('Heating system').rename_axis(index={'Heating system final': 'Heating system'})
+        self.store_information_retrofit(temp)
 
-        self.store_information_retrofit(replaced_by)
-
+        # replaced_by is indexed with new heating system
         share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
         temp = pd.concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
         share = reindex_mi(share, temp.columns, axis=1).reindex(temp.index)
         replaced_by = (share * temp).stack('Income tenant').dropna()
 
-        to_replace = replaced_by.sum(axis=1).copy()
+        to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
+        to_replace = to_replace.groupby(to_replace.index.names).sum()
+
+        replaced_by = replaced_by.droplevel('Heating system').rename_axis(
+            index={'Heating system final': 'Heating system'})
 
         replaced_by.index.set_names(
             {'Wall': 'Wall before', 'Roof': 'Roof before', 'Floor': 'Floor before', 'Windows': 'Windows before'},

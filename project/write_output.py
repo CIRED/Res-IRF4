@@ -148,7 +148,7 @@ def parse_output(buildings, param):
     detailed.update(t.T / 10**3)
     t = temp.groupby(['Housing type', 'Occupancy status']).sum()
     t.index = t.index.map(lambda x: 'Insulation actions {} - {} (Thousand)'.format(x[0], x[1]))
-    detailed.update((t / 10**3).T) #TODO: insulation  actions % stock
+    detailed.update((t / 10**3).T)
     t.index = t.index.str.replace('Thousand', '%')
     s = stock.groupby(['Housing type', 'Occupancy status']).sum()
     s.index = s.index.map(lambda x: 'Insulation actions {} - {} (%)'.format(x[0], x[1]))
@@ -421,25 +421,25 @@ def grouped_output(result, stocks, folder):
 
     # generic_input['consumption_hist']
     # ---------------------------
+    if False:
+        scenarios = [s for s in result.keys() if s != 'Reference']
+        variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
+                     'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
 
-    scenarios = [s for s in result.keys() if s != 'Reference']
-    variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
-                 'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
+        agg = pd.DataFrame({var: pd.Series(
+            [double_difference(result['Reference'].loc[var, :], result[s].loc[var, :]) for s in scenarios], index=scenarios)
+            for var in variables})
+        temp = pd.Series([double_difference(result['Reference'].loc[var, :], 0) for var in variables], index=variables,
+                         name='Reference')
+        agg = pd.concat((temp, agg.T), axis=1)
 
-    agg = pd.DataFrame({var: pd.Series(
-        [double_difference(result['Reference'].loc[var, :], result[s].loc[var, :]) for s in scenarios], index=scenarios)
-        for var in variables})
-    temp = pd.Series([double_difference(result['Reference'].loc[var, :], 0) for var in variables], index=variables,
-                     name='Reference')
-    agg = pd.concat((temp, agg.T), axis=1)
-
-    variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
-                 'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
-                 'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
-    years = [2020]
-    for year in years:
-        temp = pd.DataFrame(
-            {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
-             variables}).T
-        agg = pd.concat((agg, temp), axis=0)
-    agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
+        variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
+                     'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
+                     'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
+        years = [2020]
+        for year in years:
+            temp = pd.DataFrame(
+                {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
+                 variables}).T
+            agg = pd.concat((agg, temp), axis=0)
+        agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))

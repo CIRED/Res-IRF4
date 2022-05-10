@@ -87,7 +87,7 @@ def plot_attribute(stock, attribute, dict_order=None, suptitle=None, percent=Fal
 
 
 def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict_color=None,
-                        n_columns=3, sharey=False):
+                        n_columns=3, sharey=False, save=None):
     """Multiple bar plot of stock by attributes.
 
     Parameters
@@ -154,8 +154,15 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
         ax.spines['left'].set_visible(False)
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
 
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
 
-def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_order={}, dict_color={}, percent=False):
+
+def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_order={}, dict_color={}, percent=False,
+                             save=None):
     fig, ax = plt.subplots(figsize=(12.8, 9.6))
     if suptitle is not None:
         fig.suptitle(suptitle, fontsize=20, fontweight='bold')
@@ -182,3 +189,9 @@ def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_
     ax.legend(loc='best', frameon=False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
