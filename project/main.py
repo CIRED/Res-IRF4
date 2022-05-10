@@ -81,7 +81,8 @@ def res_irf(config, path):
         flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
                                                 ms_intensive, ms_extensive,
                                                 [p for p in policies_heater if (year >= p.start) and (year < p.end)],
-                                                [p for p in policies_insulation if (year >= p.start) and (year < p.end)])
+                                                [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
+                                                )
 
     buildings.calculate(energy_prices.loc[year, :], taxes)
 
@@ -89,7 +90,7 @@ def res_irf(config, path):
     output.round(2).to_csv(os.path.join(path, 'output.csv'))
     stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
 
-    return os.path.basename(os.path.normpath(path)), output
+    return os.path.basename(os.path.normpath(path)), output, stock
 
 
 if __name__ == '__main__':
@@ -115,11 +116,11 @@ if __name__ == '__main__':
     logging.debug('Launching processes')
     processes = list()
     with Pool() as pool:
-        result = pool.starmap(res_irf,
-                              zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
+        results = pool.starmap(res_irf,
+                               zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
 
-    result = {i[0]: i[1] for i in result}
-    stocks = {i[0]: i[2] for i in result}
+    result = {i[0]: i[1] for i in results}
+    stocks = {i[0]: i[2] for i in results}
 
     logging.debug('Parsing results')
     grouped_output(result, stocks, folder)

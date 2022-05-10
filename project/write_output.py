@@ -98,10 +98,10 @@ def parse_output(buildings, param):
     temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
     detailed.update(temp.T)
 
-    detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10 ** 3
+    detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
 
     detailed['Retrofit (Thousand)'] = pd.Series(
-        {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10 ** 3
+        {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10**3
     detailed['Retrofit >= 1 EPC (Thousand)'] = pd.Series(
         {year: item.loc[:, [i for i in item.columns if i > 0]].sum().sum() for year, item in
          buildings.certificate_jump_yrs.items()}) / 10 ** 3
@@ -111,14 +111,14 @@ def parse_output(buildings, param):
         detailed['Retrofit {} EPC (Thousand)'.format(i)] = temp.sum() / 10 ** 3
         detailed['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
 
-        t = temp.groupby('Income owner').sum() / stock.groupby('Income owner').sum()
+        """t = temp.groupby('Income owner').sum() / stock.groupby('Income owner').sum()
         t.index = t.index.map(lambda x: 'Retrofit rate {} EPC {} (%)'.format(i, x))
         detailed.update(t.T)
 
         t = temp.groupby(['Occupancy status', 'Housing type']).sum() / stock.groupby(
             ['Occupancy status', 'Housing type']).sum()
         t.index = t.index.map(lambda x: 'Retrofit rate {} EPC {} - {} (%)'.format(i, x[0], x[1]))
-        detailed.update(t.T)
+        detailed.update(t.T)"""
 
     # for replacement output need to be presented by technologies (what is used) and by agent (who change)
     replacement_heater = buildings.replacement_heater
@@ -177,30 +177,30 @@ def parse_output(buildings, param):
     index = investment_heater.index.union(investment_insulation.index)
     investment_total = investment_heater.reindex(index, fill_value=0) + investment_insulation.reindex(index,
                                                                                                       fill_value=0)
-    detailed['Investment total (Billion euro)'] = investment_total.sum() / 10 ** 9
+    detailed['Investment total (Billion euro)'] = investment_total.sum() / 10**9
     temp = investment_total.groupby('Income owner').sum()
     temp.index = temp.index.map(lambda x: 'Investment total {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
     temp = investment_total.groupby(['Housing type', 'Occupancy status']).sum()
     temp.index = temp.index.map(lambda x: 'Investment total {} - {} (Billion euro)'.format(x[0], x[1]))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
 
     subsidies_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.subsidies_heater.items()})
-    detailed['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9
+    detailed['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10**9
 
     subsidies_insulation = pd.DataFrame(
         {year: item.sum(axis=1) for year, item in buildings.subsidies_insulation.items()})
-    detailed['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10 ** 9
+    detailed['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10**9
 
     index = subsidies_heater.index.union(subsidies_insulation.index)
     subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index, fill_value=0)
-    detailed['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10 ** 9
+    detailed['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10**9
     temp = subsidies_total.groupby('Income owner').sum()
     temp.index = temp.index.map(lambda x: 'Subsidies total {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
     temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
     temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Billion euro)'.format(x[0], x[1]))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
 
     for gest, subsidies_details in {'heater': buildings.subsidies_details_heater,
                                     'insulation': buildings.subsidies_details_insulation}.items():
@@ -215,7 +215,7 @@ def parse_output(buildings, param):
 
     taxes_expenditures = buildings.taxes_expenditure_details
     taxes_expenditures = pd.DataFrame(
-        {key: pd.Series({year: data.sum() for year, data in item.items()}) for key, item in
+        {key: pd.Series({year: data.sum() for year, data in item.items()}, dtype=float) for key, item in
          taxes_expenditures.items()}).T
     taxes_expenditures.index = taxes_expenditures.index.map(
         lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ')))
@@ -260,12 +260,16 @@ def parse_output(buildings, param):
 
     # graph subsidies
     subset = pd.concat((subsidies_details, -taxes_expenditures), axis=0).T
+    subset = subset.loc[:, (subset != 0).any(axis=0)]
+
     if 'over_cap' in subset.columns:
         subset['over_cap'] = -subset['over_cap']
 
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     subset.dropna(inplace=True)
-    make_area_plot(subset / 10 ** 9, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'))
+    if not subset.empty:
+        make_area_plot(subset / 10**9, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
+                       colors=generic_input['colors'])
 
     # graph public finance
     subset = detailed.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
@@ -274,7 +278,15 @@ def parse_output(buildings, param):
     subset['Subsidies insulation (Billion euro)'] = -subset['Subsidies insulation (Billion euro)']
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
-    make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'))
+    if not subset.empty:
+        make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'),
+                       colors=generic_input['colors'])
+
+    # graph consumption
+    temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
+    temp = temp.loc[:, ['Existing', 'Construction']]
+    make_area_plot(temp / 10**9, 'Consumption (TWh)', colors=generic_input['colors'],
+                   save=os.path.join(buildings.path, 'consumption.png'))
 
     return stock, detailed
 
@@ -314,6 +326,90 @@ def grouped_output(result, stocks, folder):
 
     """
 
+    variables = {'Consumption (TWh)': ('consumption.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist']),
+                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
+                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
+                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
+                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
+                 'New efficient (Thousand)': ('flow_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Retrofit >= 1 EPC (Thousand)': ('flow_retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Investment total (Billion euro)': ('flow_investment.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Subsidies total (Billion euro)': ('flow_subsidies.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Energy expenditures (Billion euro)': (
+                 'flow_energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Health cost (Billion euro)': ('flow_health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Insulation actions (Thousand)': ('flow_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement heater (Thousand)': ('flow_heater.png', lambda y, _: '{:,.0f}'.format(y))
+                 }
+
+    for variable, infos in variables.items():
+        temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
+        try:
+            temp = pd.concat((temp, infos[2]), axis=1)
+            temp.sort_index(inplace=True)
+        except IndexError:
+            pass
+
+        make_plot(temp, variable, save=os.path.join(folder, '{}'.format(infos[0])), format_y=infos[1])
+
+    def grouped(result, variables):
+        """Group result.
+
+        Parameters
+        ----------
+        result: dict
+        variables: list
+        """
+        temp = {var: pd.DataFrame(
+            {scenario: output.loc[var, :] for scenario, output in result.items() if var in output.index}) for var in
+            variables}
+        return {k: i for k, i in temp.items() if not i.empty}
+
+    variables_detailed = {
+        'Consumption {} (TWh)': [
+            ('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['consumption_hist'])],
+        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
+        'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
+        'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
+                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
+                                              ],
+        'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Investment total {} (Billion euro)': [
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Insulation {} (Thousand)': [
+            ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['retrofit_hist'])],
+        'Insulation actions {} (Thousand)': [
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Insulation actions {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
+    }
+
+    def details_graphs(data, v, inf):
+        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
+        temp = grouped(data, [v.format(i) for i in generic_input['index'][inf[0]]])
+        replace = {v.format(i): i for i in generic_input['index'][inf[0]]}
+        temp = {replace[key]: item for key, item in temp.items()}
+
+        try:
+            n_columns = inf[2]
+        except IndexError:
+            n_columns = len(temp.keys())
+
+        try:
+            for key in temp.keys():
+                temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
+                temp[key].sort_index(inplace=True)
+        except IndexError:
+            pass
+
+        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns,
+                              save=os.path.join(folder, n))
+
+    for var, infos in variables_detailed.items():
+        for info in infos:
+            details_graphs(result, var, info)
+
     def double_difference(ref, scenario, discount=0.045, years=30):
         """Calculate double difference.
 
@@ -342,86 +438,7 @@ def grouped_output(result, stocks, folder):
         discount = pd.Series([1 / (1 + discount) ** i for i in range(double_diff.shape[0])], index=double_diff.index)
         return (double_diff * discount).sum()
 
-    variables = {'Consumption (TWh)': ('consumption.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
-                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'New efficient (Thousand)': ('flow_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Retrofit >= 1 EPC (Thousand)': ('flow_retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Investment total (Billion euro)': ('flow_investment.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Subsidies total (Billion euro)': ('flow_subsidies.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Energy expenditures (Billion euro)': (
-                 'flow_energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Health cost (Billion euro)': ('flow_health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Insulation actions (Thousand)': ('flow_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement heater (Thousand)': ('flow_heater.png', lambda y, _: '{:,.0f}'.format(y))
-                 }
-
-    for variable, infos in variables.items():
-        temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
-        make_plot(temp, variable, save=os.path.join(folder, '{}'.format(infos[0])), format_y=infos[1])
-
-    def grouped(result, variables):
-        """Group result.
-
-        Parameters
-        ----------
-        result: dict
-        variables: list
-        """
-        temp = {var: pd.DataFrame(
-            {scenario: output.loc[var, :] for scenario, output in result.items() if var in output.index}) for var in
-            variables}
-        return {k: i for k, i in temp.items() if not i.empty}
-
-    variables_detailed = {
-        'Consumption {} (TWh)': [('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['consumption_hist'])],
-        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
-        'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
-        'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
-                                        ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
-                                        ],
-        'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Investment total {} (Billion euro)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Insulation {} (Thousand)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['retrofit_hist'])],
-        'Insulation actions {} (Thousand)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Insulation actions {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
-    }
-    #
-
-    def details_graphs(data, v, inf):
-        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
-        temp = grouped(data, [v.format(i) for i in generic_input['index'][inf[0]]])
-        replace = {v.format(i): i for i in generic_input['index'][inf[0]]}
-        temp = {replace[key]: item for key, item in temp.items()}
-
-        try:
-            n_columns = inf[2]
-        except IndexError:
-            n_columns = len(temp.keys())
-
-        try:
-            for key in temp.keys():
-                temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
-                temp[key].sort_index(inplace=True)
-        except IndexError:
-            pass
-
-        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns,
-                              save=os.path.join(folder, n))
-
-    for var, infos in variables_detailed.items():
-        for info in infos:
-            details_graphs(result, var, info)
-
-    # generic_input['consumption_hist']
-    # ---------------------------
-    if False:
+    if 'Reference' in result.keys():
         scenarios = [s for s in result.keys() if s != 'Reference']
         variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
                      'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']

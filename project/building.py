@@ -370,22 +370,28 @@ class ThermalBuildings:
 
 class AgentBuildings(ThermalBuildings):
 
-    """
+    """Class AgentBuildings represents thermal dynamic building stock.
 
 
     Attributes
     ----------
+    pref_investment: float or pd.Series
+    pref_bill: float or pd.Serie
+    pref_subsidy: float or pd.Series
+    pref_inertia:  float or pd.Series
+
+
     cost_insulation: pd.DataFrame
         Cost by segment and by insulation choice (€).
     investment_insulation: pd.DataFrame
         Investment realized by segment and by insulation choice (€).
     tax_insulation: pd.DataFrame
         Tax by segment and by insulation choice (€).
-
     certificate_jump: pd.DataFrame
         Number of jump of energy performance certificate.
-
     retrofit_rate: dict
+
+
     """
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
@@ -581,7 +587,8 @@ class AgentBuildings(ThermalBuildings):
         frame = pd.Series(dtype=float, index=index).to_frame().dot(
             pd.Series(dtype=float, index=choice_heater_idx).to_frame().T)
         cost_heater, tax_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(policies_heater,
-                                                                                                  cost_heater, frame)
+                                                                                                  cost_heater.copy(),
+                                                                                                  frame)
         if self._endogenous:
             subsidies_utility = subsidies_total.copy()
             if 'reduced_tax' in subsidies_details.keys():
@@ -1320,7 +1327,8 @@ class AgentBuildings(ThermalBuildings):
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
 
-        temp = replaced_by.droplevel('Heating system').rename_axis(index={'Heating system final': 'Heating system'})
+        temp = replaced_by.droplevel('Heating system final')
+        temp = temp.groupby(temp.index.names).sum()
         self.store_information_retrofit(temp)
 
         # replaced_by is indexed with new heating system
@@ -1352,10 +1360,13 @@ class AgentBuildings(ThermalBuildings):
              'Windows after'], axis=1, inplace=True)
         replaced_by = replaced_by.set_index(self.index.names).loc[:, 'Data']
 
-        flow_retrofit = replaced_by.sub(to_replace, fill_value=0)
-        flow_retrofit = flow_retrofit[flow_retrofit != 0]
-        flow_retrofit = flow_retrofit.groupby(flow_retrofit.index).sum()
-        flow_retrofit.index = pd.MultiIndex.from_tuples(flow_retrofit.index, names=replaced_by.index.names)
+        to_replace = to_replace.reorder_levels(replaced_by.index.names)
+        flow_retrofit = pd.concat((-to_replace, replaced_by), axis=0)
+        flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
+
+        # flow_retrofit = replaced_by.sub(to_replace, fill_value=0)
+        # flow_retrofit = flow_retrofit[flow_retrofit != 0]
+        # flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
 
         return flow_retrofit
 
@@ -1368,6 +1379,7 @@ class AgentBuildings(ThermalBuildings):
             Retrofitting for each dwelling and each insulation gesture.
         """
 
+        # TODO: this metrics doesn't include change in heating sytem
         self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
 
         rslt = {}

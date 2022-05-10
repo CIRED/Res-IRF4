@@ -58,6 +58,9 @@ generic_input['consumption_hist'] = pd.read_csv('project/input/revealed_data/his
 generic_input['consumption_hist'] = {k: pd.Series(item).set_axis(pd.Series(item).index.astype(int)).rename('Historic') for k, item in
                                      generic_input['consumption_hist'].T.to_dict().items()}
 
+generic_input['consumption_total_hist'] = pd.Series([297, 281, 265, 261], index=[2016, 2017, 2018, 2019],
+                                                    name='Historic')
+
 generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_retrofit.csv', index_col=[0],
                                              header=[0])
 generic_input['retrofit_hist'] = {k: pd.DataFrame({2018: item}).T / 10**3 for k, item in
@@ -98,3 +101,46 @@ generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 
                                              ],
                           'Insulation': ['Wall', 'Floor', 'Roof', 'Windows']
                           }
+
+colors = {
+    "Owner-occupied": "lightcoral",
+    "Privately rented": "chocolate",
+    "Social-housing": "orange",
+    "Single-family": "brown",
+    "Multi-family": "darkolivegreen",
+    "G": "grey",
+    "F": "darkmagenta",
+    "E": "rebeccapurple",
+    "D": "red",
+    "C": "orangered",
+    "B": "lightcoral",
+    "A": "lightsalmon",
+    "D1": "black",
+    "D2": "maroon",
+    "D3": "darkred",
+    "D4": "brown",
+    "D5": "firebrick",
+    "D6": "orangered",
+    "D7": "tomato",
+    "D8": "lightcoral",
+    "D9": "lightsalmon",
+    "D10": "darksalmon",
+    "Electricity": "darkorange",
+    "Natural gas": "slategrey",
+    "Oil fuel": "black",
+    "Wood fuel": "saddlebrown",
+    "VTA": "grey",
+    "Taxes expenditure": "darkorange",
+    "Subsidies heater": "orangered",
+    "Subsidies insulation": "darksalmon",
+    "Reduced tax": "darkred",
+    "Cee": "tomato",
+    "Cite": "orangered",
+    "Zero interest loan": "darksalmon",
+    "Over cap": "grey",
+    "Carbon tax": "darkorange",
+    "Existing": "tomato",
+    "Construction": "grey"
+}
+
+generic_input['colors'] = colors
