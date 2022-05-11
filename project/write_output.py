@@ -202,6 +202,7 @@ def parse_output(buildings, param):
     temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Billion euro)'.format(x[0], x[1]))
     detailed.update(temp.T / 10**9)
 
+    subsidies = None
     for gest, subsidies_details in {'heater': buildings.subsidies_details_heater,
                                     'insulation': buildings.subsidies_details_insulation}.items():
 
@@ -212,6 +213,11 @@ def parse_output(buildings, param):
         for i in subsidies_details.index:
             detailed['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = subsidies_details.loc[i,
                                                                                               :] / 10 ** 9
+        if subsidies is None:
+            subsidies = subsidies_details.copy()
+        else:
+            subsidies = pd.concat((subsidies, subsidies_details), axis=0)
+    subsidies = subsidies.groupby(subsidies.index).sum()
 
     taxes_expenditures = buildings.taxes_expenditure_details
     taxes_expenditures = pd.DataFrame(
@@ -259,7 +265,7 @@ def parse_output(buildings, param):
     detailed = pd.DataFrame(detailed).loc[buildings.stock_yrs.keys(), :].T
 
     # graph subsidies
-    subset = pd.concat((subsidies_details, -taxes_expenditures), axis=0).T
+    subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
 
     if 'over_cap' in subset.columns:
@@ -372,17 +378,17 @@ def grouped_output(result, stocks, folder):
         'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
         'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
         'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
-                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
+                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 3)
                                               ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Investment total {} (Billion euro)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 3)],
         'Insulation {} (Thousand)': [
             ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['retrofit_hist'])],
         'Insulation actions {} (Thousand)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Insulation actions {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 3)]
     }
 
     def details_graphs(data, v, inf):

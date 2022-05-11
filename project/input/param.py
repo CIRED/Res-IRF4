@@ -163,7 +163,7 @@ colors = {
     "Subsidies insulation": "darksalmon",
     "Reduced tax": "darkolivegreen",
     "Cee": "tomato",
-    "Cite": "maroon",
+    "Cite": "blue",
     "Zero interest loan": "darkred",
     "Over cap": "grey",
     "Carbon tax": "rebeccapurple",

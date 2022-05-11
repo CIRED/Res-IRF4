@@ -542,9 +542,13 @@ class AgentBuildings(ThermalBuildings):
             Probability replacement.
         """
         self._market_share_exogenous = {'Wood fuel-Standard boiler': 'Wood fuel-Performance boiler',
+                                        'Wood fuel-Performance boiler': 'Wood fuel-Performance boiler',
                                         'Oil fuel-Standard boiler': 'Oil fuel-Performance boiler',
+                                        'Oil fuel-Performance boiler': 'Oil fuel-Performance boiler',
                                         'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
-                                        'Electricity-Performance boiler': 'Electricity-Heat pump'}
+                                        'Natural gas-Performance boiler': 'Natural gas-Performance boiler',
+                                        'Electricity-Performance boiler': 'Electricity-Heat pump',
+                                        'Electricity-Heat pump': 'Electricity-Heat pump'}
 
         market_share = pd.Series(index=index, dtype=float).to_frame().dot(
             pd.Series(index=choice_heater_idx, dtype=float).to_frame().T)
@@ -560,6 +564,11 @@ class AgentBuildings(ThermalBuildings):
             if to_replace.sum() < self._number_exogenous:
                 self._target_exogenous = ['D', 'E', 'F', 'G']
                 to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
+                if to_replace.sum() < self._number_exogenous:
+                    self._target_exogenous = ['C', 'D', 'E', 'F', 'G']
+                    to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
+                    if to_replace.sum() < self._number_exogenous:
+                        self._number_exogenous = 0
 
         to_replace = to_replace / to_replace.sum() * self._number_exogenous
 
@@ -569,7 +578,7 @@ class AgentBuildings(ThermalBuildings):
         probability_replacement = probability_replacement.reindex(market_share.index)
         return market_share, probability_replacement
 
-    def heater_replacement(self, prices, cost_heater, ms_heater, policies_heater, probability_replacement=1/17,
+    def heater_replacement(self, prices, cost_heater, ms_heater, policies_heater, probability_replacement=1/20,
                            index=None):
         """Function returns new building stock after heater replacement.
 
@@ -1116,16 +1125,35 @@ class AgentBuildings(ThermalBuildings):
 
         for policy in policies_insulation:
             if policy.policy == 'subsidy_target':
-                subsidies_details[policy.name] = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
+
+                temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                                   frame.index).T * surface).T
+
+                if policy.name in subsidies_details.keys():
+                    subsidies_details[policy.name] += temp
+                else:
+                    subsidies_details[policy.name] = temp
+
                 subsidies_total += subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_best':
-                subsidies_details[policy.name] = (reindex_mi(policy.value, in_best.index) * in_best.T).T
+                temp = (reindex_mi(policy.value, in_best.index) * in_best.T).T
+
+                if policy.name in subsidies_details.keys():
+                    subsidies_details[policy.name] += temp
+                else:
+                    subsidies_details[policy.name] = temp
+
                 subsidies_total += subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_worst':
-                subsidies_details[policy.name] = (reindex_mi(policy.value, out_worst.index) * out_worst.T).T
+                temp = (reindex_mi(policy.value, out_worst.index) * out_worst.T).T
+
+                if policy.name in subsidies_details.keys():
+                    subsidies_details[policy.name] += temp
+                else:
+                    subsidies_details[policy.name] = temp
+
                 subsidies_total += subsidies_details[policy.name]
 
             elif policy.policy == 'subsidy_ad_volarem':
