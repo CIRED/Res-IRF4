@@ -22,7 +22,7 @@ generic_input = dict()
 generic_input['pop_housing_min'] = 2
 generic_input['factor_pop_housing'] = -0.007
 generic_input['factor_multi_family'] = 0.87
-generic_input['available_income'] = 1421 * 10 ** 9
+generic_input['available_income'] = 1421 * 10**9
 generic_input['price_index'] = 1
 
 generic_input['income'] = pd.Series([13628, 20391, 24194, 27426, 31139, 35178, 39888, 45400, 54309, 92735],

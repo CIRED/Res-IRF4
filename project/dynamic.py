@@ -32,7 +32,8 @@ def stock_need(population, pop_housing_ini, pop_housing_min, start, factor):
 
     Returns
     -------
-    Stock need
+    Stock need (number of dwellings that need to be constructed) : pd.Series
+    Population by housing : pd.Series
     """
     population_housing = dict()
     population_housing[start] = pop_housing_ini
@@ -54,7 +55,7 @@ def stock_need(population, pop_housing_ini, pop_housing_min, start, factor):
 
 
 def population_housing_dynamic(pop_housing_prev, pop_housing_min, pop_housing_ini, factor):
-    """Returns number of people by building.
+    """Returns number of people by housing.
 
     Number of people by housing decrease over the time.
 
