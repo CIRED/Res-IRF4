@@ -310,7 +310,7 @@ def indicator_policies(result, folder):
         ----------
         ref: pd.Series
         scenario: pd.Series or int
-        values: pd.Series, default None
+        values: pd.Series or None, default None
         discount_rate: float, default 0.045
             Discount rate.
         years: int
@@ -336,12 +336,6 @@ def indicator_policies(result, folder):
             values = values.reindex(matrix_double_diff.columns, method='pad')
             matrix_double_diff = matrix_double_diff * values
 
-        """columns_extend = list(
-            range(max(matrix_double_diff.columns) + 1, max(matrix_double_diff.columns) + extend))
-        matrix_extend = pd.concat([matrix_double_diff.iloc[:, -1]] * len(columns_extend), keys=columns_extend, axis=1)
-        matrix_double_diff = pd.concat((matrix_double_diff, matrix_extend), axis=1)
-        matrix_double_diff.columns = [int(c) for c in matrix_double_diff.columns]"""
-
         matrix_bool = pd.DataFrame(1, index=matrix_double_diff.index, columns=matrix_double_diff.columns)
         matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0)) * pd.DataFrame(np.tril(matrix_bool, k=years - 1))
         matrix_bool = matrix_bool.set_axis(matrix_double_diff.index).set_axis(matrix_double_diff.columns, axis=1)
@@ -353,28 +347,44 @@ def indicator_policies(result, folder):
         return (matrix_double_diff * discount).sum()
 
     energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0])
-    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0])
+    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()
     carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv', index_col=[0])
+    # €/tCO2 / 1000000 * gCO2/kWh  = €/kWH
+    carbon_value = (carbon_value * carbon_emission.T).T / 1000000
+    carbon_value.dropna(how='all', inplace=True)
 
     scenarios = [s for s in result.keys() if s != 'Reference']
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
                  'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
 
-    s = scenarios[1]
+    # Double difference = Scenario - Reference
+    agg = {}
+    for s in scenarios:
+        rslt = {}
+        var = 'Consumption (TWh)'
+        rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
+                                      values=None)
 
-    rslt = {}
-    for energy in generic_input['index']['Heating energy']:
-        var = 'Consumption {} (TWh)'.format(energy)
-        rslt[energy] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
-                                         values=energy_prices[energy])
+        for energy in generic_input['index']['Heating energy']:
+            var = 'Consumption {} (TWh)'.format(energy)
+            rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
+                                          values=None)
+            rslt['Energy expenditures {} (€)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
+                                                                                  result[s].loc[var, :],
+                                                                                  values=energy_prices[energy])
 
-    # TODO
-    agg = pd.DataFrame({var: pd.Series(
-        [double_difference(result['Reference'].loc[var, :], result[s].loc[var, :]) for s in scenarios], index=scenarios)
-        for var in variables})
-    temp = pd.Series([double_difference(result['Reference'].loc[var, :], 0) for var in variables], index=variables,
-                     name='Reference')
-    agg = pd.concat((temp, agg.T), axis=1)
+            rslt['Emission {} (gCO2)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
+                                                                          result[s].loc[var, :],
+                                                                          values=carbon_emission[energy])
+
+            rslt['Carbon value {} (€)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
+                                                                           result[s].loc[var, :],
+                                                                           values=carbon_value[energy])
+        agg[s] = rslt
+    agg = pd.DataFrame(agg)
+
+
+
 
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
