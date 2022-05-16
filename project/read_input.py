@@ -267,6 +267,19 @@ def parse_parameters(config, param, stock):
     summary_param['Buildings demolished (Thousands)'] = param['flow_demolition'] / 10**3
     summary_param['Person by housing'] = param['pop_housing']
     summary_param['Share multi-family (%)'] = param['share_multi_family']
+
+    temp = param['surface'].xs(True, level='Existing', drop_level=True)
+    temp.index = temp.index.map(lambda x: 'Surface existing {} - {} (m2/dwelling)'.format(x[0], x[1]))
+    summary_param.update(temp.T)
+
+    temp = param['surface'].xs(False, level='Existing', drop_level=True)
+    temp.index = temp.index.map(lambda x: 'Surface construction {} - {} (m2/dwelling)'.format(x[0], x[1]))
+    summary_param.update(temp.T)
+
+    temp = param['surface'].xs(False, level='Existing', drop_level=True)
+    temp = (param['flow_built'].groupby(temp.index.names).sum() * temp).sum() / 10**6
+    summary_param['Surface construction (Million m2)'] = temp
+
     summary_param = pd.DataFrame(summary_param)
     summary_param = summary_param.loc[config['start']:, :]
     return param, summary_param

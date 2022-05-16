@@ -297,6 +297,97 @@ def parse_output(buildings, param):
     return stock, detailed
 
 
+def indicator_policies(result, folder):
+
+    def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
+        """Calculate double difference.
+
+        Double difference is a proxy of marginal flow produced in year.
+        Flow have effect during a long period of time and need to be extended during the all period.
+        Flow are discounted to year.
+
+        Parameters
+        ----------
+        ref: pd.Series
+        scenario: pd.Series or int
+        values: pd.Series, default None
+        discount_rate: float, default 0.045
+            Discount rate.
+        years: int
+            Number of years to extend variables.
+
+        Returns
+        -------
+        pd.Series
+        """
+        simple_diff = scenario - ref
+        double_diff = simple_diff.diff()
+
+        double_diff.iloc[0] = simple_diff.iloc[0]
+        double_diff.rename(None, inplace=True)
+
+        extend = max(double_diff.index) + years - 1
+
+        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(extend + 1 - double_diff.index[0])],
+                             index=range(double_diff.index[0], extend + 1))
+
+        matrix_double_diff = double_diff.to_frame().dot(discount.to_frame().T)
+        if values is not None:
+            values = values.reindex(matrix_double_diff.columns, method='pad')
+            matrix_double_diff = matrix_double_diff * values
+
+        """columns_extend = list(
+            range(max(matrix_double_diff.columns) + 1, max(matrix_double_diff.columns) + extend))
+        matrix_extend = pd.concat([matrix_double_diff.iloc[:, -1]] * len(columns_extend), keys=columns_extend, axis=1)
+        matrix_double_diff = pd.concat((matrix_double_diff, matrix_extend), axis=1)
+        matrix_double_diff.columns = [int(c) for c in matrix_double_diff.columns]"""
+
+        matrix_bool = pd.DataFrame(1, index=matrix_double_diff.index, columns=matrix_double_diff.columns)
+        matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0)) * pd.DataFrame(np.tril(matrix_bool, k=years - 1))
+        matrix_bool = matrix_bool.set_axis(matrix_double_diff.index).set_axis(matrix_double_diff.columns, axis=1)
+
+        matrix_double_diff = (matrix_double_diff * matrix_bool).sum()
+
+        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(matrix_double_diff.shape[0])],
+                             index=matrix_double_diff.index)
+        return (matrix_double_diff * discount).sum()
+
+    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0])
+    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0])
+    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv', index_col=[0])
+
+    scenarios = [s for s in result.keys() if s != 'Reference']
+    variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
+                 'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
+
+    s = scenarios[1]
+
+    rslt = {}
+    for energy in generic_input['index']['Heating energy']:
+        var = 'Consumption {} (TWh)'.format(energy)
+        rslt[energy] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
+                                         values=energy_prices[energy])
+
+    # TODO
+    agg = pd.DataFrame({var: pd.Series(
+        [double_difference(result['Reference'].loc[var, :], result[s].loc[var, :]) for s in scenarios], index=scenarios)
+        for var in variables})
+    temp = pd.Series([double_difference(result['Reference'].loc[var, :], 0) for var in variables], index=variables,
+                     name='Reference')
+    agg = pd.concat((temp, agg.T), axis=1)
+
+    variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
+                 'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
+                 'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
+    years = [2020]
+    for year in years:
+        temp = pd.DataFrame(
+            {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
+             variables}).T
+        agg = pd.concat((agg, temp), axis=0)
+    agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
+
+
 def grouped_output(result, stocks, folder):
     """Grouped scenarios output.
 
@@ -331,12 +422,6 @@ def grouped_output(result, stocks, folder):
     -------
 
     """
-
-    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0])
-    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0])
-    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv', index_col=[0])
-
-
 
     variables = {'Consumption (TWh)': ('consumption.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist']),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
@@ -422,88 +507,7 @@ def grouped_output(result, stocks, folder):
         for info in infos:
             details_graphs(result, var, info)
 
-    def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
-        """Calculate double difference.
-
-        Double difference is a proxy of marginal flow produced in year.
-        Flow have effect during a long period of time and need to be extended during the all period.
-        Flow are discounted to year.
-
-        Parameters
-        ----------
-        ref: pd.Series
-        scenario: pd.Series or int
-        values: pd.Series, default None
-        discount_rate: float, default 0.045
-            Discount rate.
-        years: int
-            Number of years to extend variables.
-
-        Returns
-        -------
-        pd.Series
-        """
-        import numpy as np
-
-        simple_diff = scenario - ref
-        double_diff = simple_diff.diff()
-
-        double_diff.iloc[0] = simple_diff.iloc[0]
-        double_diff.rename(None, inplace=True)
-
-        extend = max(double_diff.index) + years - 1
-
-        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(extend + 1 - double_diff.index[0])],
-                             index=range(double_diff.index[0], extend + 1))
-
-        matrix_double_diff = double_diff.to_frame().dot(discount.to_frame().T)
-        if values is not None:
-            values = values.reindex(matrix_double_diff.columns, method='pad')
-            matrix_double_diff = matrix_double_diff * values
-
-        """columns_extend = list(
-            range(max(matrix_double_diff.columns) + 1, max(matrix_double_diff.columns) + extend))
-        matrix_extend = pd.concat([matrix_double_diff.iloc[:, -1]] * len(columns_extend), keys=columns_extend, axis=1)
-        matrix_double_diff = pd.concat((matrix_double_diff, matrix_extend), axis=1)
-        matrix_double_diff.columns = [int(c) for c in matrix_double_diff.columns]"""
-
-        matrix_bool = pd.DataFrame(1, index=matrix_double_diff.index, columns=matrix_double_diff.columns)
-        matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0)) * pd.DataFrame(np.tril(matrix_bool, k=years - 1))
-        matrix_bool = matrix_bool.set_axis(matrix_double_diff.index).set_axis(matrix_double_diff.columns, axis=1)
-
-        matrix_double_diff = (matrix_double_diff * matrix_bool).sum()
-
-        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(matrix_double_diff.shape[0])],
-                             index=matrix_double_diff.index)
-        return (matrix_double_diff * discount).sum()
-
     if 'Reference' in result.keys():
-        scenarios = [s for s in result.keys() if s != 'Reference']
-        variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
-                     'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
+        indicator_policies(result, folder)
 
-        s = scenarios[1]
 
-        rslt = {}
-        for energy in generic_input['index']['Heating energy']:
-            var = 'Consumption {} (TWh)'.format(energy)
-            rslt[energy] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :], values=energy_prices[energy])
-
-        # TODO
-        agg = pd.DataFrame({var: pd.Series(
-            [double_difference(result['Reference'].loc[var, :], result[s].loc[var, :]) for s in scenarios], index=scenarios)
-            for var in variables})
-        temp = pd.Series([double_difference(result['Reference'].loc[var, :], 0) for var in variables], index=variables,
-                         name='Reference')
-        agg = pd.concat((temp, agg.T), axis=1)
-
-        variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
-                     'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
-                     'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
-        years = [2020]
-        for year in years:
-            temp = pd.DataFrame(
-                {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
-                 variables}).T
-            agg = pd.concat((agg, temp), axis=0)
-        agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))

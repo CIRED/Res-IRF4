@@ -60,6 +60,10 @@ def res_irf(config, path):
         total_taxes = total_taxes.add(t.value, fill_value=0)
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
 
+    temp = energy_prices.copy()
+    temp.index = temp.index.map(lambda x:  'Prices {} (€/kWh)'.format(x))
+    pd.concat((summary_param, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+
     print('Calibration {}'.format(year))
     buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],
                                param['consumption_ini'], path, param['preferences'],
