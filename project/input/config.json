@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2051,
+    "end": 2021,
     "prices_constant": false,
     "demolition_rate": 0.0035,
     "income_rate": 0.012,
@@ -73,7 +73,7 @@
     }
   },
   "ZP": {
-    "end": 2051,
+    "end": 2021,
     "prices_constant": false,
     "demolition_rate": 0.0035,
     "income_rate": 0.012,
@@ -146,7 +146,7 @@
     }
   },
   "ZP constant": {
-    "end": 2051,
+    "end": 2021,
     "prices_constant": true,
     "demolition_rate": 0.0,
     "income_rate": 0.0,
