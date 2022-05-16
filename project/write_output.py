@@ -47,7 +47,6 @@ def parse_output(buildings, param):
 
     4. Policies
 
-
     Parameters
     ----------
     buildings

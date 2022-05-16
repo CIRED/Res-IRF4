@@ -1,5 +1,8 @@
 
 # Res-IRF
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6553021.svg)](https://doi.org/10.5281/zenodo.6553021)
+
 ## Disclaimer
 
 **_The contents of this repository are all in-progress and should not be expected to be free of errors or to perform any
@@ -13,10 +16,10 @@ specific functions. Use only with care and caution._**
 
 **Step 1**: Git **clone Res-IRF folder** in your computer.
    - Use your terminal and go to a location where you want to store the Res-IRF project.
-   - `git clone https://github.com/lucas-vivier/Res-IRF.git`
+   - `https://github.com/CIRED/Res-IRF4.git`
 
 **Step 2**: **Create a conda environment** from the environment.yml file:
-   - The environment.yml file is in the Res-IRF folder.
+   - The requirements.txt file is in the Res-IRF folder.
    - Use the **terminal** and go to the Res-IRF folder stored on your computer.
    - Type: `conda create --name <env> --file requirements.txt`
 
@@ -26,8 +29,8 @@ specific functions. Use only with care and caution._**
 
 **Step 4**: **Launch Res-IRF**
    - Launch from Res-IRF root folder:
-   - `python project/main.py -n project/input/phebus/config.json`
-   - `project/input/phebus/config.json` is the path to the configuration file
+   - `python project/main.py -n project/input/config.json`
+   - `project/input/config.json` is the path to the configuration file
 
 ## Getting started
 
@@ -41,18 +44,13 @@ The model creates results in a folder in project/output.
 Folder name is by default `ddmmyyyy_hhmm` (launching date and hour).
 By default, only a  selection of the most important results are available and graphs.
 
-To get a detailed view of the results add `o True`. Detailed results are .pkl files (serialize format by the pickle
-library).
-
 A configuration file must be declared.
-An example of configuration file is in the `input/phebus` folder under the name of `config.json`.
+An example of configuration file is in the `input` folder under the name of `config.json`.
 The Res-IRF script use Multiprocessing tool to launch multiple scenarios in the same time. 
 
 In the `output/ddmmyyyy_hhmm` folder:
 - One folder for each scenario declared in the configuration file with detailed outputs:
-    - `detailed.csv` detailed output readable directly with an Excel-like tool
-    - `summary_input.csv` summary of main input
-    - copy of `parameters.json` and `config.son` used for the run
+    - `output.csv` detailed output readable directly with an Excel-like tool
 - `.png` graphs comparing scenarios launch in the same config file.
 
 
