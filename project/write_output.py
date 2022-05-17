@@ -411,6 +411,8 @@ def indicator_policies(result, folder):
         SE_NPV ={}
         for s in agg.columns:
             COFP = (agg[s]['Subsidies total (Billion euro)']+ agg[s]['VTA (Billion euro)'] + agg[s]['Health Expenditures']) *0.2
+            #Question: les doubles diff (Health expenditures et plus tard energy taxes à faire) sont actualisées, mais pas
+            #les simples diffs: à actualiser ou non car pontuelles?
             # ENERGY TAXES TO ADD
             energy_savings_total = sum(agg[s]['Energy expenditures {} (€)'.format(energy)]
                                         for energy in generic_input['index']['Heating energy'])
