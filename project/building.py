@@ -627,7 +627,9 @@ class AgentBuildings(ThermalBuildings):
         stock_replacement = replacement.stack('Heating system final')
         to_replace = replacement.sum(axis=1)
         stock = self.stock_mobile.groupby(to_replace.index.names).sum() - to_replace
-        stock = pd.concat([stock], keys=stock.index.get_level_values('Heating system'), names=['Heating system final'])
+        stock = pd.concat((stock, pd.Series(stock.index.get_level_values('Heating system'), index=stock.index,
+                                            name='Heating system final')), axis=1).set_index('Heating system final',
+                                                                                             append=True).squeeze()
         stock = pd.concat((stock.reorder_levels(stock_replacement.index.names), stock_replacement),
                           axis=0, keys=[False, True], names=['Heater replacement'])
 
@@ -772,7 +774,8 @@ class AgentBuildings(ThermalBuildings):
 
         return constant
 
-    def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None):
+    def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None,
+                            levels_heater='Heating system'):
         """Constitute building components' performance.
 
         Returns
@@ -815,7 +818,7 @@ class AgentBuildings(ThermalBuildings):
             else:
                 windows_buildings[name] = pd.Series(series.index.get_level_values('Windows'), index=series.index)
 
-        heating_system = pd.Series(index.get_level_values('Heating system'), index=index)
+        heating_system = pd.Series(index.get_level_values(levels_heater), index=index)
         energy = heating_system.str.split('-').str[0].rename('Energy')
         heater = heating_system.str.split('-').str[1]
         efficiency = pd.to_numeric(heater.replace(self._efficiency))
@@ -917,7 +920,7 @@ class AgentBuildings(ThermalBuildings):
         energy_bill_sd_before = agent.energy_bill_sd(prices)
 
         choice_insulation = self._choice_insulation
-        consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
+        consumption_sd = self.prepare_consumption(choice_insulation, index=index)[0]
 
         pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies_total.index).rename(None)
         utility_subsidies = (subsidies_total.T * pref_subsidies).T / 1000
@@ -1040,7 +1043,8 @@ class AgentBuildings(ThermalBuildings):
         surface = agent.surface
 
         choice_insulation = self._choice_insulation
-        consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
+        # consumption_sd, certificate = self.prepare_consumption(choice_insulation, index=index)
+        certificate = self.prepare_consumption(choice_insulation, index=index, levels_heater='Heating system final')[1]
 
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
@@ -1354,8 +1358,9 @@ class AgentBuildings(ThermalBuildings):
         """
         stock = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
 
-        index = stock.droplevel(['Heater replacement', 'Heating system final']).index
-        index = index[~index.duplicated()]
+        """index = stock.droplevel(['Heater replacement', 'Heating system final']).index
+        index = index[~index.duplicated()]"""
+        index = stock.index
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
                                                                   index=index)
