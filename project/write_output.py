@@ -388,17 +388,9 @@ def indicator_policies(result, folder):
 
         #For "COFP"
         # simple Diff subsidies and TVA
-        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Private Investment (Billion euro)']:
+        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment cost (Billion euro)']:
             rslt[var] = (result['Reference'].loc[var, :] - result[s].loc[var, :]).sum()
 
-        """"
-        #Private investment
-        private_investment_ref = (result['Reference'].loc['Investment total (Billion euro)', :] -
-                                  result['Reference'].loc['Subsidies total (Billion euro)']).sum()
-        private_investment_s = (result[s].loc['Investment total (Billion euro)', :] -
-                                result[s].loc['Subsidies total (Billion euro)']).sum()
-        rslt['Private Investment'] = private_investment_s - private_investment_ref
-        """
         agg[s] = rslt
 
     agg = pd.DataFrame(agg)
@@ -426,7 +418,7 @@ def indicator_policies(result, folder):
             carbon_avoided = sum(df['Carbon value {} (€)'.format(energy)]
                                  for energy in generic_input['index']['Heating energy'])
 
-            se_npv[s] = - df['Private Investment'] - cofp + energy_saved + carbon_avoided
+            se_npv[s] = - df['Investment cost (Billion euro)'] - cofp + energy_saved + carbon_avoided
         return pd.Series(se_npv, name='Socioeconomic NPV (Billion euro)')
 
     agg = pd.concat((agg, socioeconomic_npv(agg)), axis=0)

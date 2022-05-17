@@ -887,11 +887,12 @@ class AgentBuildings(ThermalBuildings):
             subsidies_insulation['Windows'], axis=0) * self.surface_insulation['Windows']
         return subsidy
 
-    def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive):
+    def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive,
+                            utility_zil=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
         Utility variables are investment cost, energy bill saving, and subsidies.
-        Preferences are obbject attributes defined initially.
+        Preferences are object attributes defined initially.
 
         Parameters
         ----------
@@ -901,6 +902,7 @@ class AgentBuildings(ThermalBuildings):
         cost_insulation: pd.DataFrame
         ms_insulation: pd.Series
         ms_extensive: pd.Series
+        utility_zil: pd.DataFrame, default None
 
         Returns
         -------
@@ -934,6 +936,10 @@ class AgentBuildings(ThermalBuildings):
 
         utility = utility_bill_saving + utility_investment + utility_subsidies
 
+        if utility_zil is not None:
+            utility_zil[utility_zil > 0] = self.pref_zil
+            utility += utility_zil
+
         """
         # restrict to coherent renovation work
         idx = pd.IndexSlice
@@ -950,8 +956,8 @@ class AgentBuildings(ThermalBuildings):
         utility += self.utility_insulation_intensive
 
         market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
-        stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
-        market_share_test = (stock * market_share.T).T.sum() / stock.sum()
+        """stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
+        market_share_test = (stock * market_share.T).T.sum() / stock.sum()"""
 
         # extensive margin
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
@@ -970,7 +976,7 @@ class AgentBuildings(ThermalBuildings):
         if self.utility_insulation_extensive is None:
             self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
 
-        utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
+        # utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
         utility += self.utility_insulation_extensive
         retrofit_rate = 1 / (1 + np.exp(- utility))
 
@@ -1022,7 +1028,7 @@ class AgentBuildings(ThermalBuildings):
         ms_insulation: pd.Series
         ms_extensive: pd.Series
         policies_insulation: list
-        index: pd.MultiIndex, default None
+        index: pd.MultiIndex or pd.Index, default None
 
         Returns
         -------
@@ -1062,8 +1068,13 @@ class AgentBuildings(ThermalBuildings):
                 if sub in subsidies_details.keys():
                     utility_subsidies -= subsidies_details[sub]
 
-            retrofit_rate, market_share = self.endogenous_retrofit(index, prices, subsidies_total, cost_insulation,
-                                                                   ms_insulation, ms_extensive)
+            utility_zil = None
+            if 'zero_interest_loan' in subsidies_details:
+                utility_zil = subsidies_details['zero_interest_loan']
+
+            retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
+                                                                   ms_insulation, ms_extensive,
+                                                                   utility_zil=utility_zil)
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
 
@@ -1255,13 +1266,8 @@ class AgentBuildings(ThermalBuildings):
                                   names=['Heater replacement'])
         flow_retrofit = flow_retrofit * reindex_mi(ms_extensive, flow_retrofit.index)
 
-        # removing unnecessary level
-        # utility_ref = utility.droplevel(['Occupancy status']).copy()
-        # utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
-        # stock = self.stock.groupby(utility_ref.index.names).sum().reindex(utility_ref.index)
-        # stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
-
-        utility_ref = reindex_mi(utility.copy(), flow_retrofit.index)
+        utility = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
+        utility_ref = reindex_mi(utility, flow_retrofit.index)
 
         constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
         constant[constant > 0] = 0
@@ -1301,8 +1307,8 @@ class AgentBuildings(ThermalBuildings):
         pd.Series
         """
 
-        utility_ref = utility.copy()
-        utility_ref = pd.concat([utility_ref, utility_ref], keys=[True, False], names=['Heater replacement'])
+        utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
+        # utility_ref = pd.concat([utility_ref, utility_ref], keys=[True, False], names=['Heater replacement'])
         idx = utility_ref.index.copy()
 
         stock = pd.concat([self.stock, self.stock], keys=[True, False], names=['Heater replacement']).groupby(
@@ -1360,31 +1366,40 @@ class AgentBuildings(ThermalBuildings):
 
         """index = stock.droplevel(['Heater replacement', 'Heating system final']).index
         index = index[~index.duplicated()]"""
-        index = stock.index
+
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
-                                                                  index=index)
+                                                                  index=stock.index)
 
         """stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
         market_share_test = (stock * market_share.T).T.sum() / stock.sum()"""
         retrofit_rate = reindex_mi(retrofit_rate, stock.index)
-        retrofit_stock = (retrofit_rate * stock).dropna().groupby(
-            [c for c in stock.index.names if c != 'Heater replacement']).sum()
+        """retrofit_stock = (retrofit_rate * stock).dropna().groupby(
+            [c for c in stock.index.names if c != 'Heater replacement']).sum()"""
+        retrofit_stock = (retrofit_rate * stock).dropna()
+        replacement_sum = retrofit_stock.sum().sum()
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
+        assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
+        self.store_information_retrofit(replaced_by)
 
-        temp = replaced_by.droplevel('Heating system final')
-        temp = temp.groupby(temp.index.names).sum()
-        self.store_information_retrofit(temp)
+        """temp = replaced_by.droplevel('Heating system final')
+        temp = temp.groupby(temp.index.names).sum()"""
+
+        replaced_by = replaced_by.groupby(
+            [c for c in replaced_by.index.names if c != 'Heater replacement']).sum()
 
         # replaced_by is indexed with new heating system
         share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
         temp = pd.concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
-        share = reindex_mi(share, temp.columns, axis=1).reindex(temp.index)
+        share = reindex_mi(share, temp.columns, axis=1)
+        share = reindex_mi(share, temp.index)
         replaced_by = (share * temp).stack('Income tenant').dropna()
+        assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
         to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
         to_replace = to_replace.groupby(to_replace.index.names).sum()
+        assert round(to_replace.sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
         replaced_by = replaced_by.droplevel('Heating system').rename_axis(
             index={'Heating system final': 'Heating system'})
@@ -1409,6 +1424,7 @@ class AgentBuildings(ThermalBuildings):
         to_replace = to_replace.reorder_levels(replaced_by.index.names)
         flow_retrofit = pd.concat((-to_replace, replaced_by), axis=0)
         flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
+        assert round(flow_retrofit.sum(), 0) == 0, 'Sum problem'
 
         # flow_retrofit = replaced_by.sub(to_replace, fill_value=0)
         # flow_retrofit = flow_retrofit[flow_retrofit != 0]
@@ -1425,25 +1441,26 @@ class AgentBuildings(ThermalBuildings):
             Retrofitting for each dwelling and each insulation gesture.
         """
 
-        # TODO: this metrics doesn't include change in heating sytem
+        levels = [i for i in replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
         self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
 
         rslt = {}
         for i in range(6):
             rslt.update({i: ((self.certificate_jump == i) * replaced_by).sum(axis=1)})
-        self.certificate_jump_yrs.update({self.year: pd.DataFrame(rslt)})
+        rslt = pd.DataFrame(rslt).groupby(levels).sum()
+        self.certificate_jump_yrs.update({self.year: rslt})
 
-        self.replacement_insulation.update({self.year: replaced_by})
+        self.replacement_insulation.update({self.year: replaced_by.groupby(levels).sum()})
         self.investment_insulation.update(
-            {self.year: replaced_by * self.cost_insulation[self.year]})
+            {self.year: (replaced_by * self.cost_insulation[self.year]).groupby(levels).sum()})
         self.taxed_insulation.update(
-            {self.year: replaced_by * self.tax_insulation[self.year]})
+            {self.year: (replaced_by * self.tax_insulation[self.year]).groupby(levels).sum()})
         self.subsidies_insulation.update(
-            {self.year: self.subsidies_total_insulation[self.year] * replaced_by.copy()})
+            {self.year: (self.subsidies_total_insulation[self.year] * replaced_by.copy()).groupby(levels).sum()})
 
         for key in self.subsidies_details_insulation[self.year].keys():
-            self.subsidies_details_insulation[self.year][key] = replaced_by * reindex_mi(
-                self.subsidies_details_insulation[self.year][key], replaced_by.index)
+            self.subsidies_details_insulation[self.year][key] = (replaced_by * reindex_mi(
+                self.subsidies_details_insulation[self.year][key], replaced_by.index)).groupby(levels).sum()
 
     def flow_demolition(self):
         """Demolition of E, F and G buildings based on their share in the mobile stock.

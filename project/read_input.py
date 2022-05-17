@@ -56,6 +56,7 @@ def read_stock(config):
     idx_names = ['Existing', 'Occupancy status', 'Income owner', 'Income tenant', 'Housing type',
                  'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
     stock = stock.reset_index(level=['Heating energy', 'Heating system'])
+    stock['Heating system'].replace({'2.5': 'Heat pump'}, inplace=True)
     stock['Heating system'] = stock['Heating energy'] + '-' + stock['Heating system']
     stock = stock.set_index(['Heating system'], append=True).loc[:, 'Stock buildings']
     stock = stock.reorder_levels(idx_names)
