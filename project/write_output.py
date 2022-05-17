@@ -484,10 +484,22 @@ def grouped_output(result, stocks, folder):
 
         s = scenarios[1]
 
-        rslt = {}
+        rslt = {'Total Energy Savings (TWh)':0}
         for energy in generic_input['index']['Heating energy']:
             var = 'Consumption {} (TWh)'.format(energy)
             rslt[energy] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :], values=energy_prices[energy])
+            rslt['Total Energy Savings (TWh)' += rslt[energy]
+
+        rslt['Total Carbon emissions (MtCo2)']= 0
+        for energy in generic_input['index']['Heating energy']:
+            var = 'Consumption {} (TWh)'.format(energy)
+            first_year = min(result['Reference'].columns) #là il se trouve que le carbon_emission commencent en 2012... a peiori est-ce qu'on écrit quelque chose de générique pour vérifier à chaque fois?
+            values = carbon_emission.loc[first_year:]
+            values = (carbon_value.T*values[energy]* 10**3).T #carbon_value est en €/tCo2, et carbon_emission en gCO2/kWh si je ne me trompe pas... d'où la conversion pour être en tCO2/TWh pour carbon_emission, car EE en TWh
+            rslt[energy] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
+                                             values=values)
+
+        # revoir: il faut pull les changements de lucas, et il faut comprendre pourquoi systémtiquement quand on ajoue values ça me mets 0 là
 
         # TODO
         agg = pd.DataFrame({var: pd.Series(
