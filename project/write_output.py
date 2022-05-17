@@ -361,8 +361,8 @@ def indicator_policies(result, folder):
     agg = {}
     for s in scenarios:
         rslt = {}
-        var = 'Consumption (TWh)'
-        rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
+        for var in ['Consumption (TWh)', 'Health cost (Billion euro)']:
+            rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
                                       values=None)
 
         for energy in generic_input['index']['Heating energy']:
@@ -380,11 +380,48 @@ def indicator_policies(result, folder):
             rslt['Carbon value {} (€)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
                                                                            result[s].loc[var, :],
                                                                            values=carbon_value[energy])
+
+        #For "COFP"
+        #Simple Diff subsidies and TVA
+        for var in ['Subsidies total (Billion euro)','VTA (Billion euro)']:
+            rslt[var] = (result['Reference'].loc[var, :]
+                                                       - result[s].loc[var,:]).sum()
+
+        #Double diff health cost and taxes on energy
+        rslt['Health Expenditures'] = double_difference(result['Reference'].loc['Health expenditure (Billion euro)', :],
+                                                                           result[s].loc['Health expenditure (Billion euro)', :],
+                                                                           values=None)
+
+        #TODO
+        #double diff for taxes on energy
+
+
+        #Private investment
+        private_investment_ref = (result['Reference'].loc['Investment total (Billion euro)', :] -
+                                 result['Reference'].loc['Subsidies total (Billion euro)']).sum()
+        private_investment_s = (result[s].loc['Investment total (Billion euro)', :] -
+                               result[s].loc['Subsidies total (Billion euro)']).sum()
+        rslt['Private Investment'] = private_investment_s - private_investment_ref
+
         agg[s] = rslt
     agg = pd.DataFrame(agg)
 
 
+    def SE_NPV (agg):
+        SE_NPV ={}
+        for s in agg.columns:
+            COFP = (agg[s]['Subsidies total (Billion euro)']+ agg[s]['VTA (Billion euro)'] + agg[s]['Health Expenditures']) *0.2
+            # ENERGY TAXES TO ADD
+            energy_savings_total = sum(agg[s]['Energy expenditures {} (€)'.format(energy)]
+                                        for energy in generic_input['index']['Heating energy'])
+            carbon_avoided_emissions_total = sum(agg[s]['Carbon value {} (€)'.format(energy)]
+                                        for energy in generic_input['index']['Heating energy'])
+            SE_NPV[s]= - agg[s]['Private Investment'] - COFP + energy_savings_total + carbon_avoided_emissions_total
+        return ({'SE NPV': SE_NPV})
 
+    df = pd.DataFrame(SE_NPV (agg)).transpose()
+
+    new_agg = pd.concat([agg, df])
 
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
