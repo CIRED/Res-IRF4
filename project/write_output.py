@@ -72,7 +72,7 @@ def parse_output(buildings, param):
 
     temp = consumption.groupby(buildings.energy).sum()
     temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
 
     temp = consumption.groupby(buildings.certificate).sum()
     temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -98,10 +98,10 @@ def parse_output(buildings, param):
     temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
     detailed.update(temp.T)
 
-    detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10 ** 3
+    detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
 
     detailed['Retrofit (Thousand)'] = pd.Series(
-        {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10 ** 3
+        {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10**3
     detailed['Retrofit >= 1 EPC (Thousand)'] = pd.Series(
         {year: item.loc[:, [i for i in item.columns if i > 0]].sum().sum() for year, item in
          buildings.certificate_jump_yrs.items()}) / 10 ** 3
@@ -145,10 +145,10 @@ def parse_output(buildings, param):
     detailed['Insulation actions (Thousand)'] = temp.sum() / 10 ** 3
     t = temp.groupby('Income owner').sum()
     t.index = t.index.map(lambda x: 'Insulation actions {} (Thousand)'.format(x))
-    detailed.update(t.T / 10 ** 3)
+    detailed.update(t.T / 10**3)
     t = temp.groupby(['Housing type', 'Occupancy status']).sum()
     t.index = t.index.map(lambda x: 'Insulation actions {} - {} (Thousand)'.format(x[0], x[1]))
-    detailed.update((t / 10 ** 3).T)
+    detailed.update((t / 10**3).T)
     t.index = t.index.str.replace('Thousand', '%')
     s = stock.groupby(['Housing type', 'Occupancy status']).sum()
     s.index = s.index.map(lambda x: 'Insulation actions {} - {} (%)'.format(x[0], x[1]))
@@ -159,48 +159,48 @@ def parse_output(buildings, param):
         temp = pd.DataFrame(
             {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
         t = (pd.DataFrame(buildings.cost_component).loc[i, :] * temp)
-        detailed['Insulation {} (Thousand)'.format(i)] = temp.sum() / 10 ** 3
+        detailed['Insulation {} (Thousand)'.format(i)] = temp.sum() / 10**3
 
         # only work because existing surface does not change over time
-        detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10 ** 9
+        detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**9
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
-    detailed['Investment heater (Billion euro)'] = temp.sum() / 10 ** 9
+    detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
     temp.index = temp.index.map(lambda x: 'Investment {} (Billion euro)'.format(x))
     detailed.update(temp.T / 10 ** 9)
     investment_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_heater.items()})
 
     investment_insulation = pd.DataFrame(
         {year: item.sum(axis=1) for year, item in buildings.investment_insulation.items()})
-    detailed['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10 ** 9
+    detailed['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10**9
 
     index = investment_heater.index.union(investment_insulation.index)
     investment_total = investment_heater.reindex(index, fill_value=0) + investment_insulation.reindex(index,
                                                                                                       fill_value=0)
-    detailed['Investment total (Billion euro)'] = investment_total.sum() / 10 ** 9
+    detailed['Investment total (Billion euro)'] = investment_total.sum() / 10**9
     temp = investment_total.groupby('Income owner').sum()
     temp.index = temp.index.map(lambda x: 'Investment total {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
     temp = investment_total.groupby(['Housing type', 'Occupancy status']).sum()
     temp.index = temp.index.map(lambda x: 'Investment total {} - {} (Billion euro)'.format(x[0], x[1]))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
 
     subsidies_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.subsidies_heater.items()})
-    detailed['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9
+    detailed['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10**9
 
     subsidies_insulation = pd.DataFrame(
         {year: item.sum(axis=1) for year, item in buildings.subsidies_insulation.items()})
-    detailed['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10 ** 9
+    detailed['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10**9
 
     index = subsidies_heater.index.union(subsidies_insulation.index)
     subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index, fill_value=0)
-    detailed['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10 ** 9
+    detailed['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10**9
     temp = subsidies_total.groupby('Income owner').sum()
     temp.index = temp.index.map(lambda x: 'Subsidies total {} (Billion euro)'.format(x))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
     temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
     temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Billion euro)'.format(x[0], x[1]))
-    detailed.update(temp.T / 10 ** 9)
+    detailed.update(temp.T / 10**9)
 
     subsidies = None
     for gest, subsidies_details in {'heater': buildings.subsidies_details_heater,
@@ -274,7 +274,7 @@ def parse_output(buildings, param):
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     subset.dropna(inplace=True, how='all')
     if not subset.empty:
-        make_area_plot(subset / 10 ** 9, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
+        make_area_plot(subset / 10**9, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
                        colors=generic_input['colors'])
 
     # graph public finance
@@ -291,13 +291,17 @@ def parse_output(buildings, param):
     # graph consumption
     temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
     temp = temp.loc[:, ['Existing', 'Construction']]
-    make_area_plot(temp / 10 ** 9, 'Consumption (TWh)', colors=generic_input['colors'],
+    make_area_plot(temp / 10**9, 'Consumption (TWh)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'consumption.png'))
 
     return stock, detailed
 
 
 def indicator_policies(result, folder):
+
+    # TODO: energy taxes
+    # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
+
     def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
         """Calculate double difference.
 
@@ -360,9 +364,9 @@ def indicator_policies(result, folder):
     agg = {}
     for s in scenarios:
         rslt = {}
-        for var in ['Consumption (TWh)', 'Health cost (Billion euro)']:
+        for var in ['Consumption (TWh)', 'Health cost (Billion euro)', 'Health expenditure (Billion euro)']:
             rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
-                                          values=None)
+                                      values=None)
 
         for energy in generic_input['index']['Heating energy']:
             var = 'Consumption {} (TWh)'.format(energy)
@@ -380,6 +384,10 @@ def indicator_policies(result, folder):
                                                                            result[s].loc[var, :],
                                                                            values=carbon_value[energy])
 
+        #For "COFP"
+        # simple Diff subsidies and TVA
+        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Private Investment (Billion euro)']:
+            rslt[var] = (result['Reference'].loc[var, :] - result[s].loc[var, :]).sum()
         # For "COFP"
         # Simple Diff subsidies and TVA
         for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)']:
@@ -394,46 +402,45 @@ def indicator_policies(result, folder):
                                                         result[s].loc['Health expenditure (Billion euro)', :],
                                                         values=None)
 
-        # TODO
-        # double diff for taxes on energy
-
-        # Private investment
+        """"
+        #Private investment
         private_investment_ref = (result['Reference'].loc['Investment total (Billion euro)', :] -
                                   result['Reference'].loc['Subsidies total (Billion euro)']).sum()
         private_investment_s = (result[s].loc['Investment total (Billion euro)', :] -
                                 result[s].loc['Subsidies total (Billion euro)']).sum()
         rslt['Private Investment'] = private_investment_s - private_investment_ref
-
+        """
         agg[s] = rslt
+
     agg = pd.DataFrame(agg)
 
-    def socio_economic_npv(agg, discount_rate=0.045):
-        """
-        Calculation of the socio-economic net present value
+    def socioeconomic_npv(data):
+        """Calculate socioeconomic NPV.
+
         Parameters
         ----------
-        agg: pd.DataFrame
-        discount_rate: float, default 0.045
-            Discount rate.
+        data: pd.DataFrame
 
         Returns
         -------
-        pd.DataFrame containing se-npv for all scenarios in agg
+        pd.DataFrame
         """
         se_npv = {}
-        for s in agg.columns:
-            cofp = (agg[s]['Subsidies total (Billion euro)'] - agg[s]['VTA (Billion euro)']) * 0.2
-            # Energy taxes to add, health expenditure to review
-            energy_savings_total = sum(agg[s]['Energy expenditures {} (€)'.format(e)]
-                                       for e in generic_input['index']['Heating energy'])
-            carbon_avoided_emissions_total = sum(agg[s]['Carbon value {} (€)'.format(e)]
-                                                 for e in generic_input['index']['Heating energy'])
-            se_npv[s] = - agg[s]['Private Investment'] - cofp + energy_savings_total + carbon_avoided_emissions_total
-        df = pd.DataFrame({'Socio-econmic NPV': se_npv}).transpose()
-        return df
+        for s in data.columns:
+            df = data.loc[:, s]
 
-    socio_eco_npv_df = socio_economic_npv(agg)
-    new_agg = pd.concat([agg, socio_eco_npv_df])
+            cofp = (df['Subsidies total (Billion euro)'] + df['VTA (Billion euro)']) * 0.2
+            # df['Health Expenditures']
+
+            energy_saved = sum(df['Energy expenditures {} (€)'.format(energy)]
+                               for energy in generic_input['index']['Heating energy'])
+            carbon_avoided = sum(df['Carbon value {} (€)'.format(energy)]
+                                 for energy in generic_input['index']['Heating energy'])
+
+            se_npv[s] = - df['Private Investment'] - cofp + energy_saved + carbon_avoided
+        return pd.Series(se_npv, name='Socioeconomic NPV (Billion euro)')
+
+    agg = pd.concat((agg, socioeconomic_npv(agg)), axis=0)
 
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
@@ -482,8 +489,7 @@ def grouped_output(result, stocks, folder):
 
     """
 
-    variables = {'Consumption (TWh)': (
-    'consumption.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist']),
+    variables = {'Consumption (TWh)': ('consumption.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist']),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
@@ -494,7 +500,7 @@ def grouped_output(result, stocks, folder):
                  'Investment total (Billion euro)': ('flow_investment.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('flow_subsidies.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy expenditures (Billion euro)': (
-                     'flow_energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'flow_energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Health cost (Billion euro)': ('flow_health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Insulation actions (Thousand)': ('flow_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Replacement heater (Thousand)': ('flow_heater.png', lambda y, _: '{:,.0f}'.format(y))
