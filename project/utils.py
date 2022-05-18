@@ -243,3 +243,131 @@ def make_area_plot(df, y_label, colors=None, save=None):
         plt.close(fig)
     else:
         plt.show()
+
+
+def waterfall_chart(df, title='Social Economic Assessment', save=None):
+    """Make waterfall chart. Used for Social Economic Assessment.
+
+    Parameters
+    ----------
+    df: pd.Series
+    title: str, optional
+    save: str, default None
+    """
+    color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
+             'Health benefit': 'royalblue'}
+    data = df.copy()
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+
+    blank = data.cumsum().shift(1).fillna(0)
+
+    # Get the net total number for the final element in the waterfall
+    total = data.sum()
+    blank.loc["Social NPV"] = total
+    data.loc["Social NPV"] = total
+    # The steps graphically show the levels as well as used for label placement
+    step = blank.reset_index(drop=True).repeat(3).shift(-1)
+    step[1::3] = np.nan
+
+    # When plotting the last element, we want to show the full bar,
+    # Set the blank to 0
+    blank.loc["Social NPV"] = 0
+
+    # Plot and label
+    data.plot(kind='bar', stacked=True, bottom=blank, legend=None,
+              title=title, ax=ax, color=color.values(), edgecolor=None)
+    # my_plot.plot(step.index, step.values, 'k')
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=15)
+    ax.yaxis.set_tick_params(which=u'both', length=0)
+
+    # Get the y-axis position for the labels
+    y_height = data.cumsum().shift(1).fillna(0)
+
+    # Get an offset so labels don't sit right on top of the bar
+    max = data.max()
+    neg_offset, pos_offset = max / 20, max / 50
+    plot_offset = int(max / 15)
+
+    # Start label loop
+    loop = 0
+    for index, val in data.iteritems():
+        # For the last item in the list, we don't want to double count
+        if val == total:
+            y = y_height[loop]
+        else:
+            y = y_height[loop] + val
+        # Determine if we want a neg or pos offset
+        if val > 0:
+            y += pos_offset
+        else:
+            y -= neg_offset
+        ax.annotate("{:,.0f}".format(val), (loop, y), ha="center")
+        loop += 1
+
+    ax.set_xticklabels(data.index, rotation=0)
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def assessment_scenarios(df, save=None):
+    """Compare social NPV between scenarios and one reference.
+
+    Stacked bar chart.
+
+    Parameters
+    ----------
+    df
+    save
+
+    Returns
+    -------
+
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
+             'Health benefit': 'royalblue'}
+
+    total = df.sum(axis=1).reset_index()
+    total.columns = ['Scenarios', 'NPV']
+
+    pd.DataFrame(total).plot(kind='scatter', x='Scenarios', y='NPV', legend=False, zorder=10, ax=ax, color='black',
+                             s=50, xlabel=None)
+    df.plot(kind='bar', stacked=True, ax=ax, color=color)
+
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=12)
+    ax.yaxis.set_tick_params(which=u'both', length=0)
+
+    ax.xaxis.label.set_visible(False)
+    ax.yaxis.label.set_visible(False)
+
+    for _, y in total.iterrows():
+        ax.annotate("{:,.1f} M€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 1), ha="center")
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                     box.width, box.height * 0.9])
+
+    # Put a legend below current axis
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
+              frameon=False, shadow=True, ncol=5)
+    ax.set_xticklabels(df.index, rotation=0)
+
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
