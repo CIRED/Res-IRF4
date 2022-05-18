@@ -261,8 +261,6 @@ def parse_output(buildings, param):
         'Subsidies insulation (Billion euro)']
     detailed['Balance state (Billion euro)'] = detailed['Income state (Billion euro)'] - detailed[
         'Expenditure state (Billion euro)']
-    detailed['Private Investment (Billion euro)'] = detailed['Investment cost (Billion euro)'] - detailed[
-        'Subsidies total (Billion euro)']
 
     detailed = pd.DataFrame(detailed).loc[buildings.stock_yrs.keys(), :].T
 
@@ -370,7 +368,7 @@ def indicator_policies(result, folder):
         rslt = {}
         for var in ['Consumption (TWh)', 'Health cost (Billion euro)', 'Health expenditure (Billion euro)']:
             rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
-                                          values=None)
+                                      values=None)
 
         for energy in generic_input['index']['Heating energy']:
             var = 'Consumption {} (TWh)'.format(energy)
@@ -392,6 +390,19 @@ def indicator_policies(result, folder):
         # simple Diff subsidies and TVA
         for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment cost (Billion euro)']:
             rslt[var] = (result['Reference'].loc[var, :] - result[s].loc[var, :]).sum()
+        # For "COFP"
+        # Simple Diff subsidies and TVA
+        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)']:
+            discount = pd.Series(
+                [1 / (1 + 0.045) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
+                index=result['Reference'].loc[var, :].index)
+            rslt[var] = ((result['Reference'].loc[var, :] - result[s].loc[var, :]) * discount.T).sum()
+
+
+        # Double diff health cost and taxes on energy
+        rslt['Health Expenditures'] = double_difference(result['Reference'].loc['Health expenditure (Billion euro)', :],
+                                                        result[s].loc['Health expenditure (Billion euro)', :],
+                                                        values=None)
 
         agg[s] = rslt
 
@@ -399,7 +410,7 @@ def indicator_policies(result, folder):
 
     def socioeconomic_npv(data, save=None):
         """Calculate socioeconomic NPV.
-        
+
         Parameters
         ----------
         data: pd.DataFrame
