@@ -18,7 +18,7 @@
 import os
 import pandas as pd
 import numpy as np
-from utils import reindex_mi
+from utils import reindex_mi, timing
 import thermal
 
 
@@ -578,6 +578,7 @@ class AgentBuildings(ThermalBuildings):
         probability_replacement = probability_replacement.reindex(market_share.index)
         return market_share, probability_replacement
 
+    @timing
     def heater_replacement(self, prices, cost_heater, ms_heater, policies_heater, probability_replacement=1/20,
                            index=None):
         """Function returns new building stock after heater replacement.
@@ -725,6 +726,7 @@ class AgentBuildings(ThermalBuildings):
             self.subsidies_details_heater[self.year][key] *= replacement
         self.heater_replaced.update({self.year: replaced_by})
 
+    @timing
     def calibration_constant_heater(self, utility, ms_heater):
         """Constant to match the observed market-share.
 
@@ -774,6 +776,7 @@ class AgentBuildings(ThermalBuildings):
 
         return constant
 
+    @timing
     def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None,
                             levels_heater='Heating system'):
         """Constitute building components' performance.
@@ -793,7 +796,12 @@ class AgentBuildings(ThermalBuildings):
         if not isinstance(performance_insulation, pd.MultiIndex):
             performance_insulation = self._performance_insulation
 
-        s = pd.concat([pd.Series(index=index, dtype=float)] * len(choice_insulation), axis=1).set_axis(choice_insulation, axis=1)
+        # only selecting useful levels
+        idx = index.copy()
+        idx = idx.droplevel([i for i in idx.names if i not in ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows'] + [levels_heater]])
+        idx = idx[~idx.duplicated()]
+
+        s = pd.concat([pd.Series(index=idx, dtype=float)] * len(choice_insulation), axis=1).set_axis(choice_insulation, axis=1)
 
         wall_buildings, floor_buildings, roof_buildings, windows_buildings = {}, {}, {}, {}
         for name, series in s.iteritems():
@@ -818,7 +826,7 @@ class AgentBuildings(ThermalBuildings):
             else:
                 windows_buildings[name] = pd.Series(series.index.get_level_values('Windows'), index=series.index)
 
-        heating_system = pd.Series(index.get_level_values(levels_heater), index=index)
+        heating_system = pd.Series(idx.get_level_values(levels_heater), index=idx)
         energy = heating_system.str.split('-').str[0].rename('Energy')
         heater = heating_system.str.split('-').str[1]
         efficiency = pd.to_numeric(heater.replace(self._efficiency))
@@ -840,9 +848,12 @@ class AgentBuildings(ThermalBuildings):
                                                   )
 
         consumption_sd = pd.DataFrame(consumption_sd).rename_axis(choice_insulation.names, axis=1)
+        consumption_sd = reindex_mi(consumption_sd, index)
         certificate = pd.DataFrame(certificate).rename_axis(choice_insulation.names, axis=1)
+        certificate = reindex_mi(certificate, index)
         return consumption_sd, certificate
 
+    @timing
     def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
 
@@ -863,6 +874,7 @@ class AgentBuildings(ThermalBuildings):
         cost.loc[idx[:, :, :, True]] = cost.loc[idx[:, :, :, True]] + cost_insulation['Windows']
         return cost
 
+    @timing
     def prepare_subsidy_insulation(self, subsidies_insulation):
         """Constitute insulation choice set subsidies. Subsidies are equal to the sum of each individual subsidy.
 
@@ -887,6 +899,7 @@ class AgentBuildings(ThermalBuildings):
             subsidies_insulation['Windows'], axis=0) * self.surface_insulation['Windows']
         return subsidy
 
+    @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive,
                             utility_zil=None):
         """Calculate endogenous retrofit based on discrete choice model.
@@ -954,7 +967,6 @@ class AgentBuildings(ThermalBuildings):
         if self.utility_insulation_intensive is None:
             self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation, ms_extensive)
         utility += self.utility_insulation_intensive
-        print('market_share')
 
         market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
         """stock = self.stock.groupby(market_share.index.names).sum().reindex(market_share.index)
@@ -980,11 +992,11 @@ class AgentBuildings(ThermalBuildings):
         # utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
         utility += self.utility_insulation_extensive
         retrofit_rate = 1 / (1 + np.exp(- utility))
-        print('retrofit_rate')
 
         return retrofit_rate, market_share
 
     @staticmethod
+    @timing
     def exogenous_retrofit(index, choice_insulation):
         """Format retrofit rate and market share for each segment.
 
@@ -1011,6 +1023,7 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
+    @timing
     def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, ms_extensive, policies_insulation,
                                index=None):
         """Calculate insulation retrofit in the dwelling stock.
@@ -1056,13 +1069,12 @@ class AgentBuildings(ThermalBuildings):
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
         cost_insulation = cost_insulation.reindex(certificate.index)
-        print('start apply_subsidies_insulation')
+
         cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump = self.apply_subsidies_insulation(
             policies_insulation,
             cost_insulation, surface,
             certificate,
             certificate_before)
-        print('end apply_subsidies_insulation')
 
         if self._endogenous:
 
@@ -1074,11 +1086,10 @@ class AgentBuildings(ThermalBuildings):
             utility_zil = None
             if 'zero_interest_loan' in subsidies_details:
                 utility_zil = subsidies_details['zero_interest_loan']
-            print('start endogenous_retrofit')
+
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
                                                                    ms_insulation, ms_extensive,
                                                                    utility_zil=utility_zil)
-            print('end endogenous_retrofit')
 
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
@@ -1088,6 +1099,7 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
+    @timing
     def apply_subsidies_insulation(self, policies_insulation, cost_insulation, surface, certificate, certificate_before):
         """Calculate subsidies amount for each possible insulation choice.
 
@@ -1148,7 +1160,7 @@ class AgentBuildings(ThermalBuildings):
             if policy.policy == 'subsidy_target':
 
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
-                                                  frame.index).T * surface).T
+                                   frame.index).T * surface).T
 
                 if policy.name in subsidies_details.keys():
                     subsidies_details[policy.name] += temp
@@ -1217,6 +1229,7 @@ class AgentBuildings(ThermalBuildings):
 
         return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
 
+    @timing
     def store_information_insulation(self, certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                      tax_insulation, subsidies_details, subsidies_total, retrofit_rate):
         """Store insulation information.
@@ -1251,6 +1264,7 @@ class AgentBuildings(ThermalBuildings):
         self.tax_insulation.update({self.year: tax_insulation})
         self.retrofit_rate.update({self.year: retrofit_rate})
 
+    @timing
     def calibration_constant_intensive(self, utility, ms_insulation, ms_extensive):
         """Calibrate alternative-specific constant to match observed market-share.
 
@@ -1299,6 +1313,7 @@ class AgentBuildings(ThermalBuildings):
 
         return constant
 
+    @timing
     def calibration_constant_extensive(self, utility, ms_extensive):
         """Calibrate alternative-specific constant to match observed market-share.
 
@@ -1349,6 +1364,7 @@ class AgentBuildings(ThermalBuildings):
 
         return utility_constant
 
+    @timing
     def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,
                       policies_heater, policies_insulation):
         """Compute heater replacement and insulation retrofit.
@@ -1375,11 +1391,10 @@ class AgentBuildings(ThermalBuildings):
         """
         stock = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
 
-        print(stock.shape[0])
+        print('Index: {}'.format(stock.shape[0]))
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
                                                                   index=stock.index)
-        print('end insulation_replacement')
 
         retrofit_rate = reindex_mi(retrofit_rate, stock.index)
         retrofit_stock = (retrofit_rate * stock).dropna()
@@ -1430,6 +1445,7 @@ class AgentBuildings(ThermalBuildings):
 
         return flow_retrofit
 
+    @timing
     def store_information_retrofit(self, replaced_by):
         """Calculate and store main outputs based on yearly retrofit.
 

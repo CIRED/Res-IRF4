@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import os
 
 from input.param import generic_input
-from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot
+from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, assessment_scenarios
 
 SMALL_SIZE = 10
 MEDIUM_SIZE = 18
@@ -303,6 +303,8 @@ def indicator_policies(result, folder):
 
     # TODO: energy taxes
     # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
+    folder_policies = os.path.join(folder, 'policies')
+    os.mkdir(folder_policies)
 
     def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
         """Calculate double difference.
@@ -395,33 +397,49 @@ def indicator_policies(result, folder):
 
     agg = pd.DataFrame(agg)
 
-    def socioeconomic_npv(data):
+    def socioeconomic_npv(data, save=None):
         """Calculate socioeconomic NPV.
         
         Parameters
         ----------
         data: pd.DataFrame
+        save: str, default None
 
         Returns
         -------
         pd.DataFrame
         """
-        se_npv = {}
+        npv = {}
         for s in data.columns:
             df = data.loc[:, s]
 
-            cofp = (df['Subsidies total (Billion euro)'] + df['VTA (Billion euro)']) * 0.2
+            cofp = (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)']) * 0.2
             # df['Health Expenditures']
 
-            energy_saved = sum(df['Energy expenditures {} (€)'.format(energy)]
-                               for energy in generic_input['index']['Heating energy'])
-            carbon_avoided = sum(df['Carbon value {} (€)'.format(energy)]
-                                 for energy in generic_input['index']['Heating energy'])
+            energy_saved = - sum(df['Energy expenditures {} (€)'.format(i)]
+                                 for i in generic_input['index']['Heating energy'])
+            carbon_avoided = - sum(df['Carbon value {} (€)'.format(i)]
+                                   for i in generic_input['index']['Heating energy'])
 
-            se_npv[s] = - df['Investment cost (Billion euro)'] - cofp + energy_saved + carbon_avoided
-        return pd.Series(se_npv, name='Socioeconomic NPV (Billion euro)')
+            temp = pd.Series({'Investment': df['Investment cost (Billion euro)'],
+                              'Energy saving': energy_saved,
+                              'Emission saving': carbon_avoided,
+                              'Health benefit': df['Health cost (Billion euro)']
+                              })
+            if save:
+                waterfall_chart(temp, title=s, save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))))
 
-    agg = pd.concat((agg, socioeconomic_npv(agg)), axis=0)
+            npv[s] = temp
+
+        npv = pd.DataFrame(npv)
+        if save:
+            assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')))
+
+        npv.loc['NPV', :] = npv.sum()
+        return npv
+
+    se_npv = socioeconomic_npv(agg, save=folder_policies)
+    agg = pd.concat((agg, se_npv), axis=0)
 
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
@@ -554,7 +572,7 @@ def grouped_output(result, stocks, folder):
         for info in infos:
             details_graphs(result, var, info)
 
-    if 'Reference' in result.keys():
+    if 'Reference' in result.keys() and len(result.keys()) > 1:
         indicator_policies(result, folder)
 
 

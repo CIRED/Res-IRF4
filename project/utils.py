@@ -18,15 +18,25 @@
 import numpy as np
 import pandas as pd
 from math import floor, ceil
-from collections import defaultdict
-from itertools import product
 import seaborn as sns
-
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from collections import defaultdict
+from functools import wraps
+from time import time
 
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
+
+
+def timing(f):
+    @wraps(f)
+    def wrap(*args, **kw):
+        ts = time()
+        result = f(*args, **kw)
+        te = time()
+        print(f'Function {f.__name__} took {te-ts:2.4f} seconds')
+        return result
+    return wrap
 
 
 def reverse_dict(data):
@@ -328,9 +338,6 @@ def assessment_scenarios(df, save=None):
     df
     save
 
-    Returns
-    -------
-
     """
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
     color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
@@ -347,7 +354,7 @@ def assessment_scenarios(df, save=None):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=12)
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=15)
     ax.yaxis.set_tick_params(which=u'both', length=0)
 
     ax.xaxis.label.set_visible(False)
@@ -364,7 +371,6 @@ def assessment_scenarios(df, save=None):
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
               frameon=False, shadow=True, ncol=5)
     ax.set_xticklabels(df.index, rotation=0)
-
 
     if save is not None:
         fig.savefig(save, bbox_inches='tight')
