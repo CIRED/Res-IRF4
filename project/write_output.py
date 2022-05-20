@@ -351,11 +351,11 @@ def indicator_policies(result, folder):
                              index=matrix_double_diff.index)
         return (matrix_double_diff * discount).sum()
 
-    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0])
-    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()
-    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv', index_col=[0])
-    # €/tCO2 / 1000000 * gCO2/kWh  = €/kWH
-    carbon_value = (carbon_value * carbon_emission.T).T / 1000000
+    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10**9 #€/kWh to €/TWh
+    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze() #€/tCO2
+    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv', index_col=[0]) * 10**3 #unit: gCO2/ kWh to tCO2/ TWh
+    # €/tCO2 * tCO2/TWh  = €/TWh
+    carbon_value = (carbon_value * carbon_emission.T).T # €/TWh
     carbon_value.dropna(how='all', inplace=True)
 
     scenarios = [s for s in result.keys() if s != 'Reference']
@@ -374,35 +374,26 @@ def indicator_policies(result, folder):
             var = 'Consumption {} (TWh)'.format(energy)
             rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
                                           values=None)
-            rslt['Energy expenditures {} (€)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
+            rslt['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
                                                                                   result[s].loc[var, :],
-                                                                                  values=energy_prices[energy])
+                                                                                  values=energy_prices[energy]) / (10 ** 9)
+            #On a des euros
 
-            rslt['Emission {} (gCO2)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
+            rslt['Emission {} (tCO2)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
                                                                           result[s].loc[var, :],
                                                                           values=carbon_emission[energy])
 
-            rslt['Carbon value {} (€)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
+            rslt['Carbon value {} (Billion euro)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
                                                                            result[s].loc[var, :],
-                                                                           values=carbon_value[energy])
+                                                                           values=carbon_value[energy]) / (10 ** 9)
 
-        #For "COFP"
-        # simple Diff subsidies and TVA
+        # Simple Diff for subsidies, TVA, Investment, then discounted once
+        # Simple diff scenario - ref
         for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment cost (Billion euro)']:
-            rslt[var] = (result['Reference'].loc[var, :] - result[s].loc[var, :]).sum()
-        # For "COFP"
-        # Simple Diff subsidies and TVA
-        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)']:
             discount = pd.Series(
                 [1 / (1 + 0.045) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
                 index=result['Reference'].loc[var, :].index)
-            rslt[var] = ((result['Reference'].loc[var, :] - result[s].loc[var, :]) * discount.T).sum()
-
-
-        # Double diff health cost and taxes on energy
-        rslt['Health Expenditures'] = double_difference(result['Reference'].loc['Health expenditure (Billion euro)', :],
-                                                        result[s].loc['Health expenditure (Billion euro)', :],
-                                                        values=None)
+            rslt[var] = ((result[s].loc[var, :] - result['Reference'].loc[var, :]) * discount.T).sum()
 
         agg[s] = rslt
 
@@ -410,6 +401,11 @@ def indicator_policies(result, folder):
 
     def socioeconomic_npv(data, save=None):
         """Calculate socioeconomic NPV.
+        Double difference is calculated with : scenario - reference
+        If the scenario requires more investment than the reference, then the difference of investments is
+        positive, and it is taken into account in the NPV as a negative impact: - Investment cost
+        If the scenario results in less energy consumed then the reference, then energy savings is positive,
+        and taken into account in the NPV as a positive account.
 
         Parameters
         ----------
@@ -427,15 +423,15 @@ def indicator_policies(result, folder):
             cofp = (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)']) * 0.2
             # df['Health Expenditures']
 
-            energy_saved = - sum(df['Energy expenditures {} (€)'.format(i)]
+            energy_saved = - sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                  for i in generic_input['index']['Heating energy'])
-            carbon_avoided = - sum(df['Carbon value {} (€)'.format(i)]
+            carbon_avoided = - sum(df['Carbon value {} (Billion euro)'.format(i)]
                                    for i in generic_input['index']['Heating energy'])
 
-            temp = pd.Series({'Investment': df['Investment cost (Billion euro)'],
+            temp = pd.Series({'Investment': - df['Investment cost (Billion euro)'],
                               'Energy saving': energy_saved,
                               'Emission saving': carbon_avoided,
-                              'Health benefit': df['Health cost (Billion euro)']
+                              'Health benefit': - df['Health cost (Billion euro)']
                               })
             if save:
                 waterfall_chart(temp, title=s, save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))))
@@ -452,6 +448,61 @@ def indicator_policies(result, folder):
     se_npv = socioeconomic_npv(agg, save=folder_policies)
     agg = pd.concat((agg, se_npv), axis=0)
 
+    def simple_cost_efficiency(data):
+        """
+        Calculate cost efficiency = Investment cost/ energy savings
+        Energy savings are calculated with double difference
+        This function needs correcting - work in progress
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        cost_efficiency = {}
+        for s in data.columns:
+            temp = data[s].loc['Investment cost (Billion euro)']/data[s].loc['Energy saving'] #pour des histoires de signes je pense que c'est inv costs
+            cost_efficiency[s] = pd.Series({'Cost efficiency': temp})
+        cost_efficiency = pd.DataFrame(cost_efficiency)
+        return (cost_efficiency)
+
+    rslt_cost_eff_simple = simple_cost_efficiency(agg)
+    agg = pd.concat((agg, rslt_cost_eff_simple), axis=0)
+
+    def leverage(result_data, data, discount_rate=0.045):
+        """
+        Calculate cost efficiency = Investment/ Subsidies cost
+        Rq:This function needs correcting - work in progress
+
+        Parameters
+        ----------
+        result_data: pd.DataFrame
+        data: pd.DataFrame
+
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        lev = {}
+        for s in data.columns:
+            inv = data[s].loc['Investment cost (Billion euro)']
+            sub = result_data[s].loc['Subsidies total (Billion euro)']
+            factor = pd.Series([1 / (1 + discount_rate) ** i for i in range(sub.shape[0])], index=sub.index)
+            sub = (sub*factor).sum()
+            lev[s] = pd.Series({'Leverage': inv/sub})
+        lev = pd.DataFrame(lev)
+        return (lev)
+
+    rslt_leverage = leverage(result, agg)
+    agg = pd.concat((agg, rslt_leverage), axis=0)
+
+
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
                  'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
@@ -462,7 +513,6 @@ def indicator_policies(result, folder):
              variables}).T
         agg = pd.concat((agg, temp), axis=0)
     agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
-
 
 def grouped_output(result, stocks, folder):
     """Grouped scenarios output.

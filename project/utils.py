@@ -361,7 +361,7 @@ def assessment_scenarios(df, save=None):
     ax.yaxis.label.set_visible(False)
 
     for _, y in total.iterrows():
-        ax.annotate("{:,.1f} M€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 1), ha="center")
+        ax.annotate("{:,.1f} Md€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 1), ha="center")
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
