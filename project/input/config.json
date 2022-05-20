@@ -1,4 +1,19 @@
 {
+  "assessment": {
+    "Policies indicators": true,
+    "Policy name": "reduced_tax",
+    "All policies": "Reference",
+    "All policies - 1": "AP-1",
+    "Zero policies": "ZP",
+    "Zero policies + 1": "ZP+1",
+    "Policy - 2021": "AP-2021",
+    "Policy - 2025": null,
+    "Policy - 2030": null,
+    "Policy - 2035": null,
+    "Policy - 2040": null,
+    "Discount rate": 0.045,
+    "Lifetime": 30
+  },
   "Reference": {
     "end": 2021,
     "prices_constant": false,
@@ -66,152 +81,6 @@
       "zero_interest_loan": {
         "start": 2019,
         "end": 2051,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      }
-    }
-  },
-  "ZP": {
-    "end": 2021,
-    "prices_constant": false,
-    "demolition_rate": 0.0035,
-    "income_rate": 0.012,
-    "start": 2018,
-    "endogenous": true,
-    "exogenous_detailed": {
-      "number": 0
-    },
-    "building_stock": "project/input/building_stock_sdes2018.csv",
-    "population": "project/input/population.csv",
-    "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
-    "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-    "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
-    "data_ceren": "project/input/revealed_data/data_ceren.csv",
-    "cost_heater": "project/input/cost_heater.csv",
-    "cost_insulation": "project/input/cost_insulation.csv",
-    "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices.csv",
-    "energy_taxes": null,
-    "carbon_emission": "project/input/policies/carbon_emission.csv",
-    "health_cost": "project/input/policies/health_cost.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": {
-      "mpr": {
-        "start": 2018,
-        "end": 2018,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
-      "cee": {
-        "start": 2019,
-        "end": 2020,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2020,
-        "insulation": "project/input/policies/subsidies_cap.csv"
-      },
-      "carbon_tax": {
-        "start": 2019,
-        "end": 2020,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2020,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": 0.17,
-        "cap": 16000
-      },
-      "reduced_tax": {
-        "start": 2019,
-        "end": 2020,
-        "value": 0.05
-      },
-      "zero_interest_loan": {
-        "start": 2019,
-        "end": 2020,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      }
-    }
-  },
-  "ZP price constant": {
-    "end": 2021,
-    "prices_constant": true,
-    "demolition_rate": 0.0035,
-    "income_rate": 0.012,
-    "start": 2018,
-    "endogenous": true,
-    "exogenous_detailed": {
-      "number": 0
-    },
-    "building_stock": "project/input/building_stock_sdes2018.csv",
-    "population": "project/input/population.csv",
-    "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
-    "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-    "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
-    "data_ceren": "project/input/revealed_data/data_ceren.csv",
-    "cost_heater": "project/input/cost_heater.csv",
-    "cost_insulation": "project/input/cost_insulation.csv",
-    "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices.csv",
-    "energy_taxes": null,
-    "carbon_emission": "project/input/policies/carbon_emission.csv",
-    "health_cost": "project/input/policies/health_cost.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": {
-      "mpr": {
-        "start": 2018,
-        "end": 2018,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
-      "cee": {
-        "start": 2019,
-        "end": 2020,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2020,
-        "insulation": "project/input/policies/subsidies_cap.csv"
-      },
-      "carbon_tax": {
-        "start": 2019,
-        "end": 2020,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2020,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": 0.17,
-        "cap": 16000
-      },
-      "reduced_tax": {
-        "start": 2019,
-        "end": 2020,
-        "value": 0.05
-      },
-      "zero_interest_loan": {
-        "start": 2019,
-        "end": 2020,
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"

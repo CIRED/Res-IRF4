@@ -19,6 +19,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import re
 
 from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, assessment_scenarios
@@ -297,12 +298,29 @@ def parse_output(buildings, param):
     return stock, detailed
 
 
-def indicator_policies(result, folder):
+def indicator_policies(result, folder, config_runs):
 
     # TODO: energy taxes
     # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
+
+    config = {key: item for key, item in config_runs.items() if item is not None}
+    list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
+    temp = ['Policy - {}'.format(year) for year in list_years]
+    for key, item in config.items():
+        if key in ['All policies', 'All policies - 1', 'Zero policies', 'Zero policies + 1'] or key in temp:
+            config[key] = item.replace(' ', '_')
+
+    if 'Discount rate' in config.keys():
+        discount_rate = float(config['Discount rate'])
+
+    if 'Lifetime' in config.keys():
+        lifetime = int(config['Lifetime'])
+
+    discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
+
+
 
     def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
         """Calculate double difference.
@@ -468,7 +486,7 @@ def indicator_policies(result, folder):
             temp = data[s].loc['Investment cost (Billion euro)']/data[s].loc['Energy saving'] #pour des histoires de signes je pense que c'est inv costs
             cost_efficiency[s] = pd.Series({'Cost efficiency': temp})
         cost_efficiency = pd.DataFrame(cost_efficiency)
-        return (cost_efficiency)
+        return cost_efficiency
 
     rslt_cost_eff_simple = simple_cost_efficiency(agg)
     agg = pd.concat((agg, rslt_cost_eff_simple), axis=0)
@@ -502,7 +520,6 @@ def indicator_policies(result, folder):
     rslt_leverage = leverage(result, agg)
     agg = pd.concat((agg, rslt_leverage), axis=0)
 
-
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
                  'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
                  'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
@@ -514,7 +531,8 @@ def indicator_policies(result, folder):
         agg = pd.concat((agg, temp), axis=0)
     agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
 
-def grouped_output(result, stocks, folder):
+
+def grouped_output(result, stocks, folder, config_runs):
     """Grouped scenarios output.
 
     Renovation expenditure discounted (Billion euro)
@@ -543,6 +561,7 @@ def grouped_output(result, stocks, folder):
     result
     stocks
     folder
+    config_runs: dict
 
     Returns
     -------
@@ -634,6 +653,11 @@ def grouped_output(result, stocks, folder):
             details_graphs(result, var, info)
 
     if 'Reference' in result.keys() and len(result.keys()) > 1:
-        indicator_policies(result, folder)
+        indicator_policies(result, folder, config_runs)
+
+    """
+    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs['effectivnees]:
+        cost_efficient()
+    """
 
 

@@ -115,6 +115,13 @@ if __name__ == '__main__':
     folder = os.path.join('project/output', datetime.today().strftime('%Y%m%d_%H%M%S'))
     os.mkdir(folder)
 
+    if 'assessment' in configuration.keys():
+        config_runs = configuration['assessment']
+        del configuration['assessment']
+    else:
+        config_runs = dict()
+        config_runs['Policies indicators'] = False
+
     logging.debug('Launching processes')
     processes = list()
     with Pool() as pool:
@@ -125,7 +132,7 @@ if __name__ == '__main__':
     stocks = {i[0]: i[2] for i in results}
 
     logging.debug('Parsing results')
-    grouped_output(result, stocks, folder)
+    grouped_output(result, stocks, folder, config_runs)
 
     logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
 
