@@ -20,6 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import re
+import pickle
 
 from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, assessment_scenarios
@@ -156,6 +157,14 @@ def parse_output(buildings, param):
     t = t / s
     detailed.update(t.T)
 
+    # getting needed parameters to calculate grey energy: it would be good to include them in "param", fo now hard coded
+    grey_en = pd.read_csv('project/input/grey_energy.csv', index_col=[0, 1]).squeeze()
+    with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
+        needed_param = pickle.load(f)
+    # calculating ratio applied to grey energy values for each type of renovation action
+    df = needed_param['ratio_surface'].T / needed_param['ratio_surface'].sum(axis=1)
+
+    df_grey_energy = {}
     for i in ['Wall', 'Floor', 'Roof', 'Windows']:
         temp = pd.DataFrame(
             {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
@@ -164,6 +173,22 @@ def parse_output(buildings, param):
 
         # only work because existing surface does not change over time
         detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**9
+
+        #calculating aprrox grey energy associated with this renovation
+        #putting factor in shape to easily multiply it with surface
+        factor = pd.concat([df.loc[i]]*len(param['surface'].columns), axis=1)
+        factor.columns = param['surface'].columns
+        factor.index.name = 'Housing type'
+        #multiplying factor with surface
+        surface_ratio = (param['surface'] * reindex_mi(factor, param['surface'].index))
+        grey_energy = grey_en['Grey energy (kWh/m2)'].loc[:, 'Retrofit']
+        for material in grey_energy.index:
+            #calculating: grey energy for a renovation * number of renovation concerning i * surface_ratio
+            df_grey_energy['Grey energy {} - {} (kWh)'.format(i, material)] = grey_energy[material] * (
+                    temp * reindex_mi(surface_ratio, temp.index)).sum()
+
+    df_grey_energy = pd.DataFrame(df_grey_energy).loc[buildings.stock_yrs.keys(), :].T
+
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9

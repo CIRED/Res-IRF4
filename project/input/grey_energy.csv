@@ -1,0 +1,5 @@
+Material type,Work,Carbon content (kgCO2/m2),Grey energy (kWh/m2)
+Traditional material,Construction,500,1500
+Traditional material,Retrofit,120,500
+Bio material,Construction,200,900
+Bio material,Retrofit,60,350
