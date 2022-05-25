@@ -165,6 +165,8 @@ def parse_output(buildings, param):
     df = needed_param['ratio_surface'].T / needed_param['ratio_surface'].sum(axis=1)
 
     df_grey_energy = {}
+    grey_energy = grey_en['Grey energy (kWh/m2)'].loc[:, 'Retrofit']
+
     for i in ['Wall', 'Floor', 'Roof', 'Windows']:
         temp = pd.DataFrame(
             {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
@@ -175,20 +177,25 @@ def parse_output(buildings, param):
         detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**9
 
         #calculating aprrox grey energy associated with this renovation
+        df_grey_energy[i] = {}
         #putting factor in shape to easily multiply it with surface
         factor = pd.concat([df.loc[i]]*len(param['surface'].columns), axis=1)
         factor.columns = param['surface'].columns
         factor.index.name = 'Housing type'
         #multiplying factor with surface
         surface_ratio = (param['surface'] * reindex_mi(factor, param['surface'].index))
-        grey_energy = grey_en['Grey energy (kWh/m2)'].loc[:, 'Retrofit']
+
         for material in grey_energy.index:
             #calculating: grey energy for a renovation * number of renovation concerning i * surface_ratio
-            df_grey_energy['Grey energy {} - {} (kWh)'.format(i, material)] = grey_energy[material] * (
+            df_grey_energy[i][material] = grey_energy[material] * (
                     temp * reindex_mi(surface_ratio, temp.index)).sum()
 
-    df_grey_energy = pd.DataFrame(df_grey_energy).loc[buildings.stock_yrs.keys(), :].T
+    df_grey_energy = pd.DataFrame.from_dict(df_grey_energy, orient="columns").stack().to_frame()
+    df_grey_energy = pd.DataFrame(df_grey_energy[0].values.tolist(),
+                                  index=df_grey_energy.index).loc[:, buildings.stock_yrs.keys()] / 10**9 #TWh
 
+    detailed['Traditional Retrofit Grey Energy (TWhPE)'] = df_grey_energy.loc['Traditional material'].sum()
+    detailed['Bio Retrofit Grey Energy (TWhPE)'] = df_grey_energy.loc['Bio material'].sum()
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
