@@ -34,7 +34,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
 def plot_attribute(stock, attribute, dict_order=None, suptitle=None, percent=False, dict_color=None,
-                   width=0.3):
+                   width=0.3, save=None, figsize=(12.8, 9.6)):
     """Make bar plot for 1 stock dataframe for one attribute in order to graphically compare.
 
     Parameters
@@ -49,7 +49,7 @@ def plot_attribute(stock, attribute, dict_order=None, suptitle=None, percent=Fal
     width: float, default 0.3
     """
 
-    fig, ax = plt.subplots(figsize=(12.8, 9.6))
+    fig, ax = plt.subplots(figsize=figsize)
 
     stock_total = stock.sum()
 
@@ -84,6 +84,12 @@ def plot_attribute(stock, attribute, dict_order=None, suptitle=None, percent=Fal
     ax.spines['left'].set_visible(False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict_color=None,

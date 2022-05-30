@@ -84,6 +84,7 @@ def parse_output(buildings, param):
     detailed['Emission (MtCO2)'] = emission.sum() / 10 ** 12
     detailed['Cumulated emission (MtCO2)'] = detailed['Emission (MtCO2)'].cumsum()
     detailed['Stock (Million)'] = stock.sum() / 10 ** 6
+    detailed['Surface (Million m2)'] = pd.DataFrame(buildings.surface_yrs).sum() / 10**6
 
     temp = pd.DataFrame(buildings.certificate_nb)
     temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
@@ -157,16 +158,6 @@ def parse_output(buildings, param):
     t = t / s
     detailed.update(t.T)
 
-    # getting needed parameters to calculate grey energy: it would be good to include them in "param", fo now hard coded
-    grey_en = pd.read_csv('project/input/grey_energy.csv', index_col=[0, 1]).squeeze()
-    with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
-        needed_param = pickle.load(f)
-    # calculating ratio applied to grey energy values for each type of renovation action
-    df = needed_param['ratio_surface'].T / needed_param['ratio_surface'].sum(axis=1)
-
-    df_grey_energy = {}
-    grey_energy = grey_en['Grey energy (kWh/m2)'].loc[:, 'Retrofit']
-
     for i in ['Wall', 'Floor', 'Roof', 'Windows']:
         temp = pd.DataFrame(
             {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
@@ -176,36 +167,24 @@ def parse_output(buildings, param):
         # only work because existing surface does not change over time
         detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**9
 
-        #calculating aprrox grey energy associated with this renovation
-        df_grey_energy[i] = {}
-        #putting factor in shape to easily multiply it with surface
-        factor = pd.concat([df.loc[i]]*len(param['surface'].columns), axis=1)
-        factor.columns = param['surface'].columns
-        factor.index.name = 'Housing type'
-        #multiplying factor with surface
-        surface_ratio = (param['surface'] * reindex_mi(factor, param['surface'].index))
+        detailed['Embodied energy {} (TWh PE)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) * param['embodied_energy_renovation'][i]).sum() / 10**9
+        detailed['Carbon footprint {} (MtCO2)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) * param['carbon_footprint_renovation'][i]).sum() / 10**9
 
-        for material in grey_energy.index:
-            #calculating: grey energy for a renovation * number of renovation concerning i * surface_ratio
-            df_grey_energy[i][material] = grey_energy[material] * (
-                    temp * reindex_mi(surface_ratio, temp.index)).sum()
+    detailed['Embodied energy renovation (TWh PE)'] = detailed['Embodied energy Wall (TWh PE)'] + detailed[
+        'Embodied energy Floor (TWh PE)'] + detailed['Embodied energy Roof (TWh PE)'] + detailed[
+                                               'Embodied energy Windows (TWh PE)']
 
-    df_grey_energy = pd.DataFrame.from_dict(df_grey_energy, orient="columns").stack().to_frame()
-    df_grey_energy = pd.DataFrame(df_grey_energy[0].values.tolist(),
-                                  index=df_grey_energy.index).loc[:, buildings.stock_yrs.keys()] / 10**9 #TWh
+    detailed['Embodied energy construction (TWh PE)'] = param['Embodied energy construction (TWh PE)']
+    detailed['Embodied energy (TWh PE)'] = detailed['Embodied energy renovation (TWh PE)'] + detailed[
+        'Embodied energy construction (TWh PE)']
 
-    detailed['Traditional Retrofit Grey Energy (TWhPE)'] = df_grey_energy.loc['Traditional material'].sum()
-    detailed['Bio Retrofit Grey Energy (TWhPE)'] = df_grey_energy.loc['Bio material'].sum()
+    detailed['Carbon footprint renovation (MtCO2)'] = detailed['Carbon footprint Wall (MtCO2)'] + detailed[
+        'Carbon footprint Floor (MtCO2)'] + detailed['Carbon footprint Roof (MtCO2)'] + detailed[
+                                               'Carbon footprint Windows (MtCO2)']
 
-    # Getting grey energy for construction
-    # This is temporary and should be integrated in dynamic.py for more precise estimation (and check these estimates)
-    my_stock = pd.DataFrame(buildings.stock_yrs).fillna(0)
-    my_stock_construction = my_stock.groupby('Existing').sum().loc[False].T
-    new_grey_energy = grey_en['Grey energy (kWh/m2)'].loc[:, 'Construction']
-    mean_surface = param['surface'].groupby('Existing').mean().loc[False] #this is temporary
-    detailed['Traditional Construction Grey Energy (TWhPE)'] = mean_surface * my_stock_construction * new_grey_energy[
-        'Traditional material'] / 10 ** 9
-    detailed['Bio Construction Grey Energy (TWhPE)'] = mean_surface * my_stock_construction * new_grey_energy['Bio material'] / 10 ** 9
+    detailed['Carbon footprint construction (MtCO2)'] = param['Carbon footprint construction (MtCO2)']
+    detailed['Carbon footprint (MtCO2)'] = detailed['Carbon footprint renovation (MtCO2)'] + detailed[
+        'Carbon footprint construction (MtCO2)']
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
@@ -340,7 +319,7 @@ def parse_output(buildings, param):
     return stock, detailed
 
 
-def indicator_policies(result, folder, config_runs):
+def indicator_policies(result, folder, config_runs, discount_rate=0.045, years=30):
 
     # TODO: energy taxes
     # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
@@ -360,9 +339,7 @@ def indicator_policies(result, folder, config_runs):
     if 'Lifetime' in config.keys():
         lifetime = int(config['Lifetime'])
 
-    discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
-
-
+    discount_factor = (1 - (1 + discount_rate) ** -years) / discount_rate
 
     def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
         """Calculate double difference.

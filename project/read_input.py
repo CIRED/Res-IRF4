@@ -273,6 +273,25 @@ def parse_parameters(config, param, stock):
     temp.index = temp.index.map(lambda x: 'Surface existing {} - {} (m2/dwelling)'.format(x[0], x[1]))
     summary_param.update(temp.T)
 
+    footprint_built = pd.read_csv(config['footprint']['construction'], index_col=[0])
+    carbon_footprint_built = footprint_built.loc[:, 'Carbon content (kgCO2/m2)']
+    carbon_footprint_built = config['footprint']['Traditional material'] * carbon_footprint_built[
+        'Traditional material'] + config['footprint']['Bio material'] * carbon_footprint_built['Bio material']
+
+    embodied_energy_built = footprint_built.loc[:, 'Grey energy (kWh/m2)']
+    embodied_energy_built = config['footprint']['Traditional material'] * embodied_energy_built[
+        'Traditional material'] + config['footprint']['Bio material'] * embodied_energy_built['Bio material']
+
+    footprint_renovation = pd.read_csv(config['footprint']['renovation'], index_col=[0, 1])
+    carbon_footprint_renovation = footprint_renovation.xs('Carbon content (kgCO2/m2)', level='Content')
+    param['carbon_footprint_renovation'] = carbon_footprint_renovation.loc['Traditional material', :] * config['footprint'][
+        'Traditional material'] + carbon_footprint_renovation.loc['Bio material', :] * config['footprint'][
+                                      'Bio material']
+    embodied_energy_renovation = footprint_renovation.xs('Grey energy (kWh/m2)', level='Content')
+    param['embodied_energy_renovation'] = embodied_energy_renovation.loc['Traditional material', :] * config['footprint'][
+        'Traditional material'] + embodied_energy_renovation.loc['Bio material', :] * config['footprint'][
+                                      'Bio material']
+
     temp = param['surface'].xs(False, level='Existing', drop_level=True)
     temp.index = temp.index.map(lambda x: 'Surface construction {} - {} (m2/dwelling)'.format(x[0], x[1]))
     summary_param.update(temp.T)
@@ -280,6 +299,16 @@ def parse_parameters(config, param, stock):
     temp = param['surface'].xs(False, level='Existing', drop_level=True)
     temp = (param['flow_built'].groupby(temp.index.names).sum() * temp).sum() / 10**6
     summary_param['Surface construction (Million m2)'] = temp
+
+    summary_param['Carbon footprint construction (MtCO2)'] = (summary_param[
+                                                                  'Surface construction (Million m2)'] * carbon_footprint_built) / 10**3
+    param['Carbon footprint construction (MtCO2)'] = summary_param['Carbon footprint construction (MtCO2)']
+
+    summary_param['Embodied energy construction (TWh PE)'] = (summary_param[
+                                                                  'Surface construction (Million m2)'] * embodied_energy_built) / 10**3
+    param['Embodied energy construction (TWh PE)'] = summary_param['Embodied energy construction (TWh PE)']
+
+    param['Surface construction (Million m2)'] = summary_param['Surface construction (Million m2)']
 
     summary_param = pd.DataFrame(summary_param)
     summary_param = summary_param.loc[config['start']:, :]

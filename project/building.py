@@ -416,6 +416,7 @@ class AgentBuildings(ThermalBuildings):
 
         self._demolition_rate = demolition_rate
         self._demolition_total = (stock * self._demolition_rate).sum()
+        self._target_demolition = ['E', 'F', 'G']
 
         self._choice_heater = list(ms_heater.columns)
         self._restrict_heater = restrict_heater
@@ -1483,7 +1484,14 @@ class AgentBuildings(ThermalBuildings):
         -------
         pd.Series
         """
-        stock_demolition = self.stock_mobile[self.certificate.isin(['E', 'F', 'G'])]
+        stock_demolition = self.stock_mobile[self.certificate.isin(self._target_demolition)]
+        if stock_demolition.sum() < self._demolition_total:
+            self._target_demolition = ['G', 'F', 'E', 'D']
+            stock_demolition = self.stock_mobile[self.certificate.isin(self._target_demolition)]
+            if stock_demolition.sum() < self._demolition_total:
+                self._target_demolition = ['G', 'F', 'E', 'D', 'C']
+                stock_demolition = self.stock_mobile[self.certificate.isin(self._target_demolition)]
+
         stock_demolition = stock_demolition / stock_demolition.sum()
         flow_demolition = (stock_demolition * self._demolition_total).dropna()
         return flow_demolition.reorder_levels(self.index.names)

@@ -85,6 +85,15 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       }
-    }
+    },
+    "footprint": {
+      "Traditional material": 0.5,
+      "Bio material": 0.5,
+      "construction": "project/input/footprint_construction.csv",
+      "renovation": "project/input/footprint_renovation.csv"
+    },
+    "population_housing": null,
+    "share_multi_family": null,
+    "surface_built": null
   }
 }

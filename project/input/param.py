@@ -69,6 +69,8 @@ generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k,
 
 generic_input['stock_ini'] = 29037000
 
+# generic_input['grey_energy'] = pd.read_csv('project/input/grey_energy.csv', index_col=[0, 1]).squeeze()
+
 with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
     generic_input['thermal_parameters'] = pickle.load(f)
 
@@ -92,18 +94,12 @@ subsidy_loan_preferences_insulation = 0.343
 bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
 inertia = 0.8299
 
+
 generic_input['preferences'] = {}
 generic_input['preferences']['heater'] = {'investment': investment_preferences_heater,
                                           'subsidy': subsidy_preferences_heater,
                                           'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
                                           'inertia': inertia}
-
-
-"""generic_input['preferences']['insulation'] = {'investment': investment_preferences_heater,
-                                              'subsidy': subsidy_preferences_heater,
-                                              'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
-                                              'zero_interest_loan': subsidy_loan_preferences_heater
-                                              }"""
 
 
 generic_input['preferences']['insulation'] = {'investment': investment_preferences_insulation,
