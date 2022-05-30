@@ -197,6 +197,16 @@ def parse_output(buildings, param):
     detailed['Traditional Retrofit Grey Energy (TWhPE)'] = df_grey_energy.loc['Traditional material'].sum()
     detailed['Bio Retrofit Grey Energy (TWhPE)'] = df_grey_energy.loc['Bio material'].sum()
 
+    # Getting grey energy for construction
+    # This is temporary and should be integrated in dynamic.py for more precise estimation (and check these estimates)
+    my_stock = pd.DataFrame(buildings.stock_yrs).fillna(0)
+    my_stock_construction = my_stock.groupby('Existing').sum().loc[False].T
+    new_grey_energy = grey_en['Grey energy (kWh/m2)'].loc[:, 'Construction']
+    mean_surface = param['surface'].groupby('Existing').mean().loc[False] #this is temporary
+    detailed['Traditional Construction Grey Energy (TWhPE)'] = mean_surface * my_stock_construction * new_grey_energy[
+        'Traditional material'] / 10 ** 9
+    detailed['Bio Construction Grey Energy (TWhPE)'] = mean_surface * my_stock_construction * new_grey_energy['Bio material'] / 10 ** 9
+
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
     temp.index = temp.index.map(lambda x: 'Investment {} (Billion euro)'.format(x))
