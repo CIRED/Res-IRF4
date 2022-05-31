@@ -331,5 +331,5 @@ def parse_parameters(config, param, stock):
     param['Surface construction (Million m2)'] = summary_param['Surface construction (Million m2)']
 
     summary_param = pd.DataFrame(summary_param)
-    summary_param = summary_param.loc[config['start']:, :]
+    # summary_param = summary_param.loc[config['start']:, :]
     return param, summary_param

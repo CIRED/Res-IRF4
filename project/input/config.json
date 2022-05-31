@@ -1,6 +1,6 @@
 {
   "assessment": {
-    "Policies indicators": true,
+    "Policies indicators": false,
     "Policy name": "reduced_tax",
     "AP": "Reference",
     "AP-1": true,
