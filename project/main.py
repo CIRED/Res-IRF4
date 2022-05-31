@@ -117,33 +117,33 @@ if __name__ == '__main__':
     os.mkdir(folder)
 
     if 'assessment' in configuration.keys():
-        config_runs = configuration['assessment']
-        config_runs = {key: item for key, item in config_runs.items() if item is not None}
+        if configuration['assessment']['Policies indicators']:
+            config_runs = configuration['assessment']
+            config_runs = {key: item for key, item in config_runs.items() if item is not None}
+
+            if config_runs['AP-1']:
+                configuration['AP-1'] = configuration['Reference']
+                configuration['AP-1']['policies'][config_runs['Policy name']]['end'] = configuration['Reference']['start'] + 2
+
+            if config_runs['ZP']:
+                configuration['ZP'] = configuration['Reference']
+                for name, policy in configuration['ZP']['policies'].items():
+                    policy['end'] = configuration['Reference']['start'] + 2
+                    configuration['ZP']['policies'][name] = policy
+
+            if config_runs['ZP'] and config_runs['ZP+1']:
+                configuration['ZP+1'] = configuration['ZP']
+                configuration['ZP+1']['policies'][config_runs['Policy name']]['end'] = configuration['Reference']['end']
+
+            list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_runs.keys() if
+                          re.search('20[0-9][0-9]', key)]
+            for year in list_years:
+                if config_runs['AP-{}'.format(year)]:
+                    configuration['AP-{}'.format(year)] = configuration['Reference']
+                    configuration['AP-{}'.format(year)]['policies'][config_runs['Policy name']]['end'] = year
+                    configuration['AP-{}'.format(year)]['end'] = year + 1
+
         del configuration['assessment']
-
-        if config_runs['AP-1']:
-            configuration['AP-1'] = configuration['Reference']
-            configuration['AP-1']['policies'][config_runs['Policy name']]['end'] = configuration['Reference']['start'] + 2
-
-        if config_runs['ZP']:
-            configuration['ZP'] = configuration['Reference']
-            for name, policy in configuration['ZP']['policies'].items():
-                policy['end'] = configuration['Reference']['start'] + 2
-                configuration['ZP']['policies'][name] = policy
-
-        if config_runs['ZP'] and config_runs['ZP+1']:
-            configuration['ZP+1'] = configuration['ZP']
-            configuration['ZP+1']['policies'][config_runs['Policy name']]['end'] = configuration['Reference']['end']
-
-        list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_runs.keys() if
-                      re.search('20[0-9][0-9]', key)]
-        for year in list_years:
-            if config_runs['AP-{}'.format(year)]:
-                configuration['AP-{}'.format(year)] = configuration['Reference']
-                configuration['AP-{}'.format(year)]['policies'][config_runs['Policy name']]['end'] = year
-                configuration['AP-{}'.format(year)]['end'] = year + 1
-
-        print('break')
 
     else:
         config_runs = dict()
