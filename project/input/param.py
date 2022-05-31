@@ -71,13 +71,27 @@ generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_r
 generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k, item in
                                   generic_input['retrofit_hist'].T.to_dict().items()}
 
-
 generic_input['stock_ini'] = 29037000
 
-# generic_input['grey_energy'] = pd.read_csv('project/input/grey_energy.csv', index_col=[0, 1]).squeeze()
+"""with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
+    generic_input['thermal_parameters'] = pickle.load(f)"""
 
-with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
-    generic_input['thermal_parameters'] = pickle.load(f)
+param = {}
+param['certificate_bounds'] = {'A': (0, 39.59394228117988),
+                               'B': (39.59394228117988, 71.8798550383082),
+                               'C': (71.8798550383082, 119.92500210928785),
+                               'D': (119.92500210928785, 183.81313518374748),
+                               'E': (183.81313518374748, 264.83029117086653),
+                               'F': (264.83029117086653, 394.25890705145184),
+                               'G': (394.25890705145184, 1000)}
+param['ratio_surface'] = pd.DataFrame(
+    [[0.975002, 0.748213, 0.762826, 0.162041], [0.905083, 0.708620, 0.748979, 0.151731]],
+    index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+    columns=['Wall', 'Floor', 'Roof', 'Windows'])
+
+param['coefficient'] = pd.Series([0.891000, 0.791331], index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'))
+generic_input['thermal_parameters'] = param
+
 
 investment_preferences_heater = pd.Series([-0.0964, -0.152],
                                           index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
@@ -90,8 +104,8 @@ investment_preferences_insulation = pd.Series([-0.0646, -0.151],
 subsidy_preferences_heater = 0.167
 
 subsidy_preferences_insulation = pd.Series([0.0486, 0.236],
-                                              index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-                                              name='Housing type')
+                                           index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+                                           name='Housing type')
 
 
 subsidy_loan_preferences_heater = 0.473
@@ -137,13 +151,13 @@ colors = {
     "Social-housing": "orange",
     "Single-family": "brown",
     "Multi-family": "darkolivegreen",
-    "G": "grey",
-    "F": "darkmagenta",
-    "E": "rebeccapurple",
-    "D": "red",
-    "C": "orangered",
-    "B": "lightcoral",
-    "A": "lightsalmon",
+    "G": "black",
+    "F": "dimgrey",
+    "E": "grey",
+    "D": "darkgrey",
+    "C": "darkgreen",
+    "B": "forestgreen",
+    "A": "limegreen",
     "D1": "black",
     "D2": "maroon",
     "D3": "darkred",

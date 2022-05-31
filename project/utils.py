@@ -262,20 +262,80 @@ def make_area_plot(df, y_label, colors=None, save=None):
         plt.show()
 
 
-def waterfall_chart(df, title='Social Economic Assessment', save=None):
+def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
+    """Make stackedbar plot.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+    y_label: str
+    colors: dict
+    format_y: function
+    save: str, optional
+    """
+    df.index = df.index.astype(int)
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+
+    if colors is None:
+        df.plot(ax=ax, kind='bar', stacked=True)
+    else:
+        df.plot(ax=ax, kind='bar', stacked=True, color=colors)
+
+    ax.set_ylabel(y_label)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.xaxis.set_tick_params(which=u'both', length=0)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    # ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
+
+    ax.yaxis.set_tick_params(which=u'both', length=0)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+    ax.set_ylim(ymin=0)
+
+    try:
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
+                  frameon=False, shadow=True, ncol=df.shape[1])
+    except AttributeError:
+        pass
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
     """Make waterfall chart. Used for Social Economic Assessment.
 
     Parameters
     ----------
     df: pd.Series
     title: str, optional
-    save: str, default None
+    figsize
+
+    Returns
+    -------
+
     """
+
     color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Health benefit': 'royalblue'}
+             'Health benefit': 'royalblue', 'Total': 'black'}
+
+    df.rename(index={'Energy saving': 'Energy',
+                     'Emission saving': 'Emission',
+                     'Health benefit': 'Health'
+                       }, inplace=True)
     data = df.copy()
 
-    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     blank = data.cumsum().shift(1).fillna(0)
 
@@ -296,11 +356,13 @@ def waterfall_chart(df, title='Social Economic Assessment', save=None):
               title=title, ax=ax, color=color.values(), edgecolor=None)
     # my_plot.plot(step.index, step.values, 'k')
 
+    plt.axhline(y=0, color='black', linestyle='--')
+
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=15)
-    ax.yaxis.set_tick_params(which=u'both', length=0)
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=16)
+    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
 
     # Get the y-axis position for the labels
     y_height = data.cumsum().shift(1).fillna(0)
@@ -335,7 +397,7 @@ def waterfall_chart(df, title='Social Economic Assessment', save=None):
         plt.show()
 
 
-def assessment_scenarios(df, save=None):
+def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
     """Compare social NPV between scenarios and one reference.
 
     Stacked bar chart.
@@ -344,9 +406,13 @@ def assessment_scenarios(df, save=None):
     ----------
     df
     save
+    figsize
+
+    Returns
+    -------
 
     """
-    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
     color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
              'Health benefit': 'royalblue'}
 
@@ -357,26 +423,25 @@ def assessment_scenarios(df, save=None):
                              s=50, xlabel=None)
     df.plot(kind='bar', stacked=True, ax=ax, color=color)
 
-
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=15)
-    ax.yaxis.set_tick_params(which=u'both', length=0)
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=16)
+    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
 
     ax.xaxis.label.set_visible(False)
     ax.yaxis.label.set_visible(False)
 
     for _, y in total.iterrows():
-        ax.annotate("{:,.1f} Md€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 1), ha="center")
+        ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 3), ha="center")
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
 
     # Put a legend below current axis
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
-              frameon=False, shadow=True, ncol=5)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
+              frameon=False, shadow=True, ncol=2)
     ax.set_xticklabels(df.index, rotation=0)
 
     if save is not None:
