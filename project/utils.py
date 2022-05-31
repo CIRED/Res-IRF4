@@ -100,7 +100,7 @@ def reindex_mi(df, mi_index, levels=None, axis=0):
     return df_reindex
 
 
-def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
+def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None):
     """Make plot.
 
     Parameters
@@ -110,6 +110,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
     colors: dict
     format_y: {'percent', 'million', 'billion'}
     save: str, optional
+    scatter: pd.Series, default None
     """
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -118,6 +119,9 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
         df.plot(ax=ax, style=STYLES)
     else:
         df.plot(ax=ax, color=colors, style=STYLES)
+
+    if scatter is not None:
+        scatter.plot(ax=ax, style='.', ms=8)
 
     ax.set_ylabel(y_label)
     ax.spines['top'].set_visible(False)
@@ -130,8 +134,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
 
     ax.yaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
-
-    # format_y = lambda y, _: '{:,.0f}%'.format(y * 100)
+    ax.set_ylim(ymin=0)
 
     try:
         box = ax.get_position()
@@ -152,7 +155,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
 
 
 def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2,
-                          save=None):
+                          save=None, scatter=None):
     """ Plot a line for each index in a subplot.
 
     Parameters
@@ -163,6 +166,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     n_columns: int, default 3
     n_bins: int, default None
     save: str, default None
+    scatter: dict, default None
     """
     list_keys = list(dict_df.keys())
     sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
@@ -182,6 +186,8 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
         try:
             key = list_keys[k]
             dict_df[key].sort_index().plot(ax=ax, linewidth=1, style=STYLES, ms=3)
+            if scatter is not None:
+                scatter[key].plot(ax=ax, style='.', ms=8, color=sns.color_palette('bright', scatter[key].shape[1]))
 
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
@@ -195,6 +201,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
 
             ax.yaxis.set_tick_params(which=u'both', length=0)
             ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+            ax.set_ylim(ymin=0)
 
             if isinstance(key, tuple):
                 ax.set_title('{}-{}'.format(key[0], key[1]), fontweight='bold', pad=-1.6)

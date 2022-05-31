@@ -197,11 +197,26 @@ def parse_parameters(config, param, stock):
     param['population_total'] = population
     param['sizing_factor'] = stock.sum() / param['stock_ini']
     param['population'] = population * param['sizing_factor']
-    param['stock_need'], param['pop_housing'] = stock_need(param['population'],
-                                                           param['population'][config['start']] / stock.sum(),
-                                                           param['pop_housing_min'],
-                                                           config['start'], param['factor_pop_housing'])
-    param['share_multi_family'] = share_multi_family(param['stock_need'], param['factor_multi_family'])
+
+    if config['pop_housing'] is None:
+        param['stock_need'], param['pop_housing'] = stock_need(param['population'],
+                                                               param['population'][config['start']] / stock.sum(),
+                                                               param['pop_housing_min'],
+                                                               config['start'], param['factor_pop_housing'])
+    elif config['pop_housing'] == 'constant':
+        pass
+    else:
+        param['pop_housing'] = pd.read_csv(config['pop_housing'], index_col=[0], header=None).squeeze()
+        param['stock_need'] = param['population'] / param['pop_housing']
+
+    if config['share_multi_family'] is None:
+        param['share_multi_family'] = share_multi_family(param['stock_need'], param['factor_multi_family'])
+    elif config['share_multi_family'] == 'constant':
+        pass
+    else:
+        param['share_multi_family'] = pd.read_csv(config['share_multi_family'], index_col=[0], header=None).squeeze()
+
+
 
     idx = range(config['start'], config['end'])
     param['available_income'] = pd.Series(
@@ -214,8 +229,13 @@ def parse_parameters(config, param, stock):
     param['flow_need'] = param['stock_need'] - param['stock_need'].shift(1)
     param['flow_construction'] = param['flow_need'] + param['flow_demolition']
 
-    surface_built = evolution_surface_built(param['surface'].xs(False, level='Existing'), param['surface_max'],
-                                            param['surface_elasticity'], param['available_income_pop'])
+    if config['surface_built'] is None:
+        surface_built = evolution_surface_built(param['surface'].xs(False, level='Existing'), param['surface_max'],
+                                                param['surface_elasticity'], param['available_income_pop'])
+    elif config['surface_built'] == 'surface_built':
+        pass
+    else:
+        surface_built = pd.read_csv(config['surface_built'], index_col=[0]).squeeze().rename(None)
 
     surface_existing = pd.concat([param['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
                                  keys=surface_built.columns)

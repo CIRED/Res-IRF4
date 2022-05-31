@@ -50,21 +50,26 @@ generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
                                            index=pd.Index(['Owner-occupied', 'Privately rented', 'Social-housing'],
                                                           name='Occupancy status'))
 
-generic_input['consumption_ini'] = pd.Series([33, 117, 36, 79],
+generic_input['consumption_ini'] = pd.Series([40, 132, 42, 79],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
-generic_input['consumption_hist'] = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0],
+consumption_hist = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0],
                                                 header=[0])
-generic_input['consumption_hist'] = {k: pd.Series(item).set_axis(pd.Series(item).index.astype(int)).rename('Historic') for k, item in
-                                     generic_input['consumption_hist'].T.to_dict().items()}
+generic_input['consumption_hist'] = {k: pd.Series(item, name='Historic') for k, item in
+                                     consumption_hist.to_dict().items()}
 
-generic_input['consumption_total_hist'] = pd.Series([297, 281, 265, 261], index=[2016, 2017, 2018, 2019],
-                                                    name='Historic')
+"""generic_input['consumption_hist'] = {k: pd.Series(item).set_axis(pd.Series(item).index.astype(int)).rename('Historic')
+                                     for k, item in generic_input['consumption_hist'].T.to_dict().items()}"""
+
+generic_input['consumption_total_hist'] = pd.read_csv('project/input/revealed_data/hist_consumption_total.csv',
+                                                      index_col=[0], header=None).squeeze().rename('Historic')
+
+generic_input['consumption_total_objectives'] = pd.Series([214, 181, 151], index=[2023, 2030, 2050], name='Objectives')
 
 generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_retrofit.csv', index_col=[0],
                                              header=[0])
 generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k, item in
-                                     generic_input['retrofit_hist'].T.to_dict().items()}
+                                  generic_input['retrofit_hist'].T.to_dict().items()}
 
 
 generic_input['stock_ini'] = 29037000

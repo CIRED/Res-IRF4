@@ -587,7 +587,7 @@ def grouped_output(result, stocks, folder, config_runs):
 
     """
 
-    variables = {'Consumption (TWh)': ('consumption.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist']),
+    variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist'], generic_input['consumption_total_objectives']),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
@@ -612,7 +612,12 @@ def grouped_output(result, stocks, folder, config_runs):
         except IndexError:
             pass
 
-        make_plot(temp, variable, save=os.path.join(folder, '{}'.format(infos[0])), format_y=infos[1])
+        try:
+            scatter = infos[3]
+        except IndexError:
+            scatter = None
+
+        make_plot(temp, variable, save=os.path.join(folder, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
 
     def grouped(result, variables):
         """Group result.
@@ -639,7 +644,7 @@ def grouped_output(result, stocks, folder, config_runs):
         'Investment total {} (Billion euro)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 3)],
         'Insulation {} (Thousand)': [
-            ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['retrofit_hist'])],
+            ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['retrofit_hist'])],
         'Insulation actions {} (Thousand)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Insulation actions {} (%)': [
@@ -658,14 +663,20 @@ def grouped_output(result, stocks, folder, config_runs):
             n_columns = len(temp.keys())
 
         try:
-            for key in temp.keys():
-                temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
-                temp[key].sort_index(inplace=True)
+            if inf[3] is not None:
+                for key in temp.keys():
+                    temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
+                    temp[key].sort_index(inplace=True)
         except IndexError:
             pass
 
+        try:
+            scatter = inf[4]
+        except IndexError:
+            scatter = None
+
         make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns,
-                              save=os.path.join(folder, n))
+                              save=os.path.join(folder, n), scatter=scatter)
 
     for var, infos in variables_detailed.items():
         for info in infos:
