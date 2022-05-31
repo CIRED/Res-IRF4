@@ -344,16 +344,15 @@ def parse_output(buildings, param):
     return stock, detailed
 
 
-def indicator_policies(result, folder, config_runs, discount_rate=0.045, years=30):
+def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     # TODO: energy taxes
     # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
 
-    config = {key: item for key, item in config_runs.items() if item is not None}
     list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
-    temp = ['Policy - {}'.format(year) for year in list_years]
+    temp = ['AP-{}'.format(year) for year in list_years]
     for key, item in config.items():
         if key in ['All policies', 'All policies - 1', 'Zero policies', 'Zero policies + 1'] or key in temp:
             config[key] = item.replace(' ', '_')
