@@ -1330,13 +1330,11 @@ class AgentBuildings(ThermalBuildings):
         """
 
         utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
-        # utility_ref = pd.concat([utility_ref, utility_ref], keys=[True, False], names=['Heater replacement'])
         idx = utility_ref.index.copy()
 
         stock = pd.concat([self.stock, self.stock], keys=[True, False], names=['Heater replacement']).groupby(
             utility_ref.index.names).sum().reindex(utility_ref.index)
         stock = stock.groupby(utility_ref.index.names).sum()
-        # stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
 
         constant = ms_extensive.copy()
         constant[ms_extensive > 0] = 0

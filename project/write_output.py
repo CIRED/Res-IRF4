@@ -706,12 +706,6 @@ def grouped_output(result, stocks, folder, config_runs):
         for info in infos:
             details_graphs(result, var, info)
 
-    if 'Reference' in result.keys() and len(result.keys()) > 1:
+    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
         indicator_policies(result, folder, config_runs)
-
-    """
-    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs['effectivnees]:
-        cost_efficient()
-    """
-
 
