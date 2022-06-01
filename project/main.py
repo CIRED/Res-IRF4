@@ -116,8 +116,9 @@ if __name__ == '__main__':
     folder = os.path.join('project/output', datetime.today().strftime('%Y%m%d_%H%M%S'))
     os.mkdir(folder)
 
+    config_runs = None
     if 'assessment' in configuration.keys():
-        if configuration['assessment']['Policies indicators']:
+        if configuration['assessment']['activated']:
             config_runs = configuration['assessment']
             config_runs = {key: item for key, item in config_runs.items() if item is not None}
 
@@ -144,10 +145,6 @@ if __name__ == '__main__':
                     configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
-
-    else:
-        config_runs = dict()
-        config_runs['Policies indicators'] = False
 
     logging.debug('Launching processes')
     processes = list()
