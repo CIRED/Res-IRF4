@@ -34,7 +34,7 @@ def timing(f):
         ts = time()
         result = f(*args, **kw)
         te = time()
-        print(f'Function {f.__name__} took {te-ts:2.4f} seconds')
+        print(f'Function {f.__name__} took {te - ts:2.4f} seconds')
         return result
     return wrap
 
@@ -329,11 +329,12 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
     color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
              'Health benefit': 'royalblue', 'Total': 'black'}
 
-    df.rename(index={'Energy saving': 'Energy',
-                     'Emission saving': 'Emission',
-                     'Health benefit': 'Health'
-                       }, inplace=True)
     data = df.copy()
+
+    data.rename(index={'Energy saving': 'Energy',
+                       'Emission saving': 'Emission',
+                       'Health benefit': 'Health'
+                       }, inplace=True)
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -413,15 +414,22 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
 
     """
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Health benefit': 'royalblue'}
+    color = {'Investment': 'firebrick', 'Energy': 'darkorange', 'Emission': 'forestgreen',
+             'Health': 'royalblue'}
 
-    total = df.sum(axis=1).reset_index()
+    data = df.copy()
+
+    data.rename(columns={'Energy saving': 'Energy',
+                         'Emission saving': 'Emission',
+                         'Health benefit': 'Health'
+                         }, inplace=True)
+
+    total = data.sum(axis=1).reset_index()
     total.columns = ['Scenarios', 'NPV']
 
     pd.DataFrame(total).plot(kind='scatter', x='Scenarios', y='NPV', legend=False, zorder=10, ax=ax, color='black',
                              s=50, xlabel=None)
-    df.plot(kind='bar', stacked=True, ax=ax, color=color)
+    data.plot(kind='bar', stacked=True, ax=ax, color=color)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -442,7 +450,7 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
     # Put a legend below current axis
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
               frameon=False, shadow=True, ncol=2)
-    ax.set_xticklabels(df.index, rotation=0)
+    ax.set_xticklabels(data.index, rotation=0)
 
     if save is not None:
         fig.savefig(save, bbox_inches='tight')

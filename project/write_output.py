@@ -351,11 +351,11 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
 
-    list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
-    temp = ['AP-{}'.format(year) for year in list_years]
-    for key, item in config.items():
-        if key in ['All policies', 'All policies - 1', 'Zero policies', 'Zero policies + 1'] or key in temp:
-            config[key] = item.replace(' ', '_')
+    #list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
+    #temp = ['AP-{}'.format(year) for year in list_years]
+    #for key, item in config.items():
+    #    if key in ['All policies', 'All policies - 1', 'Zero policies', 'Zero policies + 1'] or key in temp:
+    #        config[key] = item.replace(' ', '_')
 
     if 'Discount rate' in config.keys():
         discount_rate = float(config['Discount rate'])
@@ -508,6 +508,9 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     se_npv = socioeconomic_npv(agg, save=folder_policies)
     agg = pd.concat((agg, se_npv), axis=0)
+
+    #cost_eff = pd.DataFrame(agg.loc['Investment cost (Billion euro)']/agg.loc['Energy saving'])
+    #agg = pd.concat((agg, cost_eff.T), axis=0)
 
     def simple_cost_efficiency(data):
         """
