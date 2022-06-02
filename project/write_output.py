@@ -23,7 +23,8 @@ import re
 import pickle
 
 from input.param import generic_input
-from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, assessment_scenarios, make_stackedbar_plot
+from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, \
+    assessment_scenarios, make_stackedbar_plot
 
 SMALL_SIZE = 10
 MEDIUM_SIZE = 18
@@ -165,14 +166,16 @@ def parse_output(buildings, param):
         detailed['Insulation {} (Thousand)'.format(i)] = temp.sum() / 10**3
 
         # only work because existing surface does not change over time
-        detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10**9
+        detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum() / 10 ** 9
 
-        detailed['Embodied energy {} (TWh PE)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) * param['embodied_energy_renovation'][i]).sum() / 10**9
-        detailed['Carbon footprint {} (MtCO2)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) * param['carbon_footprint_renovation'][i]).sum() / 10**9
+        detailed['Embodied energy {} (TWh PE)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) *
+                                                             param['embodied_energy_renovation'][i]).sum() / 10 ** 9
+        detailed['Carbon footprint {} (MtCO2)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) *
+                                                             param['carbon_footprint_renovation'][i]).sum() / 10 ** 9
 
     detailed['Embodied energy renovation (TWh PE)'] = detailed['Embodied energy Wall (TWh PE)'] + detailed[
         'Embodied energy Floor (TWh PE)'] + detailed['Embodied energy Roof (TWh PE)'] + detailed[
-                                               'Embodied energy Windows (TWh PE)']
+                                                          'Embodied energy Windows (TWh PE)']
 
     detailed['Embodied energy construction (TWh PE)'] = param['Embodied energy construction (TWh PE)']
     detailed['Embodied energy (TWh PE)'] = detailed['Embodied energy renovation (TWh PE)'] + detailed[
@@ -180,7 +183,7 @@ def parse_output(buildings, param):
 
     detailed['Carbon footprint renovation (MtCO2)'] = detailed['Carbon footprint Wall (MtCO2)'] + detailed[
         'Carbon footprint Floor (MtCO2)'] + detailed['Carbon footprint Roof (MtCO2)'] + detailed[
-                                               'Carbon footprint Windows (MtCO2)']
+                                                          'Carbon footprint Windows (MtCO2)']
 
     detailed['Carbon footprint construction (MtCO2)'] = param['Carbon footprint construction (MtCO2)']
     detailed['Carbon footprint (MtCO2)'] = detailed['Carbon footprint renovation (MtCO2)'] + detailed[
@@ -316,7 +319,6 @@ def parse_output(buildings, param):
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'),
                        colors=generic_input['colors'])
 
-
     # graph consumption
     temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
     temp = temp.loc[:, ['Existing', 'Construction']]
@@ -324,36 +326,40 @@ def parse_output(buildings, param):
                    save=os.path.join(buildings.path, 'consumption.png'))
 
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
-    make_stackedbar_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'], format_y=lambda y, _: y/10**6,
+    make_stackedbar_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
+                         format_y=lambda y, _: y / 10 ** 6,
                          save=os.path.join(buildings.path, 'stock_performance.png'))
 
-    consumption = pd.concat((consumption, certificate, energy), axis=1).set_index(['Performance', 'Energy'], append=True)
+    consumption = pd.concat((consumption, certificate, energy), axis=1).set_index(['Performance', 'Energy'],
+                                                                                  append=True)
 
     df = consumption.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
-    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'], format_y=lambda y, _: y/10**9,
+    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
+                         format_y=lambda y, _: y / 10 ** 9,
                          save=os.path.join(buildings.path, 'consumption_performance.png'))
 
     df = consumption.groupby('Energy').sum().T.loc[:, generic_input['index']['Heating energy']]
-    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'], format_y=lambda y, _: y/10**9,
+    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
+                         format_y=lambda y, _: y / 10 ** 9,
                          save=os.path.join(buildings.path, 'consumption_energy.png'))
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
-    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'], format_y=lambda y, _: y/10**9,
+    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
+                         format_y=lambda y, _: y / 10 ** 9,
                          save=os.path.join(buildings.path, 'consumption_income.png'))
 
     return stock, detailed
 
 
 def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
-
     # TODO: energy taxes
     # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
 
-    #list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
-    #temp = ['AP-{}'.format(year) for year in list_years]
-    #for key, item in config.items():
+    # list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
+    # temp = ['AP-{}'.format(year) for year in list_years]
+    # for key, item in config.items():
     #    if key in ['All policies', 'All policies - 1', 'Zero policies', 'Zero policies + 1'] or key in temp:
     #        config[key] = item.replace(' ', '_')
 
@@ -412,11 +418,12 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                              index=matrix_double_diff.index)
         return (matrix_double_diff * discount).sum()
 
-    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10**9 #€/kWh to €/TWh
-    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze() #€/tCO2
-    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv', index_col=[0]) * 10**3 #unit: gCO2/ kWh to tCO2/ TWh
+    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10 ** 9  # €/kWh to €/TWh
+    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()  # €/tCO2
+    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv',
+                                  index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
     # €/tCO2 * tCO2/TWh  = €/TWh
-    carbon_value = (carbon_value * carbon_emission.T).T # €/TWh
+    carbon_value = (carbon_value * carbon_emission.T).T  # €/TWh
     carbon_value.dropna(how='all', inplace=True)
 
     scenarios = [s for s in result.keys() if s != 'Reference']
@@ -427,26 +434,29 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     agg = {}
     for s in scenarios:
         rslt = {}
-        for var in ['Consumption (TWh)', 'Health cost (Billion euro)', 'Health expenditure (Billion euro)']:
+        for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Health cost (Billion euro)',
+                    'Health expenditure (Billion euro)', 'Emission (MtCO2)']:
             rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
-                                      values=None)
+                                          values=None)
 
         for energy in generic_input['index']['Heating energy']:
             var = 'Consumption {} (TWh)'.format(energy)
             rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
                                           values=None)
-            rslt['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
-                                                                                  result[s].loc[var, :],
-                                                                                  values=energy_prices[energy]) / (10 ** 9)
-            #On a des euros
+            rslt['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(
+                result['Reference'].loc[var, :],
+                result[s].loc[var, :],
+                values=energy_prices[energy]) / (10 ** 9)
+            # On a des euros
 
             rslt['Emission {} (tCO2)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
                                                                           result[s].loc[var, :],
                                                                           values=carbon_emission[energy])
 
             rslt['Carbon value {} (Billion euro)'.format(energy)] = double_difference(result['Reference'].loc[var, :],
-                                                                           result[s].loc[var, :],
-                                                                           values=carbon_value[energy]) / (10 ** 9)
+                                                                                      result[s].loc[var, :],
+                                                                                      values=carbon_value[energy]) / (
+                                                                            10 ** 9)
 
         # Simple Diff for subsidies, TVA, Investment, then discounted once
         # Simple diff scenario - ref
@@ -456,6 +466,8 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                 index=result['Reference'].loc[var, :].index)
             rslt[var] = ((result[s].loc[var, :] - result['Reference'].loc[var, :]) * discount.T).sum()
 
+        rslt['Retrofit ratio'] = (result[s].loc['Retrofit (Thousand)', :]).sum() / (result['Reference'].loc['Retrofit '
+                                                                                                            '(Thousand)', :]).sum()
         agg[s] = rslt
 
     agg = pd.DataFrame(agg)
@@ -495,7 +507,8 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                               'Health benefit': - df['Health cost (Billion euro)']
                               })
             if save:
-                waterfall_chart(temp, title=s, save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))))
+                waterfall_chart(temp, title=s,
+                                save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))))
 
             npv[s] = temp
 
@@ -509,73 +522,46 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     se_npv = socioeconomic_npv(agg, save=folder_policies)
     agg = pd.concat((agg, se_npv), axis=0)
 
-    #cost_eff = pd.DataFrame(agg.loc['Investment cost (Billion euro)']/agg.loc['Energy saving'])
-    #agg = pd.concat((agg, cost_eff.T), axis=0)
+    # Cost-effectiveness in real consumption
+    analysis_scenarios = list(set(agg.columns).intersection(['AP-2021', 'AP-2025', 'AP-2030', 'AP-2035', 'AP-2040']))
+    reduced_agg = agg.loc[:, analysis_scenarios]
+    if 'tax' in config['Policy name']:  # pas sur de la resilience de cette ligne de code
+        cost_eff_carbon = pd.DataFrame(reduced_agg.loc['VTA (Billion euro)'] / (reduced_agg.loc['Emission (MtCO2)'])
+                                       * 10**3)
+        cost_eff_std = pd.DataFrame(reduced_agg.loc['VTA (Billion euro)'] / reduced_agg.loc['Consumption '
+                                                                                            'standard (TWh)'])
+        cost_eff_real = pd.DataFrame(reduced_agg.loc['VTA (Billion euro)'] / reduced_agg.loc['Consumption (TWh)'])
+        leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / reduced_agg.loc['VTA (Billion '
+                                                                                                        'euro)'])
+    else:
+        cost_eff_std = pd.DataFrame(
+            reduced_agg.loc['Subsidies total (Billion euro)'] / reduced_agg.loc['Consumption standard (TWh)'])
+        cost_eff_real = pd.DataFrame(
+            reduced_agg.loc['Subsidies total (Billion euro)'] / reduced_agg.loc['Consumption (TWh)'])
+        leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / reduced_agg.loc['Subsidies '
+                                                                                                        'total ('
+                                                                                                        'Billion '
+                                                                                                        'euro)'])
+    policy_name = config['Policy name'].replace('_', ' ')
+    cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon {} (€/tCO2)".format(policy_name)}, inplace=True)
+    cost_eff_std.rename(columns={0: "Cost effectiveness standard {} (€/kWh)".format(policy_name)}, inplace=True)
+    cost_eff_real.rename(columns={0: "Cost effectiveness real {} (€/kWh)".format(policy_name)}, inplace=True)
+    leverage_eff.rename(columns={0: "Leverage {} (€/kWh)".format(policy_name)}, inplace=True)
 
-    def simple_cost_efficiency(data):
-        """
-        Calculate cost efficiency = Investment cost/ energy savings
-        Energy savings are calculated with double difference
-        This function needs correcting - work in progress
+    agg = pd.concat((agg, cost_eff_real.T, cost_eff_std.T, cost_eff_carbon.T, leverage_eff.T), axis=0)
 
-        Parameters
-        ----------
-        data: pd.DataFrame
+    return agg
 
-        Returns
-        -------
-        pd.DataFrame
-        """
-
-        cost_efficiency = {}
-        for s in data.columns:
-            temp = data[s].loc['Investment cost (Billion euro)']/data[s].loc['Energy saving'] #pour des histoires de signes je pense que c'est inv costs
-            cost_efficiency[s] = pd.Series({'Cost efficiency': temp})
-        cost_efficiency = pd.DataFrame(cost_efficiency)
-        return cost_efficiency
-
-    rslt_cost_eff_simple = simple_cost_efficiency(agg)
-    agg = pd.concat((agg, rslt_cost_eff_simple), axis=0)
-
-    def leverage(result_data, data, discount_rate=0.045):
-        """
-        Calculate cost efficiency = Investment/ Subsidies cost
-        Rq:This function needs correcting - work in progress
-
-        Parameters
-        ----------
-        result_data: pd.DataFrame
-        data: pd.DataFrame
-
-
-        Returns
-        -------
-        pd.DataFrame
-        """
-
-        lev = {}
-        for s in data.columns:
-            inv = data[s].loc['Investment cost (Billion euro)']
-            sub = result_data[s].loc['Subsidies total (Billion euro)']
-            factor = pd.Series([1 / (1 + discount_rate) ** i for i in range(sub.shape[0])], index=sub.index)
-            sub = (sub*factor).sum()
-            lev[s] = pd.Series({'Leverage': inv/sub})
-        lev = pd.DataFrame(lev)
-        return (lev)
-
-    rslt_leverage = leverage(result, agg)
-    agg = pd.concat((agg, rslt_leverage), axis=0)
-
-    variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
-                 'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
-                 'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
-    years = [2020]
-    for year in years:
-        temp = pd.DataFrame(
-            {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
-             variables}).T
-        agg = pd.concat((agg, temp), axis=0)
-    agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
+    # variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
+    #              'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
+    #              'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
+    # years = [2020]
+    # for year in years:
+    #     temp = pd.DataFrame(
+    #         {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
+    #          variables}).T
+    #     agg = pd.concat((agg, temp), axis=0)
+    # agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
 
 
 def grouped_output(result, stocks, folder, config_runs):
@@ -711,4 +697,3 @@ def grouped_output(result, stocks, folder, config_runs):
 
     if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
         indicator_policies(result, folder, config_runs)
-
