@@ -183,6 +183,8 @@ colors = {
     "Over cap": "grey",
     "Carbon tax": "rebeccapurple",
     "Mpr": "darkmagenta",
+    'Sub ad volarem': "darkorange",
+    "Sub merit": "slategrey",
     "Existing": "tomato",
     "Construction": "grey"
 }

@@ -677,17 +677,21 @@ class AgentBuildings(ThermalBuildings):
                 sub = policy.value.reindex(frame.columns, axis=1).fillna(0)
                 sub = reindex_mi(sub, frame.index)
             elif policy.policy == 'subsidy_ad_volarem':
+
                 if isinstance(policy.value, (float, int)):
                     sub = policy.value * cost_heater
                     sub = pd.concat([sub] * frame.shape[0], keys=frame.index, axis=1).T
-                    if policy.cap:
-                        sub[sub > policy.cap] = sub
 
                 if isinstance(policy.value, pd.DataFrame):
                     sub = policy.value * cost_heater
                     sub = reindex_mi(sub, frame.index).fillna(0)
-                    if policy.cap:
-                        sub[sub > policy.cap] = sub
+
+                if isinstance(policy.value, pd.Series):
+                    sub = policy.value.to_frame().dot(cost_heater.to_frame().T)
+                    sub = reindex_mi(sub, frame.index).fillna(0)
+
+                if policy.cap:
+                    sub[sub > policy.cap] = sub
             else:
                 continue
 
@@ -1191,8 +1195,14 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_total += subsidies_details[policy.name]
 
             elif policy.policy == 'subsidy_ad_volarem':
-                subsidies_details[policy.name] = policy.value * cost_insulation
-                subsidies_total += subsidies_details[policy.name]
+
+                if isinstance(policy.value, pd.Series):
+                    temp = reindex_mi(policy.value, cost_insulation.index)
+                    subsidies_details[policy.name] = (temp * cost_insulation.T).T
+                    subsidies_total += subsidies_details[policy.name]
+                else:
+                    subsidies_details[policy.name] = policy.value * cost_insulation
+                    subsidies_total += subsidies_details[policy.name]
 
             elif policy.policy == 'zero_interest_loan':
                 cost = cost_insulation.copy()

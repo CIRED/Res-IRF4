@@ -124,12 +124,25 @@ def read_policies(config):
             PublicPolicy('reduced_tax', data['start'], data['end'], data['value'], 'reduced_tax', gest='insulation'))
         return l
 
+    def read_ad_volarem(data):
+        l = list()
+        value = pd.read_csv(data['value'], header=[0], index_col=[0]).squeeze().rename(None)
+        l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
+                              gest='heater'))
+        l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
+                              gest='insulation'))
+        return l
+
     read = {'mpr': read_mpr, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
-            'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil}
+            'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
+            'sub_ad_volarem': read_ad_volarem}
 
     list_policies = list()
     for key, item in config['policies'].items():
-        list_policies += read[key](item)
+        if key in read.keys():
+            list_policies += read[key](item)
+        else:
+            print('{} reading function is not implemented'.format(key))
 
     policies_heater = [p for p in list_policies if p.gest == 'heater']
     policies_insulation = [p for p in list_policies if p.gest == 'insulation']
