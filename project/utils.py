@@ -204,9 +204,9 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
             ax.set_ylim(ymin=0)
 
             if isinstance(key, tuple):
-                ax.set_title('{}-{}'.format(key[0], key[1]), fontweight='bold', pad=-1.6)
+                ax.set_title('{}-{}'.format(key[0], key[1]), pad=-1.6)
             else:
-                ax.set_title(key, fontweight='bold', pad=-1.6)
+                ax.set_title(key, pad=-1.6)
             if k == 0:
                 handles, labels = ax.get_legend_handles_labels()
                 labels = [l.replace('_', ' ') for l in labels]

@@ -665,17 +665,17 @@ def grouped_output(result, stocks, folder, config_runs):
         'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
         'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
         'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
-                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 3)
+                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                               ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Investment total {} (Billion euro)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 3)],
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Insulation {} (Thousand)': [
             ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['retrofit_hist'])],
         'Insulation actions {} (Thousand)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Insulation actions {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 3)]
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
     }
 
     def details_graphs(data, v, inf):

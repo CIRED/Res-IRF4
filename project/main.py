@@ -24,8 +24,6 @@ from input.param import generic_input
 from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
 from write_output import parse_output, grouped_output
 
-# TODO: zero-interest loan, policy analysis
-
 
 def res_irf(config, path):
     """Res-IRF model.
@@ -105,13 +103,18 @@ if __name__ == '__main__':
     from multiprocessing import Pool
     from datetime import datetime
     import re
+    import argparse
 
     start = time()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', default='project/input/config.json', help='path config file')
+    args = parser.parse_args()
 
     if not os.path.isdir('project/output'):
         os.mkdir('project/output')
 
-    with open('project/input/config.json') as file:
+    with open(args.config) as file:
         configuration = json.load(file)
 
     folder = os.path.join('project/output', datetime.today().strftime('%Y%m%d_%H%M%S'))
