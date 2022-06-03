@@ -154,8 +154,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
         plt.show()
 
 
-def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2,
-                          save=None, scatter=None):
+def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None):
     """ Plot a line for each index in a subplot.
 
     Parameters
@@ -169,7 +168,11 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     scatter: dict, default None
     """
     list_keys = list(dict_df.keys())
+    if order is not None:
+        list_keys = order
+
     sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
+    y_max = max([i.fillna(0).to_numpy().max() for i in dict_df.values()])
 
     n_axes = int(len(list_keys))
     n_rows = ceil(n_axes / n_columns)
@@ -201,7 +204,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
 
             ax.yaxis.set_tick_params(which=u'both', length=0)
             ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
-            ax.set_ylim(ymin=0)
+            ax.set_ylim(ymin=0, ymax=y_max)
 
             if isinstance(key, tuple):
                 ax.set_title('{}-{}'.format(key[0], key[1]), pad=-1.6)

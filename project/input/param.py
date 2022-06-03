@@ -138,9 +138,9 @@ generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 
                           'Housing type': ['Single-family', 'Multi-family'],
                           'Performance': ['G', 'F', 'E', 'D', 'C', 'B', 'A'],
                           'Heating energy': ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
-                          'Decision maker': ['Single-family - Owner-occupied', 'Single-family - Privately rented',
-                                             'Single-family - Social-housing', 'Multi-family - Owner-occupied',
-                                             'Multi-family - Privately rented', 'Multi-family - Social-housing',
+                          'Decision maker': ['Single-family - Owner-occupied', 'Multi-family - Owner-occupied',
+                                             'Single-family - Privately rented', 'Multi-family - Privately rented',
+                                             'Single-family - Social-housing', 'Multi-family - Social-housing'
                                              ],
                           'Insulation': ['Wall', 'Floor', 'Roof', 'Windows']
                           }
