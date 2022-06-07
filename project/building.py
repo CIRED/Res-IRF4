@@ -995,7 +995,7 @@ class AgentBuildings(ThermalBuildings):
             self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
 
         # utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
-        utility += self.utility_insulation_extensive
+        utility += reindex_mi(self.utility_insulation_extensive, utility.index)
         retrofit_rate = 1 / (1 + np.exp(- utility))
 
         return retrofit_rate, market_share
@@ -1366,12 +1366,11 @@ class AgentBuildings(ThermalBuildings):
                 print('Constant extensive optim worked')
                 break
 
-        utility_constant = reindex_mi(constant, idx)
         details = pd.concat((constant, market_share_ini, market_share_agg, ms_extensive, agg / 10**3), axis=1,
                             keys=['constant', 'calcul ini', 'calcul', 'observed', 'thousand']).round(decimals=3)
         details.to_csv(os.path.join(self.path, 'calibration_constant_extensive.csv'))
 
-        return utility_constant
+        return constant
 
     @timing
     def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,

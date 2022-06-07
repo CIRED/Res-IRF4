@@ -68,10 +68,10 @@ def parse_output(buildings, param):
 
     detailed = dict()
     detailed['Consumption standard (TWh)'] = pd.Series({year: buildings.heat_consumption_sd_yrs[year].sum() for year in
-                                                        buildings.heat_consumption_sd_yrs.keys()}) / 10 ** 9
+                                                        buildings.heat_consumption_sd_yrs.keys()}) / 10**9
 
     consumption = pd.DataFrame(buildings.heat_consumption_calib_yrs)
-    detailed['Consumption (TWh)'] = consumption.sum() / 10 ** 9
+    detailed['Consumption (TWh)'] = consumption.sum() / 10**9
 
     temp = consumption.groupby(buildings.energy).sum()
     temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -87,6 +87,19 @@ def parse_output(buildings, param):
     detailed['Stock (Million)'] = stock.sum() / 10 ** 6
     detailed['Surface (Million m2)'] = pd.DataFrame(buildings.surface_yrs).sum() / 10**6
 
+    detailed['Surface (m2/person)'] = (detailed['Surface (Million m2)'] / (param['population'] / 10**6)).dropna()
+    detailed['Consumption standard (kWh/m2)'] = (detailed['Consumption standard (TWh)'] * 10 ** 9) / (
+                detailed['Surface (Million m2)'] * 10 ** 6)
+    detailed['Consumption (kWh/m2)'] = (detailed['Consumption (TWh)'] * 10 ** 9) / (
+                detailed['Surface (Million m2)'] * 10 ** 6)
+    # TODO Kaya
+    detailed['Heating intensity (%)'] = pd.Series(buildings.heating_intensity_avg)
+    temp = pd.DataFrame(buildings.heating_intensity_tenant)
+    temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
+    detailed.update(temp.T)
+
+    detailed['Energy poverty (Million)'] = pd.Series(buildings.energy_poverty) / 10 ** 6
+
     temp = pd.DataFrame(buildings.certificate_nb)
     temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
     detailed.update(temp.T / 10 ** 6)
@@ -96,13 +109,28 @@ def parse_output(buildings, param):
         detailed['Stock efficient (Million)'] = detailed['Stock B (Million)']
 
     detailed['Stock low-efficient (Million)'] = detailed['Stock F (Million)'] + detailed['Stock G (Million)']
-    detailed['Energy poverty (Million)'] = pd.Series(buildings.energy_poverty) / 10 ** 6
-    detailed['Heating intensity (%)'] = pd.Series(buildings.heating_intensity_avg)
-    temp = pd.DataFrame(buildings.heating_intensity_tenant)
-    temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
-    detailed.update(temp.T)
 
     detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
+
+    temp = pd.DataFrame(buildings.retrofit_rate).dropna(how='all')
+    temp = temp.groupby([i for i in temp.index.names if i not in ['Heating system final']]).mean()
+    t = temp.xs(False, level='Heater replacement')
+    s_temp = pd.DataFrame(buildings.stock_yrs)
+    s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
+    retrofit_rate = ((t * s_temp) / s_temp).dropna(how='all')
+    detailed['Retrofit rate (%)'] = retrofit_rate.mean()
+    t = retrofit_rate.groupby(['Housing type', 'Occupancy status']).mean()
+    t.index = t.index.map(lambda x: 'Retrofit rate {} - {} (%)'.format(x[0], x[1]))
+    detailed.update(t.T)
+
+    t = temp.xs(True, level='Heater replacement')
+    s_temp = pd.DataFrame(buildings.stock_yrs)
+    s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
+    retrofit_rate = ((t * s_temp) / s_temp).dropna(how='all')
+    detailed['Retrofit rate w/ heater (%)'] = retrofit_rate.mean()
+    t = retrofit_rate.groupby(['Housing type', 'Occupancy status']).mean()
+    t.index = t.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
+    detailed.update(t.T)
 
     detailed['Retrofit (Thousand)'] = pd.Series(
         {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10**3
@@ -134,7 +162,7 @@ def parse_output(buildings, param):
 
     """t = temp * pd.DataFrame(buildings.cost_heater)
     t.index = t.index.map(lambda x: 'Investment heater {} (Million)'.format(x))
-    detailed.update((t / 10**6).T)"""
+    detailed.update((t / 10**6).T)
 
     temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_heater.items()})
     t = temp.groupby('Income owner').sum()
@@ -143,7 +171,7 @@ def parse_output(buildings, param):
     t = temp.groupby(['Housing type', 'Occupancy status']).sum()
     t.index = t.index.map(lambda x: 'Replacement heater {} - {} (Thousand)'.format(x[0], x[1]))
     detailed.update((t / 10 ** 3).T)
-
+    """
     replacement_insulation = buildings.replacement_insulation
     temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
     detailed['Insulation actions (Thousand)'] = temp.sum() / 10 ** 3
@@ -574,7 +602,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     # agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
 
 
-def grouped_output(result, stocks, folder, config_runs):
+def grouped_output(result, stocks, folder, config_runs=None):
     """Grouped scenarios output.
 
     Renovation expenditure discounted (Billion euro)
@@ -671,6 +699,10 @@ def grouped_output(result, stocks, folder, config_runs):
         'Insulation actions {} (Thousand)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Insulation actions {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Retrofit rate {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Retrofit rate heater {} (%)': [
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
     }
 
@@ -698,8 +730,8 @@ def grouped_output(result, stocks, folder, config_runs):
         except IndexError:
             scatter = None
 
-        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns,
-                              save=os.path.join(folder, n), scatter=scatter)
+        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder, n), scatter=scatter,
+                              order=generic_input['index'][inf[0]])
 
     for var, infos in variables_detailed.items():
         for info in infos:
