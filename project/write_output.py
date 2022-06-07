@@ -243,6 +243,8 @@ def parse_output(buildings, param):
         else:
             subsidies = pd.concat((subsidies, subsidies_details), axis=0)
     subsidies = subsidies.groupby(subsidies.index).sum()
+    for i in subsidies.index:
+        detailed['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i,:] / 10 ** 9
 
     taxes_expenditures = buildings.taxes_expenditure_details
     taxes_expenditures = pd.DataFrame(
@@ -466,11 +468,25 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                 index=result['Reference'].loc[var, :].index)
             rslt[var] = ((result[s].loc[var, :] - result['Reference'].loc[var, :]) * discount.T).sum()
 
-        rslt['Retrofit ratio'] = (result[s].loc['Retrofit (Thousand)', :]).sum() / (result['Reference'].loc['Retrofit '
-                                                                                                            '(Thousand)', :]).sum()
+        # needs to be in t for the AP t-1 scenarios
+        # rslt['Retrofit ratio'] = (result[s].loc['Retrofit (Thousand)', :]).sum() / (result['Reference'].loc['Retrofit '
+        #                                                                                                    '(Thousand)', :]).sum()
+
+        # For later indicator calculations
+        policies = ['Cee (Billion euro)', 'Cite (Billion euro)', 'Mpr (Billion euro)',
+                    'Over cap (Billion euro)', 'Reduced tax (Billion euro)', 'Zero interest loan (Billion euro)',
+                    'Carbon tax (Billion euro)', 'Taxes expenditure (Billion euro)']
+
+        for var in policies:
+            discount = pd.Series(
+                [1 / (1 + 0.045) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
+                index=result['Reference'].loc[var, :].index)
+            rslt[var] = (((result[s].loc[var, :]).fillna(0) - result['Reference'].loc[var, :]) * discount.T).sum()
+            # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
         agg[s] = rslt
 
     agg = pd.DataFrame(agg)
+
 
     def socioeconomic_npv(data, save=None):
         """Calculate socioeconomic NPV.
@@ -522,31 +538,25 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     se_npv = socioeconomic_npv(agg, save=folder_policies)
     agg = pd.concat((agg, se_npv), axis=0)
 
-    # Cost-effectiveness in real consumption
-    analysis_scenarios = list(set(agg.columns).intersection(['AP-2021', 'AP-2025', 'AP-2030', 'AP-2035', 'AP-2040']))
+    # Efficience: AP and AP-t scenarios
+    analysis_scenarios = list(set(agg.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2050)]))
     reduced_agg = agg.loc[:, analysis_scenarios]
-    if 'tax' in config['Policy name']:  # pas sur de la resilience de cette ligne de code
-        cost_eff_carbon = pd.DataFrame(reduced_agg.loc['VTA (Billion euro)'] / (reduced_agg.loc['Emission (MtCO2)'])
-                                       * 10**3)
-        cost_eff_std = pd.DataFrame(reduced_agg.loc['VTA (Billion euro)'] / reduced_agg.loc['Consumption '
-                                                                                            'standard (TWh)'])
-        cost_eff_real = pd.DataFrame(reduced_agg.loc['VTA (Billion euro)'] / reduced_agg.loc['Consumption (TWh)'])
-        leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / reduced_agg.loc['VTA (Billion '
-                                                                                                        'euro)'])
-    else:
-        cost_eff_std = pd.DataFrame(
-            reduced_agg.loc['Subsidies total (Billion euro)'] / reduced_agg.loc['Consumption standard (TWh)'])
-        cost_eff_real = pd.DataFrame(
-            reduced_agg.loc['Subsidies total (Billion euro)'] / reduced_agg.loc['Consumption (TWh)'])
-        leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / reduced_agg.loc['Subsidies '
-                                                                                                        'total ('
-                                                                                                        'Billion '
-                                                                                                        'euro)'])
-    policy_name = config['Policy name'].replace('_', ' ')
+    # We want efficience only for concerned policy (that is cut at t-1)
+    policy_name = config['Policy name'].replace('_', ' ').capitalize()
+    policy_sub_diff = reduced_agg.loc['{} (Billion euro)'.format(policy_name)]
+
+    cost_eff_carbon = pd.DataFrame(policy_sub_diff / (reduced_agg.loc['Emission (MtCO2)'])
+                                   * 10 ** 3)
+    cost_eff_std = pd.DataFrame(
+        policy_sub_diff / reduced_agg.loc['Consumption standard (TWh)'])
+    cost_eff_real = pd.DataFrame(
+        policy_sub_diff / reduced_agg.loc['Consumption (TWh)'])
+    leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / policy_sub_diff)
+
     cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon {} (€/tCO2)".format(policy_name)}, inplace=True)
     cost_eff_std.rename(columns={0: "Cost effectiveness standard {} (€/kWh)".format(policy_name)}, inplace=True)
-    cost_eff_real.rename(columns={0: "Cost effectiveness real {} (€/kWh)".format(policy_name)}, inplace=True)
-    leverage_eff.rename(columns={0: "Leverage {} (€/kWh)".format(policy_name)}, inplace=True)
+    cost_eff_real.rename(columns={0: "Cost effectiveness {} (€/kWh)".format(policy_name)}, inplace=True)
+    leverage_eff.rename(columns={0: "Leverage {} ".format(policy_name)}, inplace=True)
 
     agg = pd.concat((agg, cost_eff_real.T, cost_eff_std.T, cost_eff_carbon.T, leverage_eff.T), axis=0)
 
