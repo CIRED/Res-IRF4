@@ -272,7 +272,7 @@ def parse_output(buildings, param):
             subsidies = pd.concat((subsidies, subsidies_details), axis=0)
     subsidies = subsidies.groupby(subsidies.index).sum()
     for i in subsidies.index:
-        detailed['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i,:] / 10 ** 9
+        detailed['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i, :] / 10 ** 9
 
     taxes_expenditures = buildings.taxes_expenditure_details
     taxes_expenditures = pd.DataFrame(
@@ -448,6 +448,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                              index=matrix_double_diff.index)
         return (matrix_double_diff * discount).sum()
 
+    # Getting inputs needed
     energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10 ** 9  # €/kWh to €/TWh
     carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()  # €/tCO2
     carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv',
@@ -460,12 +461,13 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
                  'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
 
+    # Calculating simple and double differences for needed vairables, and storing them in agg
     # Double difference = Scenario - Reference
     agg = {}
     for s in scenarios:
         rslt = {}
-        for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Health cost (Billion euro)',
-                    'Health expenditure (Billion euro)', 'Emission (MtCO2)']:
+        for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
+                    'Health cost (Billion euro)', 'Health expenditure (Billion euro)', 'Emission (MtCO2)']:
             rslt[var] = double_difference(result['Reference'].loc[var, :], result[s].loc[var, :],
                                           values=None)
 
@@ -488,19 +490,15 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                                                                                       values=carbon_value[energy]) / (
                                                                             10 ** 9)
 
-        # Simple Diff for subsidies, TVA, Investment, then discounted once
-        # Simple diff scenario - ref
+        # Simple Diff for subsidies, VTA, Investment, then discounted once
+        # Simple diff = scenario - ref
         for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment cost (Billion euro)']:
             discount = pd.Series(
                 [1 / (1 + 0.045) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
                 index=result['Reference'].loc[var, :].index)
             rslt[var] = ((result[s].loc[var, :] - result['Reference'].loc[var, :]) * discount.T).sum()
 
-        # needs to be in t for the AP t-1 scenarios
-        # rslt['Retrofit ratio'] = (result[s].loc['Retrofit (Thousand)', :]).sum() / (result['Reference'].loc['Retrofit '
-        #                                                                                                    '(Thousand)', :]).sum()
-
-        # For later indicator calculations
+        # For later indicator calculations, storing subsidies simple diff by subsidy types, discounted once
         policies = ['Cee (Billion euro)', 'Cite (Billion euro)', 'Mpr (Billion euro)',
                     'Over cap (Billion euro)', 'Reduced tax (Billion euro)', 'Zero interest loan (Billion euro)',
                     'Carbon tax (Billion euro)', 'Taxes expenditure (Billion euro)']
@@ -515,8 +513,43 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     agg = pd.DataFrame(agg)
 
+    # Efficiency: AP and AP-t scenarios
+    analysis_scenarios = list(set(agg.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2050)]))
+    reduced_agg = agg.loc[:, analysis_scenarios]
+    # We want efficiency only for concerned policy (that is cut at t-1)
+    policy_name = config['Policy name'].replace('_', ' ').capitalize()
+    policy_sub_diff = reduced_agg.loc['{} (Billion euro)'.format(policy_name)]
 
-    def socioeconomic_npv(data, save=None):
+    cost_eff_carbon = pd.DataFrame(policy_sub_diff / (reduced_agg.loc['Emission (MtCO2)'])
+                                   * 10 ** 3)
+    cost_eff_std = pd.DataFrame(
+        policy_sub_diff / reduced_agg.loc['Consumption standard (TWh)'])
+    cost_eff_real = pd.DataFrame(
+        policy_sub_diff / reduced_agg.loc['Consumption (TWh)'])
+    leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / policy_sub_diff)
+    #total_inv is total investment cost/ energy savings
+    total_inv = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / reduced_agg.loc['Consumption (TWh)'])
+
+    cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon {} (€/tCO2)".format(policy_name)}, inplace=True)
+    cost_eff_std.rename(columns={0: "Cost effectiveness standard {} (€/kWh)".format(policy_name)}, inplace=True)
+    cost_eff_real.rename(columns={0: "Cost effectiveness {} (€/kWh)".format(policy_name)}, inplace=True)
+    leverage_eff.rename(columns={0: "Leverage {} ".format(policy_name)}, inplace=True)
+    total_inv.rename(columns={0: "Total investment / energy savings {} (€/kWh) ".format(policy_name)}, inplace=True)
+
+    agg = pd.concat((agg, cost_eff_real.T, cost_eff_std.T, cost_eff_carbon.T, leverage_eff.T), axis=0)
+
+    # Retrofit ratio = freerider ratio
+    for s in analysis_scenarios:
+        year = int(s[-4:])
+        agg.loc['Freeriding retrofit (Thousand)', s] = result[s].loc['Retrofit (Thousand)', year]
+        agg.loc['Non-freeriding retrofit (Thousand)', s] = result['Reference'].loc['Retrofit (Thousand)', year] - (
+            result[s].loc['Retrofit (Thousand)', year])
+        agg.loc['Freeriding retrofit ratio', s] = result[s].loc['Retrofit (Thousand)', year] / (
+            result['Reference'].loc['Retrofit (Thousand)', year])
+
+    # Efficacity : AP/AP-1 and ZP/ ZP+1 scenarios
+
+    def socioeconomic_npv(data, scenarios, save=None):
         """Calculate socioeconomic NPV.
         Double difference is calculated with : scenario - reference
         If the scenario requires more investment than the reference, then the difference of investments is
@@ -527,6 +560,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         Parameters
         ----------
         data: pd.DataFrame
+        scenarios: list
         save: str, default None
 
         Returns
@@ -534,7 +568,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         pd.DataFrame
         """
         npv = {}
-        for s in data.columns:
+        for s in scenarios:
             df = data.loc[:, s]
 
             cofp = (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)']) * 0.2
@@ -563,43 +597,33 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         npv.loc['NPV', :] = npv.sum()
         return npv
 
-    se_npv = socioeconomic_npv(agg, save=folder_policies)
+    efficacity_scenarios = [s for s in agg.columns if s not in analysis_scenarios]
+    se_npv = socioeconomic_npv(agg, efficacity_scenarios, save=folder_policies)
     agg = pd.concat((agg, se_npv), axis=0)
 
-    # Efficience: AP and AP-t scenarios
-    analysis_scenarios = list(set(agg.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2050)]))
-    reduced_agg = agg.loc[:, analysis_scenarios]
-    # We want efficience only for concerned policy (that is cut at t-1)
-    policy_name = config['Policy name'].replace('_', ' ').capitalize()
-    policy_sub_diff = reduced_agg.loc['{} (Billion euro)'.format(policy_name)]
+    #Percentage of objectives accomplished
 
-    cost_eff_carbon = pd.DataFrame(policy_sub_diff / (reduced_agg.loc['Emission (MtCO2)'])
-                                   * 10 ** 3)
-    cost_eff_std = pd.DataFrame(
-        policy_sub_diff / reduced_agg.loc['Consumption standard (TWh)'])
-    cost_eff_real = pd.DataFrame(
-        policy_sub_diff / reduced_agg.loc['Consumption (TWh)'])
-    leverage_eff = pd.DataFrame(reduced_agg.loc['Investment cost (Billion euro)'] / policy_sub_diff)
+    # Objectives in param (generic_input, we need to make this cleaner but for now:
 
-    cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon {} (€/tCO2)".format(policy_name)}, inplace=True)
-    cost_eff_std.rename(columns={0: "Cost effectiveness standard {} (€/kWh)".format(policy_name)}, inplace=True)
-    cost_eff_real.rename(columns={0: "Cost effectiveness {} (€/kWh)".format(policy_name)}, inplace=True)
-    leverage_eff.rename(columns={0: "Leverage {} ".format(policy_name)}, inplace=True)
+    consumption_total_objectives = pd.Series([214, 181, 151], index=[2023, 2030, 2050], name='Objectives')
+    emissions_total_objectives = pd.Series([25.5, 0], index=[2030, 2050], name='Objectives')
 
-    agg = pd.concat((agg, cost_eff_real.T, cost_eff_std.T, cost_eff_carbon.T, leverage_eff.T), axis=0)
+    #reduced_agg_efficacity = agg.loc[:, efficacity_scenarios]
+    #I need policy name first
+    comparison_results_energy = pd.DataFrame([result[s].loc['Consumption (TWh)'] for s in efficacity_scenarios],
+                                             index=agg.columns).T
+
+    #se rédige surement mieux
+    for y in consumption_total_objectives.index:
+        if y in comparison_results_energy.index:
+            agg.loc['Consumption objective accomplishment {}'.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                               comparison_results_energy.loc[y]).T / (
+                                                                               comparison_results_energy.iloc[0] -
+                                                                               consumption_total_objectives.loc[y]).T
+
+    agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
 
     return agg
-
-    # variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Energy poverty (Million)', 'Stock low-efficient (Million)',
-    #              'Stock efficient (Million)', 'Stock (Million)', 'New efficient (Thousand)',
-    #              'Health cost (Billion euro)', 'Retrofit rate 1 EPC (%)']
-    # years = [2020]
-    # for year in years:
-    #     temp = pd.DataFrame(
-    #         {'{} - {}'.format(var, year): pd.Series({s: result[s].loc[var, year] for s in result.keys()}) for var in
-    #          variables}).T
-    #     agg = pd.concat((agg, temp), axis=0)
-    # agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
 
 
 def grouped_output(result, stocks, folder, config_runs=None):
