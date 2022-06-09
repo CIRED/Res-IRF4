@@ -608,18 +608,47 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     consumption_total_objectives = pd.Series([214, 181, 151], index=[2023, 2030, 2050], name='Objectives')
     emissions_total_objectives = pd.Series([25.5, 0], index=[2030, 2050], name='Objectives')
 
-    #reduced_agg_efficacity = agg.loc[:, efficacity_scenarios]
-    #I need policy name first
     comparison_results_energy = pd.DataFrame([result[s].loc['Consumption (TWh)'] for s in efficacity_scenarios],
-                                             index=agg.columns).T
+                                             index=efficacity_scenarios).T
+    comparison_results_emissions = pd.DataFrame([result[s].loc['Emission (MtCO2)'] for s in efficacity_scenarios],
+                                                index=efficacity_scenarios).T
 
-    #se rédige surement mieux
+    # Selecting years with corresponding objectives and calculating the % of objective accomplished
     for y in consumption_total_objectives.index:
         if y in comparison_results_energy.index:
-            agg.loc['Consumption objective accomplishment {}'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                               comparison_results_energy.loc[y]).T / (
-                                                                               comparison_results_energy.iloc[0] -
-                                                                               consumption_total_objectives.loc[y]).T
+            agg.loc['Percentage of {} consumption objective - {} '.format(y, policy_name), :] = (comparison_results_energy.iloc[0] -
+                                                                                                 comparison_results_energy.loc[y]).T / (
+                                                                                                 comparison_results_energy.iloc[0] -
+                                                                                                 consumption_total_objectives.loc[y]).T
+
+    for y in emissions_total_objectives.index:
+        if y in comparison_results_emissions.index:
+            agg.loc['Percentage of {} emission objective - {} '.format(y, policy_name), :] = (comparison_results_emissions.iloc[0] -
+                                                                                                 comparison_results_emissions.loc[y]).T / (
+                                                                                                 comparison_results_emissions.iloc[0] -
+                                                                                                 emissions_total_objectives.loc[y]).T
+    # low_eff_var = 'Stock low-efficient (Million)'
+    # Objective is zero in 2050 - introduce it in params to make it resilient
+    low_eff_obj = pd.Series([0], index=[2030], name='Objectives')
+    comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
+                                               for s in efficacity_scenarios], index=efficacity_scenarios).T
+    for y in low_eff_obj.index:
+        if y in comparison_results_low_eff.index:
+            agg.loc['Percentage of {} low-efficient objective - {} '.format(y, policy_name), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                                   comparison_results_low_eff.loc[y]).T / (
+                                                                                                   comparison_results_low_eff.iloc[0] -
+                                                                                                   low_eff_obj.loc[y]).T
+    # Counting the number of years after 2030 when number of retrofit >= objective of 700 000
+    # which retrofit should we look at? retrofit_rate_var = ['Retrofit (Thousand)', 'Retrofit >= 1 EPC (Thousand)']
+    retrofit_obj = pd.Series([700], index=[2030], name='Objectives')
+    comparison_results_retrofit = pd.DataFrame([result[s].loc['Retrofit >= 1 EPC (Thousand)']
+                                                for s in efficacity_scenarios], index=efficacity_scenarios).T
+    for year in retrofit_obj.index:
+        comparison_results_retrofit = comparison_results_retrofit[comparison_results_retrofit.index > year]
+        for s in comparison_results_retrofit.columns:
+            comparison_results_retrofit[s] = [True if retrofit > retrofit_obj.loc[year] else False for retrofit in
+                                              comparison_results_retrofit[s]]
+            agg.loc['Percentage of {} retrofit objective - {}'. format(year, policy_name), :] = (comparison_results_retrofit.sum() / len(comparison_results_retrofit.index)).T
 
     agg.round(2).to_csv(os.path.join(folder, 'comparison.csv'))
 
