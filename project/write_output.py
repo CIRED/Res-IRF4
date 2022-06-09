@@ -458,9 +458,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     carbon_value.dropna(how='all', inplace=True)
 
     scenarios = [s for s in result.keys() if s != 'Reference']
-    variables = ['Consumption (TWh)', 'Emission (MtCO2)', 'Health cost (Billion euro)',
-                 'Energy expenditures (Billion euro)', 'Carbon value (Billion euro)', 'Balance state (Billion euro)']
-
+    policy_name = config['Policy name'].replace('_', ' ').capitalize()
     # Calculating simple and double differences for needed vairables, and storing them in agg
     # Double difference = Scenario - Reference
     agg = {}
@@ -494,7 +492,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         # Simple diff = scenario - ref
         for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment cost (Billion euro)']:
             discount = pd.Series(
-                [1 / (1 + 0.045) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
+                [1 / (1 + discount_rate) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
                 index=result['Reference'].loc[var, :].index)
             rslt[var] = ((result[s].loc[var, :] - result['Reference'].loc[var, :]) * discount.T).sum()
 
@@ -502,13 +500,13 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         policies = ['Cee (Billion euro)', 'Cite (Billion euro)', 'Mpr (Billion euro)',
                     'Over cap (Billion euro)', 'Reduced tax (Billion euro)', 'Zero interest loan (Billion euro)',
                     'Carbon tax (Billion euro)', 'Taxes expenditure (Billion euro)']
+        var = '{} (Billion euro)'.format(policy_name)
 
-        for var in policies:
-            discount = pd.Series(
-                [1 / (1 + 0.045) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
+        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(result['Reference'].loc[var, :].shape[0])],
                 index=result['Reference'].loc[var, :].index)
-            rslt[var] = (((result[s].loc[var, :]).fillna(0) - result['Reference'].loc[var, :]) * discount.T).sum()
+        rslt[var] = (((result[s].loc[var, :]).fillna(0) - result['Reference'].loc[var, :]) * discount.T).sum()
             # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
+
         agg[s] = rslt
 
     agg = pd.DataFrame(agg)
@@ -517,7 +515,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     analysis_scenarios = list(set(agg.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2050)]))
     reduced_agg = agg.loc[:, analysis_scenarios]
     # We want efficiency only for concerned policy (that is cut at t-1)
-    policy_name = config['Policy name'].replace('_', ' ').capitalize()
+
     policy_sub_diff = reduced_agg.loc['{} (Billion euro)'.format(policy_name)]
 
     cost_eff_carbon = pd.DataFrame(policy_sub_diff / (reduced_agg.loc['Emission (MtCO2)'])
@@ -544,7 +542,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         agg.loc['Freeriding retrofit (Thousand)', s] = result[s].loc['Retrofit (Thousand)', year]
         agg.loc['Non-freeriding retrofit (Thousand)', s] = result['Reference'].loc['Retrofit (Thousand)', year] - (
             result[s].loc['Retrofit (Thousand)', year])
-        agg.loc['Freeriding retrofit ratio', s] = result[s].loc['Retrofit (Thousand)', year] / (
+        agg.loc['Freeriding retrofit ratio (%)', s] = result[s].loc['Retrofit (Thousand)', year] / (
             result['Reference'].loc['Retrofit (Thousand)', year])
 
     # Efficacity : AP/AP-1 and ZP/ ZP+1 scenarios
@@ -601,9 +599,9 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     se_npv = socioeconomic_npv(agg, efficacity_scenarios, save=folder_policies)
     agg = pd.concat((agg, se_npv), axis=0)
 
-    #Percentage of objectives accomplished
+    # Percentage of objectives accomplished
 
-    # Objectives in param (generic_input, we need to make this cleaner but for now:
+    # Objectives in param (generic_input), we need to make this cleaner but for now:
 
     consumption_total_objectives = pd.Series([214, 181, 151], index=[2023, 2030, 2050], name='Objectives')
     emissions_total_objectives = pd.Series([25.5, 0], index=[2030, 2050], name='Objectives')
@@ -628,7 +626,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                                                                                                  comparison_results_emissions.iloc[0] -
                                                                                                  emissions_total_objectives.loc[y]).T
     # low_eff_var = 'Stock low-efficient (Million)'
-    # Objective is zero in 2050 - introduce it in params to make it resilient
+    # Objective is zero in 2030 - introduce it in params to make it resilient
     low_eff_obj = pd.Series([0], index=[2030], name='Objectives')
     comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
                                                for s in efficacity_scenarios], index=efficacity_scenarios).T
