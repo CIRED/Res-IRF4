@@ -400,7 +400,7 @@ class AgentBuildings(ThermalBuildings):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration)
 
-        self.vta = 0.2
+        self.vta = 0.1
 
         self.pref_investment_heater = preferences['heater']['investment']
         self.pref_investment_insulation = preferences['insulation']['investment']
