@@ -414,6 +414,8 @@ class AgentBuildings(ThermalBuildings):
         self.pref_inertia = preferences['heater']['inertia']
         self.pref_zil = preferences['insulation']['zero_interest_loan']
 
+        self.scale = None
+
         self._demolition_rate = demolition_rate
         self._demolition_total = (stock * self._demolition_rate).sum()
         self._target_demolition = ['E', 'F', 'G']
@@ -906,7 +908,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive,
-                            utility_zil=None):
+                            utility_zil=None, stock=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
         Utility variables are investment cost, energy bill saving, and subsidies.
@@ -921,6 +923,7 @@ class AgentBuildings(ThermalBuildings):
         ms_insulation: pd.Series
         ms_extensive: pd.Series
         utility_zil: pd.DataFrame, default None
+        stock: pd.Series, default None
 
         Returns
         -------
@@ -991,12 +994,36 @@ class AgentBuildings(ThermalBuildings):
 
         utility = utility_investment + utility_bill_saving + utility_subsidies
 
+        if stock is not None:
+            temp = (bill_saved_insulation * stock).sum() / stock.sum()
+            print(temp)
+            temp = (investment_insulation * stock).sum() / stock.sum()
+            print(temp)
+            temp = (subsidies_insulation * stock).sum() / stock.sum()
+            print(temp)
+
+
         if self.utility_insulation_extensive is None:
             self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
 
         # utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
         utility += reindex_mi(self.utility_insulation_extensive, utility.index)
         retrofit_rate = 1 / (1 + np.exp(- utility))
+
+        if self.scale is None:
+            delta_utility_subsidies = (pref_subsidies * (subsidies_insulation * (1 + 0.01))) / 1000
+            delta_utility = utility_investment + utility_bill_saving + delta_utility_subsidies + reindex_mi(
+                self.utility_insulation_extensive, utility.index)
+            delta_retrofit_rate = (1 / (1 + np.exp(- delta_utility)) - retrofit_rate) / retrofit_rate
+            print(delta_retrofit_rate.xs('Multi-family', level='Housing type').mean())
+            print(delta_retrofit_rate.xs('Single-family', level='Housing type').mean())
+
+
+            beta = self.pref_subsidy_insulation.loc['Single-family']
+            p = ms_extensive.loc[('Single-family', 'Owner-occupied', False)]
+            beta * p * (1 - p)
+
+
 
         return retrofit_rate, market_share
 
@@ -1030,7 +1057,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, ms_extensive, policies_insulation,
-                               index=None):
+                               index=None, stock=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -1049,6 +1076,7 @@ class AgentBuildings(ThermalBuildings):
         ms_extensive: pd.Series
         policies_insulation: list
         index: pd.MultiIndex or pd.Index, default None
+        stock: pd.Series, default None
 
         Returns
         -------
@@ -1094,7 +1122,7 @@ class AgentBuildings(ThermalBuildings):
 
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
                                                                    ms_insulation, ms_extensive,
-                                                                   utility_zil=utility_zil)
+                                                                   utility_zil=utility_zil, stock=stock)
 
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
@@ -1402,7 +1430,7 @@ class AgentBuildings(ThermalBuildings):
         print('Index: {}'.format(stock.shape[0]))
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
-                                                                  index=stock.index)
+                                                                  index=stock.index, stock=stock)
 
         retrofit_rate = reindex_mi(retrofit_rate, stock.index)
         retrofit_stock = (retrofit_rate * stock).dropna()
