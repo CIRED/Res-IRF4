@@ -330,13 +330,14 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
     """
 
     color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Health benefit': 'royalblue', 'Total': 'black'}
+             'Health benefit': 'royalblue', 'Cofp': 'grey', 'Total': 'black'}
 
     data = df.copy()
 
     data.rename(index={'Energy saving': 'Energy',
                        'Emission saving': 'Emission',
-                       'Health benefit': 'Health'
+                       'Health benefit': 'Health',
+                       'Cofp': 'COFP'
                        }, inplace=True)
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -373,7 +374,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
 
     # Get an offset so labels don't sit right on top of the bar
     max = data.max()
-    neg_offset, pos_offset = max / 20, max / 50
+    neg_offset, pos_offset = max / 10, max / 50
     plot_offset = int(max / 15)
 
     # Start label loop
@@ -389,7 +390,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
             y += pos_offset
         else:
             y -= neg_offset
-        ax.annotate("{:,.0f}".format(val), (loop, y), ha="center")
+        ax.annotate("{:,.1f}".format(val), (loop, y), ha="center")
         loop += 1
 
     ax.set_xticklabels(data.index, rotation=0)
@@ -418,13 +419,14 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
     """
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     color = {'Investment': 'firebrick', 'Energy': 'darkorange', 'Emission': 'forestgreen',
-             'Health': 'royalblue'}
+             'Health': 'royalblue','Cofp': 'grey'}
 
     data = df.copy()
 
     data.rename(columns={'Energy saving': 'Energy',
                          'Emission saving': 'Emission',
-                         'Health benefit': 'Health'
+                         'Health benefit': 'Health',
+                         'Cofp': 'Cofp'
                          }, inplace=True)
 
     total = data.sum(axis=1).reset_index()
