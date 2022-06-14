@@ -68,6 +68,8 @@ generic_input['consumption_total_objectives'] = pd.Series([214, 181, 151], index
 
 generic_input['emissions_total_objectives'] = pd.Series([25.5, 0], index=[2030, 2050], name='Objectives')
 
+generic_input['low_eff_objectives'] = pd.Series([0], index=[2050], name='Objectives')
+
 generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_retrofit.csv', index_col=[0],
                                              header=[0])
 generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k, item in
