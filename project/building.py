@@ -20,7 +20,8 @@ import pandas as pd
 import numpy as np
 from utils import reindex_mi, timing
 import thermal
-
+from scipy.optimize import fsolve
+import matplotlib.pyplot as plt
 
 class SegmentsIndex:
     def __init__(self, index, efficiency):
@@ -404,17 +405,17 @@ class AgentBuildings(ThermalBuildings):
 
         self.pref_investment_heater = preferences['heater']['investment']
         self.pref_investment_insulation = preferences['insulation']['investment']
-
         self.pref_subsidy_heater = preferences['heater']['subsidy']
         self.pref_subsidy_insulation = preferences['insulation']['subsidy']
-
         self.pref_bill_heater = preferences['heater']['bill_saved']
         self.pref_bill_insulation = preferences['insulation']['bill_saved']
-
         self.pref_inertia = preferences['heater']['inertia']
         self.pref_zil = preferences['insulation']['zero_interest_loan']
 
         self.scale = None
+        self.param_supply = None
+        self.capacity_utilization = None
+        self.factor_yrs = {}
 
         self._demolition_rate = demolition_rate
         self._demolition_total = (stock * self._demolition_rate).sum()
@@ -961,17 +962,6 @@ class AgentBuildings(ThermalBuildings):
             utility_zil[utility_zil > 0] = self.pref_zil
             utility += utility_zil
 
-        """
-        # restrict to coherent renovation work
-        idx = pd.IndexSlice
-        utility = utility.reorder_levels(['Wall', 'Floor', 'Roof', 'Windows'], axis=1)
-        utility.loc[utility.index.get_level_values('Wall') <= self._performance_insulation['Wall'], idx[True, :, :, :]] = float('nan')
-        utility.loc[utility.index.get_level_values('Floor') <= self._performance_insulation['Floor'], idx[:, True, :, :]] = float('nan')
-        utility.loc[utility.index.get_level_values('Roof') <= self._performance_insulation['Roof'], idx[:, :, True, :]] = float('nan')
-        utility.loc[utility.index.get_level_values('Windows') <= self._performance_insulation['Windows'], idx[:, :, :, True]] = float('nan')
-        utility = utility.dropna(how='all')
-        """
-
         if self.utility_insulation_intensive is None:
             self.utility_insulation_intensive = self.calibration_constant_intensive(utility, ms_insulation, ms_extensive)
         utility += self.utility_insulation_intensive
@@ -999,9 +989,9 @@ class AgentBuildings(ThermalBuildings):
             print(temp)
             temp = (investment_insulation * stock).sum() / stock.sum()
             print(temp)
+
             temp = (subsidies_insulation * stock).sum() / stock.sum()
             print(temp)
-
 
         if self.utility_insulation_extensive is None:
             self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
@@ -1018,14 +1008,79 @@ class AgentBuildings(ThermalBuildings):
             print(delta_retrofit_rate.xs('Multi-family', level='Housing type').mean())
             print(delta_retrofit_rate.xs('Single-family', level='Housing type').mean())
 
-
             beta = self.pref_subsidy_insulation.loc['Single-family']
             p = ms_extensive.loc[('Single-family', 'Owner-occupied', False)]
             beta * p * (1 - p)
 
+        if stock is not None:
+            flow = retrofit_rate * stock
+            market_size = (flow * investment_insulation).sum()
+            print(market_size / 10**9)
+            factor_employment = None
+            employment = market_size * factor_employment # ETP/€
+            # we assume that there is no friction in calibration year :
 
+            if self.param_supply is None:
+
+                self.capacity_utilization = employment / 0.8
+
+                self.param_supply = dict()
+                self.param_supply['a'], self.param_supply['b'], self.param_supply['c'] = self.calibration_supply()
+
+                x = np.arange(0, 1.05, 0.05)
+                y = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'], x)
+                fig, ax = plt.subplots(1, 1)
+                ax.plot(x, y)
+                ax.set_xlabel('Utilization rate (%)')
+                ax.set_ylabel('Cost factor')
+
+                fig.savefig(os.path.join(self.path, 'marginal_cost_curve.png'), bbox_inches='tight')
+                plt.close(fig)
+            else:
+                factor = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'],
+                                              market_size / self.capacity_utilization)
+                self.factor_yrs.update({self.year: factor})
 
         return retrofit_rate, market_share
+
+    @staticmethod
+    def factor_function(a, b, c, utilization_rate):
+        """Represents an increasing cost (or decreasing returns) function of the productive capacities utilisation rate.
+
+        Based on Imaclim-R (Waisman et al., 2012)
+
+        Parameters
+        ----------
+        a: float
+        b: float
+        c: float
+        utilization_rate: float or np.array
+
+        Returns
+        -------
+        float or np.array
+        """
+        return a - b * np.tanh(c * (1 - utilization_rate))
+
+    @staticmethod
+    def calibration_supply():
+        """
+
+        Returns
+        -------
+        np.array
+        """
+        def factor_calibration(x, factor_max=30, factor_min=0.8, factor_norm=1,
+                               utilization_norm=0.8):
+            a, b, c = x
+            y = [factor_max - AgentBuildings.factor_function(a, b, c, 1),
+                 factor_min - AgentBuildings.factor_function(a, b, c, 0),
+                 factor_norm - AgentBuildings.factor_function(a, b, c, utilization_norm)
+                 ]
+            return y
+
+        root = fsolve(factor_calibration, np.ones(3))
+        return root
 
     @staticmethod
     @timing

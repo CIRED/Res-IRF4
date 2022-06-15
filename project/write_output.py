@@ -217,6 +217,8 @@ def parse_output(buildings, param):
     detailed['Carbon footprint (MtCO2)'] = detailed['Carbon footprint renovation (MtCO2)'] + detailed[
         'Carbon footprint construction (MtCO2)']
 
+    detailed['Cost factor insulation (%)'] = pd.Series(buildings.factor_yrs)
+
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
     temp.index = temp.index.map(lambda x: 'Investment {} (Billion euro)'.format(x))

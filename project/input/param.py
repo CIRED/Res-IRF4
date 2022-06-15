@@ -131,6 +131,15 @@ generic_input['preferences']['insulation'] = {'investment': investment_preferenc
                                               'zero_interest_loan': subsidy_loan_preferences_insulation
                                               }
 
+generic_input['supply'] = {
+    'factor_max': 30,
+    'factor_min': 0.8,
+    'factor_norm': 1,
+    'utilization_norm': 0.8
+}
+
+
+
 generic_input['performance_insulation'] = {'Wall': round(1 / 3.7, 1), 'Floor': round(1 / 3, 1), 'Roof': round(1 / 6, 1),
                                            'Windows': 1.5}
 
