@@ -971,77 +971,156 @@ class AgentBuildings(ThermalBuildings):
         market_share_test = (stock * market_share.T).T.sum() / stock.sum()"""
 
         # extensive margin
+
+        def to_retrofit_rate(bill_saved, subsidies, investment):
+            utility_bill_saving = reindex_mi(self.pref_bill_insulation, bill_saved.index) * bill_saved / 1000
+
+            pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies.index).rename(None)
+            utility_subsidies = (pref_subsidies * subsidies) / 1000
+
+            pref_investment = reindex_mi(self.pref_investment_insulation, investment.index).rename(None)
+            utility_investment = (pref_investment * investment) / 1000
+
+            utility = utility_investment + utility_bill_saving + utility_subsidies
+
+            if self.utility_insulation_extensive is None:
+                self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
+
+            utility_constant = reindex_mi(self.utility_insulation_extensive, utility.index)
+            utility += utility_constant
+            retrofit_rate = 1 / (1 + np.exp(- utility))
+            retrofit_rate_mean = (retrofit_rate * stock).sum() / stock.sum()
+            print(retrofit_rate_mean)
+
+            _utility = utility_investment + utility_bill_saving + reindex_mi(self.utility_insulation_extensive,
+                                                                             utility_investment.index)
+            return retrofit_rate, _utility
+
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
-        utility_bill_saving = reindex_mi(self.pref_bill_insulation, bill_saved_insulation.index) * bill_saved_insulation / 1000
-
-        investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
-        pref_investment = reindex_mi(self.pref_investment_insulation, investment_insulation.index).rename(None)
-        utility_investment = (pref_investment * investment_insulation) / 1000
-
         subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
-        pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies_insulation.index).rename(None)
-        utility_subsidies = (pref_subsidies * subsidies_insulation) / 1000
+        investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
 
-        utility = utility_investment + utility_bill_saving + utility_subsidies
-
-        if stock is not None:
-            temp = (bill_saved_insulation * stock).sum() / stock.sum()
-            print(temp)
-            temp = (investment_insulation * stock).sum() / stock.sum()
-            print(temp)
-
-            temp = (subsidies_insulation * stock).sum() / stock.sum()
-            print(temp)
-
-        if self.utility_insulation_extensive is None:
-            self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
-
-        # utility = pd.concat([utility, utility], keys=[True, False], names=['Heater replacement'])
-        utility += reindex_mi(self.utility_insulation_extensive, utility.index)
-        retrofit_rate = 1 / (1 + np.exp(- utility))
+        retrofit_rate, _utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation)
 
         if self.scale is None:
-            delta_utility_subsidies = (pref_subsidies * (subsidies_insulation * (1 + 0.01))) / 1000
-            delta_utility = utility_investment + utility_bill_saving + delta_utility_subsidies + reindex_mi(
-                self.utility_insulation_extensive, utility.index)
-            delta_retrofit_rate = (1 / (1 + np.exp(- delta_utility)) - retrofit_rate) / retrofit_rate
-            print(delta_retrofit_rate.xs('Multi-family', level='Housing type').mean())
-            print(delta_retrofit_rate.xs('Single-family', level='Housing type').mean())
 
-            beta = self.pref_subsidy_insulation.loc['Single-family']
-            p = ms_extensive.loc[('Single-family', 'Owner-occupied', False)]
-            beta * p * (1 - p)
+            def elasticity_retrofit_rate(u, preferences, subsidies):
+                utility_subsidies_plus = preferences * subsidies / 1000
+                utility_plus = u + utility_subsidies_plus
+                retrofit_rate_plus = 1 / (1 + np.exp(- utility_plus))
+                retrofit_rate_plus = (retrofit_rate_plus * stock).sum() / stock.sum()
+                return retrofit_rate_plus
 
-        if stock is not None:
-            flow = retrofit_rate * stock
-            market_size = (flow * investment_insulation).sum()
-            print(market_size / 10**9)
-            factor_employment = None
-            employment = market_size * factor_employment # ETP/€
-            # we assume that there is no friction in calibration year :
+            def solve_scale(scale, u, preferences, subsidies, elasticity=0.033):
+                """
 
-            if self.param_supply is None:
+                Parameters
+                ----------
+                scale: np.array
+                u
+                preferences
+                subsidies
+                elasticity
 
-                self.capacity_utilization = employment / 0.8
+                Returns
+                -------
+                np.array
+                """
+                retrofit_rate_mean = 1 / (1 + np.exp(- (u + preferences * subsidies / 1000)))
+                retrofit_rate_mean = (retrofit_rate_mean * stock).sum() / stock.sum()
+                retrofit_rate_plus = elasticity_retrofit_rate(u, preferences * scale, subsidies * (1 + 0.01))
+                delta_retrofit = (retrofit_rate_plus - retrofit_rate_mean) / retrofit_rate_mean
+                return elasticity - delta_retrofit
 
-                self.param_supply = dict()
-                self.param_supply['a'], self.param_supply['b'], self.param_supply['c'] = self.calibration_supply()
+            stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
+            stock_multi = stock.xs('Multi-family', level='Housing type', drop_level=False)
+            x_before, y_before, y_before_single, y_before_multi = [], [], [], []
+            for delta in np.arange(0, 2, 0.1):
+                sub = subsidies_insulation * (1 + delta)
+                x_before.append((sub * stock).sum() / stock.sum())
+                rate = to_retrofit_rate(bill_saved_insulation, sub, investment_insulation)[0]
+                y_before.append((rate * stock).sum() / stock.sum())
+                y_before_single.append((rate * stock_single).sum() / stock_single.sum())
+                y_before_multi.append((rate * stock_multi).sum() / stock_multi.sum())
 
-                x = np.arange(0, 1.05, 0.05)
-                y = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'], x)
-                fig, ax = plt.subplots(1, 1)
-                ax.plot(x, y)
-                ax.set_xlabel('Utilization rate (%)')
-                ax.set_ylabel('Cost factor')
+            scale = float(fsolve(solve_scale, np.array([1.0]), args=(_utility, pref_subsidies, subsidies_insulation)))
+            self.pref_subsidy_insulation *= scale
+            self.pref_investment_insulation *= scale
+            self.pref_bill_insulation *= scale
+            self.pref_zil *= scale
+            self.pref_inertia *= scale
+            self.scale = scale
 
-                fig.savefig(os.path.join(self.path, 'marginal_cost_curve.png'), bbox_inches='tight')
-                plt.close(fig)
-            else:
-                factor = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'],
-                                              market_size / self.capacity_utilization)
-                self.factor_yrs.update({self.year: factor})
+            x_after, y_after, y_after_single, y_after_multi = [], [], [], []
+            for delta in np.arange(0, 2, 0.1):
+                sub = subsidies_insulation * (1 + delta)
+                x_after.append((sub * stock).sum() / stock.sum())
+                rate = to_retrofit_rate(bill_saved_insulation, sub, investment_insulation)[0]
+                y_after.append((rate * stock).sum() / stock.sum())
+                y_after_single.append((rate * stock_single).sum() / stock_single.sum())
+                y_after_multi.append((rate * stock_multi).sum() / stock_multi.sum())
+
+            df = pd.concat(
+                (pd.Series(x_before), pd.Series(y_before), pd.Series(y_after), pd.Series(y_before_single),
+                 pd.Series(y_after_single), pd.Series(y_before_multi),
+                 pd.Series(y_after_multi)), axis=1)
+
+            df.columns = ['Subsidies (€)', 'Before', 'After', 'Before single', 'After single', 'Before multi',
+                          'After multi']
+
+            fig, ax = plt.subplots(1, 1)
+            df.plot(ax=ax, x='Subsidies (€)')
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                             box.width, box.height * 0.9])
+
+            # Put a legend below current axis
+            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                      frameon=False, shadow=True, ncol=3)
+            fig.savefig(os.path.join(self.path, 'scale_effect.png'), bbox_inches='tight')
+            plt.close(fig)
+
+
+        flow = retrofit_rate * stock
+        market_size = (flow * investment_insulation).sum()
+        print(market_size / 10**9)
+        # factor_employment = None
+        # employment = market_size * factor_employment # ETP/€
+        # we assume that there is no friction in calibration year :
+
+        if self.param_supply is None:
+
+            self.capacity_utilization = market_size / 0.8
+
+            self.param_supply = dict()
+            self.param_supply['a'], self.param_supply['b'], self.param_supply['c'] = self.calibration_supply()
+
+            x = np.arange(0, 1.05, 0.05)
+            y = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'], x)
+            fig, ax = plt.subplots(1, 1)
+            ax.plot(x, y)
+            ax.set_xlabel('Utilization rate (%)')
+            ax.set_ylabel('Cost factor')
+            fig.savefig(os.path.join(self.path, 'marginal_cost_curve.png'), bbox_inches='tight')
+            plt.close(fig)
+
+
+
+
+        factor = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'],
+                                      market_size / self.capacity_utilization)
+
+
+        # to_retrofit_rate(bill_saved, subsidies, investment)
+
+
+
+
+        self.factor_yrs.update({self.year: factor})
 
         return retrofit_rate, market_share
+
+
 
     @staticmethod
     def factor_function(a, b, c, utilization_rate):
