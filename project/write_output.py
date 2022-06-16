@@ -217,7 +217,7 @@ def parse_output(buildings, param):
     detailed['Carbon footprint (MtCO2)'] = detailed['Carbon footprint renovation (MtCO2)'] + detailed[
         'Carbon footprint construction (MtCO2)']
 
-    detailed['Cost factor insulation (%)'] = pd.Series(buildings.factor_yrs)
+    detailed['Cost factor insulation (%)'] = pd.Series(buildings.factor_yrs, dtype=float)
 
     temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
     detailed['Investment heater (Billion euro)'] = temp.sum() / 10**9
@@ -523,52 +523,54 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     # Efficiency: AP and AP-t scenarios
     efficiency_scenarios = list(set(comparison.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2050)]))
-    comp_efficiency = comparison.loc[:, efficiency_scenarios]
-    # We want efficiency only for concerned policy (that is cut at t-1)
+    indicator = None
+    if efficiency_scenarios != []:
+        comp_efficiency = comparison.loc[:, efficiency_scenarios]
+        # We want efficiency only for concerned policy (that is cut at t-1)
 
-    policy_sub_diff = comp_efficiency.loc['{} (Billion euro)'.format(policy_name)]
+        policy_sub_diff = comp_efficiency.loc['{} (Billion euro)'.format(policy_name)]
 
-    #Convention: negative signs to have positive values for cost-efficiency
-    cost_eff_real = - pd.DataFrame(
-        policy_sub_diff / comp_efficiency.loc['Consumption (TWh)'])
-    cost_eff_std = - pd.DataFrame(
-        policy_sub_diff / comp_efficiency.loc['Consumption standard (TWh)'])
-    cost_eff_carbon = - pd.DataFrame(policy_sub_diff / (comp_efficiency.loc['Emission (MtCO2)'])
-                                   * 10 ** 3)
-    leverage_eff = pd.DataFrame(comp_efficiency.loc['Investment cost (Billion euro)'] / policy_sub_diff)
-    #total_inv is total investment cost/ energy savings
-    total_inv = pd.DataFrame(comp_efficiency.loc['Investment cost (Billion euro)'] / comp_efficiency.loc['Consumption '
-                                                                                                         '(TWh)'])
-    cost_eff_real.rename(columns={0: "Cost effectiveness (€/kWh)"}, inplace=True)
-    cost_eff_std.rename(columns={0: "Cost effectiveness standard (€/kWh)"}, inplace=True)
-    cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon (€/tCO2)"}, inplace=True)
-    leverage_eff.rename(columns={0: "Leverage (%)"}, inplace=True)
-    total_inv.rename(columns={0: "Total investment / energy savings (€/kWh) "}, inplace=True)
+        #Convention: negative signs to have positive values for cost-efficiency
+        cost_eff_real = - pd.DataFrame(
+            policy_sub_diff / comp_efficiency.loc['Consumption (TWh)'])
+        cost_eff_std = - pd.DataFrame(
+            policy_sub_diff / comp_efficiency.loc['Consumption standard (TWh)'])
+        cost_eff_carbon = - pd.DataFrame(policy_sub_diff / (comp_efficiency.loc['Emission (MtCO2)'])
+                                       * 10 ** 3)
+        leverage_eff = pd.DataFrame(comp_efficiency.loc['Investment cost (Billion euro)'] / policy_sub_diff)
+        #total_inv is total investment cost/ energy savings
+        total_inv = pd.DataFrame(comp_efficiency.loc['Investment cost (Billion euro)'] / comp_efficiency.loc['Consumption '
+                                                                                                             '(TWh)'])
+        cost_eff_real.rename(columns={0: "Cost effectiveness (€/kWh)"}, inplace=True)
+        cost_eff_std.rename(columns={0: "Cost effectiveness standard (€/kWh)"}, inplace=True)
+        cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon (€/tCO2)"}, inplace=True)
+        leverage_eff.rename(columns={0: "Leverage (%)"}, inplace=True)
+        total_inv.rename(columns={0: "Total investment / energy savings (€/kWh) "}, inplace=True)
 
-    # Creating indicator df
-    indicator = pd.DataFrame(comparison.loc[['{} (Billion euro)'.format(policy_name),'Consumption (TWh)']])
-    indicator = pd.concat((indicator, cost_eff_real.T, pd.DataFrame(comparison.loc['Consumption standard (TWh)']).T,
-                           cost_eff_std.T, pd.DataFrame(comparison.loc['Emission (MtCO2)']).T, cost_eff_carbon.T,
-                           pd.DataFrame(comparison.loc['Investment cost (Billion euro)']).T, leverage_eff.T,
-                           total_inv.T), axis=0)
+        # Creating indicator df
+        indicator = pd.DataFrame(comparison.loc[['{} (Billion euro)'.format(policy_name),'Consumption (TWh)']])
+        indicator = pd.concat((indicator, cost_eff_real.T, pd.DataFrame(comparison.loc['Consumption standard (TWh)']).T,
+                               cost_eff_std.T, pd.DataFrame(comparison.loc['Emission (MtCO2)']).T, cost_eff_carbon.T,
+                               pd.DataFrame(comparison.loc['Investment cost (Billion euro)']).T, leverage_eff.T,
+                               total_inv.T), axis=0)
 
-    # Retrofit ratio = freerider ratio
-    # And impact on retrofit rate : difference in retrofit rate / cost of subvention
-    for s in efficiency_scenarios:
-        year = int(s[-4:])
-        if year in result['Reference'].columns:
-            indicator.loc['Freeriding retrofit (Thousand)', s] = result[s].loc['Retrofit (Thousand)', year]
-            indicator.loc['Non-freeriding retrofit (Thousand)', s] = result['Reference'].loc['Retrofit (Thousand)', year] - (
-                result[s].loc['Retrofit (Thousand)', year])
-            indicator.loc['Freeriding retrofit ratio (%)', s] = result[s].loc['Retrofit (Thousand)', year] / (
-                result['Reference'].loc['Retrofit (Thousand)', year])
+        # Retrofit ratio = freerider ratio
+        # And impact on retrofit rate : difference in retrofit rate / cost of subvention
+        for s in efficiency_scenarios:
+            year = int(s[-4:])
+            if year in result['Reference'].columns:
+                indicator.loc['Freeriding retrofit (Thousand)', s] = result[s].loc['Retrofit (Thousand)', year]
+                indicator.loc['Non-freeriding retrofit (Thousand)', s] = result['Reference'].loc['Retrofit (Thousand)', year] - (
+                    result[s].loc['Retrofit (Thousand)', year])
+                indicator.loc['Freeriding retrofit ratio (%)', s] = result[s].loc['Retrofit (Thousand)', year] / (
+                    result['Reference'].loc['Retrofit (Thousand)', year])
 
-            indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Retrofit rate (%)', year] - (
-                result[s].loc['Retrofit rate (%)', year])
-            indicator.loc['Impact on retrofit rate (%)', s] = (result['Reference'].loc['Retrofit rate (%)', year] - (
-                result[s].loc['Retrofit rate (%)', year])) / comparison.loc['{} (Billion euro)'.format(policy_name), s]
+                indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Retrofit rate (%)', year] - (
+                    result[s].loc['Retrofit rate (%)', year])
+                indicator.loc['Impact on retrofit rate (%)', s] = (result['Reference'].loc['Retrofit rate (%)', year] - (
+                    result[s].loc['Retrofit rate (%)', year])) / comparison.loc['{} (Billion euro)'.format(policy_name), s]
 
-    # Efficacity : AP/AP-1 and ZP/ ZP+1 scenarios
+        # Efficacity : AP/AP-1 and ZP/ ZP+1 scenarios
 
     def socioeconomic_npv(data, scenarios, save=None):
         """Calculate socioeconomic NPV.
@@ -620,82 +622,85 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         return npv
 
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
-    se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, save=folder_policies)
-    indicator = pd.concat((indicator, se_npv), axis=0)
+    if effectiveness_scenarios != []:
+        se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, save=folder_policies)
+        if indicator is not None:
+            indicator = pd.concat((indicator, se_npv), axis=0)
+        else:
+            indicator = se_npv
+        # Percentage of objectives accomplished
 
-    # Percentage of objectives accomplished
+        # Objectives in param (generic_input), we need to make this cleaner but for now:
 
-    # Objectives in param (generic_input), we need to make this cleaner but for now:
+        """"* result['Reference'].loc['Sizing factor (%)'].iloc[0]"""
+        #TODO: have sizing factor in generic input
+        comparison_results_energy = pd.DataFrame([result[s].loc['Consumption (TWh)'] for s in effectiveness_scenarios],
+                                                 index=effectiveness_scenarios).T
+        comparison_results_emissions = pd.DataFrame([result[s].loc['Emission (MtCO2)'] for s in effectiveness_scenarios],
+                                                    index=effectiveness_scenarios).T
 
-    """"* result['Reference'].loc['Sizing factor (%)'].iloc[0]"""
-    #TODO: have sizing factor in generic input
-    comparison_results_energy = pd.DataFrame([result[s].loc['Consumption (TWh)'] for s in effectiveness_scenarios],
-                                             index=effectiveness_scenarios).T
-    comparison_results_emissions = pd.DataFrame([result[s].loc['Emission (MtCO2)'] for s in effectiveness_scenarios],
-                                                index=effectiveness_scenarios).T
+        # Selecting years with corresponding objectives and calculating the % of objective accomplished
+        for y in generic_input['consumption_total_objectives'].index:
+            if y in comparison_results_energy.index:
+                indicator.loc['Consumption reduction {} (TWh) '.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                                 comparison_results_energy.loc[y]).T
 
-    # Selecting years with corresponding objectives and calculating the % of objective accomplished
-    for y in generic_input['consumption_total_objectives'].index:
-        if y in comparison_results_energy.index:
-            indicator.loc['Consumption reduction {} (TWh) '.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                             comparison_results_energy.loc[y]).T
+                indicator.loc['Consumption reduction Obj {} (TWh)'.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                                    generic_input['consumption_total_objectives'].loc[y]).T
 
-            indicator.loc['Consumption reduction Obj {} (TWh)'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                generic_input['consumption_total_objectives'].loc[y]).T
+                indicator.loc['Percentage of {} consumption objective (%)'.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                                            comparison_results_energy.loc[y]).T / (
+                                                                                            comparison_results_energy.iloc[0] -
+                                                                                            generic_input['consumption_total_objectives'].loc[y]).T
 
-            indicator.loc['Percentage of {} consumption objective (%)'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                        comparison_results_energy.loc[y]).T / (
-                                                                                        comparison_results_energy.iloc[0] -
-                                                                                        generic_input['consumption_total_objectives'].loc[y]).T
+        for y in generic_input['emissions_total_objectives'] .index:
+            if y in comparison_results_emissions.index:
+                indicator.loc['Emission reduction {} (MtCO2) '.format(y), :] = (comparison_results_emissions.iloc[0] -
+                                                                                comparison_results_emissions.loc[y]).T
 
-    for y in generic_input['emissions_total_objectives'] .index:
-        if y in comparison_results_emissions.index:
-            indicator.loc['Emission reduction {} (MtCO2) '.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                            comparison_results_emissions.loc[y]).T
+                indicator.loc['Emission reduction Obj {} (MtCO2)'.format(y), :] = (comparison_results_emissions.iloc[0] -
+                                                                                   generic_input['emissions_total_objectives'] .loc[y]).T
 
-            indicator.loc['Emission reduction Obj {} (MtCO2)'.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                               generic_input['emissions_total_objectives'] .loc[y]).T
+                indicator.loc['Percentage of {} emission objective (%)'.format(y), :] = (comparison_results_emissions.iloc[0] -
+                                                                                         comparison_results_emissions.loc[y]).T / (
+                                                                                         comparison_results_emissions.iloc[0] -
+                                                                                         generic_input['emissions_total_objectives'] .loc[y]).T
+        # low_eff_var = 'Stock low-efficient (Million)'
+        # Objective is zero in 2030 - introduce it in params to make it resilient
+        comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
+                                                   for s in effectiveness_scenarios], index=effectiveness_scenarios).T
+        for y in generic_input['low_eff_objectives'].index:
+            if y in comparison_results_low_eff.index:
+                indicator.loc['Low-efficient stock reduction {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                             comparison_results_low_eff.loc[y]).T
 
-            indicator.loc['Percentage of {} emission objective (%)'.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                     comparison_results_emissions.loc[y]).T / (
-                                                                                     comparison_results_emissions.iloc[0] -
-                                                                                     generic_input['emissions_total_objectives'] .loc[y]).T
-    # low_eff_var = 'Stock low-efficient (Million)'
-    # Objective is zero in 2030 - introduce it in params to make it resilient
-    comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
-                                               for s in effectiveness_scenarios], index=effectiveness_scenarios).T
-    for y in generic_input['low_eff_objectives'].index:
-        if y in comparison_results_low_eff.index:
-            indicator.loc['Low-efficient stock reduction {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                         comparison_results_low_eff.loc[y]).T
+                indicator.loc['Low-efficient stock reduction objective {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                                       generic_input['low_eff_objectives'].loc[y]).T
 
-            indicator.loc['Low-efficient stock reduction objective {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                                   generic_input['low_eff_objectives'].loc[y]).T
+                indicator.loc['Percentage of {} low-efficient objective (%) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                               comparison_results_low_eff.loc[y]).T / (
+                                                                                               comparison_results_low_eff.iloc[0] -
+                                                                                               generic_input['low_eff_objectives'].loc[y]).T
+        # Energy poverty
+        # No objective so simply showing the reduction between first and last year
+        # first year - last year
+        energy_poverty = pd.DataFrame([result[s].loc['Energy poverty (Million)'] for s in effectiveness_scenarios],
+                                      index=effectiveness_scenarios).T
+        indicator.loc['Energy poverty (Thousand)'] = (energy_poverty.iloc[0] - energy_poverty.iloc[-1]) * 10**3
 
-            indicator.loc['Percentage of {} low-efficient objective (%) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                           comparison_results_low_eff.loc[y]).T / (
-                                                                                           comparison_results_low_eff.iloc[0] -
-                                                                                           generic_input['low_eff_objectives'].loc[y]).T
-    # Energy poverty
-    # No objective so simply showing the reduction between first and last year
-    # first year - last year
-    energy_poverty = pd.DataFrame([result[s].loc['Energy poverty (Million)'] for s in effectiveness_scenarios],
-                                  index=effectiveness_scenarios).T
-    indicator.loc['Energy poverty (Thousand)'] = (energy_poverty.iloc[0] - energy_poverty.iloc[-1]) * 10**3
-
-    # Counting the number of years after 2030 when number of retrofit >= objective of 700 000
-    """
-    retrofit_obj = pd.Series([700], index=[2030], name='Objectives')
-    comparison_results_retrofit = pd.DataFrame([result[s].loc['New efficient (Thousand)']
-                                                for s in effectiveness_scenarios], index=effectiveness_scenarios).T
-    #à revoir deux boucles for
-    for year in retrofit_obj.index:
-        comparison_results_retrofit = comparison_results_retrofit[comparison_results_retrofit.index > year]
-        for s in comparison_results_retrofit.columns:
-            comparison_results_retrofit[s] = [True if retrofit > retrofit_obj.loc[year] else False for retrofit in
-                                              comparison_results_retrofit[s]]
-            comparison.loc['Percentage of {} retrofit objective - {}'. format(year, policy_name), :] = (comparison_results_retrofit.sum() / len(comparison_results_retrofit.index)).T
-    """
+        # Counting the number of years after 2030 when number of retrofit >= objective of 700 000
+        """
+        retrofit_obj = pd.Series([700], index=[2030], name='Objectives')
+        comparison_results_retrofit = pd.DataFrame([result[s].loc['New efficient (Thousand)']
+                                                    for s in effectiveness_scenarios], index=effectiveness_scenarios).T
+        #à revoir deux boucles for
+        for year in retrofit_obj.index:
+            comparison_results_retrofit = comparison_results_retrofit[comparison_results_retrofit.index > year]
+            for s in comparison_results_retrofit.columns:
+                comparison_results_retrofit[s] = [True if retrofit > retrofit_obj.loc[year] else False for retrofit in
+                                                  comparison_results_retrofit[s]]
+                comparison.loc['Percentage of {} retrofit objective - {}'. format(year, policy_name), :] = (comparison_results_retrofit.sum() / len(comparison_results_retrofit.index)).T
+        """
 
     comparison.round(2).to_csv(os.path.join(folder_policies, 'comparison.csv'))
     indicator.round(2).to_csv(os.path.join(folder_policies, 'indicator.csv'))

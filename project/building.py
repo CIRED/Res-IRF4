@@ -974,7 +974,7 @@ class AgentBuildings(ThermalBuildings):
 
         # extensive margin
 
-        def to_retrofit_rate(bill_saved, subsidies, investment):
+        def to_retrofit_rate(bill_saved, subsidies, investment, utility_zil_mean=None):
             utility_bill_saving = reindex_mi(self.pref_bill_insulation, bill_saved.index) * bill_saved / 1000
 
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies.index).rename(None)
@@ -985,23 +985,33 @@ class AgentBuildings(ThermalBuildings):
 
             utility = utility_investment + utility_bill_saving + utility_subsidies
 
+            if utility_zil_mean is not None:
+                utility += utility_zil_mean
+
             if self.utility_insulation_extensive is None:
                 self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)
 
             utility_constant = reindex_mi(self.utility_insulation_extensive, utility.index)
             utility += utility_constant
             retrofit_rate = 1 / (1 + np.exp(- utility))
-            retrofit_rate_mean = (retrofit_rate * stock).sum() / stock.sum()
+            # retrofit_rate_mean = (retrofit_rate * stock).sum() / stock.sum()
 
             _utility = utility_investment + utility_bill_saving + reindex_mi(self.utility_insulation_extensive,
                                                                              utility_investment.index)
+            if utility_zil_mean is not None:
+                _utility += utility_zil_mean
+
             return retrofit_rate, _utility
 
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
         subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
         investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
+        utility_zil_mean = None
+        if utility_zil is not None:
+            utility_zil_mean = (utility_zil.reindex(market_share.index) * market_share).sum(axis=1)
 
-        retrofit_rate, _utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation)
+        retrofit_rate, _utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
+                                                   utility_zil_mean=utility_zil_mean)
 
         if self.scale is None:
 
@@ -1230,7 +1240,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, ms_extensive, policies_insulation,
-                               index=None, stock=None):
+                               index=None, stock=None, supply_constraint=False):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -1295,7 +1305,8 @@ class AgentBuildings(ThermalBuildings):
 
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
                                                                    ms_insulation, ms_extensive,
-                                                                   utility_zil=utility_zil, stock=stock)
+                                                                   utility_zil=utility_zil, stock=stock,
+                                                                   supply_constraint=supply_constraint)
 
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
@@ -1575,7 +1586,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,
-                      policies_heater, policies_insulation):
+                      policies_heater, policies_insulation, supply_constraint=False):
         """Compute heater replacement and insulation retrofit.
 
         1. Heater replacement based on current stock segment.
@@ -1593,6 +1604,7 @@ class AgentBuildings(ThermalBuildings):
         ms_extensive
         policies_heater
         policies_insulation
+        supply_constraint: bool
 
         Returns
         -------
@@ -1603,7 +1615,8 @@ class AgentBuildings(ThermalBuildings):
         print('Index: {}'.format(stock.shape[0]))
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
-                                                                  index=stock.index, stock=stock)
+                                                                  index=stock.index, stock=stock,
+                                                                  supply_constraint=supply_constraint)
 
         retrofit_rate = reindex_mi(retrofit_rate, stock.index)
         retrofit_stock = (retrofit_rate * stock).dropna()

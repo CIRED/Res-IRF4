@@ -59,6 +59,8 @@ def res_irf(config, path):
         total_taxes = total_taxes.add(t.value, fill_value=0)
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
 
+    param['energy_prices'] = energy_prices
+
     temp = energy_prices.copy()
     temp.columns = temp.columns.map(lambda x:  'Prices {} (€/kWh)'.format(x))
     pd.concat((summary_param, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
@@ -80,8 +82,8 @@ def res_irf(config, path):
         flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
                                                 ms_intensive, ms_extensive,
                                                 [p for p in policies_heater if (year >= p.start) and (year < p.end)],
-                                                [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-                                                )
+                                                [p for p in policies_insulation if (year >= p.start) and (year < p.end)],
+                                                supply_constraint=config['supply_constraint'])
         buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
