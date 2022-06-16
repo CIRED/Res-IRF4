@@ -402,6 +402,7 @@ class AgentBuildings(ThermalBuildings):
                          data_calibration=data_calibration)
 
         self.vta = 0.1
+        self.factor_etp = 7.44 / 10**6 # ETP/€
 
         self.pref_investment_heater = preferences['heater']['investment']
         self.pref_investment_insulation = preferences['insulation']['investment']
@@ -909,7 +910,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive,
-                            utility_zil=None, stock=None):
+                            utility_zil=None, stock=None, supply_constraint=True):
         """Calculate endogenous retrofit based on discrete choice model.
 
         Utility variables are investment cost, energy bill saving, and subsidies.
@@ -925,6 +926,7 @@ class AgentBuildings(ThermalBuildings):
         ms_extensive: pd.Series
         utility_zil: pd.DataFrame, default None
         stock: pd.Series, default None
+        supply_constraint: bool
 
         Returns
         -------
@@ -990,7 +992,6 @@ class AgentBuildings(ThermalBuildings):
             utility += utility_constant
             retrofit_rate = 1 / (1 + np.exp(- utility))
             retrofit_rate_mean = (retrofit_rate * stock).sum() / stock.sum()
-            print(retrofit_rate_mean)
 
             _utility = utility_investment + utility_bill_saving + reindex_mi(self.utility_insulation_extensive,
                                                                              utility_investment.index)
@@ -1080,47 +1081,68 @@ class AgentBuildings(ThermalBuildings):
             fig.savefig(os.path.join(self.path, 'scale_effect.png'), bbox_inches='tight')
             plt.close(fig)
 
+        if supply_constraint is True:
+            market_size = (retrofit_rate * stock * investment_insulation).sum()
+            etp_size = self.factor_etp * market_size
 
-        flow = retrofit_rate * stock
-        market_size = (flow * investment_insulation).sum()
-        print(market_size / 10**9)
-        # factor_employment = None
-        # employment = market_size * factor_employment # ETP/€
-        # we assume that there is no friction in calibration year :
+            if self.param_supply is None:
 
-        if self.param_supply is None:
+                self.capacity_utilization = etp_size / 0.8
 
-            self.capacity_utilization = market_size / 0.8
+                self.param_supply = dict()
+                self.param_supply['a'], self.param_supply['b'], self.param_supply['c'] = self.calibration_supply()
 
-            self.param_supply = dict()
-            self.param_supply['a'], self.param_supply['b'], self.param_supply['c'] = self.calibration_supply()
+                x = np.arange(0, 1.05, 0.05)
+                y = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'], x)
+                fig, ax = plt.subplots(1, 1)
+                ax.plot(x, y)
+                ax.set_xlabel('Utilization rate (%)')
+                ax.set_ylabel('Cost factor')
+                fig.savefig(os.path.join(self.path, 'marginal_cost_curve.png'), bbox_inches='tight')
+                plt.close(fig)
 
-            x = np.arange(0, 1.05, 0.05)
-            y = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'], x)
-            fig, ax = plt.subplots(1, 1)
-            ax.plot(x, y)
-            ax.set_xlabel('Utilization rate (%)')
-            ax.set_ylabel('Cost factor')
-            fig.savefig(os.path.join(self.path, 'marginal_cost_curve.png'), bbox_inches='tight')
-            plt.close(fig)
+                x, y_supply, y_demand = [], [], []
+                for factor in np.arange(0.81, 1.5, 0.05):
+                    retrofit_rate = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
+                                                     investment_insulation * factor)[0]
+                    y_demand.append((retrofit_rate * stock * investment_insulation * self.factor_etp).sum())
+                    utilization_rate = self.supply_function(self.param_supply['a'], self.param_supply['b'],
+                                                            self.param_supply['c'], factor)
+                    y_supply.append(utilization_rate * self.capacity_utilization)
+                    x.append(factor)
 
+                df = pd.concat((pd.Series(x), pd.Series(y_supply)/10**3, pd.Series(y_demand)/10**3,),
+                               axis=1).set_axis(['Cost factor', 'Supply', 'Demand'], axis=1)
+                fig, ax = plt.subplots(1, 1)
+                df.plot(ax=ax, x='Cost factor')
+                ax.set_ylabel('Employment (Thousands)')
+                box = ax.get_position()
+                ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                                 box.width, box.height * 0.9])
 
+                # Put a legend below current axis
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+                          frameon=False, shadow=True, ncol=3)
+                fig.savefig(os.path.join(self.path, 'supply_demand_equilibrium.png'), bbox_inches='tight')
+                plt.close(fig)
 
+            def solve_equilibrium(factor, bill_saved_insulation, subsidies_insulation, investment_insulation, stock):
+                retrofit_rate = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
+                                                 investment_insulation * factor)[0]
+                demand = (retrofit_rate * stock * investment_insulation * self.factor_etp).sum()
+                offer = self.supply_function(self.param_supply['a'], self.param_supply['b'],
+                                             self.param_supply['c'], factor) * self.capacity_utilization
+                return demand - offer
 
-        factor = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'],
-                                      market_size / self.capacity_utilization)
+            factor_equilibrium = fsolve(solve_equilibrium, np.array([1]), args=(
+            bill_saved_insulation, subsidies_insulation, investment_insulation, stock))
 
+            retrofit_rate = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
+                                             investment_insulation * factor_equilibrium)[0]
 
-        # to_retrofit_rate(bill_saved, subsidies, investment)
-
-
-
-
-        self.factor_yrs.update({self.year: factor})
+            self.factor_yrs.update({self.year: factor_equilibrium})
 
         return retrofit_rate, market_share
-
-
 
     @staticmethod
     def factor_function(a, b, c, utilization_rate):
@@ -1140,6 +1162,23 @@ class AgentBuildings(ThermalBuildings):
         float or np.array
         """
         return a - b * np.tanh(c * (1 - utilization_rate))
+
+    @staticmethod
+    def supply_function(a, b, c, factor):
+        """
+
+        Parameters
+        ----------
+        a
+        b
+        c
+        factor
+
+        Returns
+        -------
+        utilization_rate
+        """
+        return 1 - np.arctanh((a - factor) / b) / c
 
     @staticmethod
     def calibration_supply():
