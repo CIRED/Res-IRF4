@@ -168,4 +168,4 @@ def run(path=None):
 
 
 if __name__ == '__main__':
-    run(path='project/input/config.json')
+    run()
