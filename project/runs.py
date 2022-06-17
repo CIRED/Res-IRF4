@@ -19,12 +19,11 @@ from main import run
 
 
 if __name__ == '__main__':
-    """configs = ['project/input/config_zil.json',
-               'project/input/config_cite.json',
-               'project/input/config_cee.json',
-               'project/input/config_reduced_tax.json',
-               'project/input/config_carbon_tax.json']"""
+    configs = ['project/input/config/policies/config_zil.json',
+               'project/input/config/policies/config_cite.json',
+               'project/input/config/policies/config_cee.json',
+               'project/input/config/policies/config_reduced_tax.json',
+               'project/input/config/policies/config_carbon_tax.json']
 
-    configs = ['project/input/config.json', 'project/input/config°bis.json']
     for config in configs:
         run(path=config)
