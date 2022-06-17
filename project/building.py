@@ -99,6 +99,9 @@ class ThermalBuildings:
         self._param = param
         self._dh = 55706
         self.path = path
+        self.path_calibration = os.path.join(path, 'calibration')
+        if not os.path.isdir(self.path_calibration):
+            os.mkdir(self.path_calibration)
 
         self._consumption_ini = consumption_ini
         self.coefficient_consumption = None
@@ -335,7 +338,7 @@ class ThermalBuildings:
                 validation = pd.concat((validation, self._data_calibration), keys=['Calcul', 'Data'], axis=1)
                 validation['Error'] = (validation['Calcul'] - validation['Data']) / validation['Data']
 
-            validation.round(2).to_csv(os.path.join(self.path, 'validation_stock.csv'))
+            validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
         # self.heat_consumption_calib_yrs
         coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.index, axis=0)
@@ -379,10 +382,11 @@ class AgentBuildings(ThermalBuildings):
 
     Attributes
     ----------
-    pref_investment: float or pd.Series
-    pref_bill: float or pd.Serie
-    pref_subsidy: float or pd.Series
     pref_inertia:  float or pd.Series
+
+    pref_investment_insulation: float or pd.Series
+    pref_bill_insulation: float or pd.Series
+    pref_subsidy_insulation: float or pd.Series
 
 
     cost_insulation: pd.DataFrame
@@ -417,6 +421,7 @@ class AgentBuildings(ThermalBuildings):
         self.pref_zil = preferences['insulation']['zero_interest_loan']
 
         self.scale = None
+        self.calibration_scale = 'cite'
         self.param_supply = None
         self.capacity_utilization = None
         self.factor_yrs = {}
@@ -784,7 +789,7 @@ class AgentBuildings(ThermalBuildings):
         constant.loc[:, 'Wood boiler'] = 0
         details = pd.concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-        details.to_csv(os.path.join(self.path, 'calibration_constant_heater.csv'))
+        details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
         return constant
 
@@ -912,8 +917,8 @@ class AgentBuildings(ThermalBuildings):
         return subsidy
 
     @timing
-    def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation, ms_extensive,
-                            utility_zil=None, stock=None, supply_constraint=True):
+    def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation=None, ms_extensive=None,
+                            utility_zil=None, stock=None, supply_constraint=False, delta_subsidies=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
         Utility variables are investment cost, energy bill saving, and subsidies.
@@ -925,11 +930,12 @@ class AgentBuildings(ThermalBuildings):
         prices: pd.Series
         subsidies_total: pd.DataFrame
         cost_insulation: pd.DataFrame
-        ms_insulation: pd.Series
-        ms_extensive: pd.Series
+        ms_insulation: pd.Series, default None
+        ms_extensive: pd.Series, default None
         utility_zil: pd.DataFrame, default None
         stock: pd.Series, default None
         supply_constraint: bool
+        delta_subsidies: pd.DataFrame, default None
 
         Returns
         -------
@@ -999,12 +1005,12 @@ class AgentBuildings(ThermalBuildings):
             retrofit_rate = 1 / (1 + np.exp(- utility))
             # retrofit_rate_mean = (retrofit_rate * stock).sum() / stock.sum()
 
-            _utility = utility_investment + utility_bill_saving + reindex_mi(self.utility_insulation_extensive,
+            """_utility = utility_investment + utility_bill_saving + reindex_mi(self.utility_insulation_extensive,
                                                                              utility_investment.index)
             if utility_zil_mean is not None:
-                _utility += utility_zil_mean
+                _utility += utility_zil_mean"""
 
-            return retrofit_rate, _utility
+            return retrofit_rate, utility
 
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
         subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
@@ -1013,38 +1019,79 @@ class AgentBuildings(ThermalBuildings):
         if utility_zil is not None:
             utility_zil_mean = (utility_zil.reindex(market_share.index) * market_share).sum(axis=1)
 
-        retrofit_rate, _utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
-                                                   utility_zil_mean=utility_zil_mean)
+        if delta_subsidies is not None:
+            delta_subsidies = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
 
+        retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
+                                                   utility_zil_mean=utility_zil_mean)
+        flow_retrofit = (retrofit_rate * stock).sum()
+        retrofit_rate_mean = flow_retrofit / stock.sum()
+
+        self.scale = 1
         if self.scale is None:
 
-            def elasticity_retrofit_rate(u, preferences, subsidies):
-                utility_subsidies_plus = preferences * subsidies / 1000
-                utility_plus = u + utility_subsidies_plus
-                retrofit_rate_plus = 1 / (1 + np.exp(- utility_plus))
-                retrofit_rate_plus = (retrofit_rate_plus * stock).sum() / stock.sum()
-                return retrofit_rate_plus
+            def impact_subsidies(scale, utility, stock, pref_subsidies, delta_subsidies, indicator='freeriders'):
+                retrofit = 1 / (1 + np.exp(- utility))
+                flow = (retrofit * stock).sum()
+                retrofit = flow / stock.sum()
 
-            def solve_scale(scale, u, preferences, subsidies, elasticity=0.033):
-                """Finding scale to match elasticity
+                utility_plus = (utility + pref_subsidies * delta_subsidies * scale)
+                retrofit_plus = 1 / (1 + np.exp(- utility_plus))
+                flow_plus = (retrofit_plus * stock).sum()
+                retrofit_plus = flow_plus / stock.sum()
+
+                if indicator == 'elasticity':
+                    return (retrofit_plus - retrofit) / retrofit
+
+                if indicator == 'freeriders':
+                    return min(flow, flow_plus) / max(flow, flow_plus)
+
+            def calibration_scale(scale, utility, stock, pref_subsidies, delta_subsidies, target,
+                                  indicator='freeriders'):
+                """Finding scale to match target
+
+                elasticity 0.033 (Nauleau, 2014)
+                freeriders 0.4, 0.625, 0.85 (Nauleau, 2014)
 
                 Parameters
                 ----------
-                scale: np.array
-                u
-                preferences
-                subsidies
-                elasticity
+                scale: float or np.array
+                utility
+                pref_subsidies
+                delta_subsidies
+                target
+                indicator
 
                 Returns
                 -------
                 np.array
                 """
-                retrofit_rate_mean = 1 / (1 + np.exp(- (u + preferences * subsidies / 1000)))
-                retrofit_rate_mean = (retrofit_rate_mean * stock).sum() / stock.sum()
-                retrofit_rate_plus = elasticity_retrofit_rate(u, preferences * scale, subsidies * (1 + 0.01))
-                delta_retrofit = (retrofit_rate_plus - retrofit_rate_mean) / retrofit_rate_mean
-                return elasticity - delta_retrofit
+                calcul = impact_subsidies(scale, utility, stock, pref_subsidies, delta_subsidies, indicator=indicator)
+                return calcul - target
+
+            indicator = 'freeriders'
+            if indicator == 'freeriders':
+
+                scale = float(fsolve(calibration_scale, 1.0,
+                                     args=(utility, stock, pref_subsidies, - delta_subsidies / 1000, 0.625, 'freeriders')))
+
+                x, free_riders = [], []
+                for scale in np.arange(0.1, 5, 0.1):
+                    x.append(scale)
+                    free_riders.append(impact_subsidies(scale, utility, stock, pref_subsidies, - delta_subsidies / 1000,
+                                                        indicator='freeriders'))
+                df = pd.DataFrame([x, free_riders], index=['Scale', 'Free-riders (%)']).T
+                df.set_index('Scale', inplace=True)
+
+                """from utils import format_plot
+                fig, ax = format_plot()
+                df.plot(ax=ax)
+
+                plt.show()"""
+
+
+
+
 
             stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
             stock_multi = stock.xs('Multi-family', level='Housing type', drop_level=False)
@@ -1057,7 +1104,10 @@ class AgentBuildings(ThermalBuildings):
                 y_before_single.append((rate * stock_single).sum() / stock_single.sum())
                 y_before_multi.append((rate * stock_multi).sum() / stock_multi.sum())
 
-            scale = float(fsolve(solve_scale, np.array([1.0]), args=(_utility, pref_subsidies, subsidies_insulation)))
+
+
+
+
             self.pref_subsidy_insulation *= scale
             self.pref_investment_insulation *= scale
             self.pref_bill_insulation *= scale
@@ -1091,7 +1141,7 @@ class AgentBuildings(ThermalBuildings):
             # Put a legend below current axis
             ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
                       frameon=False, shadow=True, ncol=3)
-            fig.savefig(os.path.join(self.path, 'scale_effect.png'), bbox_inches='tight')
+            fig.savefig(os.path.join(self.path_calibration, 'scale_effect.png'), bbox_inches='tight')
             plt.close(fig)
 
         if supply_constraint is True:
@@ -1306,10 +1356,16 @@ class AgentBuildings(ThermalBuildings):
             if 'zero_interest_loan' in subsidies_details:
                 utility_zil = subsidies_details['zero_interest_loan'].copy()
 
+            delta_subsidies = None
+            if self.year == self.first_year:
+                delta_subsidies = subsidies_details['cite']
+
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
-                                                                   ms_insulation, ms_extensive,
+                                                                   ms_insulation=ms_insulation,
+                                                                   ms_extensive=ms_extensive,
                                                                    utility_zil=utility_zil, stock=stock,
-                                                                   supply_constraint=supply_constraint)
+                                                                   supply_constraint=supply_constraint,
+                                                                   delta_subsidies=delta_subsidies)
 
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
@@ -1535,7 +1591,7 @@ class AgentBuildings(ThermalBuildings):
         constant.iloc[0] = 0
         details = pd.concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
                             keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-        details.to_csv(os.path.join(self.path, 'calibration_constant_insulation.csv'))
+        details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
 
         return constant
 
@@ -1583,7 +1639,7 @@ class AgentBuildings(ThermalBuildings):
 
         details = pd.concat((constant, market_share_ini, market_share_agg, ms_extensive, agg / 10**3), axis=1,
                             keys=['constant', 'calcul ini', 'calcul', 'observed', 'thousand']).round(decimals=3)
-        details.to_csv(os.path.join(self.path, 'calibration_constant_extensive.csv'))
+        details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
         return constant
 

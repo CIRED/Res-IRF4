@@ -25,6 +25,19 @@ from collections import defaultdict
 from functools import wraps
 from time import time
 
+SMALL_SIZE = 10
+MEDIUM_SIZE = 18
+BIGGER_SIZE = 20
+
+plt.rc('font', size=BIGGER_SIZE)  # controls default text sizes
+plt.rc('axes', titlesize=BIGGER_SIZE, labelsize=BIGGER_SIZE, labelcolor='dimgrey', labelweight='bold')  # fontsize of the axes title of the x and y labels
+plt.rc('xtick', labelsize=BIGGER_SIZE, color='dimgrey')  # fontsize of the tick labels
+plt.rc('ytick', labelsize=BIGGER_SIZE, color='dimgrey')  # fontsize of the tick labels
+plt.rc('legend', fontsize=MEDIUM_SIZE)  # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+plt.rc('lines', lw=3.5)
+plt.rc('axes', lw=3.5, edgecolor='dimgrey')
+
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
 
 
@@ -100,6 +113,66 @@ def reindex_mi(df, mi_index, levels=None, axis=0):
     return df_reindex
 
 
+def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
+    """
+
+    Parameters
+    ----------
+    y_label: str
+    format_y: function
+    ymin: float or None
+    xinteger: bool
+
+    Returns
+    -------
+
+    """
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(True)
+    # ax.spines['bottom'].set_linewidth(2)
+
+    ax.spines['left'].set_visible(True)
+    # ax.spines['left'].set_linewidth(2)
+    ax.xaxis.set_tick_params(which=u'both', length=0)
+    ax.yaxis.set_tick_params(which=u'both', length=0)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+
+    if ymin is not None:
+        ax.set_ylim(ymin=0)
+        _, ymax = ax.get_ylim()
+        ax.set_ylim(ymax=ymax * 1.1)
+
+    if xinteger:
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    return ax
+
+
+def format_legend(ax, ncol=3, offset=1):
+    try:
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+
+        # Put a legend below current axis
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05 * offset),
+                  frameon=False, shadow=True, ncol=ncol)
+    except AttributeError:
+        pass
+
+
+def save_fig(fig, save=None):
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+
 def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None):
     """Make plot.
 
@@ -108,7 +181,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     df: pd.DataFrame
     y_label: str
     colors: dict
-    format_y: {'percent', 'million', 'billion'}
+    format_y: function
     save: str, optional
     scatter: pd.Series, default None
     """
@@ -121,37 +194,11 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
         df.plot(ax=ax, color=colors, style=STYLES)
 
     if scatter is not None:
-        scatter.plot(ax=ax, style='.', ms=8)
+        scatter.plot(ax=ax, style='.', ms=10)
 
-    ax.set_ylabel(y_label)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0)
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
-
-    ax.yaxis.set_tick_params(which=u'both', length=0)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
-    ax.set_ylim(ymin=0)
-
-    try:
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
-                  frameon=False, shadow=True, ncol=5)
-    except AttributeError:
-        pass
-
-    if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
+    format_legend(ax)
+    save_fig(fig, save=save)
 
 
 def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None):
@@ -172,7 +219,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
         list_keys = order
 
     sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
-    y_max = max([i.fillna(0).to_numpy().max() for i in dict_df.values()])
+    y_max = max([i.fillna(0).to_numpy().max() for i in dict_df.values()]) * 1.1
 
     n_axes = int(len(list_keys))
     n_rows = ceil(n_axes / n_columns)
@@ -188,28 +235,23 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
             ax = axes[row, column]
         try:
             key = list_keys[k]
-            dict_df[key].sort_index().plot(ax=ax, linewidth=1, style=STYLES, ms=3)
+            dict_df[key].sort_index().plot(ax=ax, style=STYLES, ms=3)
             if scatter is not None:
                 scatter[key].plot(ax=ax, style='.', ms=8, color=sns.color_palette('bright', scatter[key].shape[1]))
 
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
+            ax = format_ax(ax, format_y=format_y, ymin=0, xinteger=True)
             ax.spines['left'].set_visible(False)
+            ax.set_ylim(ymax=y_max)
 
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=90)
-            ax.xaxis.set_tick_params(which=u'both', length=0)
-            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
             if n_bins is not None:
                 plt.locator_params(axis='x', nbins=n_bins)
 
-            ax.yaxis.set_tick_params(which=u'both', length=0)
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
-            ax.set_ylim(ymin=0, ymax=y_max)
-
+            title = key
             if isinstance(key, tuple):
-                ax.set_title('{}-{}'.format(key[0], key[1]), pad=-1.6)
-            else:
-                ax.set_title(key, pad=-1.6)
+                title = '{}-{}'.format(key[0], key[1])
+            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6)
+
             if k == 0:
                 handles, labels = ax.get_legend_handles_labels()
                 labels = [l.replace('_', ' ') for l in labels]
@@ -220,14 +262,10 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     fig.legend(handles, labels, loc='lower center', frameon=False, ncol=3,
                bbox_to_anchor=(0.5, -0.1))
 
-    if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    save_fig(fig, save=save)
 
 
-def make_area_plot(df, y_label, colors=None, save=None):
+def make_area_plot(df, y_label, colors=None, save=None, ncol=3):
 
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -238,34 +276,13 @@ def make_area_plot(df, y_label, colors=None, save=None):
         df.plot.area(ax=ax, stacked=True, color=colors)
 
     df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
-    ax.set_ylabel(y_label)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0)
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.yaxis.set_tick_params(which=u'both', length=0)
 
-    try:
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05),
-                  frameon=False, shadow=True, ncol=2)
-    except AttributeError:
-        pass
-
-    if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    ax = format_ax(ax, y_label=y_label, xinteger=True)
+    format_legend(ax)
+    save_fig(fig, save=save)
 
 
-def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None):
+def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, offset=1):
     """Make stackedbar plot.
 
     Parameters
@@ -284,35 +301,9 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     else:
         df.plot(ax=ax, kind='bar', stacked=True, color=colors)
 
-    ax.set_ylabel(y_label)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0)
-    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
-
-    ax.yaxis.set_tick_params(which=u'both', length=0)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
-    ax.set_ylim(ymin=0)
-
-    try:
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
-
-        # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
-                  frameon=False, shadow=True, ncol=df.shape[1])
-    except AttributeError:
-        pass
-
-    if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
+    format_legend(ax, ncol=ncol, offset=offset)
+    save_fig(fig, save=save)
 
 
 def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
@@ -394,12 +385,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
         loop += 1
 
     ax.set_xticklabels(data.index, rotation=0)
-
-    if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    save_fig(fig, save=save)
 
 
 def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
@@ -448,17 +434,8 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
     for _, y in total.iterrows():
         ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 3), ha="center")
 
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                     box.width, box.height * 0.9])
-
-    # Put a legend below current axis
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1),
-              frameon=False, shadow=True, ncol=2)
     ax.set_xticklabels(data.index, rotation=0)
 
-    if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
-    else:
-        plt.show()
+    format_legend(ax)
+    save_fig(fig, save=save)
+
