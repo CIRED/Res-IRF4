@@ -1,7 +1,7 @@
 {
   "assessment": {
-    "activated": true,
-    "Policy name": "zero_interest_loan",
+    "activated": false,
+    "Policy name": "cite",
     "AP": "Reference",
     "AP-1": false,
     "ZP": true,

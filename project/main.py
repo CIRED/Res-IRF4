@@ -18,6 +18,14 @@
 import pandas as pd
 import os
 import copy
+import logging
+import json
+from time import time
+from multiprocessing import Pool
+from datetime import datetime
+import re
+import argparse
+
 
 from building import AgentBuildings
 from input.param import generic_input
@@ -87,8 +95,6 @@ def res_irf(config, path):
         buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
-    # buildings.calculate(energy_prices.loc[year, :], taxes)
-
     stock, output = parse_output(buildings, param)
     output.round(2).to_csv(os.path.join(path, 'output.csv'))
     stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
@@ -96,16 +102,7 @@ def res_irf(config, path):
     return os.path.basename(os.path.normpath(path)), output, stock
 
 
-if __name__ == '__main__':
-
-    import logging
-    import os
-    import json
-    from time import time
-    from multiprocessing import Pool
-    from datetime import datetime
-    import re
-    import argparse
+def run(path=None):
 
     start = time()
 
@@ -116,7 +113,10 @@ if __name__ == '__main__':
     if not os.path.isdir('project/output'):
         os.mkdir('project/output')
 
-    with open(args.config) as file:
+    if path is None:
+        path = args.config
+
+    with open(path) as file:
         configuration = json.load(file)
 
     config_runs = None
@@ -155,11 +155,9 @@ if __name__ == '__main__':
     os.mkdir(folder)
 
     logging.debug('Launching processes')
-    processes = list()
     with Pool() as pool:
         results = pool.starmap(res_irf,
                                zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
-
     result = {i[0]: i[1] for i in results}
     stocks = {i[0]: i[2] for i in results}
 
@@ -168,3 +166,6 @@ if __name__ == '__main__':
 
     logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
 
+
+if __name__ == '__main__':
+    run(path='project/input/config.json')

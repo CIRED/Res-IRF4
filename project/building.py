@@ -1026,7 +1026,7 @@ class AgentBuildings(ThermalBuildings):
                 return retrofit_rate_plus
 
             def solve_scale(scale, u, preferences, subsidies, elasticity=0.033):
-                """
+                """Finding scale to match elasticity
 
                 Parameters
                 ----------
