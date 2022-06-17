@@ -23,7 +23,10 @@ import thermal
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 
+
 class SegmentsIndex:
+    """Not used.
+    """
     def __init__(self, index, efficiency):
         self._efficiency = efficiency
 
@@ -1301,7 +1304,7 @@ class AgentBuildings(ThermalBuildings):
 
             utility_zil = None
             if 'zero_interest_loan' in subsidies_details:
-                utility_zil = subsidies_details['zero_interest_loan']
+                utility_zil = subsidies_details['zero_interest_loan'].copy()
 
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
                                                                    ms_insulation, ms_extensive,

@@ -119,14 +119,13 @@ if __name__ == '__main__':
     with open(args.config) as file:
         configuration = json.load(file)
 
-    folder = os.path.join('project/output', datetime.today().strftime('%Y%m%d_%H%M%S'))
-    os.mkdir(folder)
-
     config_runs = None
+    name_policy = ''
     if 'assessment' in configuration.keys():
         if configuration['assessment']['activated']:
             config_runs = configuration['assessment']
             config_runs = {key: item for key, item in config_runs.items() if item is not None}
+            name_policy = configuration['assessment']['Policy name'] + '_'
 
             if config_runs['AP-1']:
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
@@ -151,6 +150,9 @@ if __name__ == '__main__':
                     configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
+
+    folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
+    os.mkdir(folder)
 
     logging.debug('Launching processes')
     processes = list()

@@ -453,12 +453,12 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         return (matrix_double_diff * discount).sum()
 
     # Getting inputs needed
-    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10 ** 9  # €/kWh to €/TWh
-    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()  # €/tCO2
+    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
+    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()  # euro/tCO2
     carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv',
                                   index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
-    # €/tCO2 * tCO2/TWh  = €/TWh
-    carbon_value = (carbon_value * carbon_emission.T).T  # €/TWh
+    # euro/tCO2 * tCO2/TWh  = euro/TWh
+    carbon_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_value.dropna(how='all', inplace=True)
 
     scenarios = [s for s in result.keys() if s != 'Reference' and s != 'ZP']
@@ -541,11 +541,11 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         #total_inv is total investment cost/ energy savings
         total_inv = pd.DataFrame(comp_efficiency.loc['Investment cost (Billion euro)'] / comp_efficiency.loc['Consumption '
                                                                                                              '(TWh)'])
-        cost_eff_real.rename(columns={0: "Cost effectiveness (€/kWh)"}, inplace=True)
-        cost_eff_std.rename(columns={0: "Cost effectiveness standard (€/kWh)"}, inplace=True)
-        cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon (€/tCO2)"}, inplace=True)
+        cost_eff_real.rename(columns={0: "Cost effectiveness (euro/kWh)"}, inplace=True)
+        cost_eff_std.rename(columns={0: "Cost effectiveness standard (euro/kWh)"}, inplace=True)
+        cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon (euro/tCO2)"}, inplace=True)
         leverage_eff.rename(columns={0: "Leverage (%)"}, inplace=True)
-        total_inv.rename(columns={0: "Total investment / energy savings (€/kWh) "}, inplace=True)
+        total_inv.rename(columns={0: "Total investment / energy savings (euro/kWh) "}, inplace=True)
 
         # Creating indicator df
         indicator = pd.DataFrame(comparison.loc[['{} (Billion euro)'.format(policy_name),'Consumption (TWh)']])
