@@ -698,7 +698,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     return comparison, indicator
 
 
-def grouped_output(result, stocks, folder, config_runs=None):
+def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=None):
     """Grouped scenarios output.
 
     Renovation expenditure discounted (Billion euro)

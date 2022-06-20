@@ -985,7 +985,7 @@ class AgentBuildings(ThermalBuildings):
 
         # extensive margin
 
-        def to_retrofit_rate(bill_saved, subsidies, investment, utility_zil_mean=None):
+        def to_retrofit_rate(bill_saved, subsidies, investment, bool_zil_mean=None):
             utility_bill_saving = reindex_mi(self.pref_bill_insulation, bill_saved.index) * bill_saved / 1000
 
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation, subsidies.index).rename(None)
@@ -996,8 +996,8 @@ class AgentBuildings(ThermalBuildings):
 
             utility = utility_investment + utility_bill_saving + utility_subsidies
 
-            if utility_zil_mean is not None:
-                utility += utility_zil_mean
+            if bool_zil_mean is not None:
+                utility += bool_zil_mean * self.pref_zil
 
             if self.utility_insulation_extensive is not None:
                 utility_constant = reindex_mi(self.utility_insulation_extensive, utility.index)
@@ -1011,12 +1011,14 @@ class AgentBuildings(ThermalBuildings):
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
         subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
         investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
-        utility_zil_mean = None
+        bool_zil_mean = None
         if utility_zil is not None:
-            utility_zil_mean = (utility_zil.reindex(market_share.index) * market_share).sum(axis=1)
+            bool_zil = utility_zil.copy()
+            bool_zil[bool_zil > 0] = 1
+            bool_zil_mean = (bool_zil.reindex(market_share.index) * market_share).sum(axis=1)
 
         retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
-                                                  utility_zil_mean=utility_zil_mean)
+                                                  bool_zil_mean=bool_zil_mean)
 
         if self.utility_insulation_extensive is None:
 
@@ -1059,8 +1061,10 @@ class AgentBuildings(ThermalBuildings):
 
                 # calibration constant
                 constant = pd.Series(constant, index=ms_extensive.index)
-                utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
-                stock_ref = stock.groupby([i for i in stock.index.names if i != 'Heating system final']).mean()
+                # utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
+                utility_ref = utility.copy()
+                # stock_ref = stock.groupby([i for i in stock.index.names if i != 'Heating system final']).mean()
+                stock_ref = stock.copy()
                 utility_constant = reindex_mi(constant, utility_ref.index)
                 u = (utility_ref + utility_constant).copy()
                 retrofit_rate = 1 / (1 + np.exp(- u * scale))
@@ -1123,7 +1127,6 @@ class AgentBuildings(ThermalBuildings):
             self.pref_investment_insulation *= self.scale
             self.pref_bill_insulation *= self.scale
             self.pref_zil *= self.scale
-            self.pref_inertia *= self.scale
             self.scale = self.scale
 
             if detailed:
@@ -1156,7 +1159,7 @@ class AgentBuildings(ThermalBuildings):
                 format_legend(ax)
                 save_fig(fig, save=os.path.join(self.path_calibration, 'scale_effect.png'))
             retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
-                                                      utility_zil_mean=utility_zil_mean)
+                                                      bool_zil_mean=bool_zil_mean)
 
             if detailed:
                 scale = pd.Series(self.scale, index=['Scale'])

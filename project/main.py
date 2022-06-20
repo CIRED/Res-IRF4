@@ -70,7 +70,7 @@ def res_irf(config, path):
     param['energy_prices'] = energy_prices
 
     temp = energy_prices.copy()
-    temp.columns = temp.columns.map(lambda x:  'Prices {} (€/kWh)'.format(x))
+    temp.columns = temp.columns.map(lambda x:  'Prices {} (euro/kWh)'.format(x))
     pd.concat((summary_param, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
     print('Calibration {}'.format(year))
@@ -119,37 +119,65 @@ def run(path=None):
     with open(path) as file:
         configuration = json.load(file)
 
-    config_runs = None
+    config_policies = None
     name_policy = ''
     if 'assessment' in configuration.keys():
         if configuration['assessment']['activated']:
-            config_runs = configuration['assessment']
-            config_runs = {key: item for key, item in config_runs.items() if item is not None}
+            config_policies = configuration['assessment']
+            config_policies = {key: item for key, item in config_policies.items() if item is not None}
             name_policy = configuration['assessment']['Policy name'] + '_'
 
-            if config_runs['AP-1']:
+            if config_policies['AP-1']:
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
-                configuration['AP-1']['policies'][config_runs['Policy name']]['end'] = configuration['Reference']['start'] + 2
+                configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['start'] + 2
 
-            if config_runs['ZP']:
+            if config_policies['ZP']:
                 configuration['ZP'] = copy.deepcopy(configuration['Reference'])
                 for name, policy in configuration['ZP']['policies'].items():
                     policy['end'] = configuration['Reference']['start'] + 2
                     configuration['ZP']['policies'][name] = policy
 
-            if config_runs['ZP'] and config_runs['ZP+1']:
+            if config_policies['ZP'] and config_policies['ZP+1']:
                 configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
-                configuration['ZP+1']['policies'][config_runs['Policy name']]['end'] = configuration['Reference']['end']
+                configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['end']
 
-            list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_runs.keys() if
+            list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                           re.search('20[0-9][0-9]', key)]
             for year in list_years:
-                if config_runs['AP-{}'.format(year)]:
+                if config_policies['AP-{}'.format(year)]:
                     configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
-                    configuration['AP-{}'.format(year)]['policies'][config_runs['Policy name']]['end'] = year
+                    configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
                     configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
+    
+    config_sensitivity = None
+    if 'sensitivity' in configuration.keys():
+        if configuration['sensitivity']['activated']:
+            config_sensitivity = configuration['sensitivity']
+            if 'ZP' in config_sensitivity.keys():
+                configuration['ZP'] = copy.deepcopy(configuration['Reference'])
+                for name, policy in configuration['ZP']['policies'].items():
+                    policy['end'] = configuration['Reference']['start'] + 2
+                    configuration['ZP']['policies'][name] = policy
+            if 'prices_constant' in config_sensitivity.keys():
+                configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
+                configuration['PriceConstant']['prices_constant'] = True
+            if 'prices_factor' in config_sensitivity.keys():
+                factor = config_sensitivity['prices_factor']
+                configuration['PriceFactor'.format(factor)] = copy.deepcopy(configuration['Reference'])
+                configuration['PriceFactor'.format(factor)]['prices_factor'] = factor
+            if 'cost_factor' in config_sensitivity.keys():
+                factor = config_sensitivity['cost_factor']
+                configuration['CostFactor'.format(factor)] = copy.deepcopy(configuration['Reference'])
+                configuration['CostFactor'.format(factor)]['cost_factor'] = factor
+            if 'retrofit_rate_ini' in config_sensitivity.keys():
+                configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
+                configuration['RetrofitIni']['insulation_extensive'] = config_sensitivity['retrofit_rate_ini']
+            if 'target_freeriders' in config_sensitivity.keys():
+                configuration['FreeridersIni'] = copy.deepcopy(configuration['Reference'])
+                configuration['FreeridersIni']['target_freeriders'] = config_sensitivity['target_freeriders']
+        del configuration['sensitivity']
 
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
     os.mkdir(folder)
@@ -162,7 +190,7 @@ def run(path=None):
     stocks = {i[0]: i[2] for i in results}
 
     logging.debug('Parsing results')
-    grouped_output(result, stocks, folder, config_runs)
+    grouped_output(result, stocks, folder, config_policies, config_sensitivity)
 
     logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
 
