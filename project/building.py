@@ -919,7 +919,8 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation=None, ms_extensive=None,
-                            utility_zil=None, stock=None, supply_constraint=False, delta_subsidies=None, detailed=True):
+                            utility_zil=None, stock=None, supply_constraint=False, delta_subsidies=None,
+                            target_freeriders=0.85, detailed=True):
         """Calculate endogenous retrofit based on discrete choice model.
 
         Utility variables are investment cost, energy bill saving, and subsidies.
@@ -937,6 +938,8 @@ class AgentBuildings(ThermalBuildings):
         stock: pd.Series, default None
         supply_constraint: bool
         delta_subsidies: pd.DataFrame, default None
+        detailed: bool, default True
+        target_freeriders: float, default 0.85
 
         Returns
         -------
@@ -996,9 +999,6 @@ class AgentBuildings(ThermalBuildings):
             if utility_zil_mean is not None:
                 utility += utility_zil_mean
 
-            """if self.utility_insulation_extensive is None:
-                self.utility_insulation_extensive = self.calibration_constant_extensive(utility, ms_extensive)"""
-
             if self.utility_insulation_extensive is not None:
                 utility_constant = reindex_mi(self.utility_insulation_extensive, utility.index)
                 utility += utility_constant
@@ -1007,7 +1007,6 @@ class AgentBuildings(ThermalBuildings):
             # retrofit_rate_mean = (retrofit_rate * stock).sum() / stock.sum()
 
             return retrofit_rate, utility
-
 
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
         subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
@@ -1062,11 +1061,9 @@ class AgentBuildings(ThermalBuildings):
                 constant = pd.Series(constant, index=ms_extensive.index)
                 utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
                 stock_ref = stock.groupby([i for i in stock.index.names if i != 'Heating system final']).mean()
-                # constant = ms_extensive.copy()
-                # constant[ms_extensive > 0] = 0
                 utility_constant = reindex_mi(constant, utility_ref.index)
                 u = (utility_ref + utility_constant).copy()
-                retrofit_rate = 1 / (1 + np.exp(- u))
+                retrofit_rate = 1 / (1 + np.exp(- u * scale))
                 agg = (retrofit_rate * stock_ref).groupby(ms_extensive.index.names).sum()
                 retrofit_rate_agg = agg / stock_ref.groupby(ms_extensive.index.names).sum()
                 result = retrofit_rate_agg - ms_extensive
@@ -1100,9 +1097,14 @@ class AgentBuildings(ThermalBuildings):
             constant = ms_extensive.copy()
             constant[ms_extensive > 0] = 0
             x = np.append(constant.to_numpy(), 1)
-            root = fsolve(calibration_constant_scale, x, args=(utility, stock, ms_extensive, 0.85, - delta_subsidies / 1000, pref_subsidies))
+            root = fsolve(calibration_constant_scale, x, args=(
+            utility, stock, ms_extensive, target_freeriders, - delta_subsidies / 1000, pref_subsidies))
 
-            self.utility_insulation_extensive = pd.Series(root[:-1], index=ms_extensive.index)
+            if detailed:
+                calibration_constant_scale(root, utility, stock, ms_extensive, target_freeriders,
+                                           - delta_subsidies / 1000, pref_subsidies)
+
+            self.utility_insulation_extensive = pd.Series(root[:-1], index=ms_extensive.index) * root[-1]
 
             if detailed:
                 stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
@@ -1156,8 +1158,31 @@ class AgentBuildings(ThermalBuildings):
             retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
                                                       utility_zil_mean=utility_zil_mean)
 
-            flow_retrofit = (retrofit_rate * stock).sum()
-            retrofit_rate_mean = flow_retrofit / stock.sum()
+            if detailed:
+                scale = pd.Series(self.scale, index=['Scale'])
+                constant_ext = self.utility_insulation_extensive.copy()
+                constant_ext.index = constant_ext.index.to_flat_index()
+                constant_int = self.utility_insulation_intensive.copy()
+                constant_int.index = constant_int.index.to_flat_index()
+                flow_retrofit = retrofit_rate * stock
+                retrofit_rate_mean = flow_retrofit.sum() / stock.sum()
+                retrofit_rate_mean = pd.Series(retrofit_rate_mean, index=['Retrofit rate mean (%)'])
+                retrofit_calibrated = flow_retrofit.groupby(ms_extensive.index.names).sum() / stock.groupby(ms_extensive.index.names).sum()
+                retrofit_calibrated.index = retrofit_calibrated.index.to_flat_index()
+                flow_insulation = (flow_retrofit * market_share.T).T.sum()
+                flow_insulation_agg, name = list(), ''
+                for i in flow_insulation.index.names:
+                    flow_insulation_agg.append(flow_insulation.xs(True, level=i).sum())
+                    name = '{}{},'.format(name, i)
+                name = pd.Series('', index=[name])
+                flow_insulation_agg = pd.Series(flow_insulation_agg, index=flow_insulation.index.names)
+                flow_insulation.index = flow_insulation.index.to_flat_index()
+                flow_insulation_sum = pd.Series(flow_insulation.sum(), index=['Replacement insulation'])
+                ms_calibrated = flow_insulation / flow_insulation.sum()
+                ms_calibrated.index = ms_calibrated.index.to_flat_index()
+                result = pd.concat((scale, constant_ext, retrofit_rate_mean, retrofit_calibrated, flow_insulation_sum,
+                                    flow_insulation_agg, name, constant_int, flow_insulation, ms_calibrated), axis=0)
+                result.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
 
         if supply_constraint is True:
             market_size = (retrofit_rate * stock * investment_insulation).sum()
@@ -1311,7 +1336,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, ms_extensive, policies_insulation,
-                               index=None, stock=None, supply_constraint=False):
+                               target_freeriders, index=None, stock=None, supply_constraint=False):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -1381,9 +1406,11 @@ class AgentBuildings(ThermalBuildings):
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,
                                                                    ms_insulation=ms_insulation,
                                                                    ms_extensive=ms_extensive,
-                                                                   utility_zil=utility_zil, stock=stock,
+                                                                   utility_zil=utility_zil,
+                                                                   stock=stock,
                                                                    supply_constraint=supply_constraint,
-                                                                   delta_subsidies=delta_subsidies)
+                                                                   delta_subsidies=delta_subsidies,
+                                                                   target_freeriders=target_freeriders)
 
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
@@ -1662,7 +1689,7 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,
-                      policies_heater, policies_insulation, supply_constraint=False):
+                      policies_heater, policies_insulation, target_freeriders, supply_constraint=False):
         """Compute heater replacement and insulation retrofit.
 
         1. Heater replacement based on current stock segment.
@@ -1691,7 +1718,7 @@ class AgentBuildings(ThermalBuildings):
         print('Index: {}'.format(stock.shape[0]))
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
-                                                                  index=stock.index, stock=stock,
+                                                                  target_freeriders, index=stock.index, stock=stock,
                                                                   supply_constraint=supply_constraint)
 
         retrofit_rate = reindex_mi(retrofit_rate, stock.index)

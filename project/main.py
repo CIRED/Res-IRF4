@@ -91,7 +91,7 @@ def res_irf(config, path):
                                                 ms_intensive, ms_extensive,
                                                 [p for p in policies_heater if (year >= p.start) and (year < p.end)],
                                                 [p for p in policies_insulation if (year >= p.start) and (year < p.end)],
-                                                supply_constraint=config['supply_constraint'])
+                                                config['target_freeriders'], supply_constraint=config['supply_constraint'])
         buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
         buildings.calculate(energy_prices.loc[year, :], taxes)
 
