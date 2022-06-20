@@ -3,7 +3,7 @@
     "activated": true,
     "Policy name": "carbon_tax",
     "AP": "Reference",
-    "AP-1": true,
+    "AP-1": false,
     "ZP": false,
     "ZP+1": false,
     "AP-2020": true,
