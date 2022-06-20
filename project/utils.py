@@ -25,18 +25,19 @@ from collections import defaultdict
 from functools import wraps
 from time import time
 
+COLOR = 'dimgrey'
 SMALL_SIZE = 10
 MEDIUM_SIZE = 18
 BIGGER_SIZE = 20
 
 plt.rc('font', size=BIGGER_SIZE)  # controls default text sizes
-plt.rc('axes', titlesize=BIGGER_SIZE, labelsize=BIGGER_SIZE, labelcolor='dimgrey', labelweight='bold')  # fontsize of the axes title of the x and y labels
-plt.rc('xtick', labelsize=BIGGER_SIZE, color='dimgrey')  # fontsize of the tick labels
-plt.rc('ytick', labelsize=BIGGER_SIZE, color='dimgrey')  # fontsize of the tick labels
+plt.rc('axes', titlesize=BIGGER_SIZE, labelsize=BIGGER_SIZE, labelcolor=COLOR, labelweight='bold')  # fontsize of the axes title of the x and y labels
+plt.rc('xtick', labelsize=BIGGER_SIZE, color=COLOR)  # fontsize of the tick labels
+plt.rc('ytick', labelsize=BIGGER_SIZE, color=COLOR)  # fontsize of the tick labels
 plt.rc('legend', fontsize=MEDIUM_SIZE)  # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 plt.rc('lines', lw=3.5)
-plt.rc('axes', lw=3.5, edgecolor='dimgrey')
+plt.rc('axes', lw=3.5, edgecolor=COLOR)
 
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
 
@@ -152,15 +153,23 @@ def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
     return ax
 
 
-def format_legend(ax, ncol=3, offset=1):
+def format_legend(ax, ncol=3, offset=1, labels=None):
     try:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0 + box.height * 0.1,
                          box.width, box.height * 0.9])
 
         # Put a legend below current axis
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05 * offset),
-                  frameon=False, shadow=True, ncol=ncol)
+        if labels is not None:
+            leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                            frameon=False, shadow=True, ncol=ncol)
+        else:
+            leg = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                            frameon=False, shadow=True, ncol=ncol)
+        texts = leg.get_texts()
+        for text in texts:
+            text.set_color(COLOR)
+
     except AttributeError:
         pass
 
@@ -265,7 +274,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     save_fig(fig, save=save)
 
 
-def make_area_plot(df, y_label, colors=None, save=None, ncol=3):
+def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1):
 
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -275,10 +284,11 @@ def make_area_plot(df, y_label, colors=None, save=None, ncol=3):
     else:
         df.plot.area(ax=ax, stacked=True, color=colors)
 
-    df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
+    if total:
+        df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
 
-    ax = format_ax(ax, y_label=y_label, xinteger=True)
-    format_legend(ax)
+    ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y)
+    format_legend(ax, ncol=ncol, offset=offset)
     save_fig(fig, save=save)
 
 

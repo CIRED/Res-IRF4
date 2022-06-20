@@ -22,6 +22,7 @@ from utils import reindex_mi, timing
 import thermal
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
+from utils import format_ax, save_fig, format_legend
 
 
 class SegmentsIndex:
@@ -1019,23 +1020,22 @@ class AgentBuildings(ThermalBuildings):
         if utility_zil is not None:
             utility_zil_mean = (utility_zil.reindex(market_share.index) * market_share).sum(axis=1)
 
-        if delta_subsidies is not None:
-            delta_subsidies = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
 
         retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
                                                    utility_zil_mean=utility_zil_mean)
         flow_retrofit = (retrofit_rate * stock).sum()
         retrofit_rate_mean = flow_retrofit / stock.sum()
 
-        self.scale = 1
         if self.scale is None:
+            if delta_subsidies is not None:
+                delta_subsidies = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
 
             def impact_subsidies(scale, utility, stock, pref_subsidies, delta_subsidies, indicator='freeriders'):
-                retrofit = 1 / (1 + np.exp(- utility))
+                retrofit = 1 / (1 + np.exp(- utility * scale))
                 flow = (retrofit * stock).sum()
                 retrofit = flow / stock.sum()
 
-                utility_plus = (utility + pref_subsidies * delta_subsidies * scale)
+                utility_plus = (utility + pref_subsidies * delta_subsidies) * scale
                 retrofit_plus = 1 / (1 + np.exp(- utility_plus))
                 flow_plus = (retrofit_plus * stock).sum()
                 retrofit_plus = flow_plus / stock.sum()
@@ -1072,25 +1072,25 @@ class AgentBuildings(ThermalBuildings):
             indicator = 'freeriders'
             if indicator == 'freeriders':
 
-                scale = float(fsolve(calibration_scale, 1.0,
-                                     args=(utility, stock, pref_subsidies, - delta_subsidies / 1000, 0.625, 'freeriders')))
+                scale = float(fsolve(calibration_scale, np.array([1.0]),
+                                     args=(utility, stock, pref_subsidies, - delta_subsidies / 1000, 0.85, 'freeriders')))
 
-                x, free_riders = [], []
+                x, free_riders, elasticity = [], [], []
                 for scale in np.arange(0.1, 5, 0.1):
                     x.append(scale)
                     free_riders.append(impact_subsidies(scale, utility, stock, pref_subsidies, - delta_subsidies / 1000,
                                                         indicator='freeriders'))
-                df = pd.DataFrame([x, free_riders], index=['Scale', 'Free-riders (%)']).T
-                df.set_index('Scale', inplace=True)
+                    elasticity.append(impact_subsidies(scale, utility, stock, pref_subsidies,
+                                                       subsidies_insulation / 1000 * 0.01,
+                                                       indicator='elasticity'))
 
-                """from utils import format_plot
-                fig, ax = format_plot()
-                df.plot(ax=ax)
-
-                plt.show()"""
-
-
-
+                graphs = {'Freeriders cite': free_riders, 'Elasticity': elasticity}
+                for name, data in graphs.items():
+                    df = pd.Series(data, index=pd.Index(x, name='Scale'), name=name)
+                    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                    df.plot(ax=ax)
+                    format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), y_label=name)
+                    save_fig(fig, save=os.path.join(self.path_calibration, 'scale_calibration_{}.png'.format(name.lower())))
 
 
             stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
@@ -1103,10 +1103,6 @@ class AgentBuildings(ThermalBuildings):
                 y_before.append((rate * stock).sum() / stock.sum())
                 y_before_single.append((rate * stock_single).sum() / stock_single.sum())
                 y_before_multi.append((rate * stock_multi).sum() / stock_multi.sum())
-
-
-
-
 
             self.pref_subsidy_insulation *= scale
             self.pref_investment_insulation *= scale
@@ -1131,18 +1127,18 @@ class AgentBuildings(ThermalBuildings):
 
             df.columns = ['Subsidies (€)', 'Before', 'After', 'Before single', 'After single', 'Before multi',
                           'After multi']
+            color = {'Before': 'black', 'After': 'black',
+                     'Before single': 'darkorange', 'After single': 'darkorange',
+                     'Before multi': 'royalblue', 'After multi': 'royalblue'
+                     }
 
-            fig, ax = plt.subplots(1, 1)
-            df.plot(ax=ax, x='Subsidies (€)')
-            box = ax.get_position()
-            ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                             box.width, box.height * 0.9])
+            style = ['--', '-'] * 10
 
-            # Put a legend below current axis
-            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
-                      frameon=False, shadow=True, ncol=3)
-            fig.savefig(os.path.join(self.path_calibration, 'scale_effect.png'), bbox_inches='tight')
-            plt.close(fig)
+            fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+            df.plot(ax=ax, x='Subsidies (€)', color=color, style=style)
+            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), y_label='Retrofit rate')
+            format_legend(ax)
+            save_fig(fig, save=os.path.join(self.path_calibration, 'scale_effect.png'))
 
         if supply_constraint is True:
             market_size = (retrofit_rate * stock * investment_insulation).sum()
@@ -1151,18 +1147,16 @@ class AgentBuildings(ThermalBuildings):
             if self.param_supply is None:
 
                 self.capacity_utilization = etp_size / 0.8
-
                 self.param_supply = dict()
                 self.param_supply['a'], self.param_supply['b'], self.param_supply['c'] = self.calibration_supply()
 
                 x = np.arange(0, 1.05, 0.05)
                 y = self.factor_function(self.param_supply['a'], self.param_supply['b'], self.param_supply['c'], x)
-                fig, ax = plt.subplots(1, 1)
-                ax.plot(x, y)
+                fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                ax.plot(x, y, color='black')
+                format_ax(ax, y_label='Cost factor')
                 ax.set_xlabel('Utilization rate (%)')
-                ax.set_ylabel('Cost factor')
-                fig.savefig(os.path.join(self.path, 'marginal_cost_curve.png'), bbox_inches='tight')
-                plt.close(fig)
+                save_fig(fig, save=os.path.join(self.path_calibration, 'marginal_cost_curve.png'))
 
                 x, y_supply, y_demand = [], [], []
                 for factor in np.arange(0.81, 1.5, 0.05):
@@ -1176,18 +1170,23 @@ class AgentBuildings(ThermalBuildings):
 
                 df = pd.concat((pd.Series(x), pd.Series(y_supply)/10**3, pd.Series(y_demand)/10**3,),
                                axis=1).set_axis(['Cost factor', 'Supply', 'Demand'], axis=1)
-                fig, ax = plt.subplots(1, 1)
-                df.plot(ax=ax, x='Cost factor')
-                ax.set_ylabel('Employment (Thousands)')
-                box = ax.get_position()
-                ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                                 box.width, box.height * 0.9])
 
-                # Put a legend below current axis
-                ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
-                          frameon=False, shadow=True, ncol=3)
-                fig.savefig(os.path.join(self.path, 'supply_demand_equilibrium.png'), bbox_inches='tight')
-                plt.close(fig)
+                fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                df.plot(ax=ax, x='Cost factor', color={'Supply': 'darkorange', 'Demand': 'royalblue'})
+                format_ax(ax, y_label='Quantity (thousands of jobs)', format_y=lambda y, _: '{:.0f}'.format(y))
+                format_legend(ax)
+                save_fig(fig, save=os.path.join(self.path_calibration, 'supply_demand_inverse.png'))
+
+                fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                df.plot(ax=ax, x='Supply', y='Cost factor', color='darkorange')
+                df.plot(ax=ax, x='Demand', y='Cost factor', color='royalblue')
+                format_ax(ax, y_label='Cost factor', format_y=lambda y, _: '{:.1f}'.format(y))
+                ax.set_xlabel('Quantity (thousands of jobs)')
+                format_legend(ax, labels=['Supply', 'Demand'])
+                save_fig(fig, save=os.path.join(self.path_calibration, 'supply_demand.png'))
+
+
+
 
             def solve_equilibrium(factor, bill_saved_insulation, subsidies_insulation, investment_insulation, stock):
                 retrofit_rate = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
@@ -1357,7 +1356,7 @@ class AgentBuildings(ThermalBuildings):
                 utility_zil = subsidies_details['zero_interest_loan'].copy()
 
             delta_subsidies = None
-            if self.year == self.first_year:
+            if self.year == self.first_year + 1:
                 delta_subsidies = subsidies_details['cite']
 
             retrofit_rate, market_share = self.endogenous_retrofit(index, prices, utility_subsidies, cost_insulation,

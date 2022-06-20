@@ -359,9 +359,10 @@ def parse_output(buildings, param):
                          save=os.path.join(buildings.path, 'consumption_performance.png'), ncol=4, offset=2)
 
     df = consumption.groupby('Energy').sum().T.loc[:, generic_input['index']['Heating energy']]
-    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
-                         format_y=lambda y, _: y / 10 ** 9,
-                         save=os.path.join(buildings.path, 'consumption_energy.png'), ncol=4, offset=2)
+    make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
+                   format_y=lambda y, _: y / 10 ** 9,
+                   save=os.path.join(buildings.path, 'consumption_energy.png'), ncol=4, offset=2,
+                   total=False)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
     make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
