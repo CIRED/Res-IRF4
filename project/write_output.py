@@ -339,24 +339,34 @@ def parse_output(buildings, param):
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'),
                        colors=generic_input['colors'])
 
+    df = investment_total.groupby('Income owner').sum().loc[generic_input['index']['Income owner']].T
+    make_area_plot(df / 10**9, 'Investment (Billion euro)', colors=generic_input['colors'],
+                   save=os.path.join(buildings.path, 'investment_income.png'), total=False)
+
+    df = investment_total.groupby(['Housing type', 'Occupancy status']).sum().T
+    df.columns = df.columns.map(lambda x: '{} - {}'.format(x[0], x[1]))
+    df = df.loc[:, generic_input['index']['Decision maker']]
+    make_area_plot(df / 10**9, 'Investment (Billion euro)',
+                   save=os.path.join(buildings.path, 'investment_decision_maker.png'), total=False)
+
     # graph consumption
     temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
     temp = temp.loc[:, ['Existing', 'Construction']]
     make_area_plot(temp / 10**9, 'Consumption (TWh)', colors=generic_input['colors'],
-                   save=os.path.join(buildings.path, 'consumption.png'))
+                   save=os.path.join(buildings.path, 'consumption.png'), total=False)
 
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
-    make_stackedbar_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
-                         format_y=lambda y, _: y / 10 ** 6,
-                         save=os.path.join(buildings.path, 'stock_performance.png'), ncol=4, offset=2)
+    make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
+                   format_y=lambda y, _: y / 10 ** 6,
+                   save=os.path.join(buildings.path, 'stock_performance.png'), ncol=4, offset=2, total=False)
 
     consumption = pd.concat((consumption, certificate, energy), axis=1).set_index(['Performance', 'Energy'],
                                                                                   append=True)
 
     df = consumption.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
-    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
-                         format_y=lambda y, _: y / 10 ** 9,
-                         save=os.path.join(buildings.path, 'consumption_performance.png'), ncol=4, offset=2)
+    make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
+                   format_y=lambda y, _: y / 10 ** 9,
+                   save=os.path.join(buildings.path, 'consumption_performance.png'), ncol=4, offset=2)
 
     df = consumption.groupby('Energy').sum().T.loc[:, generic_input['index']['Heating energy']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
@@ -365,9 +375,9 @@ def parse_output(buildings, param):
                    total=False)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
-    make_stackedbar_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
-                         format_y=lambda y, _: y / 10 ** 9,
-                         save=os.path.join(buildings.path, 'consumption_income.png'), ncol=5, offset=2)
+    make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
+                   format_y=lambda y, _: y / 10 ** 9,
+                   save=os.path.join(buildings.path, 'consumption_income.png'), ncol=5, offset=2, total=False)
 
     return stock, detailed
 

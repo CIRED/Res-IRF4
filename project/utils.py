@@ -274,7 +274,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     save_fig(fig, save=save)
 
 
-def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1):
+def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1, ymin=None):
 
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -287,7 +287,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
     if total:
         df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
 
-    ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y)
+    ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
     format_legend(ax, ncol=ncol, offset=offset)
     save_fig(fig, save=save)
 
