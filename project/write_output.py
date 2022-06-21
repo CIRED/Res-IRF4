@@ -502,9 +502,12 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                 index=ref.loc[var, :].index)
-        rslt[var] = (((result[s].loc[var, :]).fillna(0) - ref.loc[var, :]) * discount.T).sum()
-            # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
 
+        if var in result[s].index: #model calibrated without Mpr so can be missing
+            rslt[var] = (((result[s].loc[var, :]).fillna(0) - ref.loc[var, :]) * discount.T).sum()
+            # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
+        else:
+            rslt[var] = ( - ref.loc[var, :] * discount.T).sum()
         comparison[s] = rslt
 
     comparison = pd.DataFrame(comparison)
