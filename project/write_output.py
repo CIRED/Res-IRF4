@@ -272,7 +272,7 @@ def parse_output(buildings, param):
         {key: pd.Series({year: data.sum() for year, data in item.items()}, dtype=float) for key, item in
          taxes_expenditures.items()}).T
     taxes_expenditures.index = taxes_expenditures.index.map(
-        lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ')))
+        lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
     detailed.update((taxes_expenditures / 10 ** 9).T)
     detailed['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / 10 ** 9
 
@@ -341,13 +341,14 @@ def parse_output(buildings, param):
 
     df = investment_total.groupby('Income owner').sum().loc[generic_input['index']['Income owner']].T
     make_area_plot(df / 10**9, 'Investment (Billion euro)', colors=generic_input['colors'],
-                   save=os.path.join(buildings.path, 'investment_income.png'), total=False)
+                   save=os.path.join(buildings.path, 'investment_income.png'), total=False, ncol=5, offset=2)
 
     df = investment_total.groupby(['Housing type', 'Occupancy status']).sum().T
     df.columns = df.columns.map(lambda x: '{} - {}'.format(x[0], x[1]))
     df = df.loc[:, generic_input['index']['Decision maker']]
     make_area_plot(df / 10**9, 'Investment (Billion euro)',
-                   save=os.path.join(buildings.path, 'investment_decision_maker.png'), total=False)
+                   save=os.path.join(buildings.path, 'investment_decision_maker.png'), total=False, loc='upper',
+                   ncol=3, offset=2)
 
     # graph consumption
     temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
@@ -358,7 +359,8 @@ def parse_output(buildings, param):
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
                    format_y=lambda y, _: y / 10 ** 6,
-                   save=os.path.join(buildings.path, 'stock_performance.png'), ncol=4, offset=2, total=False)
+                   save=os.path.join(buildings.path, 'stock_performance.png'), total=False,
+                   ncol=4, offset=2)
 
     consumption = pd.concat((consumption, certificate, energy), axis=1).set_index(['Performance', 'Energy'],
                                                                                   append=True)
@@ -371,40 +373,34 @@ def parse_output(buildings, param):
     df = consumption.groupby('Energy').sum().T.loc[:, generic_input['index']['Heating energy']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: y / 10 ** 9,
-                   save=os.path.join(buildings.path, 'consumption_energy.png'), ncol=4, offset=2,
-                   total=False)
+                   save=os.path.join(buildings.path, 'consumption_energy.png'),
+                   total=False, ncol=4, offset=1)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: y / 10 ** 9,
-                   save=os.path.join(buildings.path, 'consumption_income.png'), ncol=5, offset=2, total=False)
+                   save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False,
+                   ncol=5, offset=2)
 
     return stock, detailed
 
 
 def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
-    # TODO: energy taxes
-    # TODO: vérifier le calcul sur un exemple simple (spreadsheet)
+
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
-
-    # list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config.keys() if re.search('20[0-9][0-9]', key)]
-    # temp = ['AP-{}'.format(year) for year in list_years]
-    # for key, item in config.items():
-    #    if key in ['All policies', 'All policies - 1', 'Zero policies', 'Zero policies + 1'] or key in temp:
-    #        config[key] = item.replace(' ', '_')
 
     if 'Discount rate' in config.keys():
         discount_rate = float(config['Discount rate'])
 
     if 'Lifetime' in config.keys():
-        lifetime = int(config['Lifetime'])
+        years = int(config['Lifetime'])
 
     discount_factor = (1 - (1 + discount_rate) ** -years) / discount_rate
 
     policy_name = config['Policy name'].replace('_', ' ').capitalize()
 
-    def double_difference(ref, scenario, values=None, discount_rate=0.045, years=30):
+    def double_difference(ref, scenario, values=None, discount_rate=discount_rate, years=years):
         """Calculate double difference.
 
         Double difference is a proxy of marginal flow produced in year.
@@ -452,10 +448,9 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         return (matrix_double_diff * discount).sum()
 
     # Getting inputs needed
-    energy_prices = pd.read_csv('project/input/energy_prices.csv', index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
-    carbon_value = pd.read_csv('project/input/policies/carbon_value.csv', index_col=[0]).squeeze()  # euro/tCO2
-    carbon_emission = pd.read_csv('project/input/policies/carbon_emission.csv',
-                                  index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
+    energy_prices = pd.read_csv(config['energy_prices'], index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
+    carbon_value = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze()  # euro/tCO2
+    carbon_emission = pd.read_csv(config['carbon_emission'],index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
     # euro/tCO2 * tCO2/TWh  = euro/TWh
     carbon_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_value.dropna(how='all', inplace=True)
@@ -538,8 +533,8 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                                        * 10 ** 3)
         leverage_eff = pd.DataFrame(comp_efficiency.loc['Investment total (Billion euro)'] / policy_sub_diff)
         #total_inv is total Investment total/ energy savings
-        total_inv = pd.DataFrame(comp_efficiency.loc['Investment total (Billion euro)'] / comp_efficiency.loc['Consumption '
-                                                                                                             '(TWh)'])
+        total_inv = pd.DataFrame(
+            comp_efficiency.loc['Investment total (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)'])
         cost_eff_real.rename(columns={0: "Cost effectiveness (euro/kWh)"}, inplace=True)
         cost_eff_std.rename(columns={0: "Cost effectiveness standard (euro/kWh)"}, inplace=True)
         cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon (euro/tCO2)"}, inplace=True)

@@ -153,19 +153,33 @@ def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
     return ax
 
 
-def format_legend(ax, ncol=3, offset=1, labels=None):
+def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper'):
     try:
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                         box.width, box.height * 0.9])
+        leg = None
+        if loc == 'upper':
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                             box.width, box.height * 0.9])
 
-        # Put a legend below current axis
-        if labels is not None:
-            leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                            frameon=False, shadow=True, ncol=ncol)
-        else:
-            leg = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                            frameon=False, shadow=True, ncol=ncol)
+            # Put a legend below current axis
+            if labels is not None:
+                leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                                frameon=False, shadow=True, ncol=ncol)
+            else:
+                leg = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                                frameon=False, shadow=True, ncol=ncol)
+        elif loc == 'left':
+            # Shrink current axis by 20%
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+            # Put a legend to the right of the current axis
+            if labels is not None:
+                leg = ax.legend(labels, loc='center left', bbox_to_anchor=(1, 0.5),
+                                frameon=False, shadow=True)
+            else:
+                leg = ax.legend(loc='upper center', bbox_to_anchor=(1, 0.5),
+                                frameon=False, shadow=True)
         texts = leg.get_texts()
         for text in texts:
             text.set_color(COLOR)
@@ -203,7 +217,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
         df.plot(ax=ax, color=colors, style=STYLES)
 
     if scatter is not None:
-        scatter.plot(ax=ax, style='.', ms=10)
+        scatter.plot(ax=ax, style='.', ms=15)
 
     ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
     format_legend(ax)
@@ -274,7 +288,8 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     save_fig(fig, save=save)
 
 
-def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1, ymin=None):
+def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1,
+                   ymin=None, loc='upper'):
 
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -288,7 +303,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
         df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
 
     ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
-    format_legend(ax, ncol=ncol, offset=offset)
+    format_legend(ax, ncol=ncol, offset=offset, loc=loc)
     save_fig(fig, save=save)
 
 
