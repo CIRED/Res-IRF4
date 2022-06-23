@@ -191,6 +191,7 @@ colors = {
     "Subsidies insulation": "darksalmon",
     "Reduced tax": "darkolivegreen",
     "Cee": "tomato",
+    "Cee tax": "tomato",
     "Cite": "blue",
     "Zero interest loan": "darkred",
     "Over cap": "grey",
@@ -199,7 +200,9 @@ colors = {
     'Sub ad volarem': "darkorange",
     "Sub merit": "slategrey",
     "Existing": "tomato",
-    "Construction": "grey"
+    "New": "lightgrey",
+    "Renovation": "brown",
+    "Construction": "dimgrey"
 }
 
 generic_input['colors'] = colors
