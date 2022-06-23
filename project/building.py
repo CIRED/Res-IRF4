@@ -1553,8 +1553,9 @@ class AgentBuildings(ThermalBuildings):
             cap = (cost_insulation.T * subsidies_cap).T
             over_cap = subsidies_uncaped > cap
             subsidies_details['over_cap'] = (subsidies_uncaped - cap)[over_cap].fillna(0)
-            subsidies_details['mpr'] -= subsidies_details['over_cap']
-            assert (subsidies_details['mpr'].values >= 0).all(), 'MPR got negative values'
+            if 'mpr' in subsidies_details.keys():
+                subsidies_details['mpr'] -= subsidies_details['over_cap']
+                assert (subsidies_details['mpr'].values >= 0).all(), 'MPR got negative values'
             subsidies_total -= subsidies_details['over_cap']
 
         return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
