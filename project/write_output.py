@@ -318,10 +318,8 @@ def parse_output(buildings, param):
     # graph subsidies
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
-
     if 'over_cap' in subset.columns:
-        subset['over_cap'] = -subset['over_cap']
-
+        subset.drop('over_cap', inplace=True, axis=1)
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     subset.dropna(inplace=True, how='all')
     if not subset.empty:
@@ -432,6 +430,9 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         double_diff.iloc[0] = simple_diff.iloc[0]
         double_diff.rename(None, inplace=True)
 
+        if values is not None:
+            double_diff = double_diff * values
+
         extend = max(double_diff.index) + years - 1
 
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(extend + 1 - double_diff.index[0])],
@@ -455,7 +456,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     # Getting inputs needed
     energy_prices = pd.read_csv(config['energy_prices'], index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
     carbon_value = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze()  # euro/tCO2
-    carbon_emission = pd.read_csv(config['carbon_emission'],index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
+    carbon_emission = pd.read_csv(config['carbon_emission'], index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
     # euro/tCO2 * tCO2/TWh  = euro/TWh
     carbon_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_value.dropna(how='all', inplace=True)
