@@ -432,28 +432,38 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(years)])
 
         if values is None:
-            matrix_double_diff = double_diff * discount.sum()
+            result = double_diff * discount.sum()
 
         else:
+            """start = min(double_diff.index)
             extend = max(double_diff.index) + years - 1
-            values.truncate(after=extend)
+            # values.truncate(after=extend)
+            # values = values.loc[range(start, extend + 1)]
 
-            matrix_bool = pd.DataFrame(1, index=double_diff.index, columns=values.index)
-            matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0)) * pd.DataFrame(np.tril(matrix_bool, k=years - 1))
-            matrix_bool = matrix_bool.set_axis(double_diff.index).set_axis(values.index, axis=1)
-            matrix_bool.replace(0, np.nan, inplace=True)
+            # matrix_bool = pd.DataFrame(1, index=double_diff.index, columns=values.index)
+            matrix_bool = pd.DataFrame(1, index=double_diff.index, columns=range(start, extend + 1))
+            matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0), index=matrix_bool.index,
+                                       columns=matrix_bool.columns) * pd.DataFrame(np.tril(matrix_bool, k=years - 1),
+                                                                                   index=matrix_bool.index,
+                                                                                   columns=matrix_bool.columns)"""
+            # matrix_bool = matrix_bool.set_axis(double_diff.index).set_axis(values.index, axis=1)
+            # matrix_bool.replace(0, np.nan, inplace=True)
 
-            prices = values * matrix_bool
+            matrix_discount = pd.DataFrame([pd.Series([1 / (1 + discount_rate) ** (i - start) for i in range(start, start + years - 1)],
+                                           index=range(start, start + years - 1)) for start in double_diff.index], index=double_diff.index)
+            result = (double_diff * (matrix_discount * values).T).T
+            result = result.sum(axis=1)
+            """prices = values * matrix_bool
             prices = prices[:].values
             prices = prices[~ np.isnan(prices)].reshape((double_diff.shape[0], years))
             prices = pd.DataFrame(prices, index=double_diff.index)
 
             matrix_double_diff = prices.dot(discount.T)
-            matrix_double_diff = matrix_double_diff * double_diff
+            matrix_double_diff = matrix_double_diff * double_diff"""
 
-        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(matrix_double_diff.shape[0])],
-                             index=matrix_double_diff.index)
-        return (matrix_double_diff * discount).sum()
+        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(result.shape[0])],
+                             index=result.index)
+        return (result * discount).sum()
 
     # Getting inputs needed
     energy_prices = pd.read_csv(config['energy_prices'], index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
