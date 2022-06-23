@@ -390,7 +390,7 @@ def parse_output(buildings, param):
     return stock, detailed
 
 
-def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
+def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
