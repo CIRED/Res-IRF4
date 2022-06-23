@@ -6,7 +6,10 @@
     "prices_factor": 2,
     "cost_factor": 2,
     "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
-    "target_freeriders": 0.75
+    "target_freeriders": 0.75,
+    "energy_prices": "project/input/energy_prices.csv",
+    "carbon_value": "project/input/policies/carbon_value.csv",
+    "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "assessment": {
     "activated": true,
@@ -16,10 +19,10 @@
     "ZP": false,
     "ZP+1": false,
     "AP-2020": true,
-    "AP-2025": true,
-    "AP-2030": true,
-    "AP-2035": true,
-    "AP-2040": true,
+    "AP-2025": false,
+    "AP-2030": false,
+    "AP-2035": false,
+    "AP-2040": false,
     "Discount rate": 0.032,
     "Lifetime": 30,
         "energy_prices": "project/input/energy_prices.csv",
@@ -27,7 +30,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2050,
+    "end": 2021,
     "prices_constant": false,
     "demolition_rate": 0.0035,
     "income_rate": 0.012,

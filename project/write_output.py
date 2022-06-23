@@ -388,7 +388,7 @@ def parse_output(buildings, param):
     return stock, detailed
 
 
-def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
+def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
@@ -429,25 +429,27 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
         double_diff.iloc[0] = simple_diff.iloc[0]
         double_diff.rename(None, inplace=True)
+        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(years)])
 
-        if values is not None:
-            double_diff = double_diff * values
+        if values is None:
+            matrix_double_diff = double_diff * discount.sum()
 
-        extend = max(double_diff.index) + years - 1
+        else:
+            extend = max(double_diff.index) + years - 1
+            values.truncate(after=extend)
 
-        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(extend + 1 - double_diff.index[0])],
-                             index=range(double_diff.index[0], extend + 1))
+            matrix_bool = pd.DataFrame(1, index=double_diff.index, columns=values.index)
+            matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0)) * pd.DataFrame(np.tril(matrix_bool, k=years - 1))
+            matrix_bool = matrix_bool.set_axis(double_diff.index).set_axis(values.index, axis=1)
+            matrix_bool.replace(0, np.nan, inplace=True)
 
-        matrix_double_diff = double_diff.to_frame().dot(discount.to_frame().T)
-        if values is not None:
-            values = values.reindex(matrix_double_diff.columns, method='pad')
-            matrix_double_diff = matrix_double_diff * values
+            prices = values * matrix_bool
+            prices = prices[:].values
+            prices = prices[~ np.isnan(prices)].reshape((double_diff.shape[0], years))
+            prices = pd.DataFrame(prices, index=double_diff.index)
 
-        matrix_bool = pd.DataFrame(1, index=matrix_double_diff.index, columns=matrix_double_diff.columns)
-        matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0)) * pd.DataFrame(np.tril(matrix_bool, k=years - 1))
-        matrix_bool = matrix_bool.set_axis(matrix_double_diff.index).set_axis(matrix_double_diff.columns, axis=1)
-
-        matrix_double_diff = (matrix_double_diff * matrix_bool).sum()
+            matrix_double_diff = prices.dot(discount.T)
+            matrix_double_diff = matrix_double_diff * double_diff
 
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(matrix_double_diff.shape[0])],
                              index=matrix_double_diff.index)
