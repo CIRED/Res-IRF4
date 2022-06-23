@@ -24,7 +24,10 @@
     "AP-2035": false,
     "AP-2040": false,
     "Discount rate": 0.032,
-    "Lifetime": 30
+    "Lifetime": 30,
+        "energy_prices": "project/input/energy_prices.csv",
+    "carbon_value": "project/input/policies/carbon_value.csv",
+    "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
     "end": 2021,
@@ -72,7 +75,7 @@
         "tax": "project/input/policies/cee_tax.csv"
       },
       "cap": {
-        "start": 2019,
+        "start": 2021,
         "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },

@@ -1485,33 +1485,32 @@ class AgentBuildings(ThermalBuildings):
 
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                    frame.index).T * surface).T
+                subsidies_total += temp
 
                 if policy.name in subsidies_details.keys():
-                    subsidies_details[policy.name] += temp
-                else:
-                    subsidies_details[policy.name] = temp
+                    subsidies_details[policy.name] = subsidies_details[policy.name] + temp
 
-                subsidies_total += subsidies_details[policy.name]
+                else:
+                    subsidies_details[policy.name] = temp.copy()
 
             elif policy.policy == 'bonus_best':
                 temp = (reindex_mi(policy.value, in_best.index) * in_best.T).T
-
+                subsidies_total += temp
                 if policy.name in subsidies_details.keys():
-                    subsidies_details[policy.name] += temp
-                else:
-                    subsidies_details[policy.name] = temp
+                    subsidies_details[policy.name] = subsidies_details[policy.name] + temp
 
-                subsidies_total += subsidies_details[policy.name]
+                else:
+                    subsidies_details[policy.name] = temp.copy()
 
             elif policy.policy == 'bonus_worst':
                 temp = (reindex_mi(policy.value, out_worst.index) * out_worst.T).T
+                subsidies_total += temp
 
                 if policy.name in subsidies_details.keys():
-                    subsidies_details[policy.name] += temp
-                else:
-                    subsidies_details[policy.name] = temp
+                    subsidies_details[policy.name] = subsidies_details[policy.name] + temp
 
-                subsidies_total += subsidies_details[policy.name]
+                else:
+                    subsidies_details[policy.name] = temp.copy()
 
             elif policy.policy == 'subsidy_ad_volarem':
 
@@ -1543,18 +1542,20 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
 
-        subsidies_caped = subsidies_total.copy()
+        subsidies_uncaped = subsidies_total.copy()
         for sub in ['reduced_tax', 'zero_interest_loan']:
             if sub in subsidies_details.keys():
-                subsidies_caped -= subsidies_details[sub]
+                subsidies_uncaped -= subsidies_details[sub]
 
         if subsidies_cap:
             subsidies_cap = subsidies_cap[0]
-            subsidies_cap = reindex_mi(subsidies_cap.value, subsidies_caped.index)
+            subsidies_cap = reindex_mi(subsidies_cap.value, subsidies_uncaped.index)
             cap = (cost_insulation.T * subsidies_cap).T
-            over_cap = subsidies_caped > cap
-            subsidies_details['over_cap'] = (subsidies_caped - cap)[over_cap].fillna(0)
-
+            over_cap = subsidies_uncaped > cap
+            subsidies_details['over_cap'] = (subsidies_uncaped - cap)[over_cap].fillna(0)
+            if 'mpr' in subsidies_details.keys():
+                subsidies_details['mpr'] -= subsidies_details['over_cap']
+                assert (subsidies_details['mpr'].values >= 0).all(), 'MPR got negative values'
             subsidies_total -= subsidies_details['over_cap']
 
         return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
