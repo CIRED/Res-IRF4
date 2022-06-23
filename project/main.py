@@ -144,7 +144,7 @@ def run(path=None):
             list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                           re.search('20[0-9][0-9]', key)]
             for year in list_years:
-                if config_policies['AP-{}'.format(year)]:
+                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end']:
                     configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
                     configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
                     configuration['AP-{}'.format(year)]['end'] = year + 1
