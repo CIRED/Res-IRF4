@@ -348,14 +348,18 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
 
     """
 
-    color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Health benefit': 'royalblue', 'Cofp': 'grey', 'Total': 'black'}
+    color = {'Investment': 'firebrick', 'Embodied emission additional': 'darkgreen', 'Cofp': 'grey',
+             'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
+             'Well-being benefit': 'royalblue', 'Health savings': 'blue',
+             'Mortality reduction benefit': 'lightblue',  'Total': 'black'}
 
     data = df.copy()
 
     data.rename(index={'Energy saving': 'Energy',
                        'Emission saving': 'Emission',
-                       'Health benefit': 'Health',
+                       'Embodied emission additional': 'Embodied emission',
+                       'Well-being benefit': 'Well-being',
+                       'Mortality reduction benefit': 'Mortality',
                        'Cofp': 'COFP'
                        }, inplace=True)
 
@@ -380,7 +384,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
               title=title, ax=ax, color=color.values(), edgecolor=None)
     # my_plot.plot(step.index, step.values, 'k')
 
-    plt.axhline(y=0, color='black', linestyle='--')
+    plt.axhline(y=0, color='black', linestyle='--', linewidth=0.3)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -395,6 +399,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
     max = data.max()
     neg_offset, pos_offset = max / 10, max / 50
     plot_offset = int(max / 15)
+    ax.set_ylim(top=max + max/3)
 
     # Start label loop
     loop = 0
@@ -412,7 +417,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
         ax.annotate("{:,.1f}".format(val), (loop, y), ha="center")
         loop += 1
 
-    ax.set_xticklabels(data.index, rotation=0)
+    ax.set_xticklabels(data.index, rotation=30)
     save_fig(fig, save=save)
 
 
@@ -432,16 +437,19 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
 
     """
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    color = {'Investment': 'firebrick', 'Energy': 'darkorange', 'Emission': 'forestgreen',
-             'Health': 'royalblue','Cofp': 'grey'}
+    color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
+             'Embodied emission additional': 'darkgreen', 'Well-being benefit': 'royalblue', 'Health savings': 'blue',
+             'Mortality reduction benefit': 'lightblue', 'Cofp': 'grey', 'Total': 'black'}
 
     data = df.copy()
 
-    data.rename(columns={'Energy saving': 'Energy',
-                         'Emission saving': 'Emission',
-                         'Health benefit': 'Health',
-                         'Cofp': 'Cofp'
-                         }, inplace=True)
+    data.rename(index={'Energy saving': 'Energy',
+                       'Emission saving': 'Emission',
+                       'Embodied emission additional': 'Embodied emission',
+                       'Well-being benefit': 'Well-being',
+                       'Mortality reduction benefit': 'Mortality',
+                       'Cofp': 'COFP'
+                       }, inplace=True)
 
     total = data.sum(axis=1).reset_index()
     total.columns = ['Scenarios', 'NPV']

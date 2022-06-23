@@ -470,8 +470,8 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
     carbon_value = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze()  # euro/tCO2
     carbon_emission = pd.read_csv(config['carbon_emission'], index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
     # euro/tCO2 * tCO2/TWh  = euro/TWh
-    carbon_value = (carbon_value * carbon_emission.T).T  # euro/TWh
-    carbon_value.dropna(how='all', inplace=True)
+    carbon_emission_value = (carbon_value * carbon_emission.T).T  # euro/TWh
+    carbon_emission_value.dropna(how='all', inplace=True)
 
     scenarios = [s for s in result.keys() if s != 'Reference' and s != 'ZP']
 
@@ -486,7 +486,8 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
         rslt = {}
         for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
-                    'Health cost (Billion euro)', 'Health expenditure (Billion euro)', 'Emission (MtCO2)']:
+                    'Health expenditure (Billion euro)', 'Social cost of mortality (Billion euro)',
+                    'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)']:
             rslt[var] = double_difference(ref.loc[var, :], result[s].loc[var, :],
                                           values=None)
 
@@ -506,7 +507,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
             rslt['Carbon value {} (Billion euro)'.format(energy)] = double_difference(ref.loc[var, :],
                                                                                       result[s].loc[var, :],
-                                                                                      values=carbon_value[energy]) / (
+                                                                                      values=carbon_emission_value[energy]) / (
                                                                             10 ** 9)
 
         # Simple diff = scenario - ref
@@ -515,6 +516,13 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                 [1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                 index=ref.loc[var, :].index)
             rslt[var] = ((result[s].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+
+        var = 'Carbon footprint (MtCO2)'
+        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
+                             index=ref.loc[var, :].index)
+        rslt['Carbon footprint (Billion euro)'] = ((result[s].loc[var,
+                                                    :] - ref.loc[var, :]) * discount.T * carbon_value).sum() / 10**3
+
 
         var = '{} (Billion euro)'.format(policy_name)
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
@@ -546,31 +554,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         indicator.update({"Leverage (%)": comp_efficiency.loc['Investment total (Billion euro)'] / policy_cost})
         indicator.update({"Investment / energy savings (€/kWh)": comp_efficiency.loc['Investment total (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
         indicator = pd.DataFrame(indicator).T
-        """"#Convention: negative signs to have positive values for cost-efficiency
-        cost_eff_real = - pd.DataFrame(
-            policy_cost / comp_efficiency.loc['Consumption (TWh)'])
 
-        cost_eff_std = - pd.DataFrame(
-            policy_cost / comp_efficiency.loc['Consumption standard (TWh)'])
-        cost_eff_carbon = - pd.DataFrame(policy_cost / (comp_efficiency.loc['Emission (MtCO2)'])
-                                       * 10 ** 3)
-        leverage_eff = pd.DataFrame(comp_efficiency.loc['Investment total (Billion euro)'] / policy_cost)
-        #total_inv is total Investment total/ energy savings
-        total_inv = pd.DataFrame(
-            comp_efficiency.loc['Investment total (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)'])
-        cost_eff_real.rename(columns={0: "Cost effectiveness (euro/kWh)"}, inplace=True)
-        cost_eff_std.rename(columns={0: "Cost effectiveness standard (euro/kWh)"}, inplace=True)
-        cost_eff_carbon.rename(columns={0: "Cost effectiveness carbon (euro/tCO2)"}, inplace=True)
-        leverage_eff.rename(columns={0: "Leverage (%)"}, inplace=True)
-        total_inv.rename(columns={0: "Total investment / energy savings (euro/kWh) "}, inplace=True)
-
-        # Creating indicator df
-        indicator = pd.DataFrame(comparison.loc[['{} (Billion euro)'.format(policy_name),'Consumption (TWh)']])
-        indicator = pd.concat((indicator, cost_eff_real.T, pd.DataFrame(comparison.loc['Consumption standard (TWh)']).T,
-                               cost_eff_std.T, pd.DataFrame(comparison.loc['Emission (MtCO2)']).T, cost_eff_carbon.T,
-                               pd.DataFrame(comparison.loc['Investment total (Billion euro)']).T, leverage_eff.T,
-                               total_inv.T), axis=0)
-        """
         # Retrofit ratio = freerider ratio
         # And impact on retrofit rate : difference in retrofit rate / cost of subvention
         for s in efficiency_scenarios:
@@ -586,6 +570,8 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                     result[s].loc['Retrofit rate (%)', year])
                 indicator.loc['Impact on retrofit rate (%)', s] = (result['Reference'].loc['Retrofit rate (%)', year] - (
                     result[s].loc['Retrofit rate (%)', year])) / comparison.loc['{} (Billion euro)'.format(policy_name), s]
+    else:
+        indicator = pd.DataFrame(indicator).T
 
         # Effectiveness : AP/AP-1 and ZP/ ZP+1 scenarios
 
@@ -615,22 +601,25 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             df = data.loc[:, s]
             temp = dict()
             temp.update({'Investment': df['Investment total (Billion euro)']})
-            temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
-                                              for i in generic_input['index']['Heating energy'])})
-            temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
-                                                for i in generic_input['index']['Heating energy'])})
-            # TODO: separate health benefit : well-being / health cost / mortality
-            temp.update({'Health benefit': df['Health cost (Billion euro)']})
+            if embodied_emission:
+                temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
                                       df['Health expenditure (Billion euro)']
                                       ) * factor_cofp})
 
-            # TODO: add embodied emission as an option
-            if embodied_emission:
-                # temp.update({'Embodied emission additional': })
-                pass
-            temp = pd.DataFrame(temp)
+            temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
+                                              for i in generic_input['index']['Heating energy'])})
+            temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
+                                                for i in generic_input['index']['Heating energy'])})
+
+
+            temp.update({'Well-being benefit': df['Loss of well-being (Billion euro)']})
+            temp.update({'Health savings': df['Health expenditure (Billion euro)']})
+            temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
+
+
+            temp = pd.Series(temp)
 
             if save:
                 waterfall_chart(temp, title=s,
