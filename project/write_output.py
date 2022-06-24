@@ -120,8 +120,15 @@ def parse_output(buildings, param):
     t.index = t.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
     detailed.update(t.T)
 
+
     detailed['Retrofit (Thousand)'] = pd.Series(
         {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10**3
+    #We need them by income for freerider ratios per income deciles
+    temp = pd.DataFrame(
+        {year: item.sum(axis=1) for year, item in buildings.certificate_jump_yrs.items()})
+    t = temp.groupby('Income owner').sum()
+    t.index = t.index.map(lambda x: 'Retrofit {} (Thousand)'.format(x))
+    detailed.update(t.T / 10**3)
     detailed['Retrofit >= 1 EPC (Thousand)'] = pd.Series(
         {year: item.loc[:, [i for i in item.columns if i > 0]].sum().sum() for year, item in
          buildings.certificate_jump_yrs.items()}) / 10 ** 3
@@ -566,6 +573,14 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                     result[s].loc['Retrofit (Thousand)', year])
                 indicator.loc['Freeriding retrofit ratio (%)', s] = result[s].loc['Retrofit (Thousand)', year] / (
                     result['Reference'].loc['Retrofit (Thousand)', year])
+                decile = ['D{}'.format(i) for i in range(1, 11)]
+                df = result[s].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year] / \
+                     result['Reference'].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year]
+                #This part to be improved
+                df.index = ['Freeriding retrofit ratio {} (%)'.format(d) for d in decile]
+                df.name = s
+                df = pd.DataFrame(df)
+                indicator = pd.concat((indicator, df), axis=0)
 
                 indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Retrofit rate (%)', year] - (
                     result[s].loc['Retrofit rate (%)', year])
