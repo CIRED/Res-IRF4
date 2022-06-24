@@ -156,27 +156,43 @@ def run(path=None):
         if configuration['sensitivity']['activated']:
             config_sensitivity = configuration['sensitivity']
             if 'ZP' in config_sensitivity.keys():
-                configuration['ZP'] = copy.deepcopy(configuration['Reference'])
-                for name, policy in configuration['ZP']['policies'].items():
-                    policy['end'] = configuration['Reference']['start'] + 2
-                    configuration['ZP']['policies'][name] = policy
+                if config_sensitivity['ZP']:
+                    configuration['ZP'] = copy.deepcopy(configuration['Reference'])
+                    for name, policy in configuration['ZP']['policies'].items():
+                        policy['end'] = configuration['Reference']['start'] + 2
+                        configuration['ZP']['policies'][name] = policy
             if 'prices_constant' in config_sensitivity.keys():
-                configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
-                configuration['PriceConstant']['prices_constant'] = True
+                if config_sensitivity['prices_constant']:
+                    configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
+                    configuration['PriceConstant']['prices_constant'] = True
             if 'prices_factor' in config_sensitivity.keys():
-                factor = config_sensitivity['prices_factor']
-                configuration['PriceFactor'.format(factor)] = copy.deepcopy(configuration['Reference'])
-                configuration['PriceFactor'.format(factor)]['prices_factor'] = factor
+                values = config_sensitivity['prices_factor']
+                if values:
+                    if isinstance(values, float):
+                        values = [values]
+                    for v in values:
+                        configuration['PriceFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
+                        configuration['PriceFactor{:.0f}'.format(v * 100)]['prices_factor'] = v
             if 'cost_factor' in config_sensitivity.keys():
-                factor = config_sensitivity['cost_factor']
-                configuration['CostFactor'.format(factor)] = copy.deepcopy(configuration['Reference'])
-                configuration['CostFactor'.format(factor)]['cost_factor'] = factor
+                values = config_sensitivity['cost_factor']
+                if values:
+                    if isinstance(values, float):
+                        values = [values]
+                    for v in values:
+                        configuration['CostFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
+                        configuration['CostFactor{:.0f}'.format(v * 100)]['cost_factor'] = v
             if 'retrofit_rate_ini' in config_sensitivity.keys():
-                configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
-                configuration['RetrofitIni']['insulation_extensive'] = config_sensitivity['retrofit_rate_ini']
+                if config_sensitivity['retrofit_rate_ini']:
+                    configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
+                    configuration['RetrofitIni']['insulation_extensive'] = config_sensitivity['retrofit_rate_ini']
             if 'target_freeriders' in config_sensitivity.keys():
-                configuration['FreeridersIni'] = copy.deepcopy(configuration['Reference'])
-                configuration['FreeridersIni']['target_freeriders'] = config_sensitivity['target_freeriders']
+                values = config_sensitivity['target_freeriders']
+                if values:
+                    if isinstance(values, float):
+                        values = [values]
+                    for v in values:
+                        configuration['FreeridersIni{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
+                        configuration['FreeridersIni{:.0f}'.format(v * 100)]['target_freeriders'] = v
         del configuration['sensitivity']
 
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))

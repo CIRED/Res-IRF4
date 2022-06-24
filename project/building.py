@@ -411,6 +411,7 @@ class AgentBuildings(ThermalBuildings):
 
         self.vta = 0.1
         self.factor_etp = 7.44 / 10**6 # ETP/€
+        self.lifetime_insulation = 30
 
         self.pref_investment_heater = preferences['heater']['investment']
         self.pref_investment_insulation = preferences['insulation']['investment']
@@ -420,6 +421,8 @@ class AgentBuildings(ThermalBuildings):
         self.pref_bill_insulation = preferences['insulation']['bill_saved']
         self.pref_inertia = preferences['heater']['inertia']
         self.pref_zil = preferences['insulation']['zero_interest_loan']
+        self.discount_rate = - self.pref_investment_insulation / self.pref_bill_insulation
+        self.discount_factor = (1 - (1 + self.discount_rate) ** -self.lifetime_insulation) / self.discount_rate
 
         self.scale = None
         self.calibration_scale = 'cite'
@@ -450,21 +453,26 @@ class AgentBuildings(ThermalBuildings):
                                              'Windows': param['ratio_surface']['Windows'].mean()})
 
         self.utility_insulation_extensive, self.utility_insulation_intensive, self.constant_heater = None, None, None
-        self.heater_replaced = {}
 
-        self.certificate_jump, self.efficient_renovation = None, None
-        self.efficient_renovation_yrs, self.certificate_jump_yrs = {}, {}
+        self.certificate_jump, self.certificate_jump_yrs = None, {}
+        self.efficient_renovation, self.efficient_renovation_yrs = None, {}
 
-        self.subsidies_details_heater, self.subsidies_total_heater = {}, {}
-        self.subsidies_details_insulation, self.subsidies_total_insulation = {}, {}
+        self.replacement_heater, self.heater_replaced = {}, {}
+        self.cost_heater, self.investment_heater = {}, {}
+        self.tax_heater = {}
+        self.subsidies_details_heater, self.subsidies_heater_indiv, self.subsidies_heater = {}, {}, {}
 
-        self.replacement_heater, self.investment_heater, self.subsidies_heater = {}, {}, {}
-        self.cost_insulation, self.tax_insulation, self.tax_heater = {}, {}, {}
-        self.cost_component, self.cost_heater = {}, {}
-        self.replacement_insulation, self.investment_insulation, self.subsidies_insulation = {}, {}, {}
+        self.replacement_insulation, self.retrofit_rate = {}, {}
+        self.cost_component, self.cost_insulation_indiv, self.investment_insulation = {}, {}, {}
+        self.tax_insulation, self.taxed_insulation = {}, {}
+        self.subsidies_details_insulation, self.subsidies_insulation_indiv, self.subsidies_insulation = {}, {}, {}
 
-        self.taxed_insulation = {}
-        self.retrofit_rate = {}
+        self.bill_saved_indiv = {}
+        self.bill_saved_mean, self.bill_saved_efficient = {}, {}
+        self.investment_insulation_mean, self.investment_insulation_efficient = {}, {}
+        self.subsidies_insulation_mean, self.subsidies_insulation_efficient = {}, {}
+
+        self.private_npv_mean, self.private_npv_efficient = {}, {}
 
         self._share_decision_maker = stock.groupby(
             ['Occupancy status', 'Housing type', 'Income owner', 'Income tenant']).sum().unstack(
@@ -733,7 +741,7 @@ class AgentBuildings(ThermalBuildings):
         """
         # information stored during
         self.cost_heater.update({self.year: cost_heater})
-        self.subsidies_total_heater.update({self.year: subsidies_total})
+        self.subsidies_heater_indiv.update({self.year: subsidies_total})
         self.subsidies_details_heater.update({self.year: subsidies_details})
         self.replacement_heater.update({self.year: replacement})
         self.investment_heater.update({self.year: replacement * cost_heater})
@@ -969,6 +977,7 @@ class AgentBuildings(ThermalBuildings):
 
         energy_bill_sd = (consumption_sd.T * energy_prices * surface).T
         bill_saved = - energy_bill_sd.sub(energy_bill_sd_before, axis=0).dropna()
+        self.bill_saved_indiv.update({self.year: bill_saved})
         utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill_insulation, bill_saved.index)).T / 1000
 
         utility = utility_bill_saving + utility_investment + utility_subsidies
@@ -1590,8 +1599,8 @@ class AgentBuildings(ThermalBuildings):
         self.cost_component.update({self.year: cost_insulation_raw * self.surface_insulation * (1 + tax)})
 
         self.subsidies_details_insulation.update({self.year: subsidies_details})
-        self.subsidies_total_insulation.update({self.year: subsidies_total})
-        self.cost_insulation.update({self.year: cost_insulation})
+        self.subsidies_insulation_indiv.update({self.year: subsidies_total})
+        self.cost_insulation_indiv.update({self.year: cost_insulation})
         self.tax_insulation.update({self.year: tax_insulation})
         self.retrofit_rate.update({self.year: retrofit_rate})
 
@@ -1731,7 +1740,7 @@ class AgentBuildings(ThermalBuildings):
         market_share = reindex_mi(market_share, retrofit_stock.index)
         replaced_by = (retrofit_stock * market_share.T).T.copy()
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
-        self.store_information_retrofit(replaced_by)
+        self.store_information_retrofit(replaced_by, market_share)
 
         replaced_by = replaced_by.groupby(
             [c for c in replaced_by.index.names if c != 'Heater replacement']).sum()
@@ -1775,7 +1784,7 @@ class AgentBuildings(ThermalBuildings):
         return flow_retrofit
 
     @timing
-    def store_information_retrofit(self, replaced_by):
+    def store_information_retrofit(self, replaced_by, market_share):
         """Calculate and store main outputs based on yearly retrofit.
 
         Parameters
@@ -1783,6 +1792,17 @@ class AgentBuildings(ThermalBuildings):
         replaced_by: pd.DataFrame
             Retrofitting for each dwelling and each insulation gesture.
         """
+
+        def npv(investment, subsidies, bill_saved):
+            discount_factor = reindex_mi(self.discount_factor, investment.index)
+            return - investment + subsidies + discount_factor * bill_saved
+
+        def tri(investment, subsidies, bill_saved):
+            discount_factor = (investment - subsidies) / bill_saved
+            pass
+
+        def payback(investment, subsidies, bill_saved):
+            pass
 
         levels = [i for i in replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
         self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
@@ -1794,12 +1814,39 @@ class AgentBuildings(ThermalBuildings):
         self.certificate_jump_yrs.update({self.year: rslt})
 
         self.replacement_insulation.update({self.year: replaced_by.groupby(levels).sum()})
+
         self.investment_insulation.update(
-            {self.year: (replaced_by * self.cost_insulation[self.year]).groupby(levels).sum()})
+            {self.year: (replaced_by * self.cost_insulation_indiv[self.year]).groupby(levels).sum()})
+        self.investment_insulation_mean.update(
+            {self.year: (market_share * self.cost_insulation_indiv[self.year]).sum(axis=1).groupby(levels).first()})
+        self.investment_insulation_efficient.update(
+            {self.year: (self.efficient_renovation * self.cost_insulation_indiv[self.year]).mean(axis=1).replace(0, float('nan')).groupby(levels).first()})
+
         self.taxed_insulation.update(
             {self.year: (replaced_by * self.tax_insulation[self.year]).groupby(levels).sum()})
+        # replaced_by / replaced_by.copy()
         self.subsidies_insulation.update(
-            {self.year: (self.subsidies_total_insulation[self.year] * replaced_by.copy()).groupby(levels).sum()})
+            {self.year: (replaced_by * self.subsidies_insulation_indiv[self.year]).groupby(levels).sum()})
+        self.subsidies_insulation_mean.update(
+            {self.year: (market_share * self.subsidies_insulation_indiv[self.year]).sum(axis=1).groupby(levels).first()})
+        self.subsidies_insulation_efficient.update(
+            {self.year: (self.efficient_renovation * self.subsidies_insulation_indiv[self.year]).mean(axis=1).groupby(levels).first()})
+
+        if self.year in self.bill_saved_indiv.keys():
+            self.bill_saved_mean.update(
+                {self.year: (market_share * self.bill_saved_indiv[self.year]).sum(axis=1).groupby(
+                    levels).first()})
+            self.bill_saved_efficient.update(
+                {self.year: (self.efficient_renovation * self.bill_saved_indiv[self.year]).mean(
+                    axis=1).groupby(levels).first()})
+
+            private_npv_mean = npv(self.investment_insulation_mean[self.year],
+                                   self.subsidies_insulation_mean[self.year], self.bill_saved_mean[self.year])
+            self.private_npv_mean.update({self.year: private_npv_mean})
+            private_npv_efficient = npv(self.investment_insulation_efficient[self.year],
+                                        self.subsidies_insulation_efficient[self.year],
+                                        self.bill_saved_efficient[self.year])
+            self.private_npv_efficient.update({self.year: private_npv_efficient})
 
         for key in self.subsidies_details_insulation[self.year].keys():
             self.subsidies_details_insulation[self.year][key] = (replaced_by * reindex_mi(

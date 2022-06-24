@@ -167,18 +167,19 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper'):
                                 frameon=False, shadow=True, ncol=ncol)
             else:
                 leg = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                                frameon=False, shadow=True, ncol=ncol)
+                                frameon=False, shadow=False, ncol=ncol)
         elif loc == 'left':
             # Shrink current axis by 20%
             box = ax.get_position()
-            ax.set_position([box.x0, box.y0, box.width * 0.6, box.height])
+            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
 
             # Put a legend to the right of the current axis
             if labels is not None:
                 leg = ax.legend(labels, loc='center left', bbox_to_anchor=(1, 0.5),
-                                frameon=False, shadow=True)
+                                frameon=False, shadow=False)
             else:
-                leg = ax.legend(loc='upper center', bbox_to_anchor=(1, 0.5),
+                handles, labels = ax.get_legend_handles_labels()
+                leg = ax.legend(handles[::-1], labels[::-1], loc='upper center', bbox_to_anchor=(1, 0.5),
                                 frameon=False, shadow=True)
         texts = leg.get_texts()
         for text in texts:
@@ -303,7 +304,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
         df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
 
     if scatter is not None:
-        scatter.plot(ax=ax, style='.', ms=15)
+        scatter.plot(ax=ax, style='.', ms=15, c='red')
 
     ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
     format_legend(ax, ncol=ncol, offset=offset, loc=loc)

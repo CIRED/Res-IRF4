@@ -315,6 +315,10 @@ def parse_output(buildings, param):
 
     detailed = pd.DataFrame(detailed).loc[buildings.stock_yrs.keys(), :].T
 
+    # private NPV for representative agent
+
+
+
     # graph subsidies
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
@@ -371,13 +375,13 @@ def parse_output(buildings, param):
     df = consumption.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: y / 10 ** 9,
-                   save=os.path.join(buildings.path, 'consumption_performance.png'), ncol=4, offset=2)
+                   save=os.path.join(buildings.path, 'consumption_performance.png'), loc='left') # ncol=4, offset=2)
 
     df = consumption.groupby('Energy').sum().T.loc[:, generic_input['index']['Heating energy']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: y / 10 ** 9,
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
-                   total=False, ncol=4, offset=1)
+                   total=False, loc='left') # ncol=4, offset=1)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
@@ -398,8 +402,6 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
     if 'Lifetime' in config.keys():
         years = int(config['Lifetime'])
-
-    discount_factor = (1 - (1 + discount_rate) ** -years) / discount_rate
 
     policy_name = config['Policy name'].replace('_', ' ').capitalize()
 
@@ -435,32 +437,12 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             result = double_diff * discount.sum()
 
         else:
-            """start = min(double_diff.index)
-            extend = max(double_diff.index) + years - 1
-            # values.truncate(after=extend)
-            # values = values.loc[range(start, extend + 1)]
-
-            # matrix_bool = pd.DataFrame(1, index=double_diff.index, columns=values.index)
-            matrix_bool = pd.DataFrame(1, index=double_diff.index, columns=range(start, extend + 1))
-            matrix_bool = pd.DataFrame(np.triu(matrix_bool, k=0), index=matrix_bool.index,
-                                       columns=matrix_bool.columns) * pd.DataFrame(np.tril(matrix_bool, k=years - 1),
-                                                                                   index=matrix_bool.index,
-                                                                                   columns=matrix_bool.columns)"""
-            # matrix_bool = matrix_bool.set_axis(double_diff.index).set_axis(values.index, axis=1)
-            # matrix_bool.replace(0, np.nan, inplace=True)
             values = values.reindex(range(min(double_diff.index), max(double_diff.index + years - 1)), method='pad')
 
             matrix_discount = pd.DataFrame([pd.Series([1 / (1 + discount_rate) ** (i - start) for i in range(start, start + years - 1)],
                                            index=range(start, start + years - 1)) for start in double_diff.index], index=double_diff.index)
             result = (double_diff * (matrix_discount * values).T).T
             result = result.sum(axis=1)
-            """prices = values * matrix_bool
-            prices = prices[:].values
-            prices = prices[~ np.isnan(prices)].reshape((double_diff.shape[0], years))
-            prices = pd.DataFrame(prices, index=double_diff.index)
-
-            matrix_double_diff = prices.dot(discount.T)
-            matrix_double_diff = matrix_double_diff * double_diff"""
 
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(result.shape[0])],
                              index=result.index)
@@ -549,6 +531,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         indicator.update({'{} (Billion euro)'.format(policy_name): policy_cost})
         indicator.update({'Consumption (TWh)': comp_efficiency.loc['Consumption (TWh)']})
         indicator.update({'Consumption standard (TWh)': comp_efficiency.loc['Consumption standard (TWh)']})
+        indicator.update({'Emission (MtCO2)': comp_efficiency.loc['Emission (MtCO2)']})
         indicator.update({"Cost effectiveness (euro/kWh)": - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
         indicator.update({"Cost effectiveness standard (euro/kWh)": - policy_cost / comp_efficiency.loc['Consumption standard (TWh)']})
         indicator.update({"Cost effectiveness carbon (euro/tCO2)": - policy_cost / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
@@ -759,21 +742,24 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
 
     """
 
+    folder_img = os.path.join(folder, 'img')
+    os.mkdir(folder_img)
+
     variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist'], generic_input['consumption_total_objectives']),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'New efficient (Thousand)': ('flow_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Retrofit >= 1 EPC (Thousand)': ('flow_retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Investment total (Billion euro)': ('flow_investment.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Subsidies total (Billion euro)': ('flow_subsidies.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'New efficient (Thousand)': ('retrofit_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy expenditures (Billion euro)': (
-                 'flow_energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Health cost (Billion euro)': ('flow_health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement insulation (Thousand)': ('flow_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement heater (Thousand)': ('flow_heater.png', lambda y, _: '{:,.0f}'.format(y))
+                 'energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement insulation (Thousand)': ('replacement_insulation_total.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement heater (Thousand)': ('replacement_heater.png', lambda y, _: '{:,.0f}'.format(y))
                  }
 
     for variable, infos in variables.items():
@@ -789,7 +775,7 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
         except IndexError:
             scatter = None
 
-        make_plot(temp, variable, save=os.path.join(folder, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
+        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
 
     def grouped(result, variables):
         """Group result.
@@ -827,7 +813,7 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
     }
 
-    def details_graphs(data, v, inf):
+    def details_graphs(data, v, inf, folder_img):
         n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
         temp = grouped(data, [v.format(i) for i in generic_input['index'][inf[0]]])
         replace = {v.format(i): i for i in generic_input['index'][inf[0]]}
@@ -851,12 +837,12 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
         except IndexError:
             scatter = None
 
-        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder, n), scatter=scatter,
+        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
                               order=generic_input['index'][inf[0]])
 
     for var, infos in variables_detailed.items():
         for info in infos:
-            details_graphs(result, var, info)
+            details_graphs(result, var, info, folder_img)
 
     if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
         indicator_policies(result, folder, config_runs)
