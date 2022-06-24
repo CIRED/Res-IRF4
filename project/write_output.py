@@ -448,10 +448,10 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                                                                                    columns=matrix_bool.columns)"""
             # matrix_bool = matrix_bool.set_axis(double_diff.index).set_axis(values.index, axis=1)
             # matrix_bool.replace(0, np.nan, inplace=True)
-            values = values.reindex(range(min(double_diff.index), max(double_diff.index + years - 1)), method='pad')
+            values = values.reindex(range(min(double_diff.index), max(double_diff.index + years)), method='pad')
 
-            matrix_discount = pd.DataFrame([pd.Series([1 / (1 + discount_rate) ** (i - start) for i in range(start, start + years - 1)],
-                                           index=range(start, start + years - 1)) for start in double_diff.index], index=double_diff.index)
+            matrix_discount = pd.DataFrame([pd.Series([1 / (1 + discount_rate) ** (i - start) for i in range(start, start + years)],
+                                           index=range(start, start + years)) for start in double_diff.index], index=double_diff.index)
             result = (double_diff * (matrix_discount * values).T).T
             result = result.sum(axis=1)
             """prices = values * matrix_bool
