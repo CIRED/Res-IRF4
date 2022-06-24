@@ -397,9 +397,10 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
 
     # Get an offset so labels don't sit right on top of the bar
     max = data.max()
+    min = data.min()
     neg_offset, pos_offset = max / 10, max / 50
     plot_offset = int(max / 15)
-    ax.set_ylim(top=max + max/3)
+    ax.set_ylim(top=max + max/3, bottom=min + min/3 )
 
     # Start label loop
     loop = 0
@@ -416,8 +417,8 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
             y -= neg_offset
         ax.annotate("{:,.1f}".format(val), (loop, y), ha="center")
         loop += 1
-
-    ax.set_xticklabels(data.index, rotation=30)
+    labels = [string.replace(" ", "\n") for string in data.index]
+    ax.set_xticklabels(labels, rotation=15)
     save_fig(fig, save=save)
 
 
@@ -437,9 +438,10 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
 
     """
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    color = {'Investment': 'firebrick', 'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Embodied emission additional': 'darkgreen', 'Well-being benefit': 'royalblue', 'Health savings': 'blue',
-             'Mortality reduction benefit': 'lightblue', 'Cofp': 'grey', 'Total': 'black'}
+    color = {'Investment': 'firebrick', 'Embodied emission additional': 'darkgreen', 'Cofp': 'grey',
+             'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
+             'Well-being benefit': 'royalblue', 'Health savings': 'blue',
+             'Mortality reduction benefit': 'lightblue',  'Total': 'black'}
 
     data = df.copy()
 
