@@ -603,7 +603,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             temp = dict()
             temp.update({'Investment': df['Investment total (Billion euro)']})
             if embodied_emission:
-                temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
+                temp.update({'Embodied emission additional': - df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
                                       df['Health expenditure (Billion euro)']
@@ -620,7 +620,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
 
 
-            temp = pd.Series(temp)
+            temp = - pd.Series(temp) #minus sign for convention
 
             if save:
                 waterfall_chart(temp, title=s,

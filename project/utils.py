@@ -467,6 +467,8 @@ def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
     else:
         data.plot(kind='bar', stacked=True, ax=ax, color=colors)
 
+    plt.axhline(y=0, color='black', linestyle='--', linewidth=0.3)
+
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
