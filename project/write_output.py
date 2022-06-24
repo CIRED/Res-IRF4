@@ -122,6 +122,12 @@ def parse_output(buildings, param):
 
     detailed['Retrofit (Thousand)'] = pd.Series(
         {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10**3
+    #We need them by income for freerider ratios per income deciles
+    temp = pd.DataFrame(
+        {year: item.sum(axis=1) for year, item in buildings.certificate_jump_yrs.items()})
+    t = temp.groupby('Income owner').sum()
+    t.index = t.index.map(lambda x: 'Retrofit {} (Thousand)'.format(x))
+    detailed.update(t.T / 10**3)
     detailed['Retrofit >= 1 EPC (Thousand)'] = pd.Series(
         {year: item.loc[:, [i for i in item.columns if i > 0]].sum().sum() for year, item in
          buildings.certificate_jump_yrs.items()}) / 10 ** 3
@@ -315,10 +321,6 @@ def parse_output(buildings, param):
 
     detailed = pd.DataFrame(detailed).loc[buildings.stock_yrs.keys(), :].T
 
-    # private NPV for representative agent
-
-
-
     # graph subsidies
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
@@ -437,10 +439,10 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             result = double_diff * discount.sum()
 
         else:
-            values = values.reindex(range(min(double_diff.index), max(double_diff.index + years - 1)), method='pad')
+            values = values.reindex(range(min(double_diff.index), max(double_diff.index + years)), method='pad')
 
-            matrix_discount = pd.DataFrame([pd.Series([1 / (1 + discount_rate) ** (i - start) for i in range(start, start + years - 1)],
-                                           index=range(start, start + years - 1)) for start in double_diff.index], index=double_diff.index)
+            matrix_discount = pd.DataFrame([pd.Series([1 / (1 + discount_rate) ** (i - start) for i in range(start, start + years)],
+                                           index=range(start, start + years)) for start in double_diff.index], index=double_diff.index)
             result = (double_diff * (matrix_discount * values).T).T
             result = result.sum(axis=1)
 
@@ -549,6 +551,14 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                     result[s].loc['Retrofit (Thousand)', year])
                 indicator.loc['Freeriding retrofit ratio (%)', s] = result[s].loc['Retrofit (Thousand)', year] / (
                     result['Reference'].loc['Retrofit (Thousand)', year])
+                decile = ['D{}'.format(i) for i in range(1, 11)]
+                df = result[s].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year] / \
+                     result['Reference'].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year]
+                #This part to be improved
+                df.index = ['Freeriding retrofit ratio {} (%)'.format(d) for d in decile]
+                df.name = s
+                df = pd.DataFrame(df)
+                indicator = pd.concat((indicator, df), axis=0)
 
                 indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Retrofit rate (%)', year] - (
                     result[s].loc['Retrofit rate (%)', year])
@@ -586,7 +596,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             temp = dict()
             temp.update({'Investment': df['Investment total (Billion euro)']})
             if embodied_emission:
-                temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
+                temp.update({'Embodied emission additional': - df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
                                       df['Health expenditure (Billion euro)']
@@ -603,17 +613,18 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
 
 
-            temp = pd.Series(temp)
+            temp = - pd.Series(temp) #minus sign for convention
 
             if save:
                 waterfall_chart(temp, title=s,
-                                save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))))
+                                save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))),
+                                colors=generic_input['colors'])
 
             npv[s] = temp
 
         npv = pd.DataFrame(npv)
         if save:
-            assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')))
+            assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')), colors=generic_input['colors'])
 
         npv.loc['NPV', :] = npv.sum()
         return npv
