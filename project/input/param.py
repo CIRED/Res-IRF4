@@ -202,7 +202,16 @@ colors = {
     "Existing": "tomato",
     "New": "lightgrey",
     "Renovation": "brown",
-    "Construction": "dimgrey"
+    "Construction": "dimgrey",
+    'Investment': 'firebrick',
+    'Embodied emission additional': 'darkgreen',
+    'Cofp': 'grey',
+    'Energy saving': 'darkorange',
+    'Emission saving': 'forestgreen',
+    'Well-being benefit': 'royalblue',
+    'Health savings': 'blue',
+    'Mortality reduction benefit': 'lightblue',
+    'Social NPV': 'black'
 }
 
 generic_input['colors'] = colors

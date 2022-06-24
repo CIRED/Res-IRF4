@@ -624,13 +624,14 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
             if save:
                 waterfall_chart(temp, title=s,
-                                save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))))
+                                save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))),
+                                colors=generic_input['colors'])
 
             npv[s] = temp
 
         npv = pd.DataFrame(npv)
         if save:
-            assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')))
+            assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')), colors=generic_input['colors'])
 
         npv.loc['NPV', :] = npv.sum()
         return npv

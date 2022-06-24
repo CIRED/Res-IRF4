@@ -334,7 +334,7 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     save_fig(fig, save=save)
 
 
-def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
+def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):
     """Make waterfall chart. Used for Social Economic Assessment.
 
     Parameters
@@ -348,12 +348,15 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
 
     """
 
-    color = {'Investment': 'firebrick', 'Embodied emission additional': 'darkgreen', 'Cofp': 'grey',
-             'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Well-being benefit': 'royalblue', 'Health savings': 'blue',
-             'Mortality reduction benefit': 'lightblue',  'Total': 'black'}
+    # color = {'Investment': 'firebrick', 'Embodied emission additional': 'darkgreen', 'Cofp': 'grey',
+    #          'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
+    #          'Well-being benefit': 'royalblue', 'Health savings': 'blue',
+    #          'Mortality reduction benefit': 'lightblue',  'Total': 'black'}
+
 
     data = df.copy()
+    if colors is not None:
+        color = [colors[key] for key in list(data.index) + ['Social NPV']]
 
     data.rename(index={'Energy saving': 'Energy',
                        'Emission saving': 'Emission',
@@ -380,8 +383,12 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
     blank.loc["Social NPV"] = 0
 
     # Plot and label
-    data.plot(kind='bar', stacked=True, bottom=blank, legend=None,
-              title=title, ax=ax, color=color.values(), edgecolor=None)
+    if colors is None:
+        data.plot(kind='bar', stacked=True, bottom=blank, legend=None,
+                  title=title, ax=ax, edgecolor=None)
+    else:
+        data.plot(kind='bar', stacked=True, bottom=blank, legend=None,
+              title=title, ax=ax, color=color, edgecolor=None)
     # my_plot.plot(step.index, step.values, 'k')
 
     plt.axhline(y=0, color='black', linestyle='--', linewidth=0.3)
@@ -422,7 +429,7 @@ def waterfall_chart(df, title=None, save=None, figsize=(12.8, 9.6)):
     save_fig(fig, save=save)
 
 
-def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
+def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
     """Compare social NPV between scenarios and one reference.
 
     Stacked bar chart.
@@ -438,10 +445,6 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
 
     """
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    color = {'Investment': 'firebrick', 'Embodied emission additional': 'darkgreen', 'Cofp': 'grey',
-             'Energy saving': 'darkorange', 'Emission saving': 'forestgreen',
-             'Well-being benefit': 'royalblue', 'Health savings': 'blue',
-             'Mortality reduction benefit': 'lightblue',  'Total': 'black'}
 
     data = df.copy()
 
@@ -458,7 +461,11 @@ def assessment_scenarios(df, save=None, figsize=(12.8, 9.6)):
 
     pd.DataFrame(total).plot(kind='scatter', x='Scenarios', y='NPV', legend=False, zorder=10, ax=ax, color='black',
                              s=50, xlabel=None)
-    data.plot(kind='bar', stacked=True, ax=ax, color=color)
+
+    if colors is None:
+        data.plot(kind='bar', stacked=True, ax=ax)
+    else:
+        data.plot(kind='bar', stacked=True, ax=ax, color=colors)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
