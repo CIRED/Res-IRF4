@@ -1,32 +1,37 @@
 {
   "sensitivity": {
     "activated": true,
-    "ZP": true,
-    "prices_constant": true,
-    "prices_factor": 2,
-    "cost_factor": 2,
-    "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
-    "target_freeriders": 0.75
+    "ZP": false,
+    "prices_constant": false,
+    "prices_factor": false,
+    "cost_factor": false,
+    "retrofit_rate_ini": false,
+    "target_freeriders": [0.7, 0.75, 0.8, 0.85, 0.9]
   },
   "assessment": {
     "activated": false,
-    "Policy name": "cite",
+    "Policy name": "zero_interest_loan",
     "AP": "Reference",
     "AP-1": false,
-    "ZP": true,
+    "ZP": false,
     "ZP+1": false,
     "AP-2020": true,
-    "AP-2025": false,
-    "AP-2030": false,
-    "AP-2035": false,
-    "AP-2040": false,
+    "AP-2025": true,
+    "AP-2030": true,
+    "AP-2035": true,
+    "AP-2040": true,
     "Discount rate": 0.045,
-    "Lifetime": 30
+    "Lifetime": 30,
+    "energy_prices": "project/input/energy_prices.csv",
+    "carbon_value": "project/input/policies/carbon_value.csv",
+    "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2051,
-    "prices_constant": false,
-    "demolition_rate": 0.0035,
+    "end": 2041,
+    "prices_constant": true,
+    "taxes_constant": true,
+    "demolition_rate": 0.00,
+    "construction": false,
     "income_rate": 0.012,
     "start": 2018,
     "endogenous": true,
@@ -34,7 +39,7 @@
     "exogenous_detailed": {
       "number": 0
     },
-    "target_freeriders": 0.85,
+    "target_freeriders": 0.75,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
@@ -55,7 +60,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
@@ -69,8 +74,8 @@
         "tax": "project/input/policies/cee_tax.csv"
       },
       "cap": {
-        "start": 2019,
-        "end": 2051,
+        "start": 2021,
+        "end": 2021,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
@@ -81,7 +86,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": 0.17,
         "cap": 16000
@@ -107,6 +112,6 @@
     },
     "pop_housing": "project/input/pop_housing.csv",
     "share_multi_family": "project/input/share_multifamily.csv",
-    "surface_built": null
+    "surface_built": "endogenous"
   }
 }
