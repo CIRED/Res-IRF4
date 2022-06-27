@@ -65,13 +65,19 @@ def res_irf(config, path):
     total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
     for t in taxes:
         total_taxes = total_taxes.add(t.value, fill_value=0)
+    if config['taxes_constant']:
+        total_taxes = pd.concat([total_taxes.loc[year, :]] * total_taxes.shape[0], keys=total_taxes.index,
+                                axis=1).T
+
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
 
     param['energy_prices'] = energy_prices
 
+    t = total_taxes.copy()
+    t.columns = t.columns.map(lambda x:  'Taxes {} (euro/kWh)'.format(x))
     temp = energy_prices.copy()
     temp.columns = temp.columns.map(lambda x:  'Prices {} (euro/kWh)'.format(x))
-    pd.concat((summary_param, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+    pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
     print('Calibration {}'.format(year))
     buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],

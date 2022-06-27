@@ -218,7 +218,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
         df.plot(ax=ax, color=colors, style=STYLES)
 
     if scatter is not None:
-        scatter.plot(ax=ax, style='.', ms=15)
+        scatter.plot(ax=ax, style='.', ms=15, c='red')
 
     ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
     format_legend(ax)

@@ -231,8 +231,6 @@ def parse_parameters(config, param, stock):
     else:
         param['share_multi_family'] = pd.read_csv(config['share_multi_family'], index_col=[0], header=None).squeeze()
 
-
-
     idx = range(config['start'], config['end'])
     param['available_income'] = pd.Series(
         [param['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
@@ -244,7 +242,7 @@ def parse_parameters(config, param, stock):
     param['flow_need'] = param['stock_need'] - param['stock_need'].shift(1)
     param['flow_construction'] = param['flow_need'] + param['flow_demolition']
 
-    if config['surface_built'] is None:
+    if config['surface_built'] == 'endogenous':
         surface_built = evolution_surface_built(param['surface'].xs(False, level='Existing'), param['surface_max'],
                                                 param['surface_elasticity'], param['available_income_pop'])
     elif config['surface_built'] == 'surface_built':
@@ -282,6 +280,9 @@ def parse_parameters(config, param, stock):
 
     param['flow_built'] = pd.concat([param['flow_built']], keys=[False], names=['Existing']).reorder_levels(
         stock.index.names)
+
+    if not config['construction']:
+        param['flow_built'][param['flow_built'] > 0] = 0
 
     df = pd.read_csv(config['health_cost'], index_col=[0, 1])
     param['health_expenditure'] = df['Health expenditure']
