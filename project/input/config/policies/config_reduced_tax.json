@@ -94,7 +94,7 @@
       "reduced_tax": {
         "start": 2019,
         "end": 2051,
-        "value": 0.05
+        "value": 0.055
       },
       "zero_interest_loan": {
         "start": 2019,

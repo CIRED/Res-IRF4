@@ -31,7 +31,7 @@
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
-    "construction": false,
+    "construction": true,
     "income_rate": 0.012,
     "start": 2018,
     "endogenous": true,
@@ -94,7 +94,7 @@
       "reduced_tax": {
         "start": 2019,
         "end": 2051,
-        "value": 0.05
+        "value": 0.055
       },
       "zero_interest_loan": {
         "start": 2019,
