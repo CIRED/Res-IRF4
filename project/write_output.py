@@ -378,6 +378,23 @@ def parse_output(buildings, param):
                    save=os.path.join(buildings.path, 'consumption.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
 
+    # graph emissions
+
+    t = detailed.loc[['Carbon footprint renovation (MtCO2)', 'Carbon footprint construction (MtCO2)'], :]
+    t.index = ['Renovation', 'Construction']
+    temp_test = (consumption.groupby(['Existing', buildings.energy]).sum()).rename(
+       index={True: 'Existing', False: 'Construction'}).T
+    temp_test['Existing'] = (temp_test.loc[: ,'Existing'] * param['carbon_emission']).dropna(axis=0,how='all') / 10 ** 12
+    temp_test['Construction'] = ((temp_test.loc[: ,'Construction'] * param['carbon_emission']).dropna(axis=0,how='all') / 10 ** 12).dropna(axis=1, how='all')
+    temp_test = ((temp_test.T).groupby('Existing').sum()).T
+    temp_test = temp_test[temp_test.columns[::-1]]
+    temp_test.columns = ['Existing', 'New']
+    temp_test = pd.concat((temp_test, t.T), axis=1).dropna(how='any')
+    make_area_plot(temp_test, 'Emission (MtCO2)', colors=generic_input['colors'],
+                   save=os.path.join(buildings.path, 'emission.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
+
+
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
