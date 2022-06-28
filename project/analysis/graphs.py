@@ -167,7 +167,7 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
         plt.show()
 
 def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dict_color=None,
-                            n_columns=3, save=None):
+                 n_columns=3, save=None):
     """Multiple bar plot of stock by attributes.
 
     Parameters
@@ -217,11 +217,15 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
             ax = axes[row, column]
         if label in pie:
             if dict_color is not None:
-                lab = [string.replace(" ", "\n") for string in stock_label.index]
-                stock_label.plot.pie(ax=ax, explode=None, labels=lab, colors=[dict_color[key] for key in stock_label.index], autopct='%1.1f%%', shadow=False, textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+                lab = [string.replace(" ", "\n").replace("-", "\n") for string in stock_label.index]
+                stock_label.plot.pie(ax=ax, explode=None, labels=lab, colors=[dict_color[key] for key in
+                                                                              stock_label.index],
+                                     autopct='%1.1f%%', shadow=False, textprops={'fontsize': 10},
+                                     ylabel='', xlabel=stock_label.index.name)
                 ax.set_title(stock_label.index.name, fontsize=12)
             else:
-                stock_label.plot.pie(ax=ax, explode=None, labels=stock_label.index, autopct='%1.1f%%', shadow=False, textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+                stock_label.plot.pie(ax=ax, explode=None, labels=stock_label.index, autopct='%1.1f%%', shadow=False,
+                                     textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
         else:
             if dict_color is not None:
                 stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
