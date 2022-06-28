@@ -166,6 +166,88 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
     else:
         plt.show()
 
+def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dict_color=None,
+                            n_columns=3, save=None):
+    """Multiple bar plot of stock by attributes.
+
+    Parameters
+    ----------
+    stock: pd.Series
+    dict_order: dict
+    pie: dict
+    suptitle: str
+    percent: bool
+    dict_color: dict
+    n_columns: int
+    sharey: bool
+    """
+    labels = list(stock.index.names)
+    stock_total = stock.sum()
+
+    n_axes = int(len(stock.index.names))
+    n_rows = ceil(n_axes / n_columns)
+    fig, axes = plt.subplots(n_rows, n_columns, figsize=(12.8, 9.6))
+
+    if suptitle:
+        fig.suptitle(suptitle, fontsize=20, fontweight='bold')
+
+    for k in range(n_rows * n_columns):
+
+        try:
+            label = labels[k]
+        except IndexError:
+            ax.remove()
+            break
+
+        stock_label = stock.groupby(label).sum()
+        if label in dict_order.keys():
+            stock_label = stock_label.loc[dict_order[label]]
+
+        if percent:
+            stock_label = stock_label / stock_total
+            format_y = lambda y, _: '{:,.0f}%'.format(y * 100)
+        else:
+            format_y = lambda y, _: '{:,.0f}M'.format(y / 1000000)
+
+        row = floor(k / n_columns)
+        column = k % n_columns
+        if n_rows == 1:
+            ax = axes[column]
+        else:
+            ax = axes[row, column]
+        if label in pie:
+            if dict_color is not None:
+                lab = [string.replace(" ", "\n") for string in stock_label.index]
+                stock_label.plot.pie(ax=ax, explode=None, labels=lab, colors=[dict_color[key] for key in stock_label.index], autopct='%1.1f%%', shadow=False, textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+                ax.set_title(stock_label.index.name, fontsize=12)
+            else:
+                stock_label.plot.pie(ax=ax, explode=None, labels=stock_label.index, autopct='%1.1f%%', shadow=False, textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+        else:
+            if dict_color is not None:
+                stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
+            else:
+                stock_label.plot.bar(ax=ax)
+
+        ax.xaxis.set_tick_params(which=u'both', length=0)
+        ax.xaxis.label.set_size(12)
+
+        ax.tick_params(axis='x', which='major', labelsize=8)
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+        ax.tick_params(axis='y', which='major', labelsize=12)
+
+        ax.yaxis.set_tick_params(which=u'both', length=0)
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+
+    if save is not None:
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
 
 def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_order={}, dict_color={}, percent=False,
                              save=None):
