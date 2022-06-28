@@ -333,6 +333,15 @@ def parse_output(buildings, param):
         make_area_plot(utility_dict[i], '{} - {}'.format(i[0], i[1]),
                        save=os.path.join(path_utility, 'utility_{}_{}.png'.format(i[0].lower(), i[1].lower())))
 
+    pd.DataFrame(buildings.market_share_yrs).to_csv(os.path.join(path_utility, 'market_share.csv'))
+
+    """
+    b = pd.DataFrame(buildings.bill_saved_repr)
+    s = pd.DataFrame(buildings.subsidies_insulation_repr)
+    i = pd.DataFrame(buildings.investment_insulation_repr)
+    r = pd.DataFrame(buildings.retrofit_rate)
+    """
+
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
     if 'over_cap' in subset.columns:
@@ -787,11 +796,11 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
     os.mkdir(folder_img)
 
     variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist'], generic_input['consumption_total_objectives']),
-                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.1%}'.format(y)),
+                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.1f}'.format(y)),
+                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
                  'New efficient (Thousand)': ('retrofit_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),

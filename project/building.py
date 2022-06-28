@@ -471,6 +471,8 @@ class AgentBuildings(ThermalBuildings):
         self.tax_heater = {}
         self.subsidies_details_heater, self.subsidies_heater_indiv, self.subsidies_heater = {}, {}, {}
 
+        self.market_share_yrs = {}
+
         self.replacement_insulation, self.retrofit_rate = {}, {}
         self.cost_component, self.cost_insulation_indiv, self.investment_insulation = {}, {}, {}
         self.tax_insulation, self.taxed_insulation = {}, {}
@@ -1068,12 +1070,21 @@ class AgentBuildings(ThermalBuildings):
             flow_retrofit = flow_retrofit.reindex(utility_ref.index)
 
             x0 = np.zeros(ms_insulation.shape[0])
-            root = fsolve(solve, x0, args=(utility_ref, ms_insulation, flow_retrofit))
+            constant = fsolve(solve, x0, args=(utility_ref, ms_insulation, flow_retrofit))
             # solve(root, utility_ref, ms_insulation, flow_retrofit)
-            root = pd.Series(root, index=utility_ref.columns)
-            return root
+            constant = pd.Series(constant, index=utility_ref.columns)
 
-        def calibration_constant_scale_ext(x, utility, stock, ms_extensive, freeriders, delta_subsidies, pref_subsidies):
+            utility = utility_ref + constant
+            market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
+            agg = (market_share.T * flow_retrofit).T
+            market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
+            details = pd.concat((constant, market_share_agg, ms_insulation), axis=1,
+                                keys=['constant', 'calcul', 'observed']).round(decimals=3)
+            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
+            return constant
+
+        @timing
+        def calibration_constant_scale_ext(utility, stock, ms_extensive, target_freeriders, delta_subsidies, pref_subsidies):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
 
             Parameters
@@ -1091,27 +1102,49 @@ class AgentBuildings(ThermalBuildings):
 
             """
 
-            scale = x[-1]
-            constant = x[:-1]
+            def solve(x, utility, stock, ms_extensive, freeriders, delta_subsidies, pref_subsidies):
+                scale = x[-1]
+                constant = x[:-1]
 
-            # calibration constant
-            constant = pd.Series(constant, index=ms_extensive.index)
-            # utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
-            utility_ref = utility.copy()
-            # stock_ref = stock.groupby([i for i in stock.index.names if i != 'Heating system final']).mean()
-            stock_ref = stock.copy()
-            utility_constant = reindex_mi(constant, utility_ref.index)
-            u = (utility_ref + utility_constant).copy()
-            retrofit_rate = 1 / (1 + np.exp(- u * scale))
-            agg = (retrofit_rate * stock_ref).groupby(ms_extensive.index.names).sum()
-            retrofit_rate_agg = agg / stock_ref.groupby(ms_extensive.index.names).sum()
-            result = retrofit_rate_agg - ms_extensive
+                # calibration constant
+                constant = pd.Series(constant, index=ms_extensive.index)
+                # utility_ref = utility.groupby([i for i in utility.index.names if i != 'Heating system final']).mean()
+                utility_ref = utility.copy()
+                # stock_ref = stock.groupby([i for i in stock.index.names if i != 'Heating system final']).mean()
+                stock_ref = stock.copy()
+                utility_constant = reindex_mi(constant, utility_ref.index)
+                u = (utility_ref + utility_constant).copy()
+                retrofit_rate = 1 / (1 + np.exp(- u * scale))
+                agg = (retrofit_rate * stock_ref).groupby(ms_extensive.index.names).sum()
+                retrofit_rate_agg = agg / stock_ref.groupby(ms_extensive.index.names).sum()
+                result = retrofit_rate_agg - ms_extensive
 
-            # calibration scale
-            calcul = impact_subsidies(scale, u, stock, pref_subsidies, delta_subsidies, indicator='freeriders')
-            result = np.append(result, calcul - freeriders)
+                # calibration scale
+                calcul = impact_subsidies(scale, u, stock, pref_subsidies, delta_subsidies, indicator='freeriders')
+                result = np.append(result, calcul - freeriders)
 
-            return result
+                return result
+
+            constant = ms_extensive.copy()
+            constant[ms_extensive > 0] = 0
+            x = np.append(constant.to_numpy(), 1)
+            root = fsolve(solve, x, args=(
+            utility, stock, ms_extensive, target_freeriders, - delta_subsidies / 1000, pref_subsidies))
+            scale = root[-1]
+            constant = pd.Series(root[:-1], index=ms_extensive.index) * scale
+
+            utility_constant = reindex_mi(constant, utility.index)
+            utility = utility * scale + utility_constant
+            retrofit_rate = 1 / (1 + np.exp(- utility))
+            agg = (retrofit_rate * stock).groupby(ms_extensive.index.names).sum()
+            retrofit_rate_agg = agg / stock.groupby(
+                ms_extensive.index.names).sum()
+
+            details = pd.concat((constant, retrofit_rate_agg, ms_extensive, agg / 10 ** 3), axis=1,
+                                keys=['constant', 'calcul', 'observed', 'thousand']).round(decimals=3)
+            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
+
+            return constant, root[-1]
 
         agent = self.new(pd.Series(index=index, dtype=float))
         certificate_before = agent.certificate
@@ -1130,12 +1163,25 @@ class AgentBuildings(ThermalBuildings):
         self.bill_saved_indiv.update({self.year: bill_saved})
 
         market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_insulation,
-                                               utility_zil=utility_zil)
+                                                          utility_zil=utility_zil)
 
         if self.utility_insulation_intensive is None:
             self.utility_insulation_intensive = calibration_constant_int(utility_intensive, ms_insulation, ms_extensive)
             market_share, _ = to_market_share(bill_saved, subsidies_total, cost_insulation,
                                               utility_zil=utility_zil)
+
+        stock_single = self.stock.xs('Single-family', level='Housing type', drop_level=False)
+        flow_retrofit = pd.concat((stock_single * self._probability_replacement,
+                                   stock_single * (1 - self._probability_replacement)), axis=0, keys=[True, False],
+                                  names=['Heater replacement'])
+        flow_retrofit = flow_retrofit * reindex_mi(ms_extensive, flow_retrofit.index)
+        ms = market_share.groupby([i for i in market_share.index.names if i != 'Heating system final']).first()
+        ms = reindex_mi(ms, flow_retrofit.index).dropna()
+        flow_retrofit = flow_retrofit.reindex(ms.index)
+        agg = (ms.T * flow_retrofit).T
+        market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
+        self.market_share_yrs.update({self.year: market_share_agg})
+
         # extensive margin
 
         bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
@@ -1176,12 +1222,16 @@ class AgentBuildings(ThermalBuildings):
                     format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), y_label=name)
                     save_fig(fig, save=os.path.join(self.path_calibration, 'scale_calibration_{}.png'.format(name.lower())))
 
-            constant = ms_extensive.copy()
+            """constant = ms_extensive.copy()
             constant[ms_extensive > 0] = 0
             x = np.append(constant.to_numpy(), 1)
             root = fsolve(calibration_constant_scale_ext, x, args=(
             utility, stock, ms_extensive, target_freeriders, - delta_subsidies / 1000, pref_subsidies))
-            self.utility_insulation_extensive = pd.Series(root[:-1], index=ms_extensive.index) * root[-1]
+            self.utility_insulation_extensive = pd.Series(root[:-1], index=ms_extensive.index) * root[-1]"""
+
+            constant, scale = calibration_constant_scale_ext(utility, stock, ms_extensive, target_freeriders,
+                                                             delta_subsidies, pref_subsidies)
+            self.utility_insulation_extensive = constant
 
             if detailed:
                 stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
@@ -1195,7 +1245,7 @@ class AgentBuildings(ThermalBuildings):
                     y_before_single.append((rate * stock_single).sum() / stock_single.sum())
                     y_before_multi.append((rate * stock_multi).sum() / stock_multi.sum())
 
-            self.scale_ext = root[-1]
+            self.scale_ext = scale
             self.pref_subsidy_insulation_ext *= self.scale_ext
             self.pref_investment_insulation_ext *= self.scale_ext
             self.pref_bill_insulation_ext *= self.scale_ext
@@ -1663,7 +1713,6 @@ class AgentBuildings(ThermalBuildings):
         self.cost_insulation_indiv.update({self.year: cost_insulation})
         self.tax_insulation.update({self.year: tax_insulation})
         self.retrofit_rate.update({self.year: retrofit_rate})
-
 
     @timing
     def calibration_constant_intensive(self, utility, ms_insulation, ms_extensive):
