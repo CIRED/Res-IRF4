@@ -638,7 +638,18 @@ class AgentBuildings(ThermalBuildings):
             index = index.droplevel('Income tenant')
             index = index[~index.duplicated()]
 
-        choice_heater_idx = pd.Index(self._choice_heater, name='Heating system final')
+        #porhibited energies can be a string or a list of strings
+        prohibited_energies = list(np.array([policy.value for policy in
+                                                   policies_heater if policy.policy == 'heater_regulation']).flat)
+        list_heaters = self._choice_heater
+        for energy in prohibited_energies:
+            list_heaters = list(set(list_heaters) & set([heater for heater in self._choice_heater if energy not in heater]))
+
+        if prohibited_energies:
+            choice_heater_idx = pd.Index(list_heaters, name='Heating system final')
+        else:
+            choice_heater_idx = pd.Index(self._choice_heater, name='Heating system final')
+
         frame = pd.Series(dtype=float, index=index).to_frame().dot(
             pd.Series(dtype=float, index=choice_heater_idx).to_frame().T)
         cost_heater, tax_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(policies_heater,

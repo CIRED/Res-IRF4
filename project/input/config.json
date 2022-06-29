@@ -9,7 +9,7 @@
     "target_freeriders": 0.75
   },
   "assessment": {
-    "activated": true,
+    "activated": false,
     "Policy name": "cee",
     "AP": "Reference",
     "AP-1": true,
@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2022,
+    "end": 2021,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -102,6 +102,11 @@
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
+      },
+      "energy_elimination": {
+        "start": 2019,
+        "end": 2051,
+        "prohibited_energy": "Oil fuel"
       }
     },
     "footprint": {
