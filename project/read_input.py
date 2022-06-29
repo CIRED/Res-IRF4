@@ -133,9 +133,13 @@ def read_policies(config):
                               gest='insulation'))
         return l
 
+    def read_energy_elimination(data):
+        return [PublicPolicy('energy_elimination', data['start'], data['end'], data['prohibited_energy'],
+                             'heater_regulation', gest='heater')]
+
     read = {'mpr': read_mpr, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
-            'sub_ad_volarem': read_ad_volarem}
+            'sub_ad_volarem': read_ad_volarem, 'energy_elimination': read_energy_elimination}
 
     list_policies = list()
     for key, item in config['policies'].items():

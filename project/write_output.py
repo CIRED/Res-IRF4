@@ -415,6 +415,23 @@ def parse_output(buildings, param):
                    save=os.path.join(buildings.path, 'consumption.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
 
+    # graph emissions
+
+    t = detailed.loc[['Carbon footprint renovation (MtCO2)', 'Carbon footprint construction (MtCO2)'], :]
+    t.index = ['Renovation', 'Construction']
+    temp_test = (consumption.groupby(['Existing', buildings.energy]).sum()).rename(
+       index={True: 'Existing', False: 'Construction'}).T
+    temp_test['Existing'] = (temp_test.loc[: ,'Existing'] * param['carbon_emission']).dropna(axis=0,how='all') / 10 ** 12
+    temp_test['Construction'] = ((temp_test.loc[: ,'Construction'] * param['carbon_emission']).dropna(axis=0,how='all') / 10 ** 12).dropna(axis=1, how='all')
+    temp_test = ((temp_test.T).groupby('Existing').sum()).T
+    temp_test = temp_test[temp_test.columns[::-1]]
+    temp_test.columns = ['Existing', 'New']
+    temp_test = pd.concat((temp_test, t.T), axis=1).dropna(how='any')
+    make_area_plot(temp_test, 'Emission (MtCO2)', colors=generic_input['colors'],
+                   save=os.path.join(buildings.path, 'emission.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
+
+
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
@@ -546,11 +563,16 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                                                                             10 ** 9)
 
         # Simple diff = scenario - ref
-        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total (Billion euro)']:
+        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total (Billion euro)',
+                    'Health expenditure (Billion euro)']:
             discount = pd.Series(
                 [1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                 index=ref.loc[var, :].index)
-            rslt[var] = ((result[s].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+            if var == 'Health expenditure (Billion euro)':
+                rslt['Simple difference ' + var] = ((result[s].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+            else:
+                rslt[var] = ((result[s].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+
 
         var = 'Carbon footprint (MtCO2)'
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
@@ -648,7 +670,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                 temp.update({'Embodied emission additional': - df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
-                                      df['Health expenditure (Billion euro)']
+                                      df['Simple difference Health expenditure (Billion euro)']
                                       ) * factor_cofp})
 
             temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
