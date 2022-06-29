@@ -22,7 +22,7 @@ import os
 
 from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    assessment_scenarios, make_stackedbar_plot
+    assessment_scenarios, format_ax, format_legend, save_fig
 
 
 def parse_output(buildings, param):
@@ -103,8 +103,21 @@ def parse_output(buildings, param):
     temp = pd.DataFrame(buildings.retrofit_rate).dropna(how='all')
     temp = temp.groupby([i for i in temp.index.names if i not in ['Heating system final']]).mean()
     t = temp.xs(False, level='Heater replacement')
+
     s_temp = pd.DataFrame(buildings.stock_yrs)
     s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    for year in t.columns:
+        df = pd.concat((s_temp[year - 1], t[year]), axis=1, keys=['Stock', 'Retrofit rate']).sort_values('Retrofit rate')
+        df['Stock'] = df['Stock'].cumsum() / 10**6
+        df = df.set_index('Stock').squeeze().sort_values()
+        df.plot(ax=ax)
+    format_ax(ax, format_y=lambda x, _: '{:.0%}'.format(x), y_label='Retrofit rate (%)')
+    ax.set_xlabel('Cumulated buildings stock (Million)')
+    format_legend(ax, labels=t.columns)
+    save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))
+
     retrofit_rate = ((t * s_temp) / s_temp).dropna(how='all')
     detailed['Retrofit rate (%)'] = retrofit_rate.mean()
     t = retrofit_rate.groupby(['Housing type', 'Occupancy status']).mean()
@@ -323,7 +336,7 @@ def parse_output(buildings, param):
 
     # graph subsidies
 
-    index = buildings.utility_insulation_extensive.index
+    """index = buildings.utility_insulation_extensive.index
     utility_dict = {i: pd.DataFrame({year: item.loc[i, :] for year, item in buildings.utility_yrs.items()}).T for i in index}
     index = [('Single-family', 'Owner-occupied', False), ('Multi-family', 'Owner-occupied', False)]
     path_utility = os.path.join(buildings.path, 'utility')
@@ -333,7 +346,7 @@ def parse_output(buildings, param):
         make_area_plot(utility_dict[i], '{} - {}'.format(i[0], i[1]),
                        save=os.path.join(path_utility, 'utility_{}_{}.png'.format(i[0].lower(), i[1].lower())))
 
-    pd.DataFrame(buildings.market_share_yrs).to_csv(os.path.join(path_utility, 'market_share.csv'))
+    pd.DataFrame(buildings.market_share_yrs).to_csv(os.path.join(path_utility, 'market_share.csv'))"""
 
     """
     b = pd.DataFrame(buildings.bill_saved_repr)
@@ -341,6 +354,18 @@ def parse_output(buildings, param):
     i = pd.DataFrame(buildings.investment_insulation_repr)
     r = pd.DataFrame(buildings.retrofit_rate)
     """
+
+    df = pd.DataFrame([detailed.loc['Replacement {} (Thousand)'.format(i), :] for i in generic_input['index']['Insulation']]).T.dropna()
+    df.columns = generic_input['index']['Insulation']
+    make_area_plot(df, 'Replacement (Thousand)',
+                   save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False, loc='left',
+                   format_y=lambda y, _: '{:.0f}'.format(y), offset=2)
+
+    df = pd.DataFrame([detailed.loc['Replacement heater {} (Thousand)'.format(i), :] for i in generic_input['index']['Heater']]).T.dropna()
+    df.columns = generic_input['index']['Heater']
+    make_area_plot(df, 'Replacement (Thousand)',
+                   save=os.path.join(buildings.path, 'replacement_heater.png'), total=False, loc='left',
+                   format_y=lambda y, _: '{:.0f}'.format(y), offset=2)
 
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
@@ -380,8 +405,11 @@ def parse_output(buildings, param):
     t = detailed.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
     t.index = ['Renovation', 'Construction']
     temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
-    temp = temp.loc[:, ['Existing', 'Construction']]
-    temp.columns = ['Existing', 'New']
+    if 'Construction' in temp.index:
+        temp = temp.loc[:, ['Existing', 'Construction']]
+        temp.columns = ['Existing', 'New']
+    else:
+        temp = temp.loc[:, 'Existing']
     temp = pd.concat((temp / 10**9, t.T), axis=1).dropna(how='any')
     make_area_plot(temp, 'Consumption (TWh)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'consumption.png'), total=False,
