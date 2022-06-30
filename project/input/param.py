@@ -155,7 +155,10 @@ generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 
                                              'Single-family - Privately rented', 'Multi-family - Privately rented',
                                              'Single-family - Social-housing', 'Multi-family - Social-housing'
                                              ],
-                          'Insulation': ['Wall', 'Floor', 'Roof', 'Windows']
+                          'Insulation': ['Wall', 'Floor', 'Roof', 'Windows'],
+                          'Heater': ['Electricity-Heat pump', 'Electricity-Performance boiler',
+                                     'Natural gas-Performance boiler', 'Oil fuel-Performance boiler',
+                                     'Wood fuel-Performance boiler']
                           }
 
 colors = {

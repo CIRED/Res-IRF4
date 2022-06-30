@@ -189,12 +189,13 @@ def read_revealed(config):
 
     choice_heater = list(ms_heater.columns)
 
-    ms_extensive = pd.read_csv(config["insulation_extensive"], index_col=[0, 1, 2]).squeeze('columns').rename(None).round(
-        decimals=3)
-    ms_intensive = pd.read_csv(config["ms_insulation"], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(
+    df = pd.read_csv(config['renovation_rate_ini'])
+    renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
+
+    ms_intensive = pd.read_csv(config['ms_insulation'], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(
         decimals=3)
 
-    return efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, ms_extensive, ms_intensive
+    return efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, renovation_rate_ini, ms_intensive
 
 
 def parse_parameters(config, param, stock):

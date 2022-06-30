@@ -189,15 +189,15 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper'):
         pass
 
 
-def save_fig(fig, save=None):
+def save_fig(fig, save=None, bbox_inches='tight'):
     if save is not None:
-        fig.savefig(save, bbox_inches='tight')
+        fig.savefig(save, bbox_inches=bbox_inches)
         plt.close(fig)
     else:
         plt.show()
 
 
-def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None):
+def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True):
     """Make plot.
 
     Parameters
@@ -221,7 +221,8 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
     ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
-    format_legend(ax)
+    if legend:
+        format_legend(ax)
     save_fig(fig, save=save)
 
 
@@ -332,7 +333,7 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
 
     ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
     format_legend(ax, ncol=ncol, offset=offset)
-    save_fig(fig, save=save)
+    save_fig(fig, save=save, bbox_inches=None)
 
 
 def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):

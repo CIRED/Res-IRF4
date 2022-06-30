@@ -56,7 +56,7 @@ def res_irf(config, path):
     policies_heater, policies_insulation, taxes = read_policies(config)
     param, summary_param = parse_parameters(config, generic_input, stock)
     energy_prices, cost_heater, cost_insulation = read_exogenous(config)
-    efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, ms_extensive, ms_intensive = read_revealed(config)
+    efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, renovation_rate_ini, ms_intensive = read_revealed(config)
 
     if config['prices_constant']:
         energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
@@ -94,7 +94,7 @@ def res_irf(config, path):
         buildings.year = year
         buildings.add_flows([- buildings.flow_demolition()])
         flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
-                                                ms_intensive, ms_extensive,
+                                                ms_intensive, renovation_rate_ini,
                                                 [p for p in policies_heater if (year >= p.start) and (year < p.end)],
                                                 [p for p in policies_insulation if (year >= p.start) and (year < p.end)],
                                                 config['target_freeriders'], supply_constraint=config['supply_constraint'])
