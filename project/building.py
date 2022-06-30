@@ -1127,9 +1127,13 @@ class AgentBuildings(ThermalBuildings):
             else:
                 retrofit_rate_simple = retrofit_rate_ini
 
+            probability_replacement = self._probability_replacement
+            if isinstance(probability_replacement, pd.Series):
+                probability_replacement.index = probability_replacement.index.rename('Heating system')
+                probability_replacement = reindex_mi(probability_replacement, self._stock.index)
 
-            stock = pd.concat((self.stock * self._probability_replacement,
-                                     self.stock * (1 - self._probability_replacement)), axis=0, keys=[True, False],
+            stock = pd.concat((self.stock * probability_replacement,
+                                     self.stock * (1 - probability_replacement)), axis=0, keys=[True, False],
                                      names=['Heater replacement'])
             stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
 
