@@ -114,6 +114,7 @@ def run(path=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default='project/input/config.json', help='path config file')
+    parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
     args = parser.parse_args()
 
     if not os.path.isdir('project/output'):

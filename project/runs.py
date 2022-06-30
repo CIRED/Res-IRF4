@@ -24,7 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
     args = parser.parse_args()
 
-    configs = [c for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
+    configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
 
     for config in configs:
         run(path=config)
