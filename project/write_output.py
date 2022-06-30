@@ -24,7 +24,6 @@ from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig
 
-
 def parse_output(buildings, param):
     """Parse output.
 
@@ -67,8 +66,17 @@ def parse_output(buildings, param):
     temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
     detailed.update(temp.T / 10 ** 9)
 
-    emission = (consumption.groupby(buildings.energy).sum() * param['carbon_emission'].T).dropna(axis=1, how='all')
+    c = buildings.add_energy(consumption)
+    emission = reindex_mi(param['carbon_emission'].T.rename_axis('Energy', axis=0), c.index) * c
+    emission = emission.reindex(consumption.columns, axis=1)
+
     detailed['Emission (MtCO2)'] = emission.sum() / 10 ** 12
+
+    temp = emission.groupby('Energy').sum()
+    temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
+    detailed.update(temp.T / 10**9)
+
+    # emission = (consumption.groupby(buildings.energy).sum() * param['carbon_emission'].T).dropna(axis=1, how='all')
     detailed['Cumulated emission (MtCO2)'] = detailed['Emission (MtCO2)'].cumsum()
     detailed['Stock (Million)'] = stock.sum() / 10 ** 6
     #detailed['Sizing factor (%)'] = pd.Series(detailed['Stock (Million)'].shape[0] * [param['sizing_factor']],
@@ -416,20 +424,25 @@ def parse_output(buildings, param):
                    format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
 
     # graph emissions
-
     t = detailed.loc[['Carbon footprint renovation (MtCO2)', 'Carbon footprint construction (MtCO2)'], :]
     t.index = ['Renovation', 'Construction']
-    temp_test = (consumption.groupby(['Existing', buildings.energy]).sum()).rename(
-       index={True: 'Existing', False: 'Construction'}).T
-    temp_test['Existing'] = (temp_test.loc[: ,'Existing'] * param['carbon_emission']).dropna(axis=0,how='all') / 10 ** 12
-    temp_test['Construction'] = ((temp_test.loc[: ,'Construction'] * param['carbon_emission']).dropna(axis=0,how='all') / 10 ** 12).dropna(axis=1, how='all')
-    temp_test = ((temp_test.T).groupby('Existing').sum()).T
-    temp_test = temp_test[temp_test.columns[::-1]]
-    temp_test.columns = ['Existing', 'New']
-    temp_test = pd.concat((temp_test, t.T), axis=1).dropna(how='any')
-    make_area_plot(temp_test, 'Emission (MtCO2)', colors=generic_input['colors'],
+    temp = emission.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
+    if 'Construction' in temp.columns:
+        temp = temp.loc[:, ['Existing', 'Construction']]
+        temp.columns = ['Existing', 'New']
+    else:
+        temp = temp.loc[:, 'Existing']
+    temp = pd.concat((temp / 10 ** 12, t.T), axis=1).dropna(how='any')
+    make_area_plot(temp, 'Emission (MtCO2)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'emission.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
+    """
+    temp['Existing'] = (temp.loc[:, 'Existing'] * param['carbon_emission']).dropna(axis=0, how='all') / 10 ** 12
+    temp['Construction'] = ((temp.loc[:, 'Construction'] * param['carbon_emission']).dropna(axis=0, how='all') / 10 ** 12).dropna(axis=1, how='all')
+    temp = temp.T.groupby('Existing').sum().T
+    temp = temp[temp.columns[::-1]]
+    temp.columns = ['Existing', 'New']
+    temp = pd.concat((temp, t.T), axis=1).dropna(how='any')"""
 
 
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)

@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 from utils import make_plot, format_ax, save_fig, format_legend
 from input.param import generic_input
 
+
 class SegmentsIndex:
     """Not used.
     """
@@ -200,6 +201,14 @@ class ThermalBuildings:
         certificate = certificate.groupby(lvl).first()
         certificate = reindex_mi(certificate, df.index)
         df = pd.concat((df, certificate), axis=1).set_index('Performance', append=True).squeeze()
+        return df
+
+    def add_energy(self, df):
+        energy = self.energy.rename('Energy')
+        lvl = [i for i in energy.index.names if i in df.index.names]
+        energy = energy.groupby(lvl).first()
+        energy = reindex_mi(energy, df.index)
+        df = pd.concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
     def self_prepare(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
