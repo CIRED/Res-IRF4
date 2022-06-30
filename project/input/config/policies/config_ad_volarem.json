@@ -191,7 +191,7 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
-      "subsidy_ad_volarem": {
+      "sub_ad_volarem": {
         "start": 2020,
         "end": 2031,
         "value": 0.1
@@ -284,7 +284,7 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
-      "subsidy_ad_volarem": {
+      "sub_ad_volarem": {
         "start": 2020,
         "end": 2031,
         "value": 0.3
@@ -377,7 +377,7 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
-      "subsidy_ad_volarem": {
+      "sub_ad_volarem": {
         "start": 2020,
         "end": 2031,
         "value": 0.60
@@ -470,7 +470,7 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
-      "subsidy_ad_volarem": {
+      "sub_ad_volarem": {
         "start": 2020,
         "end": 2031,
         "value": 0.9
@@ -563,7 +563,7 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
-      "subsidy_ad_volarem": {
+      "sub_ad_volarem": {
         "start": 2020,
         "end": 2031,
         "value": 1
