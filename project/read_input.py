@@ -163,7 +163,9 @@ def read_exogenous(config):
 
     energy_prices = pd.read_csv(config['energy_prices'], index_col=[0]) * config['prices_factor']
 
-    return energy_prices, cost_heater, cost_insulation
+    energy_taxes = None
+    # energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
+    return energy_prices, energy_taxes, cost_heater, cost_insulation
 
 
 def read_revealed(config):

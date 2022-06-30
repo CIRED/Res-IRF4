@@ -77,6 +77,9 @@ generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k,
 
 generic_input['stock_ini'] = 29037000
 
+generic_input['vta_energy_prices'] = pd.Series(
+    {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
+
 """with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
     generic_input['thermal_parameters'] = pickle.load(f)"""
 

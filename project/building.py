@@ -1193,11 +1193,10 @@ class AgentBuildings(ThermalBuildings):
 
             Parameters
             ----------
-            x
             utility
             stock
-            ms_extensive
-            freeriders
+            retrofit_rate_ini
+            target_freeriders
             delta_subsidies
             pref_subsidies
 
@@ -1237,8 +1236,9 @@ class AgentBuildings(ThermalBuildings):
             else:
                 stock_retrofit = stock
 
-            root = fsolve(solve, x, args=(
-            utility, stock_retrofit, retrofit_rate_ini, target_freeriders, - delta_subsidies / 1000, pref_subsidies))
+            root, infodict, _, _ = fsolve(solve, x, args=(
+            utility, stock_retrofit, retrofit_rate_ini, target_freeriders, - delta_subsidies / 1000, pref_subsidies),
+                          full_output=True)
             scale = root[-1]
             constant = pd.Series(root[:-1], index=retrofit_rate_ini.index) * scale
 
