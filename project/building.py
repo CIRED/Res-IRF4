@@ -652,6 +652,10 @@ class AgentBuildings(ThermalBuildings):
         pd.Series
         """
 
+        if isinstance(probability_replacement, float):
+            probability_replacement = pd.Series(len(self._choice_heater)*[probability_replacement],
+                                                pd.Index(self._choice_heater, name='Heating system final') )
+
         self._probability_replacement = probability_replacement
 
         if index is None:
@@ -659,14 +663,23 @@ class AgentBuildings(ThermalBuildings):
             index = index.droplevel('Income tenant')
             index = index[~index.duplicated()]
 
-        #porhibited energies can be a string or a list of strings
-        prohibited_energies = list(np.array([policy.value for policy in
-                                                   policies_heater if policy.policy == 'heater_regulation']).flat)
+        # prohibited energies can be a string or a list of strings
+        energy_regulations = [policy for policy in policies_heater if policy.policy == 'heater_regulation']
+        prohibited_energies = pd.Series(list(np.array([policy.name.replace('_elimination', "").replace("_", " ").capitalize()
+                                             for policy in energy_regulations]).flat), index=[policy.name for policy in energy_regulations])
+
+        for regulation in energy_regulations:
+            if regulation.value is not None:
+                heater = next(x for x in self._choice_heater if prohibited_energies[regulation.name] in x)
+                probability_replacement[heater] = regulation.value
+
+        self._probability_replacement = probability_replacement
+
         list_heaters = self._choice_heater
         for energy in prohibited_energies:
             list_heaters = list(set(list_heaters) & set([heater for heater in self._choice_heater if energy not in heater]))
 
-        if prohibited_energies:
+        if energy_regulations:
             choice_heater_idx = pd.Index(list_heaters, name='Heating system final')
         else:
             choice_heater_idx = pd.Index(self._choice_heater, name='Heating system final')
@@ -682,13 +695,15 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_utility -= subsidies_details['reduced_tax']
             market_share = self.endogenous_market_share_heater(index, prices, subsidies_utility, cost_heater, ms_heater)
 
+            #je pense que ce if est inutile, c'est déja
             if isinstance(probability_replacement, pd.Series):
-                probability_replacement = reindex_mi(probability_replacement, market_share.index)
+                pass
+                #probability_replacement = reindex_mi(probability_replacement, market_share.index)
 
         else:
             market_share, probability_replacement = self.exogenous_market_share_heater(index, choice_heater_idx)
 
-        replacement = (market_share.T * probability_replacement * self.stock_mobile.groupby(
+        replacement = ((market_share * probability_replacement ).T * self.stock_mobile.groupby(
             market_share.index.names).sum()).T
 
         stock_replacement = replacement.stack('Heating system final')
@@ -1112,9 +1127,13 @@ class AgentBuildings(ThermalBuildings):
             else:
                 retrofit_rate_simple = retrofit_rate_ini
 
+            probability_replacement = self._probability_replacement
+            if isinstance(probability_replacement, pd.Series):
+                probability_replacement.index = probability_replacement.index.rename('Heating system')
+                probability_replacement = reindex_mi(probability_replacement, self._stock.index)
 
-            stock = pd.concat((self.stock * self._probability_replacement,
-                                     self.stock * (1 - self._probability_replacement)), axis=0, keys=[True, False],
+            stock = pd.concat((self.stock * probability_replacement,
+                                     self.stock * (1 - probability_replacement)), axis=0, keys=[True, False],
                                      names=['Heater replacement'])
             stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
 
