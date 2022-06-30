@@ -129,7 +129,8 @@ def read_policies(config):
 
     def read_ad_volarem(data):
         l = list()
-        value = pd.read_csv(data['value'], header=[0], index_col=[0]).squeeze().rename(None)
+        value = data['value']
+        #value = pd.read_csv(data['value'], header=[0], index_col=[0]).squeeze().rename(None)
         l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
                               gest='heater'))
         l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',

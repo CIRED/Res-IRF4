@@ -672,7 +672,7 @@ class AgentBuildings(ThermalBuildings):
         energy_regulations = [policy for policy in policies_heater if policy.policy == 'heater_regulation']
         prohibited_energies = pd.Series(list(np.array([policy.name.replace('_elimination', "").replace("_", " ").capitalize()
                                              for policy in energy_regulations]).flat), index=[policy.name for policy in energy_regulations],
-                                        dtype=float)
+                                        dtype=object)
 
         for regulation in energy_regulations:
             if regulation.value is not None:
