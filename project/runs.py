@@ -14,16 +14,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author Lucas Vivier <vivier@centre-cired.fr>
-
+import os
+import argparse
 from main import run
 
-
 if __name__ == '__main__':
-    configs = ['project/input/config/policies/config_zil.json',
-               'project/input/config/policies/config_cite.json',
-               'project/input/config/policies/config_cee.json',
-               'project/input/config/policies/config_reduced_tax.json',
-               'project/input/config/policies/config_carbon_tax.json']
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
+    args = parser.parse_args()
+
+    configs = [c for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
 
     for config in configs:
         run(path=config)

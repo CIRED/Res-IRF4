@@ -1,11 +1,11 @@
 {
   "sensitivity": {
     "activated": true,
-    "ZP": true,
-    "prices_constant": true,
+    "ZP": false,
+    "prices_constant": false,
     "prices_factor": false,
     "cost_factor": false,
-    "retrofit_rate_ini": false,
+    "retrofit_rate_ini": "project/input/renovation_rate_ini_low",
     "target_freeriders": false
   },
   "assessment": {
@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
