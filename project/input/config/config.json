@@ -103,10 +103,11 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
-      "energy_elimination": {
+      "oil_fuel_elimination": {
         "start": 2019,
         "end": 2051,
-        "prohibited_energy": "Oil fuel"
+        "value": 0.05
+      }
       }
     },
     "footprint": {
