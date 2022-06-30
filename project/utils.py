@@ -24,6 +24,9 @@ from matplotlib.ticker import MaxNLocator
 from collections import defaultdict
 from functools import wraps
 from time import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 COLOR = 'dimgrey'
 SMALL_SIZE = 10
@@ -48,7 +51,7 @@ def timing(f):
         ts = time()
         result = f(*args, **kw)
         te = time()
-        print(f'Function {f.__name__} took {te - ts:2.4f} seconds')
+        logging.debug(f'Function {f.__name__} took {te - ts:2.4f} seconds')
         return result
     return wrap
 

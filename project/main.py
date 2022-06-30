@@ -25,6 +25,7 @@ from multiprocessing import Pool
 from datetime import datetime
 import re
 import argparse
+import traceback
 
 from building import AgentBuildings
 from input.param import generic_input
@@ -50,68 +51,82 @@ def res_irf(config, path):
         Detailed results
     """
     os.mkdir(path)
-    logging.basicConfig(filename=os.path.join(path, 'log.log'), level=logging.WARNING)
+    log_formatter = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    logging.basicConfig(filename=os.path.join(path, 'log.log'),
+                        level=logging.DEBUG,
+                        format=log_formatter,
+                        filemode='a')
+    logging.getLogger('matplotlib.font_manager').disabled = True
+    logging.getLogger('matplotlib.axes').disabled = True
+    root_logger = logging.getLogger("")
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(log_formatter))
+    root_logger.addHandler(console_handler)
 
-    stock, year = read_stock(config)
-    policies_heater, policies_insulation, taxes = read_policies(config)
-    param, summary_param = parse_parameters(config, generic_input, stock)
-    energy_prices, energy_taxes, cost_heater, cost_insulation = read_exogenous(config)
-    efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, renovation_rate_ini, ms_intensive = read_revealed(config)
+    try:
+        stock, year = read_stock(config)
+        policies_heater, policies_insulation, taxes = read_policies(config)
+        param, summary_param = parse_parameters(config, generic_input, stock)
+        energy_prices, energy_taxes, cost_heater, cost_insulation = read_exogenous(config)
+        efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, renovation_rate_ini, ms_intensive = read_revealed(config)
 
-    if config['prices_constant']:
-        energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
-                                  axis=1).T
+        if config['prices_constant']:
+            energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
+                                      axis=1).T
 
-    total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
-    for t in taxes:
-        total_taxes = total_taxes.add(t.value, fill_value=0)
+        total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
+        for t in taxes:
+            total_taxes = total_taxes.add(t.value, fill_value=0)
 
-    if energy_taxes is not None:
-        total_taxes = total_taxes.add(energy_taxes, fill_value=0)
+        if energy_taxes is not None:
+            total_taxes = total_taxes.add(energy_taxes, fill_value=0)
 
-    if config['taxes_constant']:
-        total_taxes = pd.concat([total_taxes.loc[year, :]] * total_taxes.shape[0], keys=total_taxes.index,
-                                axis=1).T
+        if config['taxes_constant']:
+            total_taxes = pd.concat([total_taxes.loc[year, :]] * total_taxes.shape[0], keys=total_taxes.index,
+                                    axis=1).T
 
-    energy_vta = energy_prices * generic_input['vta_energy_prices']
-    total_taxes += energy_vta
+        energy_vta = energy_prices * generic_input['vta_energy_prices']
+        total_taxes += energy_vta
 
-    energy_prices = energy_prices.add(total_taxes, fill_value=0)
-    param['energy_prices'] = energy_prices
+        energy_prices = energy_prices.add(total_taxes, fill_value=0)
+        param['energy_prices'] = energy_prices
 
-    t = total_taxes.copy()
-    t.columns = t.columns.map(lambda x:  'Taxes {} (euro/kWh)'.format(x))
-    temp = energy_prices.copy()
-    temp.columns = temp.columns.map(lambda x:  'Prices {} (euro/kWh)'.format(x))
-    pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+        t = total_taxes.copy()
+        t.columns = t.columns.map(lambda x:  'Taxes {} (euro/kWh)'.format(x))
+        temp = energy_prices.copy()
+        temp.columns = temp.columns.map(lambda x:  'Prices {} (euro/kWh)'.format(x))
+        pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
-    print('Calibration {}'.format(year))
-    buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],
-                               param['consumption_ini'], path, param['preferences'],
-                               restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
-                               year=year, demolition_rate=param['demolition_rate'],
-                               data_calibration=param['data_ceren'], endogenous=config['endogenous'],
-                               number_exogenous=config['exogenous_detailed']['number'])
+        logging.debug('Calibration {}'.format(year))
+        buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],
+                                   param['consumption_ini'], path, param['preferences'],
+                                   restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
+                                   year=year, demolition_rate=param['demolition_rate'],
+                                   data_calibration=param['data_ceren'], endogenous=config['endogenous'],
+                                   number_exogenous=config['exogenous_detailed']['number'])
 
-    buildings.calculate(energy_prices.loc[year, :], taxes)
-    for year in range(config['start'] + 1, config['end']):
-        print('Run {}'.format(year))
-
-        buildings.year = year
-        buildings.add_flows([- buildings.flow_demolition()])
-        flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
-                                                ms_intensive, renovation_rate_ini,
-                                                [p for p in policies_heater if (year >= p.start) and (year < p.end)],
-                                                [p for p in policies_insulation if (year >= p.start) and (year < p.end)],
-                                                config['target_freeriders'], supply_constraint=config['supply_constraint'])
-        buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
         buildings.calculate(energy_prices.loc[year, :], taxes)
+        for year in range(config['start'] + 1, config['end']):
+            logging.debug('Run {}'.format(year))
 
-    stock, output = parse_output(buildings, param)
-    output.round(2).to_csv(os.path.join(path, 'output.csv'))
-    stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+            buildings.year = year
+            buildings.add_flows([- buildings.flow_demolition()])
+            flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
+                                                    ms_intensive, renovation_rate_ini,
+                                                    [p for p in policies_heater if (year >= p.start) and (year < p.end)],
+                                                    [p for p in policies_insulation if (year >= p.start) and (year < p.end)],
+                                                    config['target_freeriders'], supply_constraint=config['supply_constraint'])
+            buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
+            buildings.calculate(energy_prices.loc[year, :], taxes)
 
-    return os.path.basename(os.path.normpath(path)), output, stock
+        stock, output = parse_output(buildings, param)
+        output.round(2).to_csv(os.path.join(path, 'output.csv'))
+        stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+
+        return os.path.basename(os.path.normpath(path)), output, stock
+
+    except Exception as e:
+        root_logger.exception(e)
 
 
 def run(path=None):
@@ -211,18 +226,26 @@ def run(path=None):
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
     os.mkdir(folder)
 
-    logging.debug('Launching processes')
-    with Pool() as pool:
-        results = pool.starmap(res_irf,
-                               zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
-    result = {i[0]: i[1] for i in results}
-    stocks = {i[0]: i[2] for i in results}
+    logging.basicConfig(filename=os.path.join(folder, 'log_run.log'), level=logging.DEBUG,
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.getLogger('matplotlib.font_manager').disabled = True
+    logging.getLogger('matplotlib.axes').disabled = True
+    logger = logging.getLogger("")
 
-    logging.debug('Parsing results')
-    grouped_output(result, stocks, folder, config_policies, config_sensitivity)
+    try:
+        logging.debug('Launching processes')
+        with Pool() as pool:
+            results = pool.starmap(res_irf,
+                                   zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
+        result = {i[0]: i[1] for i in results}
+        stocks = {i[0]: i[2] for i in results}
 
-    logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
+        logging.debug('Parsing results')
+        grouped_output(result, stocks, folder, config_policies, config_sensitivity)
 
+        logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
+    except Exception as e:
+        logger.exception(e)
 
 if __name__ == '__main__':
     run()
