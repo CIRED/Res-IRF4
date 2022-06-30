@@ -19,10 +19,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import logging
 
 from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig
+
+logger = logging.getLogger(__name__)
+
 
 def parse_output(buildings, param):
     """Parse output.

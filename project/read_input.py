@@ -18,6 +18,9 @@
 import pandas as pd
 from itertools import product
 from utils import reindex_mi
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PublicPolicy:
