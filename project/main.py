@@ -26,7 +26,6 @@ from datetime import datetime
 import re
 import argparse
 
-
 from building import AgentBuildings
 from input.param import generic_input
 from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
@@ -51,6 +50,7 @@ def res_irf(config, path):
         Detailed results
     """
     os.mkdir(path)
+    # logging.basicConfig(filename=os.path.join(path, 'log.log'), encoding='utf-8', level=logging.DEBUG)
 
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
@@ -114,6 +114,7 @@ def run(path=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default='project/input/config.json', help='path config file')
+    parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
     args = parser.parse_args()
 
     if not os.path.isdir('project/output'):
