@@ -279,7 +279,8 @@ class ThermalBuildings:
 
         self.heating_intensity_yrs.update({self.year: heating_intensity})
         self.budget_share_yrs.update({self.year: budget_share})
-        self.energy_poverty.update({self.year: self.stock[budget_share >= 0.1].sum()})
+        self.energy_poverty.update({self.year: (self.stock[self.stock.index.get_level_values(
+            'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()})
         self.heating_intensity_avg.update({self.year: (self.stock * heating_intensity).sum() / self.stock.sum()})
         self.heating_intensity_tenant.update({self.year: (self.stock * heating_intensity).groupby(
             'Income tenant').sum() / self.stock.groupby('Income tenant').sum()})
