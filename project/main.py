@@ -50,7 +50,7 @@ def res_irf(config, path):
         Detailed results
     """
     os.mkdir(path)
-    # logging.basicConfig(filename=os.path.join(path, 'log.log'), encoding='utf-8', level=logging.DEBUG)
+    logging.basicConfig(filename=os.path.join(path, 'log.log'), level=logging.WARNING)
 
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
