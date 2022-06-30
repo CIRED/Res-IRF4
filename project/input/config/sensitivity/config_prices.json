@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "ZP": false,
     "prices_constant": false,
     "prices_factor": [0.2 , 0.4, 1, 2, 4],
