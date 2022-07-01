@@ -50,7 +50,7 @@ generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
                                            index=pd.Index(['Owner-occupied', 'Privately rented', 'Social-housing'],
                                                           name='Occupancy status'))
 
-generic_input['consumption_ini'] = pd.Series([40, 132, 42, 79],
+generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
 consumption_hist = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0],
@@ -99,27 +99,30 @@ param['ratio_surface'] = pd.DataFrame(
 param['coefficient'] = pd.Series([0.891000, 0.791331], index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'))
 generic_input['thermal_parameters'] = param
 
+subsidy_preferences_heater = 0.167
+bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
+subsidy_loan_preferences_heater = 0.473
+subsidy_loan_preferences_insulation = 0.343
+inertia = 0.8299
 
-investment_preferences_heater = pd.Series([-0.0964, -0.152],
-                                          index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-                                          name='Housing type')
-
-investment_preferences_insulation = pd.Series([-0.0646, -0.151],
+preferences_by_housing_type = False
+if preferences_by_housing_type:
+    investment_preferences_heater = pd.Series([-0.0964, -0.152],
                                               index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
                                               name='Housing type')
 
-subsidy_preferences_heater = 0.167
+    investment_preferences_insulation = pd.Series([-0.0646, -0.151],
+                                                  index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+                                                  name='Housing type')
 
-subsidy_preferences_insulation = pd.Series([0.0486, 0.236],
-                                           index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-                                           name='Housing type')
-
-
-subsidy_loan_preferences_heater = 0.473
-subsidy_loan_preferences_insulation = 0.343
-bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
-inertia = 0.8299
-
+    subsidy_preferences_insulation = pd.Series([0.0486, 0.236],
+                                               index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+                                               name='Housing type')
+else:
+    investment_preferences_heater = -0.0964
+    investment_preferences_insulation = -0.0646
+    subsidy_preferences_insulation = 0.0486
+    bill_saving_preferences = bill_saving_preferences.xs('Single-family', level='Housing type')
 
 generic_input['preferences'] = {}
 generic_input['preferences']['heater'] = {'investment': investment_preferences_heater,
