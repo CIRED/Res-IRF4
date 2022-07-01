@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "ZP": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
@@ -115,7 +115,7 @@
     "surface_built": "endogenous"
   },
   "Ad_volarem_10": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
@@ -193,7 +193,7 @@
       },
       "sub_ad_volarem": {
         "start": 2020,
-        "end": 2031,
+        "end": 2051,
         "value": 0.1
       }
     },
@@ -208,7 +208,7 @@
     "surface_built": "endogenous"
   },
   "Ad_volarem_40": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
@@ -286,8 +286,8 @@
       },
       "sub_ad_volarem": {
         "start": 2020,
-        "end": 2031,
-        "value": 0.3
+        "end": 2051,
+        "value": 0.4
       }
     },
     "footprint": {
@@ -301,7 +301,7 @@
     "surface_built": "endogenous"
   },
   "Ad_volarem_60": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
@@ -379,7 +379,7 @@
       },
       "sub_ad_volarem": {
         "start": 2020,
-        "end": 2031,
+        "end": 2051,
         "value": 0.60
       }
     },
@@ -394,7 +394,7 @@
     "surface_built": "endogenous"
   },
   "Ad_volarem_90": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
@@ -472,7 +472,7 @@
       },
       "sub_ad_volarem": {
         "start": 2020,
-        "end": 2031,
+        "end": 2051,
         "value": 0.9
       }
     },
@@ -487,7 +487,7 @@
     "surface_built": "endogenous"
   },
   "Ad_volarem_100": {
-    "end": 2031,
+    "end": 2051,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.00,
@@ -565,7 +565,7 @@
       },
       "sub_ad_volarem": {
         "start": 2020,
-        "end": 2031,
+        "end": 2051,
         "value": 1
       }
     },
