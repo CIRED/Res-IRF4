@@ -50,7 +50,7 @@ generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
                                            index=pd.Index(['Owner-occupied', 'Privately rented', 'Social-housing'],
                                                           name='Occupancy status'))
 
-generic_input['consumption_ini'] = pd.Series([40, 132, 42, 79],
+generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
 consumption_hist = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0],
