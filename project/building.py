@@ -435,17 +435,33 @@ class AgentBuildings(ThermalBuildings):
         self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
 
-        self.pref_investment_heater = preferences['heater']['investment'].copy()
-        self.pref_investment_insulation_int = preferences['insulation']['investment'].copy()
-        self.pref_investment_insulation_ext = preferences['insulation']['investment'].copy()
+        if isinstance(preferences['heater']['investment'], pd.Series):
+            self.pref_investment_heater = preferences['heater']['investment'].copy()
+        else:
+            self.pref_investment_heater = preferences['heater']['investment']
+
+        if isinstance(preferences['insulation']['investment'], pd.Series):
+            self.pref_investment_insulation_int = preferences['insulation']['investment'].copy()
+            self.pref_investment_insulation_ext = preferences['insulation']['investment'].copy()
+        else:
+            self.pref_investment_insulation_int = preferences['insulation']['investment']
+            self.pref_investment_insulation_ext = preferences['insulation']['investment']
 
         self.pref_subsidy_heater = preferences['heater']['subsidy']
-        self.pref_subsidy_insulation_int = preferences['insulation']['subsidy'].copy()
-        self.pref_subsidy_insulation_ext = preferences['insulation']['subsidy'].copy()
+        if isinstance(preferences['insulation']['subsidy'], pd.Series):
+            self.pref_subsidy_insulation_int = preferences['insulation']['subsidy'].copy()
+            self.pref_subsidy_insulation_ext = preferences['insulation']['subsidy'].copy()
+        else:
+            self.pref_subsidy_insulation_int = preferences['insulation']['subsidy']
+            self.pref_subsidy_insulation_ext = preferences['insulation']['subsidy']
 
         self.pref_bill_heater = preferences['heater']['bill_saved'].copy()
-        self.pref_bill_insulation_int = preferences['insulation']['bill_saved'].copy()
-        self.pref_bill_insulation_ext = preferences['insulation']['bill_saved'].copy()
+        if isinstance(preferences['insulation']['subsidy'], pd.Series):
+            self.pref_bill_insulation_int = preferences['insulation']['bill_saved'].copy()
+            self.pref_bill_insulation_ext = preferences['insulation']['bill_saved'].copy()
+        else:
+            self.pref_bill_insulation_int = preferences['insulation']['bill_saved']
+            self.pref_bill_insulation_ext = preferences['insulation']['bill_saved']
 
         self.pref_inertia = preferences['heater']['inertia']
         self.pref_zil_int = preferences['insulation']['zero_interest_loan']
