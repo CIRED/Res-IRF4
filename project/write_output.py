@@ -247,6 +247,21 @@ def parse_output(buildings, param):
     detailed.update(temp.T / 10 ** 9)
     investment_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_heater.items()})
 
+    #representative insulation investment: weighted average with number of insulation actions as waights
+    investment_insulation_repr = pd.DataFrame(buildings.investment_insulation_repr)
+    gest = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
+    gest = reindex_mi(gest, investment_insulation_repr.index)
+    temp = gest * investment_insulation_repr
+
+    t = temp.groupby('Income owner').sum() / gest.groupby('Income owner').sum()
+    t.index = t.index.map(lambda x: 'Investment per insulation action {} (euro)'.format(x))
+    detailed.update(t.T)
+
+    t = temp.groupby(['Housing type', 'Occupancy status']).sum() / gest.groupby(['Housing type',
+                                                                                 'Occupancy status']).sum()
+    t.index = t.index.map(lambda x: 'Investment per insulation action {} - {} (euro)'.format(x[0], x[1]))
+    detailed.update(t.T)
+
     investment_insulation = pd.DataFrame(
         {year: item.sum(axis=1) for year, item in buildings.investment_insulation.items()})
     detailed['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10**9
@@ -840,7 +855,9 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
     folder_img = os.path.join(folder, 'img')
     os.mkdir(folder_img)
 
-    variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y), generic_input['consumption_total_hist'], generic_input['consumption_total_objectives']),
+    variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y),
+                                       generic_input['consumption_total_hist'],
+                                       generic_input['consumption_total_objectives']),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
@@ -894,6 +911,8 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
                                               ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                               ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Investment per insulation action {} (euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
+                                                       ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Investment total {} (Billion euro)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Replacement {} (Thousand)': [
