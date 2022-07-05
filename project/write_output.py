@@ -130,18 +130,21 @@ def parse_output(buildings, param):
     format_legend(ax, labels=t.columns)
     save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))
 
-    retrofit_rate = ((t * s_temp) / s_temp).dropna(how='all')
-    detailed['Retrofit rate (%)'] = retrofit_rate.mean()
-    t = retrofit_rate.groupby(['Housing type', 'Occupancy status']).mean()
+    #Weighted average with stock to calculate real retrofit rate
+    detailed['Retrofit rate (%)'] = ((t * s_temp).sum() / s_temp.sum()).drop(2018)
+    detailed['Naive retrofit rate (%)'] = t.mean()
+    t = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
+                                                                                           'Occupancy status']).sum()
     t.index = t.index.map(lambda x: 'Retrofit rate {} - {} (%)'.format(x[0], x[1]))
     detailed.update(t.T)
 
     t = temp.xs(True, level='Heater replacement')
     s_temp = pd.DataFrame(buildings.stock_yrs)
     s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
-    retrofit_rate = ((t * s_temp) / s_temp).dropna(how='all')
-    detailed['Retrofit rate w/ heater (%)'] = retrofit_rate.mean()
-    t = retrofit_rate.groupby(['Housing type', 'Occupancy status']).mean()
+    detailed['Retrofit rate w/ heater (%)'] = ((t * s_temp).sum() / s_temp.sum()).drop(2018)
+    detailed['Naive retrofit rate w/ heater (%)'] = t.mean()
+    t = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
+                                                                                           'Occupancy status']).sum()
     t.index = t.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
     detailed.update(t.T)
 
