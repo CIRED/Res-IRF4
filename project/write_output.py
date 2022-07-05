@@ -132,20 +132,31 @@ def parse_output(buildings, param):
 
     #Weighted average with stock to calculate real retrofit rate
     detailed['Retrofit rate (%)'] = ((t * s_temp).sum() / s_temp.sum()).drop(2018)
-    detailed['Naive retrofit rate (%)'] = t.mean()
-    t = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
-                                                                                           'Occupancy status']).sum()
-    t.index = t.index.map(lambda x: 'Retrofit rate {} - {} (%)'.format(x[0], x[1]))
+    t_grouped = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
+                                                                                                   'Occupancy status']).sum()
+    t_grouped = t_grouped.drop(2018, axis=1)
+    t_grouped.index = t_grouped.index.map(lambda x: 'Retrofit rate {} - {} (%)'.format(x[0], x[1]))
+    detailed.update(t_grouped.T)
+
+    detailed['Non-weighted retrofit rate (%)'] = t.mean()
+    t = t.groupby(['Housing type', 'Occupancy status']).mean()
+    t.index = t.index.map(lambda x: 'Non-weighted retrofit rate {} - {} (%)'.format(x[0], x[1]))
     detailed.update(t.T)
 
     t = temp.xs(True, level='Heater replacement')
     s_temp = pd.DataFrame(buildings.stock_yrs)
     s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
     detailed['Retrofit rate w/ heater (%)'] = ((t * s_temp).sum() / s_temp.sum()).drop(2018)
-    detailed['Naive retrofit rate w/ heater (%)'] = t.mean()
-    t = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
+
+    t_grouped = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
                                                                                            'Occupancy status']).sum()
-    t.index = t.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
+    t_grouped = t_grouped.drop(2018, axis=1)
+    t_grouped.index = t_grouped.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
+    detailed.update(t_grouped.T)
+
+    detailed['Non-weighted retrofit rate w/ heater (%)'] = t.mean()
+    t = t.groupby(['Housing type', 'Occupancy status']).mean()
+    t.index = t.index.map(lambda x: 'Non-weighted retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
     detailed.update(t.T)
 
     detailed['Retrofit (Thousand)'] = pd.Series(
@@ -926,8 +937,12 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
         'Retrofit rate {} (%)': [
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Non-weighted retrofit rate {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
         'Retrofit rate heater {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)]
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Non-weighted retrofit rate heater {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
     }
 
     def details_graphs(data, v, inf, folder_img):
