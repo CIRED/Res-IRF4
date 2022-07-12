@@ -1232,7 +1232,7 @@ class AgentBuildings(ThermalBuildings):
         def calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation,
                                          delta_subsidies, target_invest=0.2, utility_zil=utility_zil):
             """
-            :param bill_saved: pd.DataFrame
+            :param bill_saved: pd.DataFrame’
             :param subsidies_total: pd.DataFrame
             :param cost_insulation: pd.DataFrame
             :param delta_subsidies: float, the rate of cite decrease that we want to analyse. In Risch: from 0 to 0.15
@@ -1362,7 +1362,7 @@ class AgentBuildings(ThermalBuildings):
                                                                       retrofit_rate_ini, solver='iteration')
             market_share, _ = to_market_share(bill_saved, subsidies_total, cost_insulation,
                                               utility_zil=utility_zil)
-            scale_intensive = calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total,
+            """scale_intensive = calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total,
                                                            cost_insulation, delta_subsidies,
                                                            target_invest=0.2, utility_zil=utility_zil)
 
@@ -1386,6 +1386,7 @@ class AgentBuildings(ThermalBuildings):
             test = calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total,
                                                            cost_insulation, delta_subsidies,
                                                            target_invest=0.2, utility_zil=utility_zil)
+            """
 
 
         s = self.add_certificate(stock)
@@ -1439,7 +1440,7 @@ class AgentBuildings(ThermalBuildings):
                     save_fig(fig, save=os.path.join(self.path_calibration, 'scale_calibration_{}.png'.format(name.lower())))
 
             constant, scale = calibration_constant_scale_ext(utility, stock, retrofit_rate_ini, target_freeriders,
-                                                             delta_subsidies, pref_subsidies)
+                                                             delta_subsidies_sum, pref_subsidies)
             self.utility_insulation_extensive = constant
 
             if detailed:
