@@ -247,7 +247,7 @@ def parse_output(buildings, param):
     detailed.update(temp.T / 10 ** 9)
     investment_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_heater.items()})
 
-    #representative insulation investment: weighted average with number of insulation actions as waights
+    #representative insulation investment: weighted average with number of insulation actions as weights
     investment_insulation_repr = pd.DataFrame(buildings.investment_insulation_repr)
     gest = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
     gest = reindex_mi(gest, investment_insulation_repr.index)
