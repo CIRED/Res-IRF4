@@ -470,6 +470,7 @@ class AgentBuildings(ThermalBuildings):
         self.discount_rate = - self.pref_investment_insulation_ext / self.pref_bill_insulation_ext
         self.discount_factor = (1 - (1 + self.discount_rate) ** -self.lifetime_insulation) / self.discount_rate
 
+        self.scale_int = None
         self.scale_ext = None
         self.calibration_scale = 'cite'
         self.param_supply = None
@@ -1038,13 +1039,13 @@ class AgentBuildings(ThermalBuildings):
             Market-share insulation
         """
 
-        def to_market_share(bill_saved, subsidies, investment, utility_zil=utility_zil):
+        def to_market_share(bill_saved, subsidies, investment, utility_zil=utility_zil, scale=1):
 
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation_int, subsidies.index).rename(None)
             utility_subsidies = (subsidies.T * pref_subsidies).T / 1000
 
             pref_investment = reindex_mi(self.pref_investment_insulation_int, investment.index).rename(None)
-            utility_investment = (cost_insulation.T * pref_investment).T / 1000
+            utility_investment = (investment.T * pref_investment).T / 1000
 
             utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill_insulation_int, bill_saved.index)).T / 1000
 
@@ -1057,7 +1058,7 @@ class AgentBuildings(ThermalBuildings):
             if self.utility_insulation_intensive is not None:
                 utility_intensive += self.utility_insulation_intensive
 
-            market_share = (np.exp(utility_intensive).T / np.exp(utility_intensive).sum(axis=1)).T
+            market_share = (np.exp(scale * utility_intensive).T / np.exp(scale * utility_intensive).sum(axis=1)).T
             return market_share, utility_intensive
 
         def to_retrofit_rate(bill_saved, subsidies, investment, bool_zil_mean=None, detailed=True):
@@ -1315,6 +1316,39 @@ class AgentBuildings(ThermalBuildings):
         market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_insulation,
                                                           utility_zil=utility_zil)
 
+        def calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation, delta_subsidies, target_invest=0.2,
+                                         utility_zil=utility_zil):
+            """
+            :param bill_saved: pd.DataFrame
+            :param subsidies_total: pd.DataFrame
+            :param cost_insulation: pd.DataFrame
+            :param delta_subsidies: float, the rate of cite decrease that we want to analyse. In Risch: from 0 to 0.15
+            :param target_invest: float
+            :return:
+            """
+            if 'Performance' in retrofit_rate_ini.index.names:
+                stock = self.add_certificate(stock)
+            flow_retrofit = stock * reindex_mi(retrofit_rate_ini, stock.index)
+            flow_retrofit = flow_retrofit.droplevel('Performance').dropna()
+
+            def solve(scale, flow_retrofit, bill_saved, subsidies_total, cost_insulation, delta_subsidies, target_invest, utility_zil):
+                scale = float(scale)
+                ms_before, _ = to_market_share(bill_saved, subsidies_total, cost_insulation, utility_zil=utility_zil)
+                investment_insulation_before = (cost_insulation.reindex(ms_before.index) * ms_before).sum(axis=1)
+                investment_insulation_before = (investment_insulation_before * flow_retrofit).sum() / flow_retrofit.sum()
+                new_sub = subsidies_total + delta_subsidies
+                ms_after, _ = to_market_share(bill_saved, new_sub, cost_insulation, utility_zil=utility_zil, scale=scale)
+                investment_insulation_after = (cost_insulation.reindex(ms_after.index) * ms_after).sum(axis=1)
+                investment_insulation_after = (investment_insulation_after * flow_retrofit).sum() / flow_retrofit.sum()
+                delta_invest = (investment_insulation_before - investment_insulation_after) / investment_insulation_before
+                return delta_invest.mean() - target_invest
+
+            x0 = np.ones(1)
+
+            return float(fsolve(solve, x0, args=(flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies / 1000,
+                                                 target_invest, utility_zil)))
+
+
         if self.utility_insulation_intensive is None:
             logging.debug('Calibration intensive')
             self.utility_insulation_intensive = calibration_intensive(utility_intensive, stock, ms_insulation,
@@ -1352,13 +1386,13 @@ class AgentBuildings(ThermalBuildings):
 
         if self.utility_insulation_extensive is None:
             logging.debug('Calibration renovation rate')
-            delta_subsidies = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
+            delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation_ext, subsidies_insulation.index).rename(None)
             if detailed:
                 x, free_riders, elasticity = [], [], []
                 for scale in np.arange(0.1, 5, 0.1):
                     x.append(scale)
-                    free_riders.append(impact_subsidies(scale, utility, stock, pref_subsidies, - delta_subsidies / 1000,
+                    free_riders.append(impact_subsidies(scale, utility, stock, pref_subsidies, - delta_subsidies_sum / 1000,
                                                         indicator='freeriders'))
                     elasticity.append(impact_subsidies(scale, utility, stock, pref_subsidies,
                                                        subsidies_insulation / 1000 * 0.01,

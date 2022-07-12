@@ -10,12 +10,12 @@
   },
   "assessment": {
     "activated": false,
-    "Policy name": "cee",
+    "Policy name": "mpr",
     "AP": "Reference",
     "AP-1": true,
     "ZP": false,
     "ZP+1": false,
-    "AP-2020": true,
+    "AP-2020": false,
     "AP-2025": false,
     "AP-2030": false,
     "AP-2035": false,
@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2022,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -89,7 +89,7 @@
         "start": 2019,
         "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
-        "insulation": 0.17,
+        "insulation": 0.15,
         "cap": 16000
       },
       "reduced_tax": {
@@ -103,11 +103,6 @@
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
-      },
-      "oil_fuel_elimination": {
-        "start": 2019,
-        "end": 2051,
-        "value": 0.05
       }
     },
     "footprint": {
