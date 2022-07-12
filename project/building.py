@@ -1229,9 +1229,12 @@ class AgentBuildings(ThermalBuildings):
             details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
             return constant
 
-        def calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation,
+        def calculation_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation,
                                          delta_subsidies, target_invest=0.2, utility_zil=utility_zil):
             """
+            This function can be adapted to calibrate intensive margin on Risch 2020 result. (using target_invest)
+            However, for now just returns percentage of intesive margin difference
+
             :param bill_saved: pd.DataFrame’
             :param subsidies_total: pd.DataFrame
             :param cost_insulation: pd.DataFrame
@@ -1263,11 +1266,12 @@ class AgentBuildings(ThermalBuildings):
 
             x0 = np.ones(1)
 
-            scale = fsolve(solve, x0, args=(
+            """scale = fsolve(solve, x0, args=(
                 flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies,
-                target_invest, utility_zil))
+                target_invest, utility_zil))"""
 
-            return scale
+            return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies,
+                      target_invest, utility_zil) + target_invest
 
         @timing
         def calibration_constant_scale_ext(utility, stock, retrofit_rate_ini, target_freeriders, delta_subsidies, pref_subsidies):
@@ -1362,6 +1366,11 @@ class AgentBuildings(ThermalBuildings):
                                                                       retrofit_rate_ini, solver='iteration')
             market_share, _ = to_market_share(bill_saved, subsidies_total, cost_insulation,
                                               utility_zil=utility_zil)
+
+            percentage_intensive_margin = calculation_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total,
+                                                           cost_insulation, delta_subsidies,
+                                                            utility_zil=utility_zil)
+
             """scale_intensive = calibration_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total,
                                                            cost_insulation, delta_subsidies,
                                                            target_invest=0.2, utility_zil=utility_zil)
@@ -1553,8 +1562,11 @@ class AgentBuildings(ThermalBuildings):
                 flow_insulation_sum = pd.Series(flow_insulation.sum(), index=['Replacement insulation'])
                 ms_calibrated = flow_insulation / flow_insulation.sum()
                 ms_calibrated.index = ms_calibrated.index.to_flat_index()
+                percentage_intensive_margin = pd.Series(percentage_intensive_margin,
+                                                        index=['Percentage intensive margin'])
                 result = pd.concat((scale, constant_ext, retrofit_rate_mean, retrofit_calibrated, flow_insulation_sum,
-                                    flow_insulation_agg, name, constant_int, flow_insulation, ms_calibrated), axis=0)
+                                    flow_insulation_agg, name, constant_int, flow_insulation, ms_calibrated,
+                                    percentage_intensive_margin), axis=0)
                 result.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
 
         if supply_constraint is True:
