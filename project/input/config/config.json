@@ -60,7 +60,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
@@ -75,7 +75,7 @@
       },
       "cap": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
@@ -86,7 +86,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": 0.17,
         "cap": 16000
