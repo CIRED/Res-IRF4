@@ -1270,8 +1270,8 @@ class AgentBuildings(ThermalBuildings):
                 flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies,
                 target_invest, utility_zil))"""
 
-            return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies,
-                      target_invest, utility_zil) + target_invest
+            return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -0.5 * delta_subsidies,
+                         target_invest, utility_zil) + target_invest
 
         @timing
         def calibration_constant_scale_ext(utility, stock, retrofit_rate_ini, target_freeriders, delta_subsidies, pref_subsidies):
