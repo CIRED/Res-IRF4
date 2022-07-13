@@ -6,19 +6,16 @@
     "prices_factor": 2,
     "cost_factor": 2,
     "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
-    "target_freeriders": 0.75,
-    "energy_prices": "project/input/energy_prices.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
-    "carbon_emission": "project/input/policies/carbon_emission.csv"
+    "target_freeriders": 0.75
   },
   "assessment": {
     "activated": true,
-    "Policy name": "cite",
+    "Policy name": "mpr",
     "AP": "Reference",
     "AP-1": true,
     "ZP": true,
     "ZP+1": true,
-    "AP-2020": true,
+    "AP-2020": false,
     "AP-2025": true,
     "AP-2030": true,
     "AP-2035": true,

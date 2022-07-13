@@ -1,7 +1,7 @@
 {
   "sensitivity": {
     "activated": false,
-    "ZP": true,
+    "ZP": false,
     "prices_constant": true,
     "prices_factor": 2,
     "cost_factor": 2,
