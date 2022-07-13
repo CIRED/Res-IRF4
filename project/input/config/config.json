@@ -3,8 +3,8 @@
     "activated": true,
     "ZP": true,
     "prices_constant": true,
-    "prices_factor": 2,
-    "cost_factor": 2,
+    "prices_factor": [2],
+    "cost_factor": [2],
     "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
     "target_freeriders": 0.75
   },
@@ -42,6 +42,7 @@
     "target_freeriders": 0.85,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
+    "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
     "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
@@ -102,12 +103,6 @@
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
-      },
-      "oil_fuel_elimination": {
-        "start": 2019,
-        "end": 2051,
-        "value": 0.05
-      }
       }
     },
     "footprint": {

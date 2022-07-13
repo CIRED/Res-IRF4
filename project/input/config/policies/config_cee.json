@@ -46,6 +46,7 @@
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
+    "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
