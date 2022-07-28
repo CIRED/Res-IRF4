@@ -74,7 +74,8 @@ generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_r
                                              header=[0])
 generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k, item in
                                   generic_input['retrofit_hist'].T.to_dict().items()}
-
+generic_input['retrofit_comparison'] = pd.read_csv('project/input/revealed_data/retrofit_comparison_resirf3.csv', index_col=[0],
+                                             header=[0])
 generic_input['stock_ini'] = 29037000
 
 generic_input['vta_energy_prices'] = pd.Series(

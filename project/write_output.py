@@ -671,11 +671,14 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                 decile = ['D{}'.format(i) for i in range(1, 11)]
                 df = result[s].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year] / \
                      result['Reference'].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year]
-                #This part to be improved
                 df.index = ['Freeriding retrofit ratio {} (%)'.format(d) for d in decile]
                 df.name = s
                 df = pd.DataFrame(df)
-                indicator = pd.concat((indicator, df), axis=0)
+                #This part to be improved
+                if set(list(df.index)).issubset(list(indicator.index)):
+                    indicator.loc[list(df.index), s] = df[s]
+                else:
+                    indicator = pd.concat((indicator, df), axis=0)
 
                 indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Retrofit rate (%)', year] - (
                     result[s].loc['Retrofit rate (%)', year])
@@ -746,7 +749,10 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
     if effectiveness_scenarios:
         se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, save=folder_policies)
         if indicator is not None:
-            indicator = pd.concat((indicator, se_npv), axis=0)
+            if set(list(se_npv.index)).issubset(list(indicator.index)):
+                indicator.loc[list(se_npv.index), s] = se_npv[s]
+            else:
+                indicator = pd.concat((indicator, se_npv), axis=0)
         else:
             indicator = se_npv
         # Percentage of objectives accomplished
@@ -877,7 +883,8 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y),
+                                                  generic_input['retrofit_comparison']),
                  'New efficient (Thousand)': ('retrofit_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
