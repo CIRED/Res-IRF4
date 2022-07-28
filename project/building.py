@@ -1902,6 +1902,12 @@ class AgentBuildings(ThermalBuildings):
         choice_insulation = self._choice_insulation
         certificate = self.prepare_consumption(choice_insulation, index=index, levels_heater='Heating system final')[1]
 
+        consumption_sd = self.prepare_consumption(choice_insulation, index=index)[0]
+        heat_consumption_sd_before = surface * agent.heating_consumption_sd()
+        energy_saved = - (consumption_sd.T * surface).T.sub(heat_consumption_sd_before, axis=0).dropna()
+        percentage_energy_saved = energy_saved.div(heat_consumption_sd_before, axis=0)
+        #bizarre, certains pourcentages sont négatifs
+
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
         cost_insulation = cost_insulation.reindex(certificate.index)
@@ -1910,7 +1916,8 @@ class AgentBuildings(ThermalBuildings):
             policies_insulation,
             cost_insulation, surface,
             certificate,
-            certificate_before)
+            certificate_before,
+            percentage_energy_saved)
 
         if self._endogenous:
 
@@ -1945,7 +1952,8 @@ class AgentBuildings(ThermalBuildings):
         return retrofit_rate, market_share
 
     @timing
-    def apply_subsidies_insulation(self, policies_insulation, cost_insulation, surface, certificate, certificate_before):
+    def apply_subsidies_insulation(self, policies_insulation, cost_insulation, surface, certificate, certificate_before,
+                                   percentage_energy_saved):
         """Calculate subsidies amount for each possible insulation choice.
 
         Parameters
@@ -2000,12 +2008,48 @@ class AgentBuildings(ThermalBuildings):
         epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
         certificate_jump = - certificate.replace(epc2int).sub(certificate_before.replace(epc2int), axis=0)
         global_retrofit = certificate_jump >= 2
+        mpr_global_retrofit = percentage_energy_saved > 0.55
+
+        non_cumul = "subsidy_non_cumulative" in [policy.policy for policy in policies_insulation]
+        mpr_comparison = {}
 
         for policy in policies_insulation:
-            if policy.policy == 'subsidy_target':
+            if policy.name == 'mpr' and not bool(mpr_comparison) and non_cumul:
+                if policy.policy == "subsidy_non_cumulative":
+                    mpr_comparison = {policy.policy: (reindex_mi(policy.value, mpr_global_retrofit.index) * mpr_global_retrofit.T).T}
+                elif policy.policy == "subsidy_target":
+                    mpr_comparison = {policy.policy: (reindex_mi(self.prepare_subsidy_insulation(policy.value),
+                                                 frame.index).T * surface).T}
 
+            if policy.policy == 'subsidy_target':
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                    frame.index).T * surface).T
+                if policy.name == "mpr" and non_cumul:
+                    if list(mpr_comparison.keys())[0] != policy.policy:
+                        comp = list(mpr_comparison.values())[0]
+                        comp = reindex_mi(comp, temp.index)
+                        temp = comp.where(comp > temp, temp)
+                    elif list(mpr_comparison.keys())[0] == policy.policy:
+                        temp = pd.DataFrame(index=temp.index, columns=temp.columns).fillna(0)
+                        #adding an empty dataframe
+
+                subsidies_total += temp
+
+                if policy.name in subsidies_details.keys():
+                    subsidies_details[policy.name] = subsidies_details[policy.name] + temp
+
+                else:
+                    subsidies_details[policy.name] = temp.copy()
+
+            elif policy.policy == 'subsidy_non_cumulative':
+                temp = (reindex_mi(policy.value, mpr_global_retrofit.index) * mpr_global_retrofit.T).T
+                if list(mpr_comparison.keys())[0] != policy.policy:
+                    comp = list(mpr_comparison.values())[0]
+                    comp = reindex_mi(comp, temp.index)
+                    temp = comp.where(comp > temp, temp)
+                elif list(mpr_comparison.keys())[0] == policy.policy:
+                    temp = pd.DataFrame(index=temp.index, columns=temp.columns).fillna(0)
+
                 subsidies_total += temp
 
                 if policy.name in subsidies_details.keys():
