@@ -53,7 +53,7 @@
     "efficiency": "project/input/efficiency.csv",
     "energy_prices": "project/input/energy_prices.csv",
     "prices_factor": 1,
-    "energy_taxes": null,
+    "energy_taxes": "project/input/energy_taxes.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
