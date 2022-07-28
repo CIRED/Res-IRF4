@@ -3,7 +3,8 @@
     "activated": true,
     "ZP": false,
     "prices_constant": false,
-    "mpr_global_retrofit": true
+    "mpr_global_retrofit": true,
+    "mpr_no_bonus": true
   },
   "assessment": {
     "activated": false,
@@ -24,7 +25,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2022,
+    "end": 2051,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
