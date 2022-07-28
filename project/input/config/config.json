@@ -2,12 +2,13 @@
   "sensitivity": {
     "activated": false,
     "ZP": true,
-    "prices_constant": true,
+    "prices_constant": null,
     "prices_factor": [2],
-    "cost_factor": [2],
-    "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
-    "target_freeriders": 0.75,
-    "mpr_global_retrofit": true
+    "retrofit_rate_ini": null,
+    "mpr_global_retrofit": true,
+    "cost_factor": null,
+    "renovation_rate_ini": null,
+    "target_freeriders": [0.5, 0.7, 0.9]
   },
   "assessment": {
     "activated": false,
@@ -44,7 +45,6 @@
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
-    "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
@@ -53,9 +53,9 @@
     "cost_insulation": "project/input/cost_insulation.csv",
     "cost_factor": 1,
     "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices.csv",
+    "energy_prices": "project/input/energy_prices_ht.csv",
     "prices_factor": 1,
-    "energy_taxes": null,
+    "energy_taxes": "project/input/energy_taxes.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
