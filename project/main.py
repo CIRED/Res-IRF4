@@ -221,6 +221,11 @@ def run(path=None):
                     for v in values:
                         configuration['FreeridersIni{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['FreeridersIni{:.0f}'.format(v * 100)]['target_freeriders'] = v
+            if 'mpr_global_retrofit' in config_sensitivity.keys():
+                if config_sensitivity['mpr_global_retrofit']:
+                    configuration['MprGlobalRetrofit'] = copy.deepcopy(configuration['Reference'])
+                    configuration['MprGlobalRetrofit']['policies']['mpr']['global_retrofit'] = "project/input/policies/mpr_global_retrofit.csv"
+
         del configuration['sensitivity']
 
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))

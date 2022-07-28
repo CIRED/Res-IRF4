@@ -1,12 +1,13 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "ZP": true,
     "prices_constant": true,
     "prices_factor": [2],
     "cost_factor": [2],
     "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
-    "target_freeriders": 0.75
+    "target_freeriders": 0.75,
+    "mpr_global_retrofit": true
   },
   "assessment": {
     "activated": false,
@@ -27,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2050,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -64,6 +65,7 @@
         "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
+        "global_retrofit": null,
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
