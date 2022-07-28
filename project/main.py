@@ -98,7 +98,7 @@ def res_irf(config, path):
         pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
         logging.debug('Calibration {}'.format(year))
-        buildings = AgentBuildings(stock, param['surface'], param['thermal_parameters'], efficiency, param['income'],
+        buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
                                    param['consumption_ini'], path, param['preferences'],
                                    restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
                                    year=year, demolition_rate=param['demolition_rate'],
@@ -115,7 +115,8 @@ def res_irf(config, path):
                                                     ms_intensive, renovation_rate_ini,
                                                     [p for p in policies_heater if (year >= p.start) and (year < p.end)],
                                                     [p for p in policies_insulation if (year >= p.start) and (year < p.end)],
-                                                    config['target_freeriders'], supply_constraint=config['supply_constraint'])
+                                                    config['target_freeriders'],
+                                                    supply_constraint=config['supply_constraint'])
             buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
             buildings.calculate(energy_prices.loc[year, :], taxes)
 

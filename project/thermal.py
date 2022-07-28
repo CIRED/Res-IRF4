@@ -14,48 +14,214 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author Lucas Vivier <vivier@centre-cired.fr>
-
+import numpy as np
 import pandas as pd
 from utils import reindex_mi
 
+"""LOGISTIC_COEFFICIENT = pd.read_csv('project/input/logistic_regression_coefficient_epc.csv', index_col=[0])
+LOGISTIC_COEFFICIENT.columns = ['Intercept', 'Proxy_conso_square']
+LOGISTIC_COEFFICIENT.index.names = ['Performance']"""
+CONVERSION = 2.3
+DHH = 55706
+CERTIFICATE_3USES_BOUNDARIES = {
+    'A': [0, 50],
+    'B': [50, 90],
+    'C': [90, 150],
+    'D': [150, 230],
+    'E': [230, 330],
+    'F': [330, 450],
+    'G': [450, 1000],
+}
 
-def certificate(conso, certificate_bounds):
+
+def model_heating_consumption(df, a=0.921323, b=0.634717):
+    """
+    X = (Deper_mur + Deper_baie + Deper_plancher + Deper_plafond) / Efficiency * DDH
+    Conso = X ** 1.746973 * exp(1.536192)
+    """
+    return (df ** a) * np.exp(b)
+
+
+def model_3uses_consumption(df, a=0.846102, b=1.029880):
+    """
+    X = Primary space hating energy consumption (kWh EP / m2)
+    Conso = X ** 0.846102 * exp(1.029880)
+    """
+    return (df ** a) * np.exp(b)
+
+
+def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, ratio_surface):
+    """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
+
+    Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
+
+    Parameters
+    ----------
+    u_wall: float or pd.Series
+    u_floor: float or pd.Series
+    u_roof: float or pd.Series
+    u_windows: float or pd.Series
+    dh: float or pd.Series
+    efficiency: float or pd.Series
+    ratio_surface: pd.Series
+
+    Returns
+    -------
+    float or pd.Series or pd.DataFrame
+        Standard space heating consumption.
+    """
+    data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    partial_losses = (reindex_mi(ratio_surface, data.index) * data).sum(axis=1)
+
+    if isinstance(partial_losses, (pd.Series, pd.DataFrame)):
+        if partial_losses.index.equals(efficiency.index):
+            indicator_losses = partial_losses / efficiency * dh / 1000
+            consumption = model_heating_consumption(indicator_losses).rename('Consumption')
+
+        else:
+            indicator_losses = (partial_losses * dh / 1000).to_frame().dot(
+                (1 / efficiency).to_frame().T)
+            consumption = model_heating_consumption(indicator_losses)
+
+    else:
+        indicator_losses = partial_losses / efficiency * dh / 1000
+        consumption = model_heating_consumption(indicator_losses).rename('Consumption')
+
+    return consumption
+
+
+def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, ratio_surface,
+                                conversion=CONVERSION):
+    """Convert final to primary heating consumption.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    dh
+    efficiency
+    energy
+    ratio_surface
+    conversion
+
+    Returns
+    -------
+
+    """
+    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, ratio_surface)
+
+    if isinstance(heat_consumption, pd.Series):
+        primary_heat_consumption = heat_consumption.copy()
+        primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * conversion
+        return primary_heat_consumption
+
+    elif isinstance(heat_consumption, float):
+        if energy == 'Electricity':
+            return heat_consumption * conversion
+        else:
+            return heat_consumption
+
+    if isinstance(heat_consumption, pd.DataFrame):
+        # index
+        if energy.index.equals(heat_consumption.index):
+            primary_heat_consumption = heat_consumption.copy()
+            primary_heat_consumption.loc[energy == 'Electricity', :] = primary_heat_consumption * conversion
+            return primary_heat_consumption
+        # columns
+        elif energy.index.equals(heat_consumption.columns):
+            primary_heat_consumption = heat_consumption.copy()
+            primary_heat_consumption.loc[:, energy == 'Electricity'] = primary_heat_consumption * conversion
+            return primary_heat_consumption
+        else:
+            raise 'Energy DataFrame do not match indexes and columns'
+
+
+def certificate(df):
     """Returns energy performance certificate based on space heating energy consumption.
 
     Parameters
     ----------
-    conso: float or pd.Series or pd.DataFrame
-        Space heating energy consumption.
-    certificate_bounds: dict
-        Energy consumption bounds that define certificate.
-
+    df: float or pd.Series or pd.DataFrame
+        Space heating energy consumption (kWh PE / m2.year)
     Returns
     -------
     float or pd.Series or pd.DataFrame
         Energy performance certificate.
     """
+    primary_consumption = model_3uses_consumption(df)
 
-    if isinstance(conso, pd.Series):
-        certificate = pd.Series(dtype=str, index=conso.index)
-        for key, item in certificate_bounds.items():
-            cond = (conso > item[0]) & (conso <= item[1])
+    if isinstance(primary_consumption, pd.Series):
+        certificate = pd.Series(dtype=str, index=primary_consumption.index)
+        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+            cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
             certificate[cond] = key
         return certificate
 
-    elif isinstance(conso, pd.DataFrame):
-        certificate = pd.DataFrame(dtype=str, index=conso.index, columns=conso.columns)
-        for key, item in certificate_bounds.items():
-            cond = (conso > item[0]) & (conso <= item[1])
+    elif isinstance(primary_consumption, pd.DataFrame):
+        certificate = pd.DataFrame(dtype=str, index=primary_consumption.index, columns=primary_consumption.columns)
+        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+            cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
             certificate[cond] = key
         return certificate
 
-    elif isinstance(conso, float):
-        for key, item in certificate_bounds.items():
-            if (conso > item[0]) & (conso <= item[1]):
+    elif isinstance(primary_consumption, float):
+        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+            if (primary_consumption > item[0]) & (primary_consumption <= item[1]):
                 return key
 
 
-def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
+def certificate_buildings(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, ratio_surface):
+    """Returns energy performance certificate.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    dh
+    efficiency
+    energy
+    param
+
+    Returns
+    -------
+    pd.Series
+        Primary heating consumption for all buildings in the stock.
+    pd.Series
+        Certificates for all buildings in the stock.
+
+    """
+    primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency,
+                                                           energy, ratio_surface, conversion=CONVERSION)
+    return primary_heat_consumption, certificate(primary_heat_consumption)
+
+
+def _certificate(primary_consumption, single_family=None):
+    if single_family is None:
+        single_family = pd.Series(primary_consumption.index.get_level_values('Housing type') == 'Single-family',
+                                  index=primary_consumption.index, name='Single-family')
+    else:
+        if single_family:
+            single_family = pd.Series(True, index=primary_consumption.index, name='Single-family')
+        else:
+            single_family = pd.Series(False, index=primary_consumption.index, name='Single-family')
+
+    df = pd.concat((primary_consumption.rename('Consumption'), single_family), axis=1)
+
+    def func(ds):
+        LOGISTIC_COEFFICIENT = None
+        y = LOGISTIC_COEFFICIENT['Intercept'] + LOGISTIC_COEFFICIENT['Proxy_conso_square'] * ds['Consumption']
+        proba = np.exp(y) / (np.exp(y).sum())
+        return proba.idxmax()
+
+    performance = df.apply(func, axis=1)
+    return performance
+
+
+def _heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
     """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
 
     Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
@@ -96,123 +262,37 @@ def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, para
     return consumption
 
 
-def _heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
-    """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
-
-    Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
+def _certificate(conso, certificate_bounds):
+    """Returns energy performance certificate based on space heating energy consumption.
 
     Parameters
     ----------
-    u_wall: float or pd.Series
-    u_floor: float or pd.Series
-    u_roof: float or pd.Series
-    u_windows: float or pd.Series
-    dh: float or pd.Series
-    efficiency: float or pd.Series
-    param: dict
+    conso: float or pd.Series or pd.DataFrame
+        Space heating energy consumption.
+    certificate_bounds: dict
+        Energy consumption bounds that define certificate.
 
     Returns
     -------
-    float or pd.Series
-        Partial losses.
-    float or pd.Series
-        Envelope losses.
-    float or pd.Series
-        Heating need.
-    float or pd.Series
-        Standard space heating consumption.
+    float or pd.Series or pd.DataFrame
+        Energy performance certificate.
     """
 
-    partial_losses = param['ratio_surface_wall'] * u_wall + param['ratio_surface_roof'] * u_roof + param[
-        'ratio_surface_floor'] * u_floor + param['ratio_surface_windows'] * u_windows
-    envelope_losses = param['partial_losses_surface'] * partial_losses + param['const partial_losses_surface']
-    heating_need = param['envelope_losses_surface'] * envelope_losses + param['const envelope_losses_surface']
+    if isinstance(conso, pd.Series):
+        certificate = pd.Series(dtype=str, index=conso.index)
+        for key, item in certificate_bounds.items():
+            cond = (conso > item[0]) & (conso <= item[1])
+            certificate[cond] = key
+        return certificate
 
-    if isinstance(heating_need, (pd.Series, pd.DataFrame)):
-        if heating_need.index.equals(efficiency.index):
-            heat_consumption = param['heating_consumption_calcul'] * heating_need * dh / 1000 * (1 / efficiency) + param[
-                'const heating_consumption_calcul']
-        else:
-            heat_consumption = (param['heating_consumption_calcul'] * heating_need * dh / 1000).to_frame().dot(
-                (1 / efficiency).to_frame().T) + param['const heating_consumption_calcul']
+    elif isinstance(conso, pd.DataFrame):
+        certificate = pd.DataFrame(dtype=str, index=conso.index, columns=conso.columns)
+        for key, item in certificate_bounds.items():
+            cond = (conso > item[0]) & (conso <= item[1])
+            certificate[cond] = key
+        return certificate
 
-    else:
-        heat_consumption = param['heating_consumption_calcul'] * heating_need * dh / 1000 * (1 / efficiency) + param[
-            'const heating_consumption_calcul']
-
-    return partial_losses, envelope_losses, heating_need, heat_consumption
-
-
-def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, param, conversion=2.58):
-    """Convert final to primary heating consumption.
-
-    Parameters
-    ----------
-    u_wall
-    u_floor
-    u_roof
-    u_windows
-    dh
-    efficiency
-    energy
-    param
-    conversion
-
-    Returns
-    -------
-
-    """
-    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param)
-
-    if isinstance(heat_consumption, pd.Series):
-        primary_heat_consumption = heat_consumption.copy()
-        primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * conversion
-        return primary_heat_consumption
-
-    elif isinstance(heat_consumption, float):
-        if energy == 'Electricity':
-            return heat_consumption * conversion
-        else:
-            return heat_consumption
-
-    if isinstance(heat_consumption, pd.DataFrame):
-        # index
-        if energy.index.equals(heat_consumption.index):
-            primary_heat_consumption = heat_consumption.copy()
-            primary_heat_consumption.loc[energy == 'Electricity', :] = primary_heat_consumption * conversion
-            return primary_heat_consumption
-        # columns
-        elif energy.index.equals(heat_consumption.columns):
-            primary_heat_consumption = heat_consumption.copy()
-            primary_heat_consumption.loc[:, energy == 'Electricity'] = primary_heat_consumption * conversion
-            return primary_heat_consumption
-        else:
-            raise 'Energy DataFrame do not match indexes and columns'
-
-
-def certificate_buildings(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, param, conversion=2.58):
-    """Returns energy performance certificate.
-
-    Parameters
-    ----------
-    u_wall
-    u_floor
-    u_roof
-    u_windows
-    dh
-    efficiency
-    energy
-    param
-    conversion
-
-    Returns
-    -------
-    pd.Series
-        Primary heating consumption for all buildings in the stock.
-    pd.Series
-        Certificates for all buildings in the stock.
-
-    """
-    primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency,
-                                                           energy, param, conversion=conversion)
-    return primary_heat_consumption, certificate(primary_heat_consumption, param['certificate_bounds'])
+    elif isinstance(conso, float):
+        for key, item in certificate_bounds.items():
+            if (conso > item[0]) & (conso <= item[1]):
+                return key

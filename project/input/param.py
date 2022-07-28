@@ -81,9 +81,9 @@ generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
 
 """with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
-    generic_input['thermal_parameters'] = pickle.load(f)"""
+    generic_input['thermal_parameters'] = pickle.load(f)
 
-param = {}
+
 param['certificate_bounds'] = {'A': (0, 39.59394228117988),
                                'B': (39.59394228117988, 71.8798550383082),
                                'C': (71.8798550383082, 119.92500210928785),
@@ -91,13 +91,16 @@ param['certificate_bounds'] = {'A': (0, 39.59394228117988),
                                'E': (183.81313518374748, 264.83029117086653),
                                'F': (264.83029117086653, 394.25890705145184),
                                'G': (394.25890705145184, 1000)}
-param['ratio_surface'] = pd.DataFrame(
-    [[0.975002, 0.748213, 0.762826, 0.162041], [0.905083, 0.708620, 0.748979, 0.151731]],
-    index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-    columns=['Wall', 'Floor', 'Roof', 'Windows'])
-
 param['coefficient'] = pd.Series([0.891000, 0.791331], index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'))
 generic_input['thermal_parameters'] = param
+param['logistic_regression_coefficient'] = pd.read_csv('project/input/logistic_regression_coefficient_epc.csv', index_col=[0])
+param['logistic_regression_coefficient'].columns = ['Intercept', 'Proxy_conso_square', 'Housing type']
+param['logistic_regression_coefficient'].index.names = ['Performance']"""
+
+generic_input['ratio_surface'] = pd.DataFrame(
+    [[0.97, 0.75, 0.8, 0.11], [0.90, 0, 0, 0.15]],
+    index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+    columns=['Wall', 'Floor', 'Roof', 'Windows'])
 
 subsidy_preferences_heater = 0.167
 bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
@@ -145,9 +148,10 @@ generic_input['supply'] = {
 }
 
 
-
-generic_input['performance_insulation'] = {'Wall': round(1 / 3.7, 1), 'Floor': round(1 / 3, 1), 'Roof': round(1 / 6, 1),
-                                           'Windows': 1.5}
+generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 2),
+                                           'Floor': round(1 / 3.6, 2),
+                                           'Roof': round(1 / 8.6, 2),
+                                           'Windows': 1.3}
 
 generic_input['surface'] = pd.read_csv('project/input/surface.csv', index_col=[0, 1, 2]).squeeze('columns').rename(None)
 

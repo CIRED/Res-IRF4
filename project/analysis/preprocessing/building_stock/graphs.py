@@ -166,6 +166,7 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
     else:
         plt.show()
 
+
 def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dict_color=None,
                  n_columns=3, save=None):
     """Multiple bar plot of stock by attributes.
