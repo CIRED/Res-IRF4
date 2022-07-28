@@ -164,15 +164,19 @@ def read_policies(config):
 
 
 def read_exogenous(config):
+
     cost_heater = pd.read_csv(config['cost_heater'], index_col=[0]).squeeze('columns').rename(None) * config[
         'cost_factor']
     cost_insulation = pd.read_csv(config['cost_insulation'], index_col=[0]).squeeze('columns').rename(None) * config[
         'cost_factor']
 
-    energy_prices = pd.read_csv(config['energy_prices'], index_col=[0]) * config['prices_factor']
+    energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
+    energy_prices.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
 
-    energy_taxes = None
-    # energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
+    energy_taxes = pd.read_csv(config['energy_taxes'], index_col=[0])
+    energy_taxes.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
+
+    # energy_prices =
     return energy_prices, energy_taxes, cost_heater, cost_insulation
 
 

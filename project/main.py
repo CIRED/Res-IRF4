@@ -25,7 +25,6 @@ from multiprocessing import Pool
 from datetime import datetime
 import re
 import argparse
-import traceback
 
 from building import AgentBuildings
 from input.param import generic_input
@@ -210,10 +209,10 @@ def run(path=None):
                     for v in values:
                         configuration['CostFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['CostFactor{:.0f}'.format(v * 100)]['cost_factor'] = v
-            if 'retrofit_rate_ini' in config_sensitivity.keys():
-                if config_sensitivity['retrofit_rate_ini']:
+            if 'renovation_rate_ini' in config_sensitivity.keys():
+                if config_sensitivity['renovation_rate_ini']:
                     configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
-                    configuration['RetrofitIni']['insulation_extensive'] = config_sensitivity['retrofit_rate_ini']
+                    configuration['RetrofitIni']['renovation_rate_ini'] = config_sensitivity['renovation_rate_ini']
             if 'target_freeriders' in config_sensitivity.keys():
                 values = config_sensitivity['target_freeriders']
                 if values:

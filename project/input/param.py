@@ -134,12 +134,20 @@ generic_input['preferences']['heater'] = {'investment': investment_preferences_h
                                           'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
                                           'inertia': inertia}
 
-
+"""
 generic_input['preferences']['insulation'] = {'investment': investment_preferences_insulation,
                                               'subsidy': subsidy_preferences_insulation,
                                               'bill_saved': bill_saving_preferences.loc[:, 'Insulation'],
                                               'zero_interest_loan': subsidy_loan_preferences_insulation
                                               }
+"""
+
+generic_input['preferences']['insulation'] = {'investment': investment_preferences_heater,
+                                              'subsidy': subsidy_preferences_heater,
+                                              'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
+                                              'zero_interest_loan': subsidy_loan_preferences_heater
+                                              }
+
 
 generic_input['supply'] = {
     'factor_max': 30,
