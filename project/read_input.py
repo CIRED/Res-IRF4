@@ -76,20 +76,19 @@ def read_policies(config):
         l = list()
         heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
         insulation = pd.read_csv(data['insulation'], index_col=[0])
+
         if data['global_retrofit']:
             global_retrofit = pd.read_csv(data['global_retrofit'], index_col=[0]).squeeze('columns')
-        if data['bonus']:
-            bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
-            bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
-
-        l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
-        l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
-        if data['global_retrofit']:
             l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
                                   gest='insulation'))
         if data['bonus']:
+            bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
+            bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
             l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus_best', gest='insulation'))
             l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus_worst', gest='insulation'))
+
+        l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
+        l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
 
         return l
 

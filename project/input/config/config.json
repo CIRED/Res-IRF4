@@ -29,7 +29,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2023,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -65,7 +65,7 @@
         "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
+        "global_retrofit": "project/input/policies/mpr_global_retrofit.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {

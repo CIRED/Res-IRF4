@@ -496,6 +496,7 @@ class AgentBuildings(ThermalBuildings):
 
         self.certificate_jump, self.certificate_jump_yrs = None, {}
         self.efficient_renovation, self.efficient_renovation_yrs = None, {}
+        self.global_renovation, self.global_renovation_yrs = None, {}
 
         self.replacement_heater, self.heater_replaced = {}, {}
         self.cost_heater, self.investment_heater = {}, {}
@@ -1878,6 +1879,7 @@ class AgentBuildings(ThermalBuildings):
         ms_insulation: pd.Series
         ms_extensive: pd.Series
         policies_insulation: list
+        target_freeriders: float
         index: pd.MultiIndex or pd.Index, default None
         stock: pd.Series, default None
 
@@ -1906,7 +1908,6 @@ class AgentBuildings(ThermalBuildings):
         heat_consumption_sd_before = surface * agent.heating_consumption_sd()
         energy_saved = - (consumption_sd.T * surface).T.sub(heat_consumption_sd_before, axis=0).dropna()
         percentage_energy_saved = energy_saved.div(heat_consumption_sd_before, axis=0)
-        #bizarre, certains pourcentages sont négatifs
 
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
@@ -1947,7 +1948,8 @@ class AgentBuildings(ThermalBuildings):
             retrofit_rate, market_share = self.exogenous_retrofit(index, choice_insulation)
 
         self.store_information_insulation(certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
-                                          tax_insulation, subsidies_details, subsidies_total, retrofit_rate)
+                                          tax_insulation, subsidies_details, subsidies_total, retrofit_rate,
+                                          percentage_energy_saved)
 
         return retrofit_rate, market_share
 
@@ -1996,6 +1998,7 @@ class AgentBuildings(ThermalBuildings):
                                                                   axis=0).astype(bool)
         in_best = certificate.isin(['A', 'B']).astype(int).mul(~certificate_before.isin(['A', 'B']).astype(int),
                                                                axis=0).astype(bool)
+        non_cumulative_condition = {'mpr': percentage_energy_saved > 0.55}
 
         target_0 = certificate.isin(['D', 'C', 'B', 'A']).astype(int).mul(
             certificate_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
@@ -2007,56 +2010,22 @@ class AgentBuildings(ThermalBuildings):
 
         epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
         certificate_jump = - certificate.replace(epc2int).sub(certificate_before.replace(epc2int), axis=0)
-        global_retrofit = certificate_jump >= 2
-        mpr_global_retrofit = percentage_energy_saved > 0.55
 
-        non_cumul = "subsidy_non_cumulative" in [policy.policy for policy in policies_insulation]
-        mpr_comparison = {}
+        subsidies_comparison = {}
 
         for policy in policies_insulation:
-            if policy.name == 'mpr' and not bool(mpr_comparison) and non_cumul:
-                if policy.policy == "subsidy_non_cumulative":
-                    mpr_comparison = {policy.policy: (reindex_mi(policy.value, mpr_global_retrofit.index) * mpr_global_retrofit.T).T}
-                elif policy.policy == "subsidy_target":
-                    mpr_comparison = {policy.policy: (reindex_mi(self.prepare_subsidy_insulation(policy.value),
-                                                 frame.index).T * surface).T}
 
             if policy.policy == 'subsidy_target':
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                    frame.index).T * surface).T
-                if policy.name == "mpr" and non_cumul:
-                    if list(mpr_comparison.keys())[0] != policy.policy:
-                        comp = list(mpr_comparison.values())[0]
-                        comp = reindex_mi(comp, temp.index)
-                        temp = comp.where(comp > temp, temp)
-                    elif list(mpr_comparison.keys())[0] == policy.policy:
-                        temp = pd.DataFrame(index=temp.index, columns=temp.columns).fillna(0)
-                        #adding an empty dataframe
-
                 subsidies_total += temp
 
                 if policy.name in subsidies_details.keys():
                     subsidies_details[policy.name] = subsidies_details[policy.name] + temp
-
                 else:
                     subsidies_details[policy.name] = temp.copy()
 
-            elif policy.policy == 'subsidy_non_cumulative':
-                temp = (reindex_mi(policy.value, mpr_global_retrofit.index) * mpr_global_retrofit.T).T
-                if list(mpr_comparison.keys())[0] != policy.policy:
-                    comp = list(mpr_comparison.values())[0]
-                    comp = reindex_mi(comp, temp.index)
-                    temp = comp.where(comp > temp, temp)
-                elif list(mpr_comparison.keys())[0] == policy.policy:
-                    temp = pd.DataFrame(index=temp.index, columns=temp.columns).fillna(0)
-
-                subsidies_total += temp
-
-                if policy.name in subsidies_details.keys():
-                    subsidies_details[policy.name] = subsidies_details[policy.name] + temp
-
-                else:
-                    subsidies_details[policy.name] = temp.copy()
+                subsidies_comparison[policy.name] = subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_best':
                 temp = (reindex_mi(policy.value, in_best.index) * in_best.T).T
@@ -2105,8 +2074,21 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
 
-        subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
+        subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
+        if subsidies_non_cumulative:
+            for policy in subsidies_non_cumulative:
+                sub = (reindex_mi(policy.value, non_cumulative_condition[policy.name].index) * non_cumulative_condition[
+                    policy.name].T).T
+                if policy.name in subsidies_comparison.keys():
+                    comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
+                    temp = comp.where(comp > sub, sub)
+                else:
+                    temp = sub
+                update = - subsidies_comparison[policy.name] + temp
+                subsidies_details[policy.name] += update
+                subsidies_total += update
 
+        subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_uncaped = subsidies_total.copy()
         for sub in ['reduced_tax', 'zero_interest_loan']:
             if sub in subsidies_details.keys():
@@ -2127,7 +2109,8 @@ class AgentBuildings(ThermalBuildings):
 
     @timing
     def store_information_insulation(self, certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
-                                     tax_insulation, subsidies_details, subsidies_total, retrofit_rate):
+                                     tax_insulation, subsidies_details, subsidies_total, retrofit_rate,
+                                     percentage_energy_saved):
         """Store insulation information.
 
         Parameters
@@ -2149,8 +2132,11 @@ class AgentBuildings(ThermalBuildings):
         subsidies_total: pd.DataFrame
             Total mount of subsidies for each dwelling and each insulation gesture (€).
         retrofit_rate: pd.Series
+        percentage_energy_saved
         """
+
         self.efficient_renovation = certificate.isin(['A', 'B'])
+        self.global_renovation = percentage_energy_saved > 0.55
         self.certificate_jump = certificate_jump
         self.cost_component.update({self.year: cost_insulation_raw * self.surface_insulation * (1 + tax)})
 
@@ -2314,6 +2300,7 @@ class AgentBuildings(ThermalBuildings):
 
         levels = [i for i in replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
         self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
+        self.global_renovation_yrs.update({self.year: (replaced_by * self.global_renovation).sum().sum()})
 
         rslt = {}
         for i in range(6):

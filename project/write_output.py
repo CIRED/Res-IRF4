@@ -110,7 +110,8 @@ def parse_output(buildings, param):
 
     detailed['Stock low-efficient (Million)'] = detailed['Stock F (Million)'] + detailed['Stock G (Million)']
 
-    detailed['New efficient (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
+    detailed['Efficient renovation (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
+    detailed['Global renovation (Thousand)'] = pd.Series(buildings.global_renovation_yrs) / 10**3
 
     temp = pd.DataFrame(buildings.retrofit_rate).dropna(how='all')
     temp = temp.groupby([i for i in temp.index.names if i not in ['Heating system final']]).mean()
