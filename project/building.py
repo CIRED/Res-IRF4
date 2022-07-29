@@ -2088,6 +2088,7 @@ class AgentBuildings(ThermalBuildings):
             for policy in subsidies_non_cumulative:
                 sub = (reindex_mi(policy.value, non_cumulative_condition[policy.name].index) * non_cumulative_condition[
                     policy.name].T).T
+                sub = sub.astype(float)
                 if policy.name in subsidies_comparison.keys():
                     comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
                     temp = comp.where(comp > sub, sub)
