@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "ZP": false,
     "prices_constant": false,
     "prices_factor": false,
@@ -63,7 +63,8 @@
         "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "bonus": "project/input/policies/mpr_bonus.csv"
+        "bonus": "project/input/policies/mpr_bonus.csv",
+        "global_retrofit": "project/input/policies/mpr_global_retrofit.csv"
       },
       "cee": {
         "start": 2019,
