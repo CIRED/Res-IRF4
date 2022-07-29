@@ -886,7 +886,8 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y),
                                                   generic_input['retrofit_comparison']),
-                 'New efficient (Thousand)': ('retrofit_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Efficient renovation (Thousand)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Global renovation (Thousand)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy expenditures (Billion euro)': (
@@ -902,7 +903,7 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
             temp = pd.concat((temp, infos[2]), axis=1)
             temp.sort_index(inplace=True)
         except IndexError:
-            pass
+            continue
 
         try:
             scatter = infos[3]
