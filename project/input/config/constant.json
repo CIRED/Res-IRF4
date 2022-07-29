@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "ZP": false,
     "prices_constant": false,
     "prices_factor": false,
@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2041,
+    "end": 2025,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.0,
@@ -39,7 +39,7 @@
     "exogenous_detailed": {
       "number": 0
     },
-    "target_freeriders": 0.85,
+    "target_freeriders": 0.7,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
@@ -63,7 +63,6 @@
         "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
