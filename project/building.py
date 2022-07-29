@@ -417,13 +417,17 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
                  ms_heater, choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
-                 data_calibration=None, endogenous=True, number_exogenous=300000):
+                 data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='max'):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration)
 
         self.vta = 0.1
         self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
+
+        # {'max', 'market_share'}
+        utility_extensive = 'market_share'
+        self._utility_extensive = utility_extensive
 
         if isinstance(preferences['heater']['investment'], pd.Series):
             self.pref_investment_heater = preferences['heater']['investment'].copy()
@@ -1573,15 +1577,15 @@ class AgentBuildings(ThermalBuildings):
             bool_zil[bool_zil > 0] = 1
 
         bill_saved_insulation, subsidies_insulation, investment_insulation = None, None, None
-        option = 'max'
-        if option == 'market_share':
+
+        if self._utility_extensive == 'market_share':
             bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
             subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
             investment_insulation = (cost_insulation.reindex(market_share.index) * market_share).sum(axis=1)
             if utility_zil is not None:
                 bool_zil_ext = (bool_zil.reindex(market_share.index) * market_share).sum(axis=1)
 
-        elif option == 'max':
+        elif self._utility_extensive == 'max':
             columns = utility_intensive.idxmax(axis=1)
             self.work_umax_yrs.update({self.year: rename_tuple(columns, utility_intensive.columns.names)})
             self.utility_intensive_max_yrs.update({self.year: utility_intensive.max(axis=1)})
