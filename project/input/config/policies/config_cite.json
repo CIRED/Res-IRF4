@@ -46,7 +46,6 @@
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
-    "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
@@ -55,7 +54,7 @@
     "cost_insulation": "project/input/cost_insulation.csv",
     "cost_factor": 1,
     "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices.csv",
+    "energy_prices": "project/input/energy_prices_ht.csv",
     "prices_factor": 1,
     "energy_taxes": "project/input/energy_taxes.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv",
@@ -67,7 +66,7 @@
         "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
+        "global_retrofit": "project/input/policies/mpr_global_retrofit.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
