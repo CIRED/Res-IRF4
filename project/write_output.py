@@ -488,7 +488,6 @@ def parse_output(buildings, param):
     temp.columns = ['Existing', 'New']
     temp = pd.concat((temp, t.T), axis=1).dropna(how='any')"""
 
-
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
