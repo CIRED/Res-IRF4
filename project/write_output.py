@@ -114,7 +114,7 @@ def parse_output(buildings, param):
     detailed['Global retrofits (Thousand)'] = pd.Series(buildings.global_renovation_yrs).T / 10**3
     detailed['Bonus best retrofits (Thousand)'] = pd.Series(buildings.bonus_best_yrs).T / 10**3
     detailed['Bonus worst retrofits (Thousand)'] = pd.Series(buildings.bonus_worst_yrs).T / 10**3
-    detailed['Percentage of global retrofits'] = detailed['Global retrofits (Thousand)']/detailed[
+    detailed['Percentage of global retrofits'] = detailed['Global retrofits (Thousand)'] / detailed[
         'Retrofit (Thousand)']
     detailed['Percentage of bonus best retrofits'] = detailed['Bonus best retrofits (Thousand)']/detailed[
         'Retrofit (Thousand)']

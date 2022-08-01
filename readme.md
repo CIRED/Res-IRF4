@@ -21,15 +21,15 @@ specific functions. Use only with care and caution._**
 **Step 2**: **Create a conda environment** from the environment.yml file:
    - The requirements.txt file is in the Res-IRF folder.
    - Use the **terminal** and go to the Res-IRF folder stored on your computer.
-   - Type: `conda create --name <env> --file requirements.txt`
+   - Type: `conda env create -f environment.yml`
 
 **Step 3**: **Activate the new environment**.
    - The first line of the yml file sets the new environment's name.
-   - Type: `conda activate Res-IRF`
+   - Type: `conda activate envResIRF`
 
 **Step 4**: **Launch Res-IRF**
    - Launch from Res-IRF root folder:
-   - `python project/main.py -n project/input/config.json`
+   - `python project/main.py -c project/input/config/config.json`
    - `project/input/config.json` is the path to the configuration file
 
 ## Getting started
