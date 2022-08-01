@@ -2002,7 +2002,16 @@ class AgentBuildings(ThermalBuildings):
                                                                   axis=0).astype(bool)
         in_best = certificate.isin(['A', 'B']).astype(int).mul(~certificate_before.isin(['A', 'B']).astype(int),
                                                                axis=0).astype(bool)
-        non_cumulative_condition = {'mpr': percentage_energy_saved > 0.55}
+
+        non_cumulative_condition = percentage_energy_saved > 0.55
+        low_decile_condition = percentage_energy_saved.loc[
+            (percentage_energy_saved.index.get_level_values('Income owner') <= 'D4') & (
+                        percentage_energy_saved.index.get_level_values('Income owner') != 'D10')] > 0.35
+        low_decile_condition = reindex_mi(low_decile_condition, non_cumulative_condition.index)
+        non_cumulative_condition = low_decile_condition.where(low_decile_condition > non_cumulative_condition,
+                                                              non_cumulative_condition)
+
+        non_cumulative_condition = {'mpr': non_cumulative_condition}
 
         target_0 = certificate.isin(['D', 'C', 'B', 'A']).astype(int).mul(
             certificate_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
@@ -2083,6 +2092,7 @@ class AgentBuildings(ThermalBuildings):
             for policy in subsidies_non_cumulative:
                 sub = (reindex_mi(policy.value, non_cumulative_condition[policy.name].index) * non_cumulative_condition[
                     policy.name].T).T
+                sub = sub.astype(float)
                 if policy.name in subsidies_comparison.keys():
                     comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
                     temp = comp.where(comp > sub, sub)
