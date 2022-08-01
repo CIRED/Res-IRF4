@@ -119,6 +119,7 @@ def res_irf(config, path):
             buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
             buildings.calculate(energy_prices.loc[year, :], taxes)
 
+        logging.debug('Writing output')
         stock, output = parse_output(buildings, param)
         output.round(2).to_csv(os.path.join(path, 'output.csv'))
         stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
