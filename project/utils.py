@@ -156,7 +156,7 @@ def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
     return ax
 
 
-def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper'):
+def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04):
     try:
         leg = None
         if loc == 'upper':
@@ -174,7 +174,7 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper'):
         elif loc == 'left':
             # Shrink current axis by 20%
             box = ax.get_position()
-            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+            ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
 
             # Put a legend to the right of the current axis
             if labels is not None:
@@ -182,7 +182,7 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper'):
                                 frameon=False, shadow=False)
             else:
                 handles, labels = ax.get_legend_handles_labels()
-                leg = ax.legend(handles[::-1], labels[::-1], loc='upper center', bbox_to_anchor=(1, 0.5),
+                leg = ax.legend(handles[::-1], labels[::-1], loc='upper center', bbox_to_anchor=(left, 0.7),
                                 frameon=False, shadow=True)
         texts = leg.get_texts()
         for text in texts:
@@ -294,7 +294,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
 
 
 def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1,
-                   ymin=None, loc='upper', scatter=None):
+                   ymin=None, loc='upper', scatter=None, left=1.04):
 
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -311,7 +311,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
     ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
-    format_legend(ax, ncol=ncol, offset=offset, loc=loc)
+    format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
     save_fig(fig, save=save)
 
 

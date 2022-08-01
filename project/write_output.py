@@ -506,13 +506,13 @@ def parse_output(buildings, param):
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
-                   total=False, loc='left') # ncol=4, offset=1)
+                   total=False, loc='left', left=1.1) # ncol=4, offset=1)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
                    save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False,
-                   ncol=5, offset=2)
+                   ncol=5)
 
     return stock, detailed
 
