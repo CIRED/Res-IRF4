@@ -110,17 +110,6 @@ def parse_output(buildings, param):
 
     detailed['Stock low-efficient (Million)'] = detailed['Stock F (Million)'] + detailed['Stock G (Million)']
 
-    detailed['Efficient retrofits (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
-    detailed['Global retrofits (Thousand)'] = pd.Series(buildings.global_renovation_yrs).T / 10**3
-    detailed['Bonus best retrofits (Thousand)'] = pd.Series(buildings.bonus_best_yrs).T / 10**3
-    detailed['Bonus worst retrofits (Thousand)'] = pd.Series(buildings.bonus_worst_yrs).T / 10**3
-    detailed['Percentage of global retrofits'] = detailed['Global retrofits (Thousand)']/detailed[
-        'Retrofit (Thousand)']
-    detailed['Percentage of bonus best retrofits'] = detailed['Bonus best retrofits (Thousand)']/detailed[
-        'Retrofit (Thousand)']
-    detailed['Percentage of bonus worst retrofits'] = detailed['Bonus worst retrofits (Thousand)']/detailed[
-        'Retrofit (Thousand)']
-
     temp = pd.DataFrame(buildings.retrofit_rate).dropna(how='all')
     temp = temp.groupby([i for i in temp.index.names if i not in ['Heating system final']]).mean()
     t = temp.xs(False, level='Heater replacement')
@@ -193,6 +182,17 @@ def parse_output(buildings, param):
             ['Occupancy status', 'Housing type']).sum()
         t.index = t.index.map(lambda x: 'Retrofit rate {} EPC {} - {} (%)'.format(i, x[0], x[1]))
         detailed.update(t.T)"""
+
+    detailed['Efficient retrofits (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
+    detailed['Global retrofits (Thousand)'] = pd.Series(buildings.global_renovation_yrs).T / 10**3
+    detailed['Bonus best retrofits (Thousand)'] = pd.Series(buildings.bonus_best_yrs).T / 10**3
+    detailed['Bonus worst retrofits (Thousand)'] = pd.Series(buildings.bonus_worst_yrs).T / 10**3
+    detailed['Percentage of global retrofits'] = detailed['Global retrofits (Thousand)']/detailed[
+        'Retrofit (Thousand)']
+    detailed['Percentage of bonus best retrofits'] = detailed['Bonus best retrofits (Thousand)']/detailed[
+        'Retrofit (Thousand)']
+    detailed['Percentage of bonus worst retrofits'] = detailed['Bonus worst retrofits (Thousand)']/detailed[
+        'Retrofit (Thousand)']
 
     # for replacement output need to be presented by technologies (what is used) and by agent (who change)
     replacement_heater = buildings.replacement_heater
@@ -457,7 +457,7 @@ def parse_output(buildings, param):
     t = detailed.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
     t.index = ['Renovation', 'Construction']
     temp = consumption.groupby('Existing').sum().rename(index={True: 'Existing', False: 'Construction'}).T
-    if 'Construction' in temp.index:
+    if 'Construction' in temp.columns:
         temp = temp.loc[:, ['Existing', 'Construction']]
         temp.columns = ['Existing', 'New']
     else:
@@ -889,6 +889,7 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
     variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y),
                                        generic_input['consumption_total_hist'],
                                        generic_input['consumption_total_objectives']),
+                 'Consumption standard (TWh)': ('consumption_standard.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
