@@ -2004,10 +2004,10 @@ class AgentBuildings(ThermalBuildings):
         tax_insulation = cost_insulation * tax
         cost_insulation += tax_insulation
 
-        self.out_worst = ~certificate.isin(['G', 'F']).astype(int).mul(certificate_before.isin(['G', 'F']).astype(int),
-                                                                  axis=0).astype(bool)
-        self.in_best = certificate.isin(['A', 'B']).astype(int).mul(~certificate_before.isin(['A', 'B']).astype(int),
-                                                               axis=0).astype(bool)
+        self.out_worst = ((~certificate.isin(['G', 'F'])).astype(int).T * certificate_before.isin(['G', 'F']).astype(
+            int)).T.astype(bool)
+        self.in_best = (certificate.isin(['A', 'B']).astype(int).T * (~certificate_before.isin(['A', 'B'])).astype(
+            int)).T.astype(bool)
 
         non_cumulative_condition = percentage_energy_saved > 0.55
         low_decile_condition = percentage_energy_saved.loc[

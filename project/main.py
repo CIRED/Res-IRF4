@@ -237,11 +237,16 @@ def run(path=None):
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
     os.mkdir(folder)
 
+    log_formatter = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     logging.basicConfig(filename=os.path.join(folder, 'log_run.log'), level=logging.DEBUG,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+                        format=log_formatter)
     logging.getLogger('matplotlib.font_manager').disabled = True
     logging.getLogger('matplotlib.axes').disabled = True
     logger = logging.getLogger("")
+    root_logger = logging.getLogger("")
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(log_formatter))
+    root_logger.addHandler(console_handler)
 
     try:
         logging.debug('Launching processes')
