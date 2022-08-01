@@ -110,8 +110,16 @@ def parse_output(buildings, param):
 
     detailed['Stock low-efficient (Million)'] = detailed['Stock F (Million)'] + detailed['Stock G (Million)']
 
-    detailed['Efficient renovation (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
-    detailed['Global renovation (Thousand)'] = pd.Series(buildings.global_renovation_yrs) / 10**3
+    detailed['Efficient retrofits (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
+    detailed['Global retrofits (Thousand)'] = pd.Series(buildings.global_renovation_yrs).T / 10**3
+    detailed['Bonus best retrofits (Thousand)'] = pd.Series(buildings.bonus_best_yrs).T / 10**3
+    detailed['Bonus worst retrofits (Thousand)'] = pd.Series(buildings.bonus_worst_yrs).T / 10**3
+    detailed['Percentage of global retrofits'] = detailed['Global retrofits (Thousand)']/detailed[
+        'Retrofit (Thousand)']
+    detailed['Percentage of bonus best retrofits'] = detailed['Bonus best retrofits (Thousand)']/detailed[
+        'Retrofit (Thousand)']
+    detailed['Percentage of bonus worst retrofits'] = detailed['Bonus worst retrofits (Thousand)']/detailed[
+        'Retrofit (Thousand)']
 
     temp = pd.DataFrame(buildings.retrofit_rate).dropna(how='all')
     temp = temp.groupby([i for i in temp.index.names if i not in ['Heating system final']]).mean()
@@ -327,6 +335,7 @@ def parse_output(buildings, param):
     subsidies = subsidies.groupby(subsidies.index).sum()
     for i in subsidies.index:
         detailed['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i, :] / 10 ** 9
+
 
     taxes_expenditures = buildings.taxes_expenditure_details
     taxes_expenditures = pd.DataFrame(
@@ -886,8 +895,8 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y),
                                                   generic_input['retrofit_comparison']),
-                 'Efficient renovation (Thousand)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Global renovation (Thousand)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Efficient retrofits (Thousand)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Global retrofits (Thousand)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy expenditures (Billion euro)': (

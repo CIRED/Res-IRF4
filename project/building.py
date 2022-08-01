@@ -501,6 +501,8 @@ class AgentBuildings(ThermalBuildings):
         self.certificate_jump, self.certificate_jump_yrs = None, {}
         self.efficient_renovation, self.efficient_renovation_yrs = None, {}
         self.global_renovation, self.global_renovation_yrs = None, {}
+        self.in_best, self.bonus_best_yrs = None, {}
+        self.out_worst, self.bonus_worst_yrs = None, {}
 
         self.replacement_heater, self.heater_replaced = {}, {}
         self.cost_heater, self.investment_heater = {}, {}
@@ -1998,9 +2000,9 @@ class AgentBuildings(ThermalBuildings):
         tax_insulation = cost_insulation * tax
         cost_insulation += tax_insulation
 
-        out_worst = ~certificate.isin(['G', 'F']).astype(int).mul(certificate_before.isin(['G', 'F']).astype(int),
+        self.out_worst = ~certificate.isin(['G', 'F']).astype(int).mul(certificate_before.isin(['G', 'F']).astype(int),
                                                                   axis=0).astype(bool)
-        in_best = certificate.isin(['A', 'B']).astype(int).mul(~certificate_before.isin(['A', 'B']).astype(int),
+        self.in_best = certificate.isin(['A', 'B']).astype(int).mul(~certificate_before.isin(['A', 'B']).astype(int),
                                                                axis=0).astype(bool)
 
         non_cumulative_condition = percentage_energy_saved > 0.55
@@ -2041,7 +2043,7 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_comparison[policy.name] = subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_best':
-                temp = (reindex_mi(policy.value, in_best.index) * in_best.T).T
+                temp = (reindex_mi(policy.value, self.in_best.index) * self.in_best.T).T
                 subsidies_total += temp
                 if policy.name in subsidies_details.keys():
                     subsidies_details[policy.name] = subsidies_details[policy.name] + temp
@@ -2050,7 +2052,7 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_details[policy.name] = temp.copy()
 
             elif policy.policy == 'bonus_worst':
-                temp = (reindex_mi(policy.value, out_worst.index) * out_worst.T).T
+                temp = (reindex_mi(policy.value, self.out_worst.index) * self.out_worst.T).T
                 subsidies_total += temp
 
                 if policy.name in subsidies_details.keys():
@@ -2150,7 +2152,15 @@ class AgentBuildings(ThermalBuildings):
         """
 
         self.efficient_renovation = certificate.isin(['A', 'B'])
+
         self.global_renovation = percentage_energy_saved > 0.55
+        low_decile_condition = percentage_energy_saved.loc[
+            (percentage_energy_saved.index.get_level_values('Income owner') <= 'D4') & (
+                        percentage_energy_saved.index.get_level_values('Income owner') != 'D10')] > 0.35
+        low_decile_condition = reindex_mi(low_decile_condition, self.global_renovation.index)
+        self.global_renovation = low_decile_condition.where(low_decile_condition > self.global_renovation,
+                                                              self.global_renovation)
+
         self.certificate_jump = certificate_jump
         self.cost_component.update({self.year: cost_insulation_raw * self.surface_insulation * (1 + tax)})
 
@@ -2315,6 +2325,8 @@ class AgentBuildings(ThermalBuildings):
         levels = [i for i in replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
         self.efficient_renovation_yrs.update({self.year: (replaced_by * self.efficient_renovation).sum().sum()})
         self.global_renovation_yrs.update({self.year: (replaced_by * self.global_renovation).sum().sum()})
+        self.bonus_best_yrs.update({self.year: (replaced_by * self.in_best).sum().sum()})
+        self.bonus_worst_yrs.update({self.year: (replaced_by * self.out_worst).sum().sum()})
 
         rslt = {}
         for i in range(6):
