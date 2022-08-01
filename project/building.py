@@ -487,11 +487,7 @@ class AgentBuildings(ThermalBuildings):
 
         self._choice_insulation = choice_insulation
         self._performance_insulation = performance_insulation
-        # TODO: clean assign by housing type (mean is done)
-        self.surface_insulation = pd.Series({'Wall': self._ratio_surface['Wall'].mean(),
-                                             'Floor': self._ratio_surface['Floor'].mean(),
-                                             'Roof': self._ratio_surface['Roof'].mean(),
-                                             'Windows': self._ratio_surface['Windows'].mean()})
+        self.surface_insulation = self._ratio_surface.copy()
 
         self.utility_insulation_extensive, self.utility_insulation_intensive, self.constant_heater = None, None, None
         self.utility_yrs, self.utility_details_yrs = {}, {}
@@ -965,12 +961,12 @@ class AgentBuildings(ThermalBuildings):
         pd.Series
             Multiindex series. Levels are Wall, Floor, Roof and Windows and values are boolean.
         """
-        cost = pd.Series(0, index=self._choice_insulation)
+        cost = pd.DataFrame(0, index=cost_insulation.index, columns=self._choice_insulation)
         idx = pd.IndexSlice
-        cost.loc[idx[True, :, :, :]] = cost.loc[idx[True, :, :, :]] + cost_insulation['Wall']
-        cost.loc[idx[:, True, :, :]] = cost.loc[idx[:, True, :, :]] + cost_insulation['Floor']
-        cost.loc[idx[:, :, True, :]] = cost.loc[idx[:, :, True, :]] + cost_insulation['Roof']
-        cost.loc[idx[:, :, :, True]] = cost.loc[idx[:, :, :, True]] + cost_insulation['Windows']
+        cost.loc[:, idx[True, :, :, :]] = (cost.loc[:, idx[True, :, :, :]].T + cost_insulation['Wall']).T
+        cost.loc[:, idx[:, True, :, :]] = (cost.loc[:, idx[:, True, :, :]].T + cost_insulation['Floor']).T
+        cost.loc[:, idx[:, :, True, :]] = (cost.loc[:, idx[:, :, True, :]].T + cost_insulation['Roof']).T
+        cost.loc[:, idx[:, :, :, True]] = (cost.loc[:, idx[:, :, :, True]].T + cost_insulation['Windows']).T
         return cost
 
     @timing
@@ -988,15 +984,20 @@ class AgentBuildings(ThermalBuildings):
         """
         subsidy = pd.DataFrame(0, index=subsidies_insulation.index, columns=self._choice_insulation)
         idx = pd.IndexSlice
-        subsidy.loc[:, idx[True, :, :, :]] = subsidy.loc[:, idx[True, :, :, :]].add(
-            subsidies_insulation['Wall'], axis=0) * self.surface_insulation['Wall']
-        subsidy.loc[:, idx[:, True, :, :]] = subsidy.loc[:, idx[:, True, :, :]].add(
-            subsidies_insulation['Floor'], axis=0) * self.surface_insulation['Floor']
-        subsidy.loc[:, idx[:, :, True, :]] = subsidy.loc[:, idx[:, :, True, :]].add(
-            subsidies_insulation['Roof'], axis=0) * self.surface_insulation['Roof']
-        subsidy.loc[:, idx[:, :, :, True]] = subsidy.loc[:, idx[:, :, :, True]].add(
-            subsidies_insulation['Windows'], axis=0) * self.surface_insulation['Windows']
-        return subsidy
+        subsidies = {}
+        for i in self.surface_insulation.index:
+            subsidy.loc[:, idx[True, :, :, :]] = subsidy.loc[:, idx[True, :, :, :]].add(
+                subsidies_insulation['Wall'], axis=0) * self.surface_insulation.loc[i, 'Wall']
+            subsidy.loc[:, idx[:, True, :, :]] = subsidy.loc[:, idx[:, True, :, :]].add(
+                subsidies_insulation['Floor'], axis=0) * self.surface_insulation.loc[i, 'Floor']
+            subsidy.loc[:, idx[:, :, True, :]] = subsidy.loc[:, idx[:, :, True, :]].add(
+                subsidies_insulation['Roof'], axis=0) * self.surface_insulation.loc[i, 'Roof']
+            subsidy.loc[:, idx[:, :, :, True]] = subsidy.loc[:, idx[:, :, :, True]].add(
+                subsidies_insulation['Windows'], axis=0) * self.surface_insulation.loc[i, 'Windows']
+            subsidies[i] = subsidy.copy()
+        subsidies = pd.concat(list(subsidies.values()), axis=0, keys=self.surface_insulation.index,
+                              names=self.surface_insulation.index.names)
+        return subsidies
 
     @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation=None,
@@ -1486,8 +1487,9 @@ class AgentBuildings(ThermalBuildings):
 
                     return details
 
-                abatement = mac_curve(npv_select, consumption_before, consumption_select, bill_saved_select, cost_insulation_select, subsidies_total_select, columns, stock,
-                                     discount_factor=discount_factor)
+                abatement = mac_curve(npv_select, consumption_before, consumption_select, bill_saved_select,
+                                      cost_insulation_select, subsidies_total_select, columns, stock,
+                                      discount_factor=discount_factor)
 
                 return payback, abatement
 
@@ -1916,7 +1918,9 @@ class AgentBuildings(ThermalBuildings):
         percentage_energy_saved = energy_saved.div(heat_consumption_sd_before, axis=0)
 
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
-        cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
+        cost_insulation = reindex_mi(cost_insulation, surface.index)
+        cost_insulation = (cost_insulation.T * surface.rename(None)).T
+        # cost_insulation = surface.rename(None).to_frame().dot(cost_insulation.to_frame().T)
         cost_insulation = cost_insulation.reindex(certificate.index)
 
         cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump = self.apply_subsidies_insulation(

@@ -92,7 +92,7 @@ def parse_output(buildings, param):
                 detailed['Surface (Million m2)'] * 10 ** 6)
     detailed['Consumption (kWh/m2)'] = (detailed['Consumption (TWh)'] * 10 ** 9) / (
                 detailed['Surface (Million m2)'] * 10 ** 6)
-    # TODO Kaya
+
     detailed['Heating intensity (%)'] = pd.Series(buildings.heating_intensity_avg)
     temp = pd.DataFrame(buildings.heating_intensity_tenant)
     temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
@@ -234,7 +234,8 @@ def parse_output(buildings, param):
             {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
         detailed['Replacement {} (Thousand)'.format(i)] = temp.sum() / 10**3
 
-        t = (pd.DataFrame(buildings.cost_component).loc[i, :] * temp)
+        cost = pd.DataFrame({key: item.loc[:, i] for key, item in buildings.cost_component.items()})
+        t = reindex_mi(cost, temp.index) * temp
         # only work because existing surface does not change over time
         detailed['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum().loc[
                                                                  t.columns] / 10 ** 9
