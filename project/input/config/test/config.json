@@ -4,10 +4,9 @@
     "ZP": true,
     "prices_constant": true,
     "prices_factor": [2],
-    "retrofit_rate_ini": "project/input/revealed_data/renovation_rate_ini_low.csv",
+    "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_low.csv",
     "mpr_global_retrofit": null,
     "cost_factor": null,
-    "renovation_rate_ini": null,
     "target_freeriders": [0.7, 0.8, 0.9]
   },
   "assessment": {

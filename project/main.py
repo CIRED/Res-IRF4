@@ -121,7 +121,7 @@ def res_irf(config, path):
 
         logging.debug('Writing output')
         stock, output = parse_output(buildings, param)
-        output.round(2).to_csv(os.path.join(path, 'output.csv'))
+        output.round(3).to_csv(os.path.join(path, 'output.csv'))
         stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
 
         return os.path.basename(os.path.normpath(path)), output, stock

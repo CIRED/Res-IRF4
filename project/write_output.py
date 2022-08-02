@@ -624,7 +624,6 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
             else:
                 rslt[var] = ((result[s].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
 
-
         var = 'Carbon footprint (MtCO2)'
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                              index=ref.loc[var, :].index)
