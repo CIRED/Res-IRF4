@@ -230,8 +230,6 @@ def run(path=None):
                 if config_sensitivity['mpr_no_bonus']:
                     configuration['MprNoBonus'] = copy.deepcopy(configuration['Reference'])
                     configuration['MprNoBonus']['policies']['mpr']['bonus'] = None
-
-
         del configuration['sensitivity']
 
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
@@ -248,6 +246,7 @@ def run(path=None):
     console_handler.setFormatter(logging.Formatter(log_formatter))
     root_logger.addHandler(console_handler)
 
+    logging.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logging.debug('Launching processes')
         with Pool() as pool:
