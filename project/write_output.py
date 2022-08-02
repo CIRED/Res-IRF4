@@ -427,7 +427,8 @@ def parse_output(buildings, param):
     subset.dropna(inplace=True, how='all')
     if not subset.empty:
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
-                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9))
+                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
+                       scatter=generic_input['public_policies_2019'])
 
     # graph public finance
     subset = detailed.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
