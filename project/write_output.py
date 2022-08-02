@@ -410,14 +410,15 @@ def parse_output(buildings, param):
     df = pd.DataFrame([detailed.loc['Replacement {} (Thousand)'.format(i), :] for i in generic_input['index']['Insulation']]).T.dropna()
     df.columns = generic_input['index']['Insulation']
     make_area_plot(df, 'Replacement (Thousand)',
-                   save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False, loc='left',
-                   format_y=lambda y, _: '{:.0f}'.format(y), offset=2)
+                   save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y), colors=generic_input['colors'], loc='left', left=1.1)
 
     df = pd.DataFrame([detailed.loc['Replacement heater {} (Thousand)'.format(i), :] for i in generic_input['index']['Heater']]).T.dropna()
     df.columns = generic_input['index']['Heater']
     make_area_plot(df, 'Replacement (Thousand)',
-                   save=os.path.join(buildings.path, 'replacement_heater.png'), total=False, loc='left',
-                   format_y=lambda y, _: '{:.0f}'.format(y), offset=2)
+                   save=os.path.join(buildings.path, 'replacement_heater.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   colors=generic_input['colors'], loc='left', left=1.25)
 
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
@@ -427,7 +428,8 @@ def parse_output(buildings, param):
     subset.dropna(inplace=True, how='all')
     if not subset.empty:
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
-                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9))
+                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
+                       loc='left', left=1.1)
 
     # graph public finance
     subset = detailed.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
@@ -439,19 +441,20 @@ def parse_output(buildings, param):
     if not subset.empty:
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'),
                        colors=generic_input['colors'],
-                       format_y=lambda y, _: '{:.0f}'.format(y))
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
     df = investment_total.groupby('Income owner').sum().loc[generic_input['index']['Income owner']].T
     make_area_plot(df, 'Investment (Billion euro)', colors=generic_input['colors'],
-                   save=os.path.join(buildings.path, 'investment_income.png'), total=False, loc='left', offset=0.5,
+                   save=os.path.join(buildings.path, 'investment_income.png'), total=False, loc='left',
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9))
 
     df = investment_total.groupby(['Housing type', 'Occupancy status']).sum().T
     df.columns = df.columns.map(lambda x: '{} - {}'.format(x[0], x[1]))
     df = df.loc[:, generic_input['index']['Decision maker']]
     make_area_plot(df, 'Investment (Billion euro)',
-                   save=os.path.join(buildings.path, 'investment_decision_maker.png'), total=False, loc='upper',
-                   ncol=3, offset=2, format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9))
+                   save=os.path.join(buildings.path, 'investment_decision_maker.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
+                   colors=generic_input['colors'], loc='left', left=1.25)
 
     # graph consumption
     t = detailed.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
@@ -465,7 +468,7 @@ def parse_output(buildings, param):
     temp = pd.concat((temp / 10**9, t.T), axis=1).dropna(how='any')
     make_area_plot(temp, 'Consumption (TWh)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'consumption.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
     # graph emissions
     t = detailed.loc[['Carbon footprint renovation (MtCO2)', 'Carbon footprint construction (MtCO2)'], :]
@@ -479,20 +482,13 @@ def parse_output(buildings, param):
     temp = pd.concat((temp / 10 ** 12, t.T), axis=1).dropna(how='any')
     make_area_plot(temp, 'Emission (MtCO2)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'emission.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y), ncol=4)
-    """
-    temp['Existing'] = (temp.loc[:, 'Existing'] * param['carbon_emission']).dropna(axis=0, how='all') / 10 ** 12
-    temp['Construction'] = ((temp.loc[:, 'Construction'] * param['carbon_emission']).dropna(axis=0, how='all') / 10 ** 12).dropna(axis=1, how='all')
-    temp = temp.T.groupby('Existing').sum().T
-    temp = temp[temp.columns[::-1]]
-    temp.columns = ['Existing', 'New']
-    temp = pd.concat((temp, t.T), axis=1).dropna(how='any')"""
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
                    save=os.path.join(buildings.path, 'stock_performance.png'), total=False,
-                   ncol=4, offset=2)
+                   loc='left')
 
     consumption = pd.concat((consumption, certificate, energy), axis=1).set_index(['Performance', 'Energy'],
                                                                                   append=True)
@@ -500,19 +496,18 @@ def parse_output(buildings, param):
     df = consumption.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
-                   save=os.path.join(buildings.path, 'consumption_performance.png'), loc='left') # ncol=4, offset=2)
+                   save=os.path.join(buildings.path, 'consumption_performance.png'), loc='left')
 
     df = consumption.groupby('Energy').sum().T.loc[:, generic_input['index']['Heating energy']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
-                   total=False, loc='left', left=1.1) # ncol=4, offset=1)
+                   total=False, loc='left', left=1.1)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
-                   save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False,
-                   ncol=5)
+                   save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False)
 
     return stock, detailed
 

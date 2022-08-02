@@ -185,7 +185,7 @@ def run(path=None):
     config_sensitivity = None
     if 'sensitivity' in configuration.keys():
         if configuration['sensitivity']['activated']:
-            name_policy = 'sensitivity'
+            name_policy = 'sensitivity_'
             config_sensitivity = configuration['sensitivity']
             if 'ZP' in config_sensitivity.keys():
                 if config_sensitivity['ZP']:
