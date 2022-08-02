@@ -417,7 +417,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
                  ms_heater, choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
-                 data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='max'):
+                 data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='market_share'):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration)
 
@@ -425,8 +425,7 @@ class AgentBuildings(ThermalBuildings):
         self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
 
-        # {'max', 'market_share'}
-        utility_extensive = 'market_share'
+        # {'max', 'market_share'} define how to calculate utility_extensive
         self._utility_extensive = utility_extensive
 
         if isinstance(preferences['heater']['investment'], pd.Series):
@@ -2175,7 +2174,7 @@ class AgentBuildings(ThermalBuildings):
         self.retrofit_rate.update({self.year: retrofit_rate})
 
     @timing
-    def calibration_constant_extensive(self, utility, ms_extensive):
+    def _calibration_constant_extensive(self, utility, ms_extensive):
         """Calibrate alternative-specific constant to match observed market-share.
 
         Parameters

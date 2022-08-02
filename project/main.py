@@ -137,6 +137,8 @@ def run(path=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default='project/input/config.json', help='path config file')
     parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
+    parser.add_argument('-y', '--year', default=None, help='end year')
+
     args = parser.parse_args()
 
     if not os.path.isdir('project/output'):
@@ -183,6 +185,7 @@ def run(path=None):
     config_sensitivity = None
     if 'sensitivity' in configuration.keys():
         if configuration['sensitivity']['activated']:
+            name_policy = 'sensitivity_'
             config_sensitivity = configuration['sensitivity']
             if 'ZP' in config_sensitivity.keys():
                 if config_sensitivity['ZP']:
@@ -230,8 +233,6 @@ def run(path=None):
                 if config_sensitivity['mpr_no_bonus']:
                     configuration['MprNoBonus'] = copy.deepcopy(configuration['Reference'])
                     configuration['MprNoBonus']['policies']['mpr']['bonus'] = None
-
-
         del configuration['sensitivity']
 
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
@@ -243,11 +244,16 @@ def run(path=None):
     logging.getLogger('matplotlib.font_manager').disabled = True
     logging.getLogger('matplotlib.axes').disabled = True
     logger = logging.getLogger("")
-    root_logger = logging.getLogger("")
+    """root_logger = logging.getLogger("")
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(log_formatter))
-    root_logger.addHandler(console_handler)
+    root_logger.addHandler(console_handler)"""
 
+    if args.year:
+        for key in configuration.keys():
+            configuration[key]['end'] = int(args.year)
+
+    logging.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logging.debug('Launching processes')
         with Pool() as pool:
