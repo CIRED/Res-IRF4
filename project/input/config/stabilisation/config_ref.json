@@ -52,7 +52,7 @@
     "cost_insulation": "project/input/cost_insulation.csv",
     "cost_factor": 1,
     "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices.csv",
+    "energy_prices": "project/input/energy_prices_ht.csv",
     "prices_factor": 1,
     "energy_taxes": "project/input/energy_taxes.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv",

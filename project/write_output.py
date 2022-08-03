@@ -360,6 +360,9 @@ def parse_output(buildings, param):
         {year: item.sum().sum() for year, item in buildings.taxed_insulation.items()}) / 10 ** 9
     detailed['VTA (Billion euro)'] = detailed['VTA heater (Billion euro)'] + detailed['VTA insulation (Billion euro)']
 
+    detailed['Investment total HT (Billion euro)'] = detailed['Investment total (Billion euro)'] - detailed[
+        'VTA (Billion euro)']
+
     detailed['Carbon value (Billion euro)'] = (pd.DataFrame(buildings.heat_consumption_energy_yrs).T * param[
         'carbon_value_kwh']).sum(axis=1) / 10 ** 9
 
@@ -615,7 +618,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
                                                                             10 ** 9)
 
         # Simple diff = scenario - ref
-        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total (Billion euro)',
+        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total HT (Billion euro)',
                     'Health expenditure (Billion euro)']:
             discount = pd.Series(
                 [1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
@@ -657,10 +660,12 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         indicator.update({'Consumption standard (TWh)': comp_efficiency.loc['Consumption standard (TWh)']})
         indicator.update({'Emission (MtCO2)': comp_efficiency.loc['Emission (MtCO2)']})
         indicator.update({"Cost effectiveness (euro/kWh)": - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
-        indicator.update({"Cost effectiveness standard (euro/kWh)": - policy_cost / comp_efficiency.loc['Consumption standard (TWh)']})
-        indicator.update({"Cost effectiveness carbon (euro/tCO2)": - policy_cost / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
-        indicator.update({"Leverage (%)": comp_efficiency.loc['Investment total (Billion euro)'] / policy_cost})
-        indicator.update({"Investment / energy savings (€/kWh)": comp_efficiency.loc['Investment total (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
+        indicator.update({"Cost effectiveness standard (euro/kWh)": - policy_cost / comp_efficiency.loc[
+            'Consumption standard (TWh)']})
+        indicator.update({"Cost effectiveness carbon (euro/tCO2)": - policy_cost / comp_efficiency.loc[
+            'Emission (MtCO2)'] * 10**3})
+        indicator.update({"Leverage (%)": comp_efficiency.loc['Investment total HT (Billion euro)'] / policy_cost})
+        indicator.update({"Investment / energy savings (€/kWh)": comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
         indicator = pd.DataFrame(indicator).T
 
         # Retrofit ratio = freerider ratio
@@ -719,7 +724,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         for s in scenarios:
             df = data.loc[:, s]
             temp = dict()
-            temp.update({'Investment': df['Investment total (Billion euro)']})
+            temp.update({'Investment': df['Investment total HT (Billion euro)']})
             if embodied_emission:
                 temp.update({'Embodied emission additional': - df['Carbon footprint (Billion euro)']})
             if cofp:

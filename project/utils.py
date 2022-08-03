@@ -298,14 +298,14 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
     df.index = df.index.astype(int)
     if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan']:
-        fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey= True)
+        fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
         df.plot.area(ax=ax[1], stacked=True, color=colors)
         scatter.T.plot.bar(ax=ax[0], stacked=True, color=colors, legend=False, width=1.5, rot=0)
         ax[0] = format_ax(ax[0], y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
         ax[1] = format_ax(ax[1], xinteger=True, format_y=format_y, ymin=ymin)
         if total:
             df.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
-        format_legend(ax[1], ncol=ncol, offset=offset, loc='left')
+        format_legend(ax[1], ncol=ncol, offset=offset, loc='left', left=left)
         ax[0].set_title('Realized')
         ax[1].set_title('Model results')
 
@@ -323,7 +323,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
         if scatter is not None:
             scatter.plot(ax=ax, style='.', ms=15, c='red')
         ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
-        format_legend(ax, ncol=ncol, offset=offset, loc=loc)
+        format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
 
     save_fig(fig, save=save)
 
