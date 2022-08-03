@@ -77,11 +77,17 @@ generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k,
 generic_input['retrofit_comparison'] = pd.read_csv('project/input/revealed_data/retrofit_comparison_resirf3.csv', index_col=[0],
                                              header=[0])
 
-generic_input['public_policies_2019'] = pd.DataFrame([1.88*10**9 , 1.05*10**9, 0*10**9, 1.32*10**9, 0.56*10**9], index=['Cee', 'Cite',
-                                                                                                    'Mpr',
-                                                                                                    'Reduced tax',
-                                                                                                    'Zero interest loan'],
-                                                             columns=[2019])
+generic_input['public_policies_2019'] = pd.DataFrame([1.88*10**9, 1.05*10**9, 0*10**9, 1.32*10**9, 0.56*10**9], index=[
+    'Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan'], columns=[2019])
+
+generic_input['investment_per_renovating_houshold_decision_maker'] = {k: pd.DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
+                                  ['Single-family - {}'.format(i) for i in [
+                                      'Owner-occupied', 'Privately rented', 'Social-housing']]+ [
+                                      'Multi-family - {}'.format(i) for i in [
+                                          'Owner-occupied', 'Privately rented', 'Social-housing']]}
+
+generic_input['investment_per_renovating_houshold_income_owner'] = {k:  pd.DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
+                                  ['D{}'.format(i) for i in range(1, 11)]}
 
 generic_input['stock_ini'] = 29037000
 

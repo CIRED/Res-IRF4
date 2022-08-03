@@ -944,8 +944,8 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
                                               ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                               ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Investment per insulation action {} (euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
-                                                       ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Investment per insulation action {} (euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y), 10, None, generic_input['investment_per_renovating_houshold_income_owner'] ),
+                                                       ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['investment_per_renovating_houshold_decision_maker'])],
         'Investment total {} (Billion euro)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Replacement {} (Thousand)': [
