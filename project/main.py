@@ -57,7 +57,7 @@ def res_irf(config, path):
     # logging.getLogger('matplotlib.font_manager').disabled = True
     # logging.getLogger('matplotlib.axes').disabled = True
 
-    logger = logging.getLogger('log_{}'.format(path.split('/')[-1].lower()))
+    """logger = logging.getLogger('log_{}'.format(path.split('/')[-1].lower()))
     logger.setLevel('DEBUG')
     logger.propagate = False
     # consoler handler
@@ -67,10 +67,10 @@ def res_irf(config, path):
     # file handler
     file_handler = logging.FileHandler(os.path.join(path, 'log.log'))
     file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
-    logger.addHandler(file_handler)
+    logger.addHandler(file_handler)"""
 
     try:
-        logger.debug('Reading input')
+        # logger.debug('Reading input')
 
         stock, year = read_stock(config)
         policies_heater, policies_insulation, taxes = read_policies(config)
@@ -105,18 +105,18 @@ def res_irf(config, path):
         temp.columns = temp.columns.map(lambda x:  'Prices {} (euro/kWh)'.format(x))
         pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
-        logger.debug('Creating AgentBuildings object')
+        # logger.debug('Creating AgentBuildings object')
         buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
                                    param['consumption_ini'], path, param['preferences'],
                                    restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
                                    year=year, demolition_rate=param['demolition_rate'],
                                    data_calibration=param['data_ceren'], endogenous=config['endogenous'],
-                                   number_exogenous=config['exogenous_detailed']['number'], logger=logger)
+                                   number_exogenous=config['exogenous_detailed']['number'], logger=None)
 
-        logger.debug('Calibration energy consumption {}'.format(year))
+        # logger.debug('Calibration energy consumption {}'.format(year))
         buildings.calculate(energy_prices.loc[year, :], taxes)
         for year in range(config['start'] + 1, config['end']):
-            logger.debug('Run {}'.format(year))
+            # logger.debug('Run {}'.format(year))
             buildings.year = year
             buildings.add_flows([- buildings.flow_demolition()])
             flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
@@ -128,7 +128,7 @@ def res_irf(config, path):
             buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
             buildings.calculate(energy_prices.loc[year, :], taxes)
 
-        logger.debug('Writing output')
+        # logger.debug('Writing output')
         stock, output = parse_output(buildings, param)
         output.round(3).to_csv(os.path.join(path, 'output.csv'))
         stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
@@ -136,7 +136,7 @@ def res_irf(config, path):
         return os.path.basename(os.path.normpath(path)), output, stock
 
     except Exception as e:
-        logger.exception(e)
+        # logger.exception(e)
         # logging.error(traceback.format_exc())
         raise e
 
@@ -262,7 +262,8 @@ if __name__ == '__main__':
     logging.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logging.debug('Launching processes')
-        with get_context("spawn").Pool() as pool:
+        # get_context("spawn").
+        with Pool() as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}

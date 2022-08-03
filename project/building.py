@@ -416,7 +416,7 @@ class AgentBuildings(ThermalBuildings):
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
                  ms_heater, choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
                  data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='max',
-                 logger=logging.getLogger()):
+                 logger=None):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration)
 
@@ -861,7 +861,7 @@ class AgentBuildings(ThermalBuildings):
             ms_heater = ms_heater.reindex(market_share_agg.index)
 
             if (market_share_agg.round(decimals=3) == ms_heater.round(decimals=3).fillna(0)).all().all():
-                self.logger.debug('Constant heater optim worked')
+                # self.logger.debug('Constant heater optim worked')
                 break
 
         constant.loc[:, 'Wood boiler-Performance boiler'] = 0
@@ -1223,7 +1223,7 @@ class AgentBuildings(ThermalBuildings):
                 constant = constant + np.log(ms_insulation / market_share_agg)
 
                 if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
-                    self.logger.debug('Constant intensive optim worked')
+                    # self.logger.debug('Constant intensive optim worked')
                     break
 
             constant.iloc[0] = 0
@@ -1255,7 +1255,7 @@ class AgentBuildings(ThermalBuildings):
                 constant = constant + np.log(ms_insulation / market_share_agg)
 
                 if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
-                    self.logger.debug('Constant intensive optim worked')
+                    # self.logger.debug('Constant intensive optim worked')
                     break
 
             constant.iloc[0] = 0
@@ -1379,6 +1379,7 @@ class AgentBuildings(ThermalBuildings):
 
             return constant, root[-1]
 
+        # TODO: calculate utility with new heating system
         agent = self.new(pd.Series(index=index, dtype=float))
         certificate_before = agent.certificate
         index = certificate_before[certificate_before > 'B'].index
@@ -1509,7 +1510,7 @@ class AgentBuildings(ThermalBuildings):
                                                           utility_zil=utility_zil)
 
         if self.utility_insulation_intensive is None:
-            self.logger.debug('Calibration intensive')
+            # self.logger.debug('Calibration intensive')
             self.utility_insulation_intensive = calibration_intensive(utility_intensive, stock, ms_insulation,
                                                                       retrofit_rate_ini, solver='iteration')
             market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_insulation,
@@ -1627,7 +1628,7 @@ class AgentBuildings(ThermalBuildings):
                                                   bool_zil=bool_zil_ext)
 
         if self.utility_insulation_extensive is None:
-            self.logger.debug('Calibration renovation rate')
+            # self.logger.debug('Calibration renovation rate')
             delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation_ext, subsidies_insulation.index).rename(None)
             if detailed:
@@ -2217,7 +2218,7 @@ class AgentBuildings(ThermalBuildings):
 
             if (retrofit_rate_agg.round(decimals=3) == ms_extensive.round(decimals=3).reindex(
                     retrofit_rate_agg.index)).all():
-                self.logger.debug('Constant extensive optim worked')
+                # self.logger.debug('Constant extensive optim worked')
                 break
 
         details = pd.concat((constant, retrofit_rate_ini, retrofit_rate_agg, ms_extensive, agg / 10**3), axis=1,
@@ -2255,7 +2256,7 @@ class AgentBuildings(ThermalBuildings):
         stock = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
         self.stock_temp.update({self.year: stock})
 
-        self.logger.debug('Agents: {}'.format(stock.shape[0]))
+        # self.logger.debug('Agents: {}'.format(stock.shape[0]))
         retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
                                                                   ms_extensive, policies_insulation,
                                                                   target_freeriders, index=stock.index, stock=stock,
