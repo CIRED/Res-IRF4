@@ -80,6 +80,14 @@ generic_input['public_policies_2019'] = pd.DataFrame([1.88*10**9, 1.05*10**9, 0*
                                                      index=['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan'],
                                                      columns=[2019])
 
+generic_input['investment_per_renovating_houshold_decision_maker'] = {k: pd.DataFrame([9100], index=['TREMI 2019'],
+                                                                                      columns=[2019]).T for k in [
+    'Single-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']] + [
+    'Multi-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']]}
+
+generic_input['investment_per_renovating_houshold_income_owner'] = {k:  pd.DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
+                                  ['D{}'.format(i) for i in range(1, 11)]}
+
 generic_input['stock_ini'] = 29037000
 
 generic_input['vta_energy_prices'] = pd.Series(

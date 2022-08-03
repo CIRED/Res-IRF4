@@ -1982,6 +1982,8 @@ class AgentBuildings(ThermalBuildings):
             Certificate by segment after insulation replacement for each possible insulation choice.
         certificate_before: : pd.Series
             Certificate by segment before.
+        percentage_energy_saved : pd.DataFrame
+            Ratio of energy saved for each possible insulation works, per houshold
 
         Returns
         -------
