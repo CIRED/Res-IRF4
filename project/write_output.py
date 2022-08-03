@@ -429,6 +429,7 @@ def parse_output(buildings, param):
     if not subset.empty:
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
                        colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
+                       scatter=generic_input['public_policies_2019'],
                        loc='left', left=1.1)
 
     # graph public finance
