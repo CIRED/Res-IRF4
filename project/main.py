@@ -52,15 +52,13 @@ def res_irf(config, path):
         Detailed results
     """
     os.mkdir(path)
-    # filemode='a',
-    """logging.basicConfig(filename=os.path.join(path, 'log.log'),
-                        level=logging.DEBUG,
-                        format=LOG_FORMATTER)"""
-    logging.getLogger('matplotlib.font_manager').disabled = True
-    logging.getLogger('matplotlib.axes').disabled = True
+
+    # logging.getLogger('matplotlib.font_manager').disabled = True
+    # logging.getLogger('matplotlib.axes').disabled = True
 
     logger = logging.getLogger('log_{}'.format(path.split('/')[-1].lower()))
     logger.setLevel('DEBUG')
+    logger.propagate = False
     # consoler handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
