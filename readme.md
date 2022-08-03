@@ -57,8 +57,8 @@ In the `output/ddmmyyyy_hhmm` folder:
 ## About the authors
 
 The development of the Res-IRF model was initiated at CIRED in 2008. Coordinated by Louis-Gaëtan Giraudet, it involved
-over the years, in alphabetic order, Cyril Bourgeois, Frédéric Branger, François Chabrol, David Glotin, Céline Guivarch,
-Philippe Quirion, and Lucas Vivier.
+over the years, in alphabetic order, Louise Asselin, Cyril Bourgeois, Frédéric Branger, François Chabrol, David Glotin, 
+Céline Guivarch, Philippe Quirion, and Lucas Vivier.
 
 ## Meta
 

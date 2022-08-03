@@ -21,10 +21,11 @@ import copy
 import logging
 import json
 from time import time
-from multiprocessing import Pool
+from multiprocessing import get_context, Pool
 from datetime import datetime
 import re
 import argparse
+import traceback
 
 from building import AgentBuildings
 from input.param import generic_input
@@ -70,6 +71,7 @@ def res_irf(config, path):
 
     try:
         logger.debug('Reading input')
+
         stock, year = read_stock(config)
         policies_heater, policies_insulation, taxes = read_policies(config)
         param, summary_param = parse_parameters(config, generic_input, stock)
@@ -135,6 +137,8 @@ def res_irf(config, path):
 
     except Exception as e:
         logger.exception(e)
+        # logging.error(traceback.format_exc())
+        raise e
 
 
 def run(path=None):
@@ -259,7 +263,7 @@ def run(path=None):
     logging.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logging.debug('Launching processes')
-        with Pool() as pool:
+        with get_context("spawn").Pool() as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}

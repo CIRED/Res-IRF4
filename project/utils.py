@@ -24,9 +24,6 @@ from matplotlib.ticker import MaxNLocator
 from collections import defaultdict
 from functools import wraps
 from time import time
-import logging
-
-logger = logging.getLogger(__name__)
 
 COLOR = 'dimgrey'
 SMALL_SIZE = 10

@@ -1095,6 +1095,9 @@ class AgentBuildings(ThermalBuildings):
                     zil_mean = utility_zil.groupby(levels).mean().rename('ZIL')
                     df = pd.concat((df, zil_mean), axis=1)
 
+                if self.year == 2020:
+                    print('break')
+
                 self.utility_details_yrs.update({self.year: df})
                 self.utility_yrs.update({self.year: utility})
                 self.utility_investment_yrs.update({self.year: utility_investment})
