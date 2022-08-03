@@ -141,8 +141,7 @@ def res_irf(config, path):
         raise e
 
 
-def run(path=None):
-
+if __name__ == '__main__':
     start = time()
 
     parser = argparse.ArgumentParser()
@@ -156,10 +155,7 @@ def run(path=None):
     if not os.path.isdir('project/output'):
         os.mkdir('project/output')
 
-    if path is None:
-        path = args.config
-
-    with open(path) as file:
+    with open(args.config) as file:
         configuration = json.load(file)
 
     config_policies = None
@@ -172,7 +168,8 @@ def run(path=None):
 
             if config_policies['AP-1']:
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
-                configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['start'] + 2
+                configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
+                                                                                               'start'] + 2
 
             if config_policies['ZP']:
                 configuration['ZP'] = copy.deepcopy(configuration['Reference'])
@@ -182,7 +179,8 @@ def run(path=None):
 
             if config_policies['ZP'] and config_policies['ZP+1']:
                 configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
-                configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['end']
+                configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
+                    'end']
 
             list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                           re.search('20[0-9][0-9]', key)]
@@ -193,7 +191,7 @@ def run(path=None):
                     configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
-    
+
     config_sensitivity = None
     if 'sensitivity' in configuration.keys():
         if configuration['sensitivity']['activated'] * args.sensitivity:
@@ -240,7 +238,8 @@ def run(path=None):
             if 'mpr_global_retrofit' in config_sensitivity.keys():
                 if config_sensitivity['mpr_global_retrofit']:
                     configuration['MprGlobalRetrofit'] = copy.deepcopy(configuration['Reference'])
-                    configuration['MprGlobalRetrofit']['policies']['mpr']['global_retrofit'] = "project/input/policies/mpr_global_retrofit.csv"
+                    configuration['MprGlobalRetrofit']['policies']['mpr'][
+                        'global_retrofit'] = "project/input/policies/mpr_global_retrofit.csv"
             if 'mpr_no_bonus' in config_sensitivity.keys():
                 if config_sensitivity['mpr_no_bonus']:
                     configuration['MprNoBonus'] = copy.deepcopy(configuration['Reference'])
@@ -275,7 +274,3 @@ def run(path=None):
         logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
         logging.exception(e)
-
-
-if __name__ == '__main__':
-    run()
