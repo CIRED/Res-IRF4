@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2051,
+    "end": 2031,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.0,

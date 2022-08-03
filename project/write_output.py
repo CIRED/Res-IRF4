@@ -486,7 +486,7 @@ def parse_output(buildings, param):
     temp = pd.concat((temp / 10 ** 12, t.T), axis=1).dropna(how='any')
     make_area_plot(temp, 'Emission (MtCO2)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'emission.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2)
 
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
@@ -506,7 +506,7 @@ def parse_output(buildings, param):
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
-                   total=False, loc='left', left=1.1)
+                   total=False, loc='left', left=1.2)
 
     df = consumption.groupby('Income tenant').sum().T.loc[:, generic_input['index']['Income tenant']]
     make_area_plot(df, 'Energy consumption (TWh)', colors=generic_input['colors'],
