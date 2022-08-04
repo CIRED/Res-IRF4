@@ -7,7 +7,7 @@
     "mpr_no_bonus": false
   },
   "assessment": {
-    "activated": true,
+    "activated": false,
     "Policy name": "reduced_tax",
     "AP": "Reference",
     "AP-1": false,
@@ -25,7 +25,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2050,
+    "end": 2021,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
