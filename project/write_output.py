@@ -91,9 +91,10 @@ def parse_output(buildings, param):
                 detailed['Surface (Million m2)'] * 10 ** 6)
 
     detailed['Heating intensity (%)'] = pd.Series(buildings.heating_intensity_avg)
-    temp = pd.DataFrame(buildings.heating_intensity_tenant)
-    temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
-    detailed.update(temp.T)
+    if buildings._debug_mode:
+        temp = pd.DataFrame(buildings.heating_intensity_tenant)
+        temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
+        detailed.update(temp.T)
 
     detailed['Energy poverty (Million)'] = pd.Series(buildings.energy_poverty) / 10 ** 6
 
@@ -171,16 +172,7 @@ def parse_output(buildings, param):
         detailed['Retrofit {} EPC (Thousand)'.format(i)] = temp.sum() / 10 ** 3
         detailed['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
 
-        """t = temp.groupby('Income owner').sum() / stock.groupby('Income owner').sum()
-        t.index = t.index.map(lambda x: 'Retrofit rate {} EPC {} (%)'.format(i, x))
-        detailed.update(t.T)
-
-        t = temp.groupby(['Occupancy status', 'Housing type']).sum() / stock.groupby(
-            ['Occupancy status', 'Housing type']).sum()
-        t.index = t.index.map(lambda x: 'Retrofit rate {} EPC {} - {} (%)'.format(i, x[0], x[1]))
-        detailed.update(t.T)"""
-
-    detailed['Efficient retrofits (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
+    # detailed['Efficient retrofits (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
     detailed['Global retrofits (Thousand)'] = pd.Series(buildings.global_renovation_yrs).T / 10**3
     detailed['Bonus best retrofits (Thousand)'] = pd.Series(buildings.bonus_best_yrs).T / 10**3
     detailed['Bonus worst retrofits (Thousand)'] = pd.Series(buildings.bonus_worst_yrs).T / 10**3
@@ -199,18 +191,6 @@ def parse_output(buildings, param):
     detailed.update((t / 10 ** 3).T)
     detailed['Replacement heater (Thousand)'] = temp.sum() / 10 ** 3
 
-    """t = temp * pd.DataFrame(buildings.cost_heater)
-    t.index = t.index.map(lambda x: 'Investment heater {} (Million)'.format(x))
-    detailed.update((t / 10**6).T)
-
-    temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_heater.items()})
-    t = temp.groupby('Income owner').sum()
-    t.index = t.index.map(lambda x: 'Replacement heater {} (Thousand)'.format(x))
-    detailed.update((t / 10 ** 3).T)
-    t = temp.groupby(['Housing type', 'Occupancy status']).sum()
-    t.index = t.index.map(lambda x: 'Replacement heater {} - {} (Thousand)'.format(x[0], x[1]))
-    detailed.update((t / 10 ** 3).T)
-    """
     replacement_insulation = buildings.replacement_insulation
     temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
     detailed['Replacement insulation (Thousand)'] = temp.sum() / 10 ** 3
@@ -269,19 +249,20 @@ def parse_output(buildings, param):
     investment_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_heater.items()})
 
     #representative insulation investment: weighted average with number of insulation actions as weights
-    investment_insulation_repr = pd.DataFrame(buildings.investment_insulation_repr)
-    gest = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
-    gest = reindex_mi(gest, investment_insulation_repr.index)
-    temp = gest * investment_insulation_repr
+    if buildings._debug_mode:
+        investment_insulation_repr = pd.DataFrame(buildings.investment_insulation_repr)
+        gest = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
+        gest = reindex_mi(gest, investment_insulation_repr.index)
+        temp = gest * investment_insulation_repr
 
-    t = temp.groupby('Income owner').sum() / gest.groupby('Income owner').sum()
-    t.index = t.index.map(lambda x: 'Investment per insulation action {} (euro)'.format(x))
-    detailed.update(t.T)
+        t = temp.groupby('Income owner').sum() / gest.groupby('Income owner').sum()
+        t.index = t.index.map(lambda x: 'Investment per insulation action {} (euro)'.format(x))
+        detailed.update(t.T)
 
-    t = temp.groupby(['Housing type', 'Occupancy status']).sum() / gest.groupby(['Housing type',
-                                                                                 'Occupancy status']).sum()
-    t.index = t.index.map(lambda x: 'Investment per insulation action {} - {} (euro)'.format(x[0], x[1]))
-    detailed.update(t.T)
+        t = temp.groupby(['Housing type', 'Occupancy status']).sum() / gest.groupby(['Housing type',
+                                                                                     'Occupancy status']).sum()
+        t.index = t.index.map(lambda x: 'Investment per insulation action {} - {} (euro)'.format(x[0], x[1]))
+        detailed.update(t.T)
 
     investment_insulation = pd.DataFrame(
         {year: item.sum(axis=1) for year, item in buildings.investment_insulation.items()})
@@ -334,7 +315,6 @@ def parse_output(buildings, param):
     for i in subsidies.index:
         detailed['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i, :] / 10 ** 9
 
-
     taxes_expenditures = buildings.taxes_expenditure_details
     taxes_expenditures = pd.DataFrame(
         {key: pd.Series({year: data.sum() for year, data in item.items()}, dtype=float) for key, item in
@@ -386,27 +366,7 @@ def parse_output(buildings, param):
 
     detailed = pd.DataFrame(detailed).loc[buildings.stock_yrs.keys(), :].T
 
-    # graph subsidies
-
-    """index = buildings.utility_insulation_extensive.index
-    utility_dict = {i: pd.DataFrame({year: item.loc[i, :] for year, item in buildings.utility_yrs.items()}).T for i in index}
-    index = [('Single-family', 'Owner-occupied', False), ('Multi-family', 'Owner-occupied', False)]
-    path_utility = os.path.join(buildings.path, 'utility')
-    os.mkdir(path_utility)
-    for i in index:
-        utility_dict[i].to_csv(os.path.join(path_utility, 'utility_{}_{}.csv'.format(i[0].lower(), i[1].lower())))
-        make_area_plot(utility_dict[i], '{} - {}'.format(i[0], i[1]),
-                       save=os.path.join(path_utility, 'utility_{}_{}.png'.format(i[0].lower(), i[1].lower())))
-
-    pd.DataFrame(buildings.market_share_yrs).to_csv(os.path.join(path_utility, 'market_share.csv'))"""
-
-    """
-    b = pd.DataFrame(buildings.bill_saved_repr)
-    s = pd.DataFrame(buildings.subsidies_insulation_repr)
-    i = pd.DataFrame(buildings.investment_insulation_repr)
-    r = pd.DataFrame(buildings.retrofit_rate)
-    """
-
+    # graph
     df = pd.DataFrame([detailed.loc['Replacement {} (Thousand)'.format(i), :] for i in generic_input['index']['Insulation']]).T.dropna()
     df.columns = generic_input['index']['Insulation']
     make_area_plot(df, 'Replacement (Thousand)',
@@ -420,6 +380,7 @@ def parse_output(buildings, param):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
 
+    # graph subsidies
     subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
     subset = subset.loc[:, (subset != 0).any(axis=0)]
     if 'over_cap' in subset.columns:
@@ -511,6 +472,160 @@ def parse_output(buildings, param):
                    save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False)
 
     return stock, detailed
+
+
+def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=None):
+    """Grouped scenarios output.
+
+    Renovation expenditure discounted (Billion euro)
+    Subsidies expenditure discounted (Billion euro)
+    Cumulated consumption discounted (TWh)
+    Cumulated emission discounted (MtCO2)
+    Health expenditure discounted (Billion euro)
+    Carbon social expenditure discounted (Billion euro)
+    Energy expenditure discounted (Billion euro)
+    Cumulated emission (MtCO2) - 2030
+    Energy poverty (Thousand) - 2030
+    Stock low-efficient (Thousand) - 2030
+    Consumption conventional (TWh) - 2030
+    Consumption actual (TWh) - 2030
+    Emission (MtCO2) - 2030
+    Cumulated emission (MtCO2) - 2050
+    Energy poverty (Thousand) - 2050
+    Stock low-efficient (Thousand) - 2050
+    Stock efficient (Thousand) - 2050
+    Consumption conventional (TWh) - 2050
+    Consumption actual (TWh) - 2050
+    Emission (MtCO2) - 2050
+
+    Parameters
+    ----------
+    result
+    stocks
+    folder
+    config_runs: dict
+
+    Returns
+    -------
+
+    """
+
+    folder_img = os.path.join(folder, 'img')
+    os.mkdir(folder_img)
+
+    variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y),
+                                       generic_input['consumption_total_hist'],
+                                       generic_input['consumption_total_objectives']),
+                 'Consumption standard (TWh)': ('consumption_standard.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
+                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
+                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y),
+                                                  generic_input['retrofit_comparison']),
+                 'Bonus best retrofits (Thousand)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Global retrofits (Thousand)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Energy expenditures (Billion euro)': (
+                 'energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement insulation (Thousand)': ('replacement_insulation_total.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement heater (Thousand)': ('replacement_heater.png', lambda y, _: '{:,.0f}'.format(y))
+                 }
+
+    for variable, infos in variables.items():
+        temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
+        try:
+            temp = pd.concat((temp, infos[2]), axis=1)
+            temp.sort_index(inplace=True)
+        except IndexError:
+            continue
+
+        try:
+            scatter = infos[3]
+        except IndexError:
+            scatter = None
+
+        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
+
+    def grouped(result, variables):
+        """Group result.
+
+        Parameters
+        ----------
+        result: dict
+        variables: list
+        """
+        temp = {var: pd.DataFrame(
+            {scenario: output.loc[var, :] for scenario, output in result.items() if var in output.index}) for var in
+            variables}
+        return {k: i for k, i in temp.items() if not i.empty}
+
+    # 'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
+    # 'Investment per insulation action {} (euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y), 10, None, generic_input['investment_per_renovating_houshold_income_owner'] ),
+    #                                                        ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['investment_per_renovating_houshold_decision_maker'])],
+
+    variables_detailed = {
+        'Consumption {} (TWh)': [
+            ('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['consumption_hist'])],
+        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
+        'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
+                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
+                                              ],
+        'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Investment total {} (Billion euro)': [
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Replacement {} (Thousand)': [
+            ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['retrofit_hist'])],
+        'Replacement insulation {} (Thousand)': [
+            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+        'Replacement insulation {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Retrofit rate {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Non-weighted retrofit rate {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Retrofit rate heater {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Non-weighted retrofit rate heater {} (%)': [
+            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+    }
+
+    def details_graphs(data, v, inf, folder_img):
+        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
+        temp = grouped(data, [v.format(i) for i in generic_input['index'][inf[0]]])
+        replace = {v.format(i): i for i in generic_input['index'][inf[0]]}
+        temp = {replace[key]: item for key, item in temp.items()}
+
+        try:
+            n_columns = inf[2]
+        except IndexError:
+            n_columns = len(temp.keys())
+
+        try:
+            if inf[3] is not None:
+                for key in temp.keys():
+                    temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
+                    temp[key].sort_index(inplace=True)
+        except IndexError:
+            pass
+
+        try:
+            scatter = inf[4]
+        except IndexError:
+            scatter = None
+
+        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
+                              order=generic_input['index'][inf[0]])
+
+    for var, infos in variables_detailed.items():
+        for info in infos:
+            details_graphs(result, var, info, folder_img)
+
+    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
+        indicator_policies(result, folder, config_runs)
 
 
 def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
@@ -841,156 +956,3 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         indicator.round(2).to_csv(os.path.join(folder_policies, 'indicator.csv'))
 
     return comparison, indicator
-
-
-def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=None):
-    """Grouped scenarios output.
-
-    Renovation expenditure discounted (Billion euro)
-    Subsidies expenditure discounted (Billion euro)
-    Cumulated consumption discounted (TWh)
-    Cumulated emission discounted (MtCO2)
-    Health expenditure discounted (Billion euro)
-    Carbon social expenditure discounted (Billion euro)
-    Energy expenditure discounted (Billion euro)
-    Cumulated emission (MtCO2) - 2030
-    Energy poverty (Thousand) - 2030
-    Stock low-efficient (Thousand) - 2030
-    Consumption conventional (TWh) - 2030
-    Consumption actual (TWh) - 2030
-    Emission (MtCO2) - 2030
-    Cumulated emission (MtCO2) - 2050
-    Energy poverty (Thousand) - 2050
-    Stock low-efficient (Thousand) - 2050
-    Stock efficient (Thousand) - 2050
-    Consumption conventional (TWh) - 2050
-    Consumption actual (TWh) - 2050
-    Emission (MtCO2) - 2050
-
-    Parameters
-    ----------
-    result
-    stocks
-    folder
-    config_runs: dict
-
-    Returns
-    -------
-
-    """
-
-    folder_img = os.path.join(folder, 'img')
-    os.mkdir(folder_img)
-
-    variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y),
-                                       generic_input['consumption_total_hist'],
-                                       generic_input['consumption_total_objectives']),
-                 'Consumption standard (TWh)': ('consumption_standard.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
-                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y),
-                                                  generic_input['retrofit_comparison']),
-                 'Efficient retrofits (Thousand)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Global retrofits (Thousand)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Energy expenditures (Billion euro)': (
-                 'energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement insulation (Thousand)': ('replacement_insulation_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement heater (Thousand)': ('replacement_heater.png', lambda y, _: '{:,.0f}'.format(y))
-                 }
-
-    for variable, infos in variables.items():
-        temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
-        try:
-            temp = pd.concat((temp, infos[2]), axis=1)
-            temp.sort_index(inplace=True)
-        except IndexError:
-            continue
-
-        try:
-            scatter = infos[3]
-        except IndexError:
-            scatter = None
-
-        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
-
-    def grouped(result, variables):
-        """Group result.
-
-        Parameters
-        ----------
-        result: dict
-        variables: list
-        """
-        temp = {var: pd.DataFrame(
-            {scenario: output.loc[var, :] for scenario, output in result.items() if var in output.index}) for var in
-            variables}
-        return {k: i for k, i in temp.items() if not i.empty}
-
-    variables_detailed = {
-        'Consumption {} (TWh)': [
-            ('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['consumption_hist'])],
-        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
-        'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
-        'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
-                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
-                                              ],
-        'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Investment per insulation action {} (euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y), 10, None, generic_input['investment_per_renovating_houshold_income_owner'] ),
-                                                       ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['investment_per_renovating_houshold_decision_maker'])],
-        'Investment total {} (Billion euro)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Replacement {} (Thousand)': [
-            ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['retrofit_hist'])],
-        'Replacement insulation {} (Thousand)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Replacement insulation {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Retrofit rate {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Non-weighted retrofit rate {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Retrofit rate heater {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Non-weighted retrofit rate heater {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-    }
-
-    def details_graphs(data, v, inf, folder_img):
-        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
-        temp = grouped(data, [v.format(i) for i in generic_input['index'][inf[0]]])
-        replace = {v.format(i): i for i in generic_input['index'][inf[0]]}
-        temp = {replace[key]: item for key, item in temp.items()}
-
-        try:
-            n_columns = inf[2]
-        except IndexError:
-            n_columns = len(temp.keys())
-
-        try:
-            if inf[3] is not None:
-                for key in temp.keys():
-                    temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
-                    temp[key].sort_index(inplace=True)
-        except IndexError:
-            pass
-
-        try:
-            scatter = inf[4]
-        except IndexError:
-            scatter = None
-
-        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
-                              order=generic_input['index'][inf[0]])
-
-    for var, infos in variables_detailed.items():
-        for info in infos:
-            details_graphs(result, var, info, folder_img)
-
-    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
-        indicator_policies(result, folder, config_runs)
