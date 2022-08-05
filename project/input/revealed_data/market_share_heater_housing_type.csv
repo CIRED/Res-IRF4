@@ -1,17 +1,17 @@
-Housing type,Heater system initial,Electricity-Heat pump,Electricity-Performance boiler,Natural gas-Performance boiler,Oil fuel-Performance boiler,Wood fuel-Performance boiler
-Multi family,Electricity-Heat pump,1,0,0,0,0
-Multi family,Electricity-Performance boiler,0.35,0.65,0,0,0
-Multi family,Natural gas-Performance boiler,0.072,0.134,0.795,0,0
-Multi family,Oil fuel-Performance boiler,0.072,0.134,0.795,0,0
-Multi family,Wood fuel-Performance boiler,,,,,
-Multi family,Wood fuel-Standard boiler,,,,,
-Multi family,Natural gas-Standard boiler,0.072,0.134,0.795,0,0
-Multi family,Oil fuel-Standard boiler,0.072,0.134,0.795,0,0
-Single family,Electricity-Heat pump,0.793,0,0,0,0.207
-Single family,Electricity-Performance boiler,0.2,0.416,0,0,0.384
-Single family,Natural gas-Performance boiler,0.197,0,0.684,0,0.12
-Single family,Oil fuel-Performance boiler,0.118,0.126,0,0,0.756
-Single family,Wood fuel-Performance boiler,0.115,0.142,0.08,0,0.663
-Single family,Wood fuel-Standard boiler,0.115,0.142,0.08,0,0.663
-Single family,Natural gas-Standard boiler,0.197,0,0.684,0,0.12
-Single family,Oil fuel-Standard boiler,0.118,0.126,0,0,0.756
+Housing type,Heating system,Electricity-Heat pump,Electricity-Performance boiler,Natural gas-Performance boiler,Oil fuel-Performance boiler,Wood fuel-Performance boiler
+Multi-family,Electricity-Heat pump,1,,,,
+Multi-family,Electricity-Performance boiler,0.35,0.65,,,
+Multi-family,Natural gas-Performance boiler,0.072,0.134,0.795,,
+Multi-family,Oil fuel-Performance boiler,0.072,0.134,0.795,,
+Multi-family,Wood fuel-Performance boiler,,,,,
+Multi-family,Wood fuel-Standard boiler,,,,,
+Multi-family,Natural gas-Standard boiler,0.072,0.134,0.795,,
+Multi-family,Oil fuel-Standard boiler,0.072,0.134,0.795,,
+Single-family,Electricity-Heat pump,0.793,,,,0.207
+Single-family,Electricity-Performance boiler,0.2,0.416,,,0.384
+Single-family,Natural gas-Performance boiler,0.197,,0.684,,0.12
+Single-family,Oil fuel-Performance boiler,0.118,0.126,,,0.756
+Single-family,Wood fuel-Performance boiler,0.115,0.142,0.08,,0.663
+Single-family,Wood fuel-Standard boiler,0.115,0.142,0.08,,0.663
+Single-family,Natural gas-Standard boiler,0.197,,0.684,,0.12
+Single-family,Oil fuel-Standard boiler,0.118,0.126,,,0.756

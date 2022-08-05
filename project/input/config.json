@@ -42,7 +42,7 @@
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
     "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
+    "ms_heater": "project/input/revealed_data/market_share_heater_housing_type.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
     "data_ceren": "project/input/revealed_data/data_ceren.csv",

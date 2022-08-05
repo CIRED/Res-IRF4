@@ -580,8 +580,8 @@ class AgentBuildings(ThermalBuildings):
 
         utility = utility_inertia + utility_investment + utility_bill_saving + utility_subsidies
 
-        restrict_heater = reindex_mi(self._restrict_heater.reindex(utility.columns, axis=1), utility.index).astype(
-            bool)
+        restrict_heater = reindex_mi(self._restrict_heater.reindex(utility.columns, axis=1), utility.index).astype(bool)
+        # restrict_heater = reindex_mi(self._restrict_heater.loc[:, utility.columns], utility.index)
         utility[restrict_heater] = float('nan')
 
         if self.constant_heater is None:
@@ -848,11 +848,11 @@ class AgentBuildings(ThermalBuildings):
         constant[constant > 0] = 0
         market_share_ini, market_share_agg = None, None
         for i in range(100):
-            constant.loc[:, 'Wood fuel-Performance boiler'] = 0
+            constant.loc[:, 'Wood fuel-Performance boiler'] = 0 #pas sure de comprendre, on ouvre cette possibilité du coup?
             utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
             utility = utility_ref + utility_constant
             market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
-            agg = (market_share.T * stock).T.groupby('Heating system').sum()
+            agg = (market_share.T * stock).T.groupby(['Housing type', 'Heating system'] ).sum()
             market_share_agg = (agg.T / agg.sum(axis=1)).T
             if i == 0:
                 market_share_ini = market_share_agg.copy()
