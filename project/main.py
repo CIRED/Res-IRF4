@@ -164,3 +164,4 @@ if __name__ == '__main__':
         logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
         logging.exception(e)
+        raise e
