@@ -195,12 +195,25 @@ class ThermalBuildings:
         return ThermalBuildings(stock, self._surface_yrs, self._ratio_surface, self._efficiency, self._income,
                                 self._consumption_ini, self.path)
 
-    def add_certificate(self, df):
+    def add_certificate(self, df, heating_system='Heating system'):
+        """Add energy performance certificate to df index.
+
+        Parameters
+        ----------
+        df
+        heating_system
+
+        Returns
+        -------
+
+        """
         certificate = self.certificate.rename('Performance')
         lvl = [i for i in certificate.index.names if i in df.index.names]
         certificate = certificate.groupby(lvl).first()
+
         certificate = reindex_mi(certificate, df.index)
         df = pd.concat((df, certificate), axis=1).set_index('Performance', append=True).squeeze()
+
         return df
 
     def add_energy(self, df):
@@ -567,6 +580,7 @@ class AgentBuildings(ThermalBuildings):
 
     def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater):
 
+        ms_heater.dropna(how='all', inplace=True)
         choice_heater = self._choice_heater
         choice_heater_idx = pd.Index(choice_heater, name='Heating system final')
         agent = self.new(pd.Series(index=index, dtype=float))
@@ -854,18 +868,21 @@ class AgentBuildings(ThermalBuildings):
         utility_ref = utility.droplevel(['Occupancy status']).copy()
         utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
 
+        possible = reindex_mi(ms_heater, utility_ref.index)
+        utility_ref[~(possible > 0)] = float('nan')
+
         stock = self.stock.groupby(utility_ref.index.names).sum()
 
         # initializing constant to 0
         constant = ms_heater.copy()
         constant[constant > 0] = 0
         market_share_ini, market_share_agg = None, None
-        for i in range(100):
-            constant.loc[:, 'Wood fuel-Performance boiler'] = 0 #pas sure de comprendre, on ouvre cette possibilité du coup?
+        for i in range(50):
+            constant.loc[:, 'Electricity-Heat pump'] = 0
             utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
             utility = utility_ref + utility_constant
             market_share = (np.exp(utility).T / np.exp(utility).sum(axis=1)).T
-            agg = (market_share.T * stock).T.groupby(['Housing type', 'Heating system'] ).sum()
+            agg = (market_share.T * stock).T.groupby(['Housing type', 'Heating system']).sum()
             market_share_agg = (agg.T / agg.sum(axis=1)).T
             if i == 0:
                 market_share_ini = market_share_agg.copy()
@@ -874,10 +891,11 @@ class AgentBuildings(ThermalBuildings):
             ms_heater = ms_heater.reindex(market_share_agg.index)
 
             if (market_share_agg.round(decimals=3) == ms_heater.round(decimals=3).fillna(0)).all().all():
-                # self.logger.debug('Constant heater optim worked')
+                self.logger.debug('Constant heater optim worked')
                 break
 
-        constant.loc[:, 'Wood boiler-Performance boiler'] = 0
+        constant.loc[:, 'Electricity-Heat pump'] = 0
+
         details = pd.concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
         details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
@@ -1088,14 +1106,9 @@ class AgentBuildings(ThermalBuildings):
                 utility += utility_zil
 
             if self.utility_insulation_extensive is not None:
-                _utility = utility.copy()
-                _utility.index.rename({'Heating system': 'Heating system final'}, inplace=True)
-                _utility.index.rename({'Heating system before': 'Heating system'}, inplace=True)
-                _utility = self.add_certificate(_utility)
+                _utility = self.add_certificate(utility.copy())
                 utility_constant = reindex_mi(self.utility_insulation_extensive, _utility.index)
                 _utility += utility_constant
-                _utility.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-                _utility.index.rename({'Heating system final': 'Heating system'}, inplace=True)
                 utility = _utility.droplevel('Performance')
 
             retrofit_rate = 1 / (1 + np.exp(- utility))
@@ -1219,10 +1232,7 @@ class AgentBuildings(ThermalBuildings):
             # single-family
             stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
             flow_retrofit = stock_single * reindex_mi(retrofit_rate_ini, stock_single.index)
-            flow_retrofit.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-            flow_retrofit.index.rename({'Heating system final': 'Heating system'}, inplace=True)
 
-            # utility = utility.groupby([i for i in utility.index.names if i != 'Heating system before']).mean()
             utility_ref = reindex_mi(utility, flow_retrofit.index).dropna()
 
             constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
@@ -1254,8 +1264,6 @@ class AgentBuildings(ThermalBuildings):
 
             stock_multi = stock.xs('Multi-family', level='Housing type', drop_level=False)
             flow_retrofit = stock_multi * reindex_mi(retrofit_rate_ini, stock_multi.index)
-            flow_retrofit.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-            flow_retrofit.index.rename({'Heating system final': 'Heating system'}, inplace=True)
 
             utility_ref = reindex_mi(utility, flow_retrofit.index).dropna(how='all', axis=0).dropna(how='all', axis=1)
 
@@ -1348,26 +1356,26 @@ class AgentBuildings(ThermalBuildings):
 
             """
 
-            def solve(x, utility, stock, retrofit_rate_ini, freeriders, delta_subsidies, pref_subsidies):
+            def solve(x, utility_ini, stock_ini, retrofit_rate_target, freeride, delta_sub, pref_sub):
                 scale = x[-1]
-                constant = x[:-1]
+                cst = x[:-1]
 
                 # calibration constant
-                constant = pd.Series(constant, index=retrofit_rate_ini.index)
-                utility_ref = utility.copy()
-                stock_ref = stock.copy()
-                utility_constant = reindex_mi(constant, utility_ref.index)
-                u = (utility_ref + utility_constant).copy()
-                retrofit_rate = 1 / (1 + np.exp(- u * scale))
-                agg = (retrofit_rate * stock_ref).groupby(retrofit_rate_ini.index.names).sum()
-                retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_ini.index.names).sum()
-                result = retrofit_rate_agg - retrofit_rate_ini
+                cst = pd.Series(cst, index=retrofit_rate_target.index)
+                utility_ref = utility_ini.copy()
+                stock_ref = stock_ini.copy()
+                utility_cst = reindex_mi(cst, utility_ref.index)
+                u = (utility_ref + utility_cst).copy()
+                retrofit_rate_calc = 1 / (1 + np.exp(- u * scale))
+                agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
+                retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
+                rslt = retrofit_rate_agg - retrofit_rate_target
 
                 # calibration scale
-                calcul = impact_subsidies(scale, u, stock, pref_subsidies, delta_subsidies, indicator='freeriders')
-                result = np.append(result, calcul - freeriders)
+                calcul = impact_subsidies(scale, utility_ini, stock_ini, pref_sub, delta_sub, indicator='freeriders')
+                rslt = np.append(rslt, calcul - freeride)
 
-                return result
+                return rslt
 
             constant = retrofit_rate_ini.copy()
             constant[retrofit_rate_ini > 0] = 0
@@ -1397,7 +1405,6 @@ class AgentBuildings(ThermalBuildings):
 
             return constant, root[-1]
 
-        # TODO: calculate utility with new heating system
         # bill saved calculated based on the new heating system
         # certificate before work and so subsidies before the new heating system
 
@@ -1414,132 +1421,127 @@ class AgentBuildings(ThermalBuildings):
 
         energy_bill_sd = (consumption_sd.T * energy_prices * surface).T
         bill_saved = - energy_bill_sd.sub(energy_bill_sd_before, axis=0).dropna()
+        bill_saved.index.rename({'Heating system': 'Heating system final'}, inplace=True)
+        bill_saved.index.rename({'Heating system before': 'Heating system'}, inplace=True)
         self.bill_saved_indiv.update({self.year: bill_saved})
 
         # mac curve and payback period investment for the calibration year
-        if self._debug_mode and self.year == self.first_year + 1:
-            consumption_before = (agent.heating_consumption_sd().T * surface).T
-            consumption = (consumption_sd.T * surface).T
-            consumption_saving = - consumption.T.subtract(consumption_before).T
-            discount_factor = reindex_mi(self.discount_factor, bill_saved.index)
-            npv = - cost_insulation + subsidies_total + (discount_factor * bill_saved.T).T
+        if False:
+            if self._debug_mode and self.year == self.first_year + 1:
+                consumption_before = (agent.heating_consumption_sd().T * surface).T
+                consumption = (consumption_sd.T * surface).T
+                consumption_saving = - consumption.T.subtract(consumption_before).T
+                discount_factor = reindex_mi(self.discount_factor, bill_saved.index)
+                npv = - cost_insulation + subsidies_total + (discount_factor * bill_saved.T).T
 
-            def calculate_financial_indicator(columns, consumption, consumption_before,
-                                              bill_saved, cost_insulation, subsidies_total, npv,
-                                              certificate, stock, name='', discount_factor=discount_factor):
+                def calculate_financial_indicator(columns, consumption, consumption_before,
+                                                  bill_saved, cost_insulation, subsidies_total, npv,
+                                                  certificate, stock, name='', discount_factor=discount_factor):
 
-                # find result for each technology selected
-                bill_saved_select, cost_insulation_select, subsidies_total_select, consumption_select, npv_select = pd.Series(
-                    dtype=float), pd.Series(dtype=float), pd.Series(dtype=float), pd.Series(dtype=float), pd.Series(dtype=float)
-                for c in columns.unique():
-                    idx = columns.index[columns == c]
-                    consumption_select = pd.concat((consumption_select, consumption.loc[idx, c]), axis=0)
-                    bill_saved_select = pd.concat((bill_saved_select, bill_saved.loc[idx, c]), axis=0)
-                    cost_insulation_select = pd.concat((cost_insulation_select, cost_insulation.loc[idx, c]), axis=0)
-                    subsidies_total_select = pd.concat((subsidies_total_select, subsidies_total.loc[idx, c]), axis=0)
-                    npv_select = pd.concat((npv_select, npv.loc[idx, c]), axis=0)
+                    # find result for each technology selected
+                    bill_saved_select, cost_insulation_select, subsidies_total_select, consumption_select, npv_select = pd.Series(
+                        dtype=float), pd.Series(dtype=float), pd.Series(dtype=float), pd.Series(dtype=float), pd.Series(dtype=float)
+                    for c in columns.unique():
+                        idx = columns.index[columns == c]
+                        consumption_select = pd.concat((consumption_select, consumption.loc[idx, c]), axis=0)
+                        bill_saved_select = pd.concat((bill_saved_select, bill_saved.loc[idx, c]), axis=0)
+                        cost_insulation_select = pd.concat((cost_insulation_select, cost_insulation.loc[idx, c]), axis=0)
+                        subsidies_total_select = pd.concat((subsidies_total_select, subsidies_total.loc[idx, c]), axis=0)
+                        npv_select = pd.concat((npv_select, npv.loc[idx, c]), axis=0)
 
-                # reindex
-                consumption_select.index = pd.MultiIndex.from_tuples(consumption_select.index).set_names(
-                    consumption.index.names)
-                bill_saved_select.index = pd.MultiIndex.from_tuples(bill_saved_select.index).set_names(
-                    bill_saved.index.names)
-                subsidies_total_select.index = pd.MultiIndex.from_tuples(subsidies_total_select.index).set_names(
-                    subsidies_total.index.names)
-                cost_insulation_select.index = pd.MultiIndex.from_tuples(cost_insulation_select.index).set_names(
-                    cost_insulation.index.names)
-                npv_select.index = pd.MultiIndex.from_tuples(npv_select.index).set_names(
-                    npv.index.names)
+                    # reindex
+                    consumption_select.index = pd.MultiIndex.from_tuples(consumption_select.index).set_names(
+                        consumption.index.names)
+                    bill_saved_select.index = pd.MultiIndex.from_tuples(bill_saved_select.index).set_names(
+                        bill_saved.index.names)
+                    subsidies_total_select.index = pd.MultiIndex.from_tuples(subsidies_total_select.index).set_names(
+                        subsidies_total.index.names)
+                    cost_insulation_select.index = pd.MultiIndex.from_tuples(cost_insulation_select.index).set_names(
+                        cost_insulation.index.names)
+                    npv_select.index = pd.MultiIndex.from_tuples(npv_select.index).set_names(
+                        npv.index.names)
 
-                # calculate payback
-                def calculate_payback(cost, subsidies, revenue, certificate, stock, name=name):
-                    cash_flow = pd.concat([revenue] * 80, keys=range(0, 80), axis=1)
-                    capex = (cost.rename(0) - subsidies.rename(0)).to_frame().reindex(
-                        cash_flow.columns, axis=1).fillna(0)
-                    cash_flow_cumsum = (- capex + cash_flow).cumsum(axis=1)
-                    mask = (cash_flow_cumsum > 0).cumsum(axis=1).eq(1)
-                    payback = mask.idxmax(axis=1)
-                    payback[~(mask == True).any(axis=1)] = float('nan')
-                    payback = pd.concat((certificate.rename('Peformance'), revenue.rename('Bill saved'),
-                                         stock.rename('Stock'), payback.rename('Payback')),
-                                        axis=1).sort_values('Payback')
-                    payback['Stock cumulated'] = payback['Stock'].cumsum() / 10**6
+                    # calculate payback
+                    def calculate_payback(cost, subsidies, revenue, certificate, stock, name=name):
+                        cash_flow = pd.concat([revenue] * 80, keys=range(0, 80), axis=1)
+                        capex = (cost.rename(0) - subsidies.rename(0)).to_frame().reindex(
+                            cash_flow.columns, axis=1).fillna(0)
+                        cash_flow_cumsum = (- capex + cash_flow).cumsum(axis=1)
+                        mask = (cash_flow_cumsum > 0).cumsum(axis=1).eq(1)
+                        payback = mask.idxmax(axis=1)
+                        payback[~(mask == True).any(axis=1)] = float('nan')
+                        payback = pd.concat((certificate.rename('Peformance'), revenue.rename('Bill saved'),
+                                             stock.rename('Stock'), payback.rename('Payback')),
+                                            axis=1).sort_values('Payback')
+                        payback['Stock cumulated'] = payback['Stock'].cumsum() / 10**6
 
-                    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-                    payback.plot(x='Stock cumulated', y='Payback', ax=ax, fontsize=12, figsize=(8, 10))
-                    format_ax(ax)
-                    ax.get_legend().remove()
-                    ax.axvline(x=payback['Stock cumulated'].iloc[-1], c='red')
-                    ax.set_ylabel('Payback')
-                    fig.savefig(os.path.join(self.path_static, 'payback_{}.png'.format(name)))
-                    plt.close(fig)
+                        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                        payback.plot(x='Stock cumulated', y='Payback', ax=ax, fontsize=12, figsize=(8, 10))
+                        format_ax(ax)
+                        ax.get_legend().remove()
+                        ax.axvline(x=payback['Stock cumulated'].iloc[-1], c='red')
+                        ax.set_ylabel('Payback')
+                        fig.savefig(os.path.join(self.path_static, 'payback_{}.png'.format(name)))
+                        plt.close(fig)
 
-                    return payback
+                        return payback
 
-                payback = calculate_payback(cost_insulation_select, subsidies_total_select, bill_saved_select,
-                                                    certificate, stock, name='npv_{}'.format(name))
+                    payback = calculate_payback(cost_insulation_select, subsidies_total_select, bill_saved_select,
+                                                        certificate, stock, name='npv_{}'.format(name))
 
-                # MAC curve
-                def mac_curve(npv, consumption_before, consumption, revenue, cost, subsidies, columns, stock,
-                              discount_factor=discount_factor):
+                    # MAC curve
+                    def mac_curve(npv, consumption_before, consumption, revenue, cost, subsidies, columns, stock,
+                                  discount_factor=discount_factor):
 
-                    # details
-                    consumption_saving = (consumption_before - consumption)
-                    details = pd.concat((npv, consumption_saving, consumption_before, consumption,
-                                         revenue, revenue * discount_factor,
-                                         cost, subsidies, cost - subsidies,
-                                         columns),
-                                     axis=1, keys=['NPV', 'Consumption saving', 'Consumption before', 'Consumption after',
-                                                   'Bill saving', 'Bill saving cumac', 'Cost insulation',
-                                                   'Subsidies', 'Cost net', 'Insulation'])
-                    details.sort_values('NPV', inplace=True, ascending=False)
+                        # details
+                        consumption_saving = (consumption_before - consumption)
+                        details = pd.concat((npv, consumption_saving, consumption_before, consumption,
+                                             revenue, revenue * discount_factor,
+                                             cost, subsidies, cost - subsidies,
+                                             columns),
+                                         axis=1, keys=['NPV', 'Consumption saving', 'Consumption before', 'Consumption after',
+                                                       'Bill saving', 'Bill saving cumac', 'Cost insulation',
+                                                       'Subsidies', 'Cost net', 'Insulation'])
+                        details.sort_values('NPV', inplace=True, ascending=False)
 
-                    # mac curve
-                    consumption_saving = consumption_saving * stock / 10 ** 9
-                    temp = pd.concat((consumption_saving.rename('Consumption'), npv.rename('NPV')),
-                                     axis=1).sort_values('NPV')
-                    temp['Consumption saving cumulated'] = (temp['Consumption'].cumsum())
-                    temp['NPV'] = temp['NPV'] / 10**3
+                        # mac curve
+                        consumption_saving = consumption_saving * stock / 10 ** 9
+                        temp = pd.concat((consumption_saving.rename('Consumption'), npv.rename('NPV')),
+                                         axis=1).sort_values('NPV')
+                        temp['Consumption saving cumulated'] = (temp['Consumption'].cumsum())
+                        temp['NPV'] = temp['NPV'] / 10**3
 
-                    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-                    temp.plot(x='Consumption saving cumulated', y='NPV', ax=ax, fontsize=12, figsize=(8, 10))
-                    format_ax(ax, ymin=None)
-                    ax.get_legend().remove()
-                    ax.axvline(x=(consumption_before * stock).sum() / 10 ** 9, c='red')
-                    ax.set_ylabel('NPV (k€)')
-                    ax.set_xlabel('Consumption saving cumulated (TWh)')
-                    fig.savefig(os.path.join(self.path_static, 'npv_{}.png'.format(name)))
-                    plt.close(fig)
+                        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                        temp.plot(x='Consumption saving cumulated', y='NPV', ax=ax, fontsize=12, figsize=(8, 10))
+                        format_ax(ax, ymin=None)
+                        ax.get_legend().remove()
+                        ax.axvline(x=(consumption_before * stock).sum() / 10 ** 9, c='red')
+                        ax.set_ylabel('NPV (k€)')
+                        ax.set_xlabel('Consumption saving cumulated (TWh)')
+                        fig.savefig(os.path.join(self.path_static, 'npv_{}.png'.format(name)))
+                        plt.close(fig)
 
-                    return details
+                        return details
 
-                abatement = mac_curve(npv_select, consumption_before, consumption_select, bill_saved_select,
-                                      cost_insulation_select, subsidies_total_select, columns, stock,
-                                      discount_factor=discount_factor)
+                    abatement = mac_curve(npv_select, consumption_before, consumption_select, bill_saved_select,
+                                          cost_insulation_select, subsidies_total_select, columns, stock,
+                                          discount_factor=discount_factor)
 
-                return payback, abatement
+                    return payback, abatement
 
-            insulation_private_optim = npv.idxmax(axis=1)
-            _, _ = calculate_financial_indicator(insulation_private_optim, consumption, consumption_before, bill_saved,
-                                                 cost_insulation, subsidies_total, npv, agent.certificate, stock,
-                                                 name='private_optim')
-            insulation_max_saving = consumption_saving.idxmax(axis=1)
-            _, _ = calculate_financial_indicator(insulation_max_saving, consumption, consumption_before,
-                                                               bill_saved, cost_insulation, subsidies_total, npv,
-                                                               agent.certificate, stock, name='max_saving')
+                insulation_private_optim = npv.idxmax(axis=1)
+                _, _ = calculate_financial_indicator(insulation_private_optim, consumption, consumption_before, bill_saved,
+                                                     cost_insulation, subsidies_total, npv, agent.certificate, stock,
+                                                     name='private_optim')
+                insulation_max_saving = consumption_saving.idxmax(axis=1)
+                _, _ = calculate_financial_indicator(insulation_max_saving, consumption, consumption_before,
+                                                                   bill_saved, cost_insulation, subsidies_total, npv,
+                                                                   agent.certificate, stock, name='max_saving')
 
-        subsidies_total.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-        subsidies_total.index.rename({'Heating system final': 'Heating system'}, inplace=True)
-        if utility_zil is not None:
-            utility_zil.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-            utility_zil.index.rename({'Heating system final': 'Heating system'}, inplace=True)
-        cost_insulation.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-        cost_insulation.index.rename({'Heating system final': 'Heating system'}, inplace=True)
         market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_insulation,
                                                           utility_zil=utility_zil)
-
         if self.utility_insulation_intensive is None:
-            # self.logger.debug('Calibration intensive')
+            self.logger.debug('Calibration intensive')
             self.utility_insulation_intensive = calibration_intensive(utility_intensive, stock, ms_insulation,
                                                                       retrofit_rate_ini, solver='iteration')
             market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_insulation,
@@ -1593,8 +1595,6 @@ class AgentBuildings(ThermalBuildings):
             s = self.add_certificate(stock)
             stock_single = s.xs('Single-family', level='Housing type', drop_level=False)
             flow_retrofit = stock_single * reindex_mi(retrofit_rate_ini, stock_single.index)
-            flow_retrofit.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-            flow_retrofit.index.rename({'Heating system final': 'Heating system'}, inplace=True)
             # ms = market_share.groupby([i for i in market_share.index.names if i != 'Heating system final']).first()
             ms = reindex_mi(market_share, flow_retrofit.index).dropna()
             flow_retrofit = flow_retrofit.reindex(ms.index)
@@ -1661,9 +1661,8 @@ class AgentBuildings(ThermalBuildings):
                                                   bool_zil=bool_zil_ext)
 
         if self.utility_insulation_extensive is None:
-            # self.logger.debug('Calibration renovation rate')
-            delta_subsidies.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-            delta_subsidies.index.rename({'Heating system final': 'Heating system'}, inplace=True)
+            self.logger.debug('Calibration renovation rate')
+
             delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation_ext, subsidies_insulation.index).rename(None)
 
@@ -1767,8 +1766,6 @@ class AgentBuildings(ThermalBuildings):
 
                 consumption_sd = self.heating_consumption_sd().groupby(
                     [l for l in self.index.names if l != 'Income tenant']).first()
-                consumption_sd.index.rename({'Heating system': 'Heating system before'}, inplace=True)
-                consumption_sd.index.rename({'Heating system final': 'Heating system'}, inplace=True)
 
                 consumption_sd = reindex_mi(consumption_sd, r.index)
                 df = pd.concat((consumption_sd, r), axis=1, keys=['Consumption', 'Retrofit rate'])
@@ -1885,12 +1882,6 @@ class AgentBuildings(ThermalBuildings):
                                              investment_insulation * factor_equilibrium)[0]
 
             self.factor_yrs.update({self.year: factor_equilibrium})
-
-        market_share.index.rename({'Heating system': 'Heating system final'}, inplace=True)
-        market_share.index.rename({'Heating system before': 'Heating system'}, inplace=True)
-
-        retrofit_rate.index.rename({'Heating system': 'Heating system final'}, inplace=True)
-        retrofit_rate.index.rename({'Heating system before': 'Heating system'}, inplace=True)
 
         return retrofit_rate, market_share
 
@@ -2273,7 +2264,7 @@ class AgentBuildings(ThermalBuildings):
 
             if (retrofit_rate_agg.round(decimals=3) == ms_extensive.round(decimals=3).reindex(
                     retrofit_rate_agg.index)).all():
-                # self.logger.debug('Constant extensive optim worked')
+                self.logger.debug('Constant extensive optim worked')
                 break
 
         details = pd.concat((constant, retrofit_rate_ini, retrofit_rate_agg, ms_extensive, agg / 10**3), axis=1,
