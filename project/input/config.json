@@ -1,10 +1,10 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "ZP": false,
     "prices_constant": false,
     "mpr_global_retrofit": true,
-    "mpr_no_bonus": false
+    "mpr_no_bonus": true
   },
   "assessment": {
     "activated": false,
@@ -25,7 +25,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2050,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
