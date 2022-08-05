@@ -1530,7 +1530,7 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_total.index.rename({'Heating system': 'Heating system before'}, inplace=True)
         subsidies_total.index.rename({'Heating system final': 'Heating system'}, inplace=True)
-        if utility_zil:
+        if utility_zil is not None:
             utility_zil.index.rename({'Heating system': 'Heating system before'}, inplace=True)
             utility_zil.index.rename({'Heating system final': 'Heating system'}, inplace=True)
         cost_insulation.index.rename({'Heating system': 'Heating system before'}, inplace=True)

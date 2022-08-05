@@ -39,7 +39,7 @@
     "exogenous_detailed": {
       "number": 0
     },
-    "target_freeriders": 0.7,
+    "target_freeriders": 0.85,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_low.csv",
