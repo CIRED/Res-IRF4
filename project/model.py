@@ -3,7 +3,7 @@ import pandas as pd
 from building import AgentBuildings
 from input.param import generic_input
 from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
-from write_output import parse_output
+from write_output import parse_output_run, plot_scenario
 import logging
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
@@ -46,7 +46,7 @@ def res_irf(config, path, debug_mode=False):
     logger.addHandler(file_handler)
 
     try:
-        logger.debug('Reading input')
+        logger.info('Reading input')
         stock, year = read_stock(config)
         policies_heater, policies_insulation, taxes = read_policies(config)
         param, summary_param = parse_parameters(config, generic_input, stock)
@@ -80,7 +80,7 @@ def res_irf(config, path, debug_mode=False):
         temp.columns = temp.columns.map(lambda x:  'Prices {} (euro/kWh)'.format(x))
         pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
-        logger.debug('Creating AgentBuildings object')
+        logger.info('Creating AgentBuildings object')
         buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
                                    param['consumption_ini'], path, param['preferences'],
                                    restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
@@ -89,10 +89,15 @@ def res_irf(config, path, debug_mode=False):
                                    number_exogenous=config['exogenous_detailed']['number'], logger=logger,
                                    debug_mode=debug_mode)
 
-        logger.debug('Calibration energy consumption {}'.format(year))
+        output, stock = pd.DataFrame(), pd.DataFrame()
+        logger.info('Calibration energy consumption {}'.format(year))
         buildings.calculate(energy_prices.loc[year, :], taxes)
+        s, o = parse_output_run(buildings, param)
+        stock = pd.concat((stock, s), axis=1)
+        output = pd.concat((output, o), axis=1)
+
         for year in range(config['start'] + 1, config['end']):
-            logger.debug('Run {}'.format(year))
+            logger.info('Run {}'.format(year))
             buildings.year = year
             buildings.add_flows([- buildings.flow_demolition()])
             flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, ms_heater, cost_insulation,
@@ -103,15 +108,20 @@ def res_irf(config, path, debug_mode=False):
                                                     supply_constraint=config['supply_constraint'])
             buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
             buildings.calculate(energy_prices.loc[year, :], taxes)
+            logger.info('Writing output')
+            s, o = parse_output_run(buildings, param)
+            stock = pd.concat((stock, s), axis=1)
+            stock.index.names = s.index.names
+            output = pd.concat((output, o), axis=1)
 
-        logger.debug('Writing output')
-        stock, output = parse_output(buildings, param)
+        logger.info('Dumping output in {}'.format(path))
         output.round(3).to_csv(os.path.join(path, 'output.csv'))
         stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+        plot_scenario(output, stock, buildings)
 
         return os.path.basename(os.path.normpath(path)), output, stock
 
     except Exception as e:
-        # logger.exception(e)
+        logger.exception(e)
         # logging.error(traceback.format_exc())
         raise e
