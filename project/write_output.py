@@ -191,9 +191,12 @@ def parse_output(buildings, param):
     detailed.update((t / 10 ** 3).T)
     detailed['Replacement heater (Thousand)'] = temp.sum() / 10 ** 3
 
-    temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_heater.items()})
-    t = temp.groupby(['Heating system', 'Housing type']).sum()
-    t.index = t.index.map(lambda x: 'Replacement heater {} {} (Thousand)'.format(x[0], x[1]))
+    t = pd.DataFrame({year: item.groupby('Housing type').sum().loc['Multi-family'] for year, item in replacement_heater.items()})
+    t.index = t.index.map(lambda x: 'Replacement heater Multi-family {} (Thousand)'.format(x))
+    detailed.update((t / 10 ** 3).T)
+
+    t = pd.DataFrame({year: item.groupby('Housing type').sum().loc['Single-family'] for year, item in replacement_heater.items()})
+    t.index = t.index.map(lambda x: 'Replacement heater Single-family {} (Thousand)'.format(x))
     detailed.update((t / 10 ** 3).T)
 
     replacement_insulation = buildings.replacement_insulation
@@ -387,7 +390,7 @@ def parse_output(buildings, param):
 
     mf_heater_index = [heater for heater in generic_input['index']['Heater']
                        if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
-    df = pd.DataFrame([detailed.loc['Replacement heater {} Multi-family (Thousand)'.format(i), :] for i in mf_heater_index]).T.dropna()
+    df = pd.DataFrame([detailed.loc['Replacement heater Multi-family {} (Thousand)'.format(i), :] for i in mf_heater_index]).T.dropna()
     df.columns = mf_heater_index
     make_area_plot(df, 'Replacement (Thousand)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
@@ -395,7 +398,7 @@ def parse_output(buildings, param):
                    colors=generic_input['colors'], loc='left', left=1.25)
 
 
-    df = pd.DataFrame([detailed.loc['Replacement heater {} Single-family (Thousand)'.format(i), :] for i in generic_input['index']['Heater']]).T.dropna()
+    df = pd.DataFrame([detailed.loc['Replacement heater Single-family {} (Thousand)'.format(i), :] for i in generic_input['index']['Heater']]).T.dropna()
     df.columns = generic_input['index']['Heater']
     make_area_plot(df, 'Replacement (Thousand)',
                    save=os.path.join(buildings.path, 'replacement_heater_sf.png'), total=False,
