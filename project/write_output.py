@@ -165,6 +165,14 @@ def parse_output_run(buildings, param):
         t.index = t.index.map(lambda x: 'Replacement heater {} {} (Thousand)'.format(x[0], x[1]))
         output.update((t / 10 ** 3).T)
 
+        t = buildings.replacement_heater.groupby('Housing type').sum().loc['Multi-family']
+        t.index = t.index.map(lambda x: 'Replacement heater Multi-family {} (Thousand)'.format(x))
+        output.update((t / 10 ** 3).T)
+
+        t = buildings.replacement_heater.groupby('Housing type').sum().loc['Single-family']
+        t.index = t.index.map(lambda x: 'Replacement heater Single-family {} (Thousand)'.format(x))
+        output.update((t / 10 ** 3).T)
+
         replacement_insulation = buildings.replacement_insulation
         temp = buildings.replacement_insulation.sum(axis=1)
         output['Replacement insulation (Thousand)'] = temp.sum() / 10 ** 3
@@ -716,14 +724,14 @@ def plot_scenario(output, stock, buildings):
     mf_heater_index = [heater for heater in generic_input['index']['Heater']
                        if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
     df = pd.DataFrame(
-        [output.loc['Replacement heater {} Multi-family (Thousand)'.format(i), :] for i in mf_heater_index]).T.dropna()
+        [output.loc['Replacement heater Multi-family {} (Thousand)'.format(i), :] for i in mf_heater_index]).T.dropna()
     df.columns = mf_heater_index
     make_area_plot(df, 'Replacement (Thousand)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
 
-    df = pd.DataFrame([output.loc['Replacement heater {} Single-family (Thousand)'.format(i), :] for i in
+    df = pd.DataFrame([output.loc['Replacement heater Single-family {} (Thousand)'.format(i), :] for i in
                        generic_input['index']['Heater']]).T.dropna()
     df.columns = generic_input['index']['Heater']
     make_area_plot(df, 'Replacement (Thousand)',
