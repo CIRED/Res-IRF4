@@ -159,7 +159,7 @@ if __name__ == '__main__':
         stocks = {i[0]: i[2] for i in results}
 
         logging.debug('Parsing results')
-        grouped_output(result, stocks, folder, config_policies, config_sensitivity)
+        grouped_output(result, folder, config_policies, config_sensitivity)
 
         logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

@@ -129,6 +129,7 @@ class ThermalBuildings:
         self.heat_consumption_calib = None
         self.heat_consumption_energy = None
         self.taxes_expenditure = None
+        self.taxes_list = []
         self.taxes_expenditure_details = {}
         self.stock_yrs = {}
 
@@ -404,9 +405,9 @@ class ThermalBuildings:
 
         total_taxes = pd.Series(0, index=prices.index)
         for tax in taxes:
-            """if tax.name not in self.taxes_expenditure_details.keys():
-                self.taxes_expenditure_details[tax.name] = {}"""
             if self.year in tax.value.index:
+                if tax.name not in self.taxes_list:
+                    self.taxes_list += [tax.name]
                 amount = tax.value.loc[self.year, :] * heat_consumption_energy
                 self.taxes_expenditure_details[tax.name] = amount
                 total_taxes += amount
@@ -478,6 +479,7 @@ class AgentBuildings(ThermalBuildings):
         self.lifetime_insulation = 30
 
         self.logger = logger
+        self.policies = []
 
         # {'max', 'market_share'} define how to calculate utility_extensive
         self._utility_extensive = utility_extensive
@@ -844,6 +846,8 @@ class AgentBuildings(ThermalBuildings):
 
         sub = None
         for policy in policies_heater:
+            if policy.name not in self.policies:
+                self.policies += [policy.name]
             if policy.policy == 'subsidy_target':
                 sub = policy.value.reindex(frame.columns, axis=1).fillna(0)
                 sub = reindex_mi(sub, frame.index)
@@ -2146,6 +2150,8 @@ class AgentBuildings(ThermalBuildings):
         subsidies_comparison = {}
 
         for policy in policies_insulation:
+            if policy.name not in self.policies:
+                self.policies += [policy.name]
 
             if policy.policy == 'subsidy_target':
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
