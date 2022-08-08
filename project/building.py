@@ -469,7 +469,7 @@ class AgentBuildings(ThermalBuildings):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration, debug_mode=debug_mode)
 
-        self.market_share = None
+
         self.vta = 0.1
         self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
@@ -546,10 +546,11 @@ class AgentBuildings(ThermalBuildings):
         self.cost_insulation_indiv, self.subsidies_heater_indiv, self.subsidies_insulation_indiv = None, None, None
 
         self.certificate_jump = None
+        self.gest_nb = None
 
         self.global_renovation, self.in_best, self.out_worst = None, None, None
         self.bonus_best, self.bonus_worst = None, None
-
+        self.market_share = None
         self.replacement_heater, self.heater_replaced = None, None
         self.cost_heater, self.investment_heater = None, None
         self.tax_heater = None
@@ -2446,6 +2447,18 @@ class AgentBuildings(ThermalBuildings):
             rslt.update({i: ((self.certificate_jump == i) * replaced_by).sum(axis=1)})
         self.certificate_jump = pd.DataFrame(rslt).groupby(levels).sum()
 
+        gest = {1: [(False, False, False,  True), (False, False,  True, False), (False, True,  False,  False),
+                    (True, False,  False,  False)],
+                2: [(False, False, True, True), (False, True, False, True), (True, False, False, True), (True, False, True, False),
+                    (True, True, False, False), (False,  True,  True, False)],
+                3: [(False, True, True, True), (True, False, True, True), (True, True, False, True), (True, True, True, False)],
+                4: [(True, True, True, True)]}
+        rslt = {i: 0 for i in range(1, 6)}
+        for n, g in gest.items():
+            rslt[n] += replaced_by.loc[:, g].xs(False, level='Heater replacement').sum().sum()
+            rslt[n + 1] += replaced_by.loc[:, g].xs(True, level='Heater replacement').sum().sum()
+        self.gest_nb = pd.Series(rslt)
+
         if self._debug_mode:
             self.global_renovation_yrs.update({self.year: self.global_renovation})
             self.bonus_best_yrs.update({self.year: self.bonus_best})
@@ -2633,11 +2646,14 @@ class AgentBuildings(ThermalBuildings):
             output['Retrofit >= 1 EPC (Thousand)'] = self.certificate_jump.loc[:,
                                                      [i for i in self.certificate_jump.columns if
                                                       i > 0]].sum().sum() / 10 ** 3
-
             for i in range(6):
                 temp = self.certificate_jump.loc[:, i]
                 output['Retrofit {} EPC (Thousand)'.format(i)] = temp.sum() / 10 ** 3
                 # output['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
+
+            temp = self.gest_nb
+            temp.index = temp.index.map(lambda x: 'Renovation types {} (Thousand)'.format(x))
+            output.update(temp.T / 10 ** 3)
 
             # output['Efficient retrofits (Thousand)'] = pd.Series(self.efficient_renovation_yrs) / 10**3
             output['Global retrofits (Thousand)'] = self.global_renovation / 10 ** 3
