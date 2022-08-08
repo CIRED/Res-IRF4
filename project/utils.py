@@ -114,7 +114,7 @@ def reindex_mi(df, mi_index, levels=None, axis=0):
     return df_reindex
 
 
-def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
+def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
     """
 
     Parameters
@@ -123,6 +123,7 @@ def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
     format_y: function
     ymin: float or None
     xinteger: bool
+    title: str, optional
 
     Returns
     -------
@@ -141,6 +142,11 @@ def format_ax(ax, y_label=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
 
     if y_label is not None:
         ax.set_ylabel(y_label)
+
+    if title:
+        t = title.split(' (')[0]
+        unit = title.split(' (')[1].split(')')[0]
+        ax.set_title('{}\n{}'.format({t}, {unit}), loc='left')
 
     if ymin is not None:
         ax.set_ylim(ymin=0)
@@ -220,7 +226,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=0, xinteger=True)
     if legend:
         format_legend(ax)
     save_fig(fig, save=save)
@@ -294,33 +300,19 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
                    ymin=None, loc='upper', scatter=None, left=1.04):
 
     df.index = df.index.astype(int)
-    if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan']:
-        fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
-        df.plot.area(ax=ax[1], stacked=True, color=colors)
-        scatter.T.plot.bar(ax=ax[0], stacked=True, color=colors, legend=False, width=1.5, rot=0)
-        ax[0] = format_ax(ax[0], y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
-        ax[1] = format_ax(ax[1], xinteger=True, format_y=format_y, ymin=ymin)
-        if total:
-            df.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
-        format_legend(ax[1], ncol=ncol, offset=offset, loc='left', left=left)
-        ax[0].set_title('Realized')
-        ax[1].set_title('Model results')
-
-
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    if colors is None:
+        df.plot.area(ax=ax, stacked=True)
     else:
-        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-        if colors is None:
-            df.plot.area(ax=ax, stacked=True)
-        else:
-            df.plot.area(ax=ax, stacked=True, color=colors)
+        df.plot.area(ax=ax, stacked=True, color=colors)
 
-        if total:
-            df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
+    if total:
+        df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
 
-        if scatter is not None:
-            scatter.plot(ax=ax, style='.', ms=15, c='red')
-        ax = format_ax(ax, y_label=y_label, xinteger=True, format_y=format_y, ymin=ymin)
-        format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
+    if scatter is not None:
+        scatter.plot(ax=ax, style='.', ms=15, c='red')
+    ax = format_ax(ax, title=y_label, xinteger=True, format_y=format_y, ymin=ymin)
+    format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
 
     save_fig(fig, save=save)
 

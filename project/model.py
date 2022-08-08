@@ -80,13 +80,17 @@ def res_irf(config, path):
         pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
         logger.info('Creating AgentBuildings object')
+        if 'renovation_rate_max' in config.keys():
+            renovation_rate_max = config['renovation_rate_max']
+        else:
+            renovation_rate_max = 1.0
         buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
                                    param['consumption_ini'], path, param['preferences'],
                                    restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
                                    year=year, demolition_rate=param['demolition_rate'],
                                    data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                    number_exogenous=config['exogenous_detailed']['number'], logger=logger,
-                                   debug_mode=config['debug_mode'])
+                                   debug_mode=config['debug_mode'], renovation_rate_max=renovation_rate_max)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         logger.info('Calibration energy consumption {}'.format(year))

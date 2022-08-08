@@ -27,10 +27,10 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2031,
-    "debug_mode": false,
-    "prices_constant": true,
-    "taxes_constant": true,
+    "end": 2021,
+    "debug_mode": true,
+    "prices_constant": false,
+    "taxes_constant": false,
     "demolition_rate": 0.0,
     "construction": false,
     "income_rate": 0.0,
@@ -44,6 +44,7 @@
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
+    "renovation_rate_max": 0.5,
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
@@ -52,7 +53,7 @@
     "cost_insulation": "project/input/cost_insulation.csv",
     "cost_factor": 1,
     "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices.csv",
+    "energy_prices": "project/input/energy_prices_ht.csv",
     "prices_factor": 1,
     "energy_taxes": "project/input/energy_taxes.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv",
@@ -103,7 +104,9 @@
         "end": 2019,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       },
       "sub_ad_volarem": {
         "start": 2019,

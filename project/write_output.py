@@ -83,9 +83,22 @@ def plot_scenario(output, stock, buildings):
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
     # subset.dropna(inplace=True, how='all')
     if not subset.empty:
-        make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
-                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                       scatter=generic_input['public_policies_2019'], loc='left', left=1.2)
+        scatter = generic_input['public_policies_2019']
+        if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan']:
+            fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
+            subset.index = subset.index.astype(int)
+            subset.plot.area(ax=ax[1], stacked=True, color=generic_input['colors'])
+            scatter.T.plot.bar(ax=ax[0], stacked=True, color=generic_input['colors'], legend=False, width=1.5, rot=0)
+            ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=0)
+            ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=0)
+            subset.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
+            format_legend(ax[1], loc='left', left=1.2)
+            ax[0].set_title('Realized')
+            ax[1].set_title('Model results')
+        else:
+            make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
+                           colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                           scatter=generic_input['public_policies_2019'], loc='left', left=1.2)
 
 
     # graph public finance
@@ -272,11 +285,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Retrofit rate {} (%)': [
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Non-weighted retrofit rate {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
         'Retrofit rate heater {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Non-weighted retrofit rate heater {} (%)': [
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
     }
 

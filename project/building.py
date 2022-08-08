@@ -464,11 +464,10 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
                  ms_heater, choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
-                 data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='max',
-                 logger=None, debug_mode=False):
+                 data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='market_share',
+                 logger=None, debug_mode=False, renovation_rate_max=1.0):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration, debug_mode=debug_mode)
-
 
         self.vta = 0.1
         self.factor_etp = 7.44 / 10**6 # ETP/€
@@ -514,6 +513,8 @@ class AgentBuildings(ThermalBuildings):
 
         self.discount_rate = - self.pref_investment_insulation_ext / self.pref_bill_insulation_ext
         self.discount_factor = (1 - (1 + self.discount_rate) ** -self.lifetime_insulation) / self.discount_rate
+
+        self.renovation_rate_max = renovation_rate_max
 
         self.scale_int = None
         self.scale_ext = None
@@ -1154,7 +1155,7 @@ class AgentBuildings(ThermalBuildings):
             market_share = (np.exp(scale * utility_intensive).T / np.exp(scale * utility_intensive).sum(axis=1)).T
             return market_share, utility_intensive
 
-        def retrofit_func(utility, rate_max=0.3):
+        def retrofit_func(utility, rate_max=self.renovation_rate_max):
             return 1 / (1 + np.exp(- utility)) * rate_max
 
         def to_retrofit_rate(bill_saved, subsidies, investment, bool_zil=None, debug_mode=self._debug_mode):
@@ -2447,11 +2448,13 @@ class AgentBuildings(ThermalBuildings):
             rslt.update({i: ((self.certificate_jump == i) * replaced_by).sum(axis=1)})
         self.certificate_jump = pd.DataFrame(rslt).groupby(levels).sum()
 
-        gest = {1: [(False, False, False,  True), (False, False,  True, False), (False, True,  False,  False),
-                    (True, False,  False,  False)],
-                2: [(False, False, True, True), (False, True, False, True), (True, False, False, True), (True, False, True, False),
-                    (True, True, False, False), (False,  True,  True, False)],
-                3: [(False, True, True, True), (True, False, True, True), (True, True, False, True), (True, True, True, False)],
+        gest = {1: [(False, False, False, True), (False, False, True, False), (False, True, False, False),
+                    (True, False, False, False)],
+                2: [(False, False, True, True), (False, True, False, True), (True, False, False, True),
+                    (True, False, True, False),
+                    (True, True, False, False), (False, True, True, False)],
+                3: [(False, True, True, True), (True, False, True, True), (True, True, False, True),
+                    (True, True, True, False)],
                 4: [(True, True, True, True)]}
         rslt = {i: 0 for i in range(1, 6)}
         for n, g in gest.items():
@@ -2616,10 +2619,10 @@ class AgentBuildings(ThermalBuildings):
             t_grouped.index = t_grouped.index.map(lambda x: 'Retrofit rate {} - {} (%)'.format(x[0], x[1]))
             output.update(t_grouped.T)
 
-            output['Non-weighted retrofit rate (%)'] = t.mean()
+            """output['Non-weighted retrofit rate (%)'] = t.mean()
             t = t.groupby(['Housing type', 'Occupancy status']).mean()
             t.index = t.index.map(lambda x: 'Non-weighted retrofit rate {} - {} (%)'.format(x[0], x[1]))
-            output.update(t.T)
+            output.update(t.T)"""
 
             t = temp.xs(True, level='Heater replacement')
             s_temp = self.stock
@@ -2632,10 +2635,10 @@ class AgentBuildings(ThermalBuildings):
             t_grouped.index = t_grouped.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
             output.update(t_grouped.T)
 
-            output['Non-weighted retrofit rate w/ heater (%)'] = t.mean()
+            """output['Non-weighted retrofit rate w/ heater (%)'] = t.mean()
             t = t.groupby(['Housing type', 'Occupancy status']).mean()
             t.index = t.index.map(lambda x: 'Non-weighted retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
-            output.update(t.T)
+            output.update(t.T)"""
 
             output['Retrofit (Thousand)'] = self.certificate_jump.sum().sum() / 10 ** 3
             # We need them by income for freerider ratios per income deciles
