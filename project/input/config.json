@@ -7,7 +7,7 @@
     "mpr_no_bonus": true
   },
   "assessment": {
-    "activated": false,
+    "activated": true,
     "Policy name": "cite",
     "AP": "Reference",
     "AP-1": true,
