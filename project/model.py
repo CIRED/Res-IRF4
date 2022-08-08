@@ -5,11 +5,12 @@ from input.param import generic_input
 from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
 from write_output import parse_output_run, plot_scenario
 import logging
+from time import time
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 
-def res_irf(config, path, debug_mode=False):
+def res_irf(config, path):
     """Res-IRF model.
 
     Parameters
@@ -18,8 +19,6 @@ def res_irf(config, path, debug_mode=False):
         Scenario-specific input
     path: str
         Scenario-specific output path
-    debug_mode: bool
-        Detailed output.
 
     Returns
     -------
@@ -87,16 +86,17 @@ def res_irf(config, path, debug_mode=False):
                                    year=year, demolition_rate=param['demolition_rate'],
                                    data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                    number_exogenous=config['exogenous_detailed']['number'], logger=logger,
-                                   debug_mode=debug_mode)
+                                   debug_mode=config['debug_mode'])
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         logger.info('Calibration energy consumption {}'.format(year))
         buildings.calculate(energy_prices.loc[year, :], taxes)
-        s, o = parse_output_run(buildings, param)
+        s, o = buildings.parse_output_run(param)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
         for year in range(config['start'] + 1, config['end']):
+            start = time()
             logger.info('Run {}'.format(year))
             buildings.year = year
             buildings.add_flows([- buildings.flow_demolition()])
@@ -109,10 +109,11 @@ def res_irf(config, path, debug_mode=False):
             buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
             buildings.calculate(energy_prices.loc[year, :], taxes)
             logger.info('Writing output')
-            s, o = parse_output_run(buildings, param)
+            s, o = buildings.parse_output_run(param)
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
+            logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
 
         logger.info('Dumping output in {}'.format(path))
         output.round(3).to_csv(os.path.join(path, 'output.csv'))

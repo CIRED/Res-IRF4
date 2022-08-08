@@ -76,7 +76,7 @@ generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k,
 generic_input['retrofit_comparison'] = pd.read_csv('project/input/revealed_data/retrofit_comparison_resirf3.csv',
                                                    index_col=[0], header=[0])
 
-generic_input['public_policies_2019'] = pd.DataFrame([1.88*10**9, 1.05*10**9, 0*10**9, 1.32*10**9, 0.56*10**9],
+generic_input['public_policies_2019'] = pd.DataFrame([1.88, 1.05, 0, 1.32, 0.56],
                                                      index=['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan'],
                                                      columns=[2019])
 
@@ -169,9 +169,9 @@ generic_input['supply'] = {
 }
 
 
-generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 2),
-                                           'Floor': round(1 / 3.6, 2),
-                                           'Roof': round(1 / 8.6, 2),
+generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 1),
+                                           'Floor': round(1 / 3.6, 1),
+                                           'Roof': round(1 / 8.6, 1),
                                            'Windows': 1.3}
 
 generic_input['surface'] = pd.read_csv('project/input/surface.csv', index_col=[0, 1, 2]).squeeze('columns').rename(None)

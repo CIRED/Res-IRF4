@@ -28,6 +28,7 @@
   },
   "Reference": {
     "end": 2021,
+    "debug_mode": false,
     "prices_constant": true,
     "taxes_constant": true,
     "demolition_rate": 0.0,

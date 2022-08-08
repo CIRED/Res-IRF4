@@ -59,7 +59,7 @@ def parse_output_run(buildings, param):
 
     temp = emission.groupby('Existing').sum()
     temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
-    temp.index = temp.index.map(lambda x: 'Emission {} (TWh)'.format(x))
+    temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
     output.update(temp.T / 10**9)
 
     temp = emission.groupby('Energy').sum()
@@ -225,7 +225,7 @@ def parse_output_run(buildings, param):
         output.update(temp.T / 10 ** 9)
         investment_heater = buildings.investment_heater.sum(axis=1)
 
-        #representative insulation investment: weighted average with number of insulation actions as weights
+        # representative insulation investment: weighted average with number of insulation actions as weights
         if buildings._debug_mode:
             investment_insulation_repr = pd.DataFrame(buildings.investment_insulation_repr)
             gest = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
@@ -338,373 +338,21 @@ def parse_output_run(buildings, param):
     return stock, output
 
 
-"""
+def plot_scenario(output, stock, buildings):
 
-fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-for year in t.columns:
-    df = pd.concat((s_temp[year - 1], t[year]), axis=1, keys=['Stock', 'Retrofit rate']).sort_values('Retrofit rate')
-    df['Stock'] = df['Stock'].cumsum() / 10**6
-    df = df.set_index('Stock').squeeze().sort_values()
-    df.plot(ax=ax)
-format_ax(ax, format_y=lambda x, _: '{:.0%}'.format(x), y_label='Retrofit rate (%)')
-ax.set_xlabel('Cumulated buildings stock (Million)')
-format_legend(ax, labels=t.columns)
-save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))
-
-
-"""
-
-
-def parse_output(buildings, param):
-    """Parse output.
-
-    Model output
-    1. Energy consumption & emission
-    2. Stock performance evolution
-    3. Numbers retrofit (heater & envelope component retrofit)
-    3.1 By technology
-    3.2 By agent : income owner, and occupation status, housing type
-
-    4. Policies
-
-    Parameters
-    ----------
-    buildings
-    param
-
-    Returns
-    -------
-    """
-    stock = pd.DataFrame(buildings.stock_yrs).fillna(0)
-    certificate = buildings.certificate.rename('Performance')
-    energy = buildings.energy.rename('Energy')
-    stock = pd.concat((stock, certificate, energy), axis=1).set_index(['Performance', 'Energy'], append=True)
-    stock = stock.groupby(
-        ['Occupancy status', 'Income owner', 'Income tenant', 'Housing type', 'Heating system', 'Performance']).sum()
-
-    output = dict()
-    output['Consumption standard (TWh)'] = pd.Series({year: item.sum() for year, item in
-                                                        buildings.heat_consumption_sd_yrs.items()}) / 10**9
-
-    consumption = pd.DataFrame(buildings.heat_consumption_calib_yrs)
-    output['Consumption (TWh)'] = consumption.sum() / 10**9
-
-    temp = consumption.groupby(buildings.energy).sum()
-    temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-    output.update(temp.T / 10**9)
-
-    temp = consumption.groupby(buildings.certificate).sum()
-    temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-    output.update(temp.T / 10 ** 9)
-
-    c = buildings.add_energy(consumption)
-    emission = reindex_mi(param['carbon_emission'].T.rename_axis('Energy', axis=0), c.index) * c
-    emission = emission.reindex(consumption.columns, axis=1)
-
-    output['Emission (MtCO2)'] = emission.sum() / 10 ** 12
-
-    temp = emission.groupby('Energy').sum()
-    temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
-    output.update(temp.T / 10**9)
-
-    # emission = (consumption.groupby(buildings.energy).sum() * param['carbon_emission'].T).dropna(axis=1, how='all')
-    output['Cumulated emission (MtCO2)'] = output['Emission (MtCO2)'].cumsum()
-    output['Stock (Million)'] = stock.sum() / 10 ** 6
-    #output['Sizing factor (%)'] = pd.Series(output['Stock (Million)'].shape[0] * [param['sizing_factor']],
-    #                                          index=output['Stock (Million)'].index)
-    output['Surface (Million m2)'] = pd.DataFrame(buildings.surface_yrs).sum() / 10**6
-
-    output['Surface (m2/person)'] = (output['Surface (Million m2)'] / (param['population'] / 10**6)).dropna()
-    output['Consumption standard (kWh/m2)'] = (output['Consumption standard (TWh)'] * 10 ** 9) / (
-                output['Surface (Million m2)'] * 10 ** 6)
-    output['Consumption (kWh/m2)'] = (output['Consumption (TWh)'] * 10 ** 9) / (
-                output['Surface (Million m2)'] * 10 ** 6)
-
-    output['Heating intensity (%)'] = pd.Series(buildings.heating_intensity_avg)
-    if buildings._debug_mode:
-        temp = pd.DataFrame(buildings.heating_intensity_tenant)
-        temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
-        output.update(temp.T)
-
-    output['Energy poverty (Million)'] = pd.Series(buildings.energy_poverty) / 10 ** 6
-
-    temp = pd.DataFrame(buildings.certificate_nb)
-    temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
-    output.update(temp.T / 10 ** 6)
-    try:
-        output['Stock efficient (Million)'] = output['Stock A (Million)'] + output['Stock B (Million)']
-    except KeyError:
-        output['Stock efficient (Million)'] = output['Stock B (Million)']
-
-    output['Stock low-efficient (Million)'] = output['Stock F (Million)'] + output['Stock G (Million)']
-
-    temp = pd.DataFrame(buildings.retrofit_rate).dropna(how='all')
-    temp = temp.groupby([i for i in temp.index.names if i not in ['Heating system final']]).mean()
-    t = temp.xs(False, level='Heater replacement')
-
-    s_temp = pd.DataFrame(buildings.stock_yrs)
-    s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
-
-    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    """fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
     for year in t.columns:
-        df = pd.concat((s_temp[year - 1], t[year]), axis=1, keys=['Stock', 'Retrofit rate']).sort_values('Retrofit rate')
-        df['Stock'] = df['Stock'].cumsum() / 10**6
+        df = pd.concat((s_temp[year - 1], t[year]), axis=1, keys=['Stock', 'Retrofit rate']).sort_values(
+            'Retrofit rate')
+        df['Stock'] = df['Stock'].cumsum() / 10 ** 6
         df = df.set_index('Stock').squeeze().sort_values()
         df.plot(ax=ax)
     format_ax(ax, format_y=lambda x, _: '{:.0%}'.format(x), y_label='Retrofit rate (%)')
     ax.set_xlabel('Cumulated buildings stock (Million)')
     format_legend(ax, labels=t.columns)
-    save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))
-
-    #Weighted average with stock to calculate real retrofit rate
-    output['Retrofit rate (%)'] = ((t * s_temp).sum() / s_temp.sum()).drop(2018)
-    t_grouped = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
-                                                                                                   'Occupancy status']).sum()
-    t_grouped = t_grouped.drop(2018, axis=1)
-    t_grouped.index = t_grouped.index.map(lambda x: 'Retrofit rate {} - {} (%)'.format(x[0], x[1]))
-    output.update(t_grouped.T)
-
-    output['Non-weighted retrofit rate (%)'] = t.mean()
-    t = t.groupby(['Housing type', 'Occupancy status']).mean()
-    t.index = t.index.map(lambda x: 'Non-weighted retrofit rate {} - {} (%)'.format(x[0], x[1]))
-    output.update(t.T)
-
-    t = temp.xs(True, level='Heater replacement')
-    s_temp = pd.DataFrame(buildings.stock_yrs)
-    s_temp = s_temp.groupby([i for i in s_temp.index.names if i != 'Income tenant']).sum()
-    output['Retrofit rate w/ heater (%)'] = ((t * s_temp).sum() / s_temp.sum()).drop(2018)
-
-    t_grouped = (t * s_temp).groupby(['Housing type', 'Occupancy status']).sum() / s_temp.groupby(['Housing type',
-                                                                                           'Occupancy status']).sum()
-    t_grouped = t_grouped.drop(2018, axis=1)
-    t_grouped.index = t_grouped.index.map(lambda x: 'Retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
-    output.update(t_grouped.T)
-
-    output['Non-weighted retrofit rate w/ heater (%)'] = t.mean()
-    t = t.groupby(['Housing type', 'Occupancy status']).mean()
-    t.index = t.index.map(lambda x: 'Non-weighted retrofit rate heater {} - {} (%)'.format(x[0], x[1]))
-    output.update(t.T)
-
-    output['Retrofit (Thousand)'] = pd.Series(
-        {year: item.sum().sum() for year, item in buildings.certificate_jump_yrs.items()}) / 10**3
-    #We need them by income for freerider ratios per income deciles
-    temp = pd.DataFrame(
-        {year: item.sum(axis=1) for year, item in buildings.certificate_jump_yrs.items()})
-    t = temp.groupby('Income owner').sum()
-    t.index = t.index.map(lambda x: 'Retrofit {} (Thousand)'.format(x))
-    output.update(t.T / 10**3)
-    output['Retrofit >= 1 EPC (Thousand)'] = pd.Series(
-        {year: item.loc[:, [i for i in item.columns if i > 0]].sum().sum() for year, item in
-         buildings.certificate_jump_yrs.items()}) / 10 ** 3
-
-    for i in range(6):
-        temp = pd.DataFrame({year: item.loc[:, i] for year, item in buildings.certificate_jump_yrs.items()})
-        output['Retrofit {} EPC (Thousand)'.format(i)] = temp.sum() / 10 ** 3
-        output['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
-
-    # output['Efficient retrofits (Thousand)'] = pd.Series(buildings.efficient_renovation_yrs) / 10**3
-    output['Global retrofits (Thousand)'] = pd.Series(buildings.global_renovation_yrs).T / 10**3
-    output['Bonus best retrofits (Thousand)'] = pd.Series(buildings.bonus_best_yrs).T / 10**3
-    output['Bonus worst retrofits (Thousand)'] = pd.Series(buildings.bonus_worst_yrs).T / 10**3
-    output['Percentage of global retrofits'] = output['Global retrofits (Thousand)']/output[
-        'Retrofit (Thousand)']
-    output['Percentage of bonus best retrofits'] = output['Bonus best retrofits (Thousand)']/output[
-        'Retrofit (Thousand)']
-    output['Percentage of bonus worst retrofits'] = output['Bonus worst retrofits (Thousand)']/output[
-        'Retrofit (Thousand)']
-
-    # for replacement output need to be presented by technologies (what is used) and by agent (who change)
-    replacement_heater = buildings.replacement_heater
-    temp = pd.DataFrame({year: item.sum() for year, item in replacement_heater.items()})
-    t = temp.copy()
-    t.index = t.index.map(lambda x: 'Replacement heater {} (Thousand)'.format(x))
-    output.update((t / 10 ** 3).T)
-    output['Replacement heater (Thousand)'] = temp.sum() / 10 ** 3
-
-    temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_heater.items()})
-    t = temp.groupby(['Heating system', 'Housing type']).sum()
-    t.index = t.index.map(lambda x: 'Replacement heater {} {} (Thousand)'.format(x[0], x[1]))
-    output.update((t / 10 ** 3).T)
-
-    replacement_insulation = buildings.replacement_insulation
-    temp = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
-    output['Replacement insulation (Thousand)'] = temp.sum() / 10 ** 3
-    t = temp.groupby('Income owner').sum()
-    t.index = t.index.map(lambda x: 'Replacement insulation {} (Thousand)'.format(x))
-    output.update(t.T / 10**3)
-    t = temp.groupby(['Housing type', 'Occupancy status']).sum()
-    t.index = t.index.map(lambda x: 'Replacement insulation {} - {} (Thousand)'.format(x[0], x[1]))
-    output.update((t / 10**3).T)
-    t.index = t.index.str.replace('Thousand', '%')
-    s = stock.groupby(['Housing type', 'Occupancy status']).sum()
-    s.index = s.index.map(lambda x: 'Replacement insulation {} - {} (%)'.format(x[0], x[1]))
-    t = t / s
-    output.update(t.T)
-
-    for i in ['Wall', 'Floor', 'Roof', 'Windows']:
-        temp = pd.DataFrame(
-            {year: item.xs(True, level=i, axis=1).sum(axis=1) for year, item in replacement_insulation.items()})
-        output['Replacement {} (Thousand)'.format(i)] = temp.sum() / 10**3
-
-        cost = pd.DataFrame({key: item.loc[:, i] for key, item in buildings.cost_component.items()})
-        t = reindex_mi(cost, temp.index) * temp
-        # only work because existing surface does not change over time
-        output['Investment {} (Billion euro)'.format(i)] = (t * reindex_mi(param['surface'], t.index)).sum().loc[
-                                                                 t.columns] / 10 ** 9
-
-        output['Embodied energy {} (TWh PE)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) *
-                                                             param['embodied_energy_renovation'][i]).sum().loc[
-                                                                temp.columns] / 10 ** 9
-        output['Carbon footprint {} (MtCO2)'.format(i)] = (temp * reindex_mi(param['surface'], temp.index) *
-                                                             param['carbon_footprint_renovation'][i]).sum().loc[
-                                                                temp.columns] / 10 ** 9
-
-    output['Embodied energy renovation (TWh PE)'] = output['Embodied energy Wall (TWh PE)'] + output[
-        'Embodied energy Floor (TWh PE)'] + output['Embodied energy Roof (TWh PE)'] + output[
-                                                          'Embodied energy Windows (TWh PE)']
-
-    output['Embodied energy construction (TWh PE)'] = param['Embodied energy construction (TWh PE)']
-    output['Embodied energy (TWh PE)'] = output['Embodied energy renovation (TWh PE)'] + output[
-        'Embodied energy construction (TWh PE)']
-
-    output['Carbon footprint renovation (MtCO2)'] = output['Carbon footprint Wall (MtCO2)'] + output[
-        'Carbon footprint Floor (MtCO2)'] + output['Carbon footprint Roof (MtCO2)'] + output[
-                                                          'Carbon footprint Windows (MtCO2)']
-
-    output['Carbon footprint construction (MtCO2)'] = param['Carbon footprint construction (MtCO2)']
-    output['Carbon footprint (MtCO2)'] = output['Carbon footprint renovation (MtCO2)'] + output[
-        'Carbon footprint construction (MtCO2)']
-
-    output['Cost factor insulation (%)'] = pd.Series(buildings.factor_yrs, dtype=float)
-
-    temp = pd.DataFrame({year: item.sum() for year, item in buildings.investment_heater.items()})
-    output['Investment heater (Billion euro)'] = temp.sum() / 10**9
-    temp.index = temp.index.map(lambda x: 'Investment {} (Billion euro)'.format(x))
-    output.update(temp.T / 10 ** 9)
-    investment_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.investment_heater.items()})
-
-    #representative insulation investment: weighted average with number of insulation actions as weights
-    if buildings._debug_mode:
-        investment_insulation_repr = pd.DataFrame(buildings.investment_insulation_repr)
-        gest = pd.DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
-        gest = reindex_mi(gest, investment_insulation_repr.index)
-        temp = gest * investment_insulation_repr
-
-        t = temp.groupby('Income owner').sum() / gest.groupby('Income owner').sum()
-        t.index = t.index.map(lambda x: 'Investment per insulation action {} (euro)'.format(x))
-        output.update(t.T)
-
-        t = temp.groupby(['Housing type', 'Occupancy status']).sum() / gest.groupby(['Housing type',
-                                                                                     'Occupancy status']).sum()
-        t.index = t.index.map(lambda x: 'Investment per insulation action {} - {} (euro)'.format(x[0], x[1]))
-        output.update(t.T)
-
-    investment_insulation = pd.DataFrame(
-        {year: item.sum(axis=1) for year, item in buildings.investment_insulation.items()})
-    output['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10**9
-
-    index = investment_heater.index.union(investment_insulation.index)
-    investment_total = investment_heater.reindex(index, fill_value=0) + investment_insulation.reindex(index,
-                                                                                                      fill_value=0)
-    output['Investment total (Billion euro)'] = investment_total.sum() / 10**9
-    temp = investment_total.groupby('Income owner').sum()
-    temp.index = temp.index.map(lambda x: 'Investment total {} (Billion euro)'.format(x))
-    output.update(temp.T / 10**9)
-    temp = investment_total.groupby(['Housing type', 'Occupancy status']).sum()
-    temp.index = temp.index.map(lambda x: 'Investment total {} - {} (Billion euro)'.format(x[0], x[1]))
-    output.update(temp.T / 10**9)
-
-    subsidies_heater = pd.DataFrame({year: item.sum(axis=1) for year, item in buildings.subsidies_heater.items()})
-    output['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10**9
-
-    subsidies_insulation = pd.DataFrame(
-        {year: item.sum(axis=1) for year, item in buildings.subsidies_insulation.items()})
-    output['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10**9
-
-    index = subsidies_heater.index.union(subsidies_insulation.index)
-    subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index, fill_value=0)
-    output['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10**9
-    temp = subsidies_total.groupby('Income owner').sum()
-    temp.index = temp.index.map(lambda x: 'Subsidies total {} (Billion euro)'.format(x))
-    output.update(temp.T / 10**9)
-    temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
-    temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Billion euro)'.format(x[0], x[1]))
-    output.update(temp.T / 10**9)
-
-    subsidies = None
-    for gest, subsidies_details in {'heater': buildings.subsidies_details_heater,
-                                    'insulation': buildings.subsidies_details_insulation}.items():
-
-        subsidies_details = reverse_dict(subsidies_details)
-        subsidies_details = pd.DataFrame(
-            {key: pd.Series({year: data.sum().sum() for year, data in item.items()}) for key, item in
-             subsidies_details.items()}).T
-        for i in subsidies_details.index:
-            output['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = subsidies_details.loc[i,
-                                                                                              :] / 10 ** 9
-        if subsidies is None:
-            subsidies = subsidies_details.copy()
-        else:
-            subsidies = pd.concat((subsidies, subsidies_details), axis=0)
-    subsidies = subsidies.groupby(subsidies.index).sum()
-    for i in subsidies.index:
-        output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i, :] / 10 ** 9
-
-    taxes_expenditures = buildings.taxes_expenditure_details
-    taxes_expenditures = pd.DataFrame(
-        {key: pd.Series({year: data.sum() for year, data in item.items()}, dtype=float) for key, item in
-         taxes_expenditures.items()}).T
-    taxes_expenditures.index = taxes_expenditures.index.map(
-        lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
-    output.update((taxes_expenditures / 10 ** 9).T)
-    output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / 10 ** 9
-
-    energy_expenditures = pd.DataFrame(buildings.energy_expenditure_yrs)
-    output['Energy expenditures (Billion euro)'] = energy_expenditures.sum() / 10 ** 9
-    temp = energy_expenditures.groupby('Income tenant').sum()
-    temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
-    output.update(temp.T / 10 ** 9)
-
-    output['VTA heater (Billion euro)'] = pd.DataFrame(
-        {year: item.sum() for year, item in buildings.tax_heater.items()}).sum() / 10 ** 9
-
-    output['VTA insulation (Billion euro)'] = pd.Series(
-        {year: item.sum().sum() for year, item in buildings.taxed_insulation.items()}) / 10 ** 9
-    output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
-
-    output['Investment total HT (Billion euro)'] = output['Investment total (Billion euro)'] - output[
-        'VTA (Billion euro)']
-
-    output['Carbon value (Billion euro)'] = (pd.DataFrame(buildings.heat_consumption_energy_yrs).T * param[
-        'carbon_value_kwh']).sum(axis=1) / 10 ** 9
-
-    health_cost = {'health_expenditure': 'Health expenditure (Billion euro)',
-                   'mortality_cost': 'Social cost of mortality (Billion euro)',
-                   'loss_well_being': 'Loss of well-being (Billion euro)'}
-    for key, item in health_cost.items():
-        output[item] = (stock.T * reindex_mi(param[key], stock.index)).T.sum() / 10 ** 9
-    output['Health cost (Billion euro)'] = output['Health expenditure (Billion euro)'] + output[
-        'Social cost of mortality (Billion euro)'] + output['Loss of well-being (Billion euro)']
-
-    output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output[
-        'Taxes expenditure (Billion euro)']
-    output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
-        'Subsidies insulation (Billion euro)']
-    output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output[
-        'Expenditure state (Billion euro)']
-
-    levels = ['Occupancy status', 'Income owner', 'Housing type']
-    for level in levels:
-        temp = subsidies_total.groupby(level).sum() / investment_total.groupby(level).sum()
-        temp.index = temp.index.map(lambda x: 'Share subsidies {} (%)'.format(x))
-        output.update(temp.T)
-
-    output = pd.DataFrame(output).loc[buildings.stock_yrs.keys(), :].T
-
-    return stock, output
+    save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))"""
 
 
-def plot_scenario(output, stock, buildings):
     # graph
     df = pd.DataFrame(
         [output.loc['Replacement {} (Thousand)'.format(i), :] for i in generic_input['index']['Insulation']]).T.dropna()
@@ -740,19 +388,22 @@ def plot_scenario(output, stock, buildings):
                    colors=generic_input['colors'], loc='left', left=1.25)
 
     # graph subsidies
-    # TODO: via output.csv
-    """subset = pd.concat((subsidies, -taxes_expenditures), axis=0).T
-    subset = subset.loc[:, (subset != 0).any(axis=0)]
+    subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies], :]
+    taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
+
+    subset = pd.concat((subsidies, -taxes_expenditures), axis=0)
+    subset.fillna(0, inplace=True)
+    subset = subset.loc[:, (subset != 0).any(axis=0)].T
     if 'over_cap' in subset.columns:
         subset.drop('over_cap', inplace=True, axis=1)
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
-    subset.dropna(inplace=True, how='all')
+    # subset.dropna(inplace=True, how='all')
     if not subset.empty:
         make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
-                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
-                       scatter=generic_input['public_policies_2019'],
-                       loc='left', left=1.1)
-    """
+                       colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                       scatter=generic_input['public_policies_2019'], loc='left', left=1.1)
+
+
     # graph public finance
     subset = output.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
                          'Subsidies insulation (Billion euro)'], :].T
@@ -782,8 +433,6 @@ def plot_scenario(output, stock, buildings):
                    colors=generic_input['colors'], loc='left', left=1.25)
 
     # graph consumption
-    # TODO
-    """
     t = output.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
     t.index = ['Renovation', 'Construction']
     if 'Consumption New (TWh)' in output.index:
@@ -792,7 +441,7 @@ def plot_scenario(output, stock, buildings):
         l = ['Existing']
     temp = output.loc[['Consumption {} (TWh)'.format(i) for i in l], :]
     temp.index = l
-    temp = pd.concat((temp, t.T), axis=1).dropna(how='any')
+    temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
     make_area_plot(temp, 'Consumption (TWh)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'consumption.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
@@ -806,11 +455,11 @@ def plot_scenario(output, stock, buildings):
         l = ['Existing']
     temp = output.loc[['Emission {} (MtCO2)'.format(i) for i in l], :]
     temp.index = l
-    temp = pd.concat((temp / 10 ** 12, t.T), axis=1).dropna(how='any')
+    temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
     make_area_plot(temp, 'Emission (MtCO2)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'emission.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2)
-    """
+
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Millions)', colors=generic_input['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
@@ -831,7 +480,7 @@ def plot_scenario(output, stock, buildings):
                    save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False)"""
 
 
-def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=None):
+def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
     """Grouped scenarios output.
 
     Renovation expenditure discounted (Billion euro)
@@ -858,7 +507,6 @@ def grouped_output(result, stocks, folder, config_runs=None, config_sensitivity=
     Parameters
     ----------
     result
-    stocks
     folder
     config_runs: dict
 
