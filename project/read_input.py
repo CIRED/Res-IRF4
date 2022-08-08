@@ -49,6 +49,23 @@ class PublicPolicy:
         self.cost_max = cost_max
         self.cost_min = cost_min
 
+    def cost_targeted(self, cost_insulation, target_subsidies=None):
+        cost = cost_insulation.copy()
+        if self.cost_max is not None:
+            cost_max = reindex_mi(self.cost_max, cost.index)
+            cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(
+                cost.columns, axis=1)
+            cost[cost > cost_max] = cost_max
+        if self.cost_min is not None:
+            cost_min = reindex_mi(self.cost_min, cost.index)
+            cost_min = pd.concat([cost_min] * cost.shape[1], axis=1).set_axis(
+                cost.columns, axis=1)
+            cost[cost < cost_min] = 0
+        if self.target is not None and target_subsidies is not None:
+            cost = cost[target_subsidies].fillna(0)
+
+        return cost
+
 
 def read_stock(config):
     stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze('columns')
@@ -125,15 +142,16 @@ def read_policies(config):
         return l
 
     def read_zil(data):
+        data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
+
         if data['ad_volarem']:
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
-                             gest='insulation')]
+                             target=True, cost_min=data['min'], cost_max=data_max, gest='insulation')]
         else:
-            data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                         gest='insulation', target=True, cost_max=data_max, cost_min=data['min'])]
+                            gest='insulation', target=True, cost_max=data_max, cost_min=data['min'])]
 
     def read_reduced_tax(data):
         l = list()

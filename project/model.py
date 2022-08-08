@@ -3,7 +3,7 @@ import pandas as pd
 from building import AgentBuildings
 from input.param import generic_input
 from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
-from write_output import parse_output_run, plot_scenario
+from write_output import plot_scenario
 import logging
 from time import time
 

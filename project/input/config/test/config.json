@@ -29,6 +29,7 @@
   },
   "Reference": {
     "end": 2051,
+    "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,

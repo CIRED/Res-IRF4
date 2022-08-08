@@ -2072,23 +2072,17 @@ class AgentBuildings(ThermalBuildings):
 
         if self._endogenous:
 
-            zil = [policy for policy in policies_insulation if policy.name == 'zero_interest_loan']
-            if zil:
-                if zil[0].policy == 'subsidy_ad_volarem':
-                    zil = 'subsidy_ad_volarem'
-                    l = ['reduced_tax']
-                else:
-                    l = ['reduced_tax', 'zero_interest_loan']
-
             utility_subsidies = subsidies_total.copy()
-
+            zil = [p for p in policies_insulation if (p.name == 'zero_interest_loan')]
+            l = ['reduced_tax'] + [z.name for z in zil if z.policy != 'subsidy_ad_volarem']
             for sub in l:
                 if sub in subsidies_details.keys():
                     utility_subsidies -= subsidies_details[sub]
 
             utility_zil = None
-            if 'zero_interest_loan' in subsidies_details and zil != 'subsidy_ad_volarem':
-                utility_zil = subsidies_details['zero_interest_loan'].copy()
+            if 'zero_interest_loan' in subsidies_details:
+                if zil[0].policy != 'subsidy_ad_volarem':
+                    utility_zil = subsidies_details['zero_interest_loan'].copy()
 
             delta_subsidies = None
             if self.year in [self.first_year + 1]:
@@ -2222,16 +2216,21 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'subsidy_ad_volarem':
 
+                cost = policy.cost_targeted(cost_insulation, target_subsidies=target_subsidies)
+
                 if isinstance(policy.value, pd.Series):
-                    temp = reindex_mi(policy.value, cost_insulation.index)
-                    subsidies_details[policy.name] = (temp * cost_insulation.T).T
+                    temp = reindex_mi(policy.value, cost.index)
+                    subsidies_details[policy.name] = (temp * cost.T).T
                     subsidies_total += subsidies_details[policy.name]
                 else:
-                    subsidies_details[policy.name] = policy.value * cost_insulation
+                    subsidies_details[policy.name] = policy.value * cost
                     subsidies_total += subsidies_details[policy.name]
 
             elif policy.policy == 'zero_interest_loan':
-                cost = cost_insulation.copy()
+
+                cost = policy.cost_targeted(cost_insulation, target_subsidies=target_subsidies)
+
+                """cost = cost_insulation.copy()
                 if policy.cost_max is not None:
                     cost_max = reindex_mi(policy.cost_max, cost.index)
                     cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(
@@ -2243,7 +2242,7 @@ class AgentBuildings(ThermalBuildings):
                         cost.columns, axis=1)
                     cost[cost < cost_min] = 0
                 if policy.target is not None:
-                    cost = cost[target_subsidies].fillna(0)
+                    cost = cost[target_subsidies].fillna(0)"""
 
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
@@ -2434,7 +2433,6 @@ class AgentBuildings(ThermalBuildings):
         self.bonus_best = (replaced_by * self.in_best).sum().sum()
         self.bonus_worst = (replaced_by * self.out_worst).sum().sum()
         self.replacement_insulation = replaced_by.groupby(levels).sum()
-
         self.investment_insulation = (replaced_by * self.cost_insulation_indiv).groupby(levels).sum()
         self.taxed_insulation = (replaced_by * self.tax_insulation).groupby(levels).sum()
         self.subsidies_insulation = (replaced_by * self.subsidies_insulation_indiv).groupby(levels).sum()
