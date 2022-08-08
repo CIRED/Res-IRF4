@@ -898,9 +898,9 @@ class AgentBuildings(ThermalBuildings):
         self.tax_heater = replacement * tax_heater
         self.subsidies_heater = replacement * subsidies_total
         self.heater_replaced = replaced_by
-
         for key in self.subsidies_details_heater.keys():
             self.subsidies_details_heater[key] *= replacement
+
         if self._debug_mode:
             self.cost_heater_yrs.update({self.year: self.cost_heater})
             self.subsidies_heater_indiv_yrs.update({self.year: self.subsidies_heater_indiv})
@@ -1153,6 +1153,9 @@ class AgentBuildings(ThermalBuildings):
             market_share = (np.exp(scale * utility_intensive).T / np.exp(scale * utility_intensive).sum(axis=1)).T
             return market_share, utility_intensive
 
+        def retrofit_func(utility, rate_max=0.3):
+            return 1 / (1 + np.exp(- utility)) * rate_max
+
         def to_retrofit_rate(bill_saved, subsidies, investment, bool_zil=None, debug_mode=self._debug_mode):
             utility_bill_saving = reindex_mi(self.pref_bill_insulation_ext, bill_saved.index) * bill_saved / 1000
 
@@ -1174,7 +1177,7 @@ class AgentBuildings(ThermalBuildings):
                 _utility += utility_constant
                 utility = _utility.droplevel('Performance')
 
-            retrofit_rate = 1 / (1 + np.exp(- utility))
+            retrofit_rate = retrofit_func(utility)
 
             if debug_mode and self.utility_insulation_extensive is not None:
                 levels = [l for l in self.utility_insulation_extensive.index.names if l != 'Performance']
@@ -1197,12 +1200,12 @@ class AgentBuildings(ThermalBuildings):
             return retrofit_rate, utility
 
         def impact_subsidies(scale, utility, stock, pref_subsidies, delta_subsidies, indicator='freeriders'):
-            retrofit = 1 / (1 + np.exp(- utility * scale))
+            retrofit = retrofit_func(utility * scale)
             flow = (retrofit * stock).sum()
             retrofit = flow / stock.sum()
 
             utility_plus = (utility + pref_subsidies * delta_subsidies) * scale
-            retrofit_plus = 1 / (1 + np.exp(- utility_plus))
+            retrofit_plus = retrofit_func(utility_plus)
             flow_plus = (retrofit_plus * stock).sum()
             retrofit_plus = flow_plus / stock.sum()
 
@@ -1436,7 +1439,7 @@ class AgentBuildings(ThermalBuildings):
                 stock_ref = stock_ini.copy()
                 utility_cst = reindex_mi(cst, utility_ref.index)
                 u = (utility_ref + utility_cst).copy()
-                retrofit_rate_calc = 1 / (1 + np.exp(- u * scale))
+                retrofit_rate_calc = retrofit_func(u * scale)
                 agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
                 retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
                 rslt = retrofit_rate_agg - retrofit_rate_target
@@ -1465,7 +1468,7 @@ class AgentBuildings(ThermalBuildings):
 
             utility_constant = reindex_mi(constant, utility.index)
             utility = utility * scale + utility_constant
-            retrofit_rate = 1 / (1 + np.exp(- utility))
+            retrofit_rate = retrofit_func(utility)
             agg = (retrofit_rate * stock).groupby(retrofit_rate_ini.index.names).sum()
             retrofit_rate_agg = agg / stock.groupby(retrofit_rate_ini.index.names).sum()
 

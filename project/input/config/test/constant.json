@@ -27,7 +27,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "debug_mode": false,
     "prices_constant": true,
     "taxes_constant": true,
