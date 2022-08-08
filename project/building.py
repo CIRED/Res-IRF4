@@ -2072,13 +2072,22 @@ class AgentBuildings(ThermalBuildings):
 
         if self._endogenous:
 
+            zil = [policy for policy in policies_insulation if policy.name == 'zero_interest_loan']
+            if zil:
+                if zil[0].policy == 'subsidy_ad_volarem':
+                    zil = 'subsidy_ad_volarem'
+                    l = ['reduced_tax']
+                else:
+                    l = ['reduced_tax', 'zero_interest_loan']
+
             utility_subsidies = subsidies_total.copy()
-            for sub in ['reduced_tax', 'zero_interest_loan']:
+
+            for sub in l:
                 if sub in subsidies_details.keys():
                     utility_subsidies -= subsidies_details[sub]
 
             utility_zil = None
-            if 'zero_interest_loan' in subsidies_details:
+            if 'zero_interest_loan' in subsidies_details and zil != 'subsidy_ad_volarem':
                 utility_zil = subsidies_details['zero_interest_loan'].copy()
 
             delta_subsidies = None

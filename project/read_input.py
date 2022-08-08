@@ -125,9 +125,14 @@ def read_policies(config):
         return l
 
     def read_zil(data):
-        data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
-        return [
-            PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
+        if data['ad_volarem']:
+            return [
+                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
+                             gest='insulation')]
+        else:
+            data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
+            return [
+                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
                          gest='insulation', target=True, cost_max=data_max, cost_min=data['min'])]
 
     def read_reduced_tax(data):
