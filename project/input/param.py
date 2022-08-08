@@ -169,9 +169,9 @@ generic_input['supply'] = {
 }
 
 
-generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 2),
-                                           'Floor': round(1 / 3.6, 2),
-                                           'Roof': round(1 / 8.6, 2),
+generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 1),
+                                           'Floor': round(1 / 3.6, 1),
+                                           'Roof': round(1 / 8.6, 1),
                                            'Windows': 1.3}
 
 generic_input['surface'] = pd.read_csv('project/input/surface.csv', index_col=[0, 1, 2]).squeeze('columns').rename(None)

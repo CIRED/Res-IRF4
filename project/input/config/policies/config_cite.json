@@ -19,10 +19,10 @@
     "ZP": true,
     "ZP+1": true,
     "AP-2020": true,
-    "AP-2025": true,
-    "AP-2030": true,
-    "AP-2035": true,
-    "AP-2040": true,
+    "AP-2025": false,
+    "AP-2030": false,
+    "AP-2035": false,
+    "AP-2040": false,
     "Discount rate": 0.032,
     "Lifetime": 30,
     "energy_prices": "project/input/energy_prices.csv",
@@ -30,7 +30,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2051,
+    "end": 2021,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,

@@ -151,7 +151,6 @@ if __name__ == '__main__':
     logging.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logging.debug('Launching processes')
-        # get_context("spawn").
         with Pool() as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
