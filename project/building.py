@@ -2190,15 +2190,8 @@ class AgentBuildings(ThermalBuildings):
         self.in_best = (certificate.isin(['A', 'B']).astype(int).T * (~certificate_before.isin(['A', 'B'])).astype(
             int)).T.astype(bool)
 
-        non_cumulative_condition = percentage_energy_saved > 0.55
-        low_decile_condition = percentage_energy_saved.loc[
-            (percentage_energy_saved.index.get_level_values('Income owner') <= 'D4') & (
-                        percentage_energy_saved.index.get_level_values('Income owner') != 'D10')] > 0.35
-        low_decile_condition = reindex_mi(low_decile_condition, non_cumulative_condition.index)
-        non_cumulative_condition = low_decile_condition.where(low_decile_condition > non_cumulative_condition,
-                                                              non_cumulative_condition)
+        #non_cumulative_condition = percentage_energy_saved > 0.55
 
-        non_cumulative_condition = {'mpr': non_cumulative_condition}
 
         target_0 = certificate.isin(['D', 'C', 'B', 'A']).astype(int).mul(
             certificate_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
@@ -2211,7 +2204,17 @@ class AgentBuildings(ThermalBuildings):
         epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
         certificate_jump = - certificate.replace(epc2int).sub(certificate_before.replace(epc2int), axis=0)
 
-        subsidies_comparison = {}
+        non_cumulative_condition = certificate_jump >= 2
+        low_decile_condition = certificate_jump.loc[
+                                   (certificate_jump.index.get_level_values('Income owner') <= 'D4') & (
+                                           certificate_jump.index.get_level_values('Income owner') != 'D10')] >= 1
+        low_decile_condition = reindex_mi(low_decile_condition, non_cumulative_condition.index)
+        non_cumulative_condition = low_decile_condition.where(low_decile_condition > non_cumulative_condition,
+                                                              non_cumulative_condition)
+
+        non_cumulative_condition = {'mpr': non_cumulative_condition}
+
+        #subsidies_comparison = {}
 
         for policy in policies_insulation:
             if policy.name not in self.policies:
@@ -2227,7 +2230,7 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     subsidies_details[policy.name] = temp.copy()
 
-                subsidies_comparison[policy.name] = subsidies_details[policy.name]
+                #subsidies_comparison[policy.name] = subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_best':
                 temp = (reindex_mi(policy.value, self.in_best.index) * self.in_best.T).T
@@ -2281,19 +2284,24 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
 
+        subsidies_comparison =['mpr']
         subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
         if subsidies_non_cumulative:
             for policy in subsidies_non_cumulative:
                 sub = (reindex_mi(policy.value, non_cumulative_condition[policy.name].index) * non_cumulative_condition[
                     policy.name].T).T
                 sub = sub.astype(float)
-                if policy.name in subsidies_comparison.keys():
-                    comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
+                # if policy.name in subsidies_comparison.keys():
+                #     #ici pas sure d'avoir besoin de subsidy comparison en fait
+                #     comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
+                #     temp = comp.where(comp > sub, sub)
+                if policy.name in subsidies_comparison:
+                    comp = reindex_mi(subsidies_details[policy.name], sub.index)
                     temp = comp.where(comp > sub, sub)
                 else:
                     temp = sub
-                update = - subsidies_comparison[policy.name] + temp
-                subsidies_details[policy.name] += update
+                update = - subsidies_details[policy.name] + temp
+                subsidies_details[policy.name] += update #on pourrait faire simplement = temp mais après on a le update pour subsidies total ce qui est pas plus mal
                 subsidies_total += update
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
@@ -2343,13 +2351,7 @@ class AgentBuildings(ThermalBuildings):
         percentage_energy_saved
         """
 
-        self.global_renovation = percentage_energy_saved > 0.55
-        low_decile_condition = percentage_energy_saved.loc[
-            (percentage_energy_saved.index.get_level_values('Income owner') <= 'D4') & (
-                        percentage_energy_saved.index.get_level_values('Income owner') != 'D10')] > 0.35
-        low_decile_condition = reindex_mi(low_decile_condition, self.global_renovation.index)
-        self.global_renovation = low_decile_condition.where(low_decile_condition > self.global_renovation,
-                                                            self.global_renovation)
+
 
         self.certificate_jump = certificate_jump
         self.cost_component = cost_insulation_raw * self.surface_insulation * (1 + tax)
@@ -2358,6 +2360,15 @@ class AgentBuildings(ThermalBuildings):
         self.cost_insulation_indiv = cost_insulation
         self.tax_insulation = tax_insulation
         self.retrofit_rate = retrofit_rate
+
+        #self.global_renovation = percentage_energy_saved > 0.55
+        self.global_renovation = certificate_jump >= 2
+        low_decile_condition = certificate_jump.loc[
+            (certificate_jump.index.get_level_values('Income owner') <= 'D4') & (
+                        certificate_jump.index.get_level_values('Income owner') != 'D10')] >= 1
+        low_decile_condition = reindex_mi(low_decile_condition, self.global_renovation.index)
+        self.global_renovation = low_decile_condition.where(low_decile_condition > self.global_renovation,
+                                                            self.global_renovation)
 
         if self._debug_mode:
             self.cost_component_yrs.update({self.year: self.cost_component})

@@ -98,6 +98,11 @@ def read_policies(config):
             global_retrofit = pd.read_csv(data['global_retrofit'], index_col=[0]).squeeze('columns')
             l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
                                   gest='insulation'))
+
+        if data['mpr_serenite']:
+            mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
+            l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
+                                  gest='insulation'))
         if data['bonus']:
             bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
             bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
