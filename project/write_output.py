@@ -41,16 +41,16 @@ def plot_scenario(output, stock, buildings):
 
     # graph
     df = pd.DataFrame(
-        [output.loc['Replacement {} (Thousand)'.format(i), :] for i in generic_input['index']['Insulation']]).T.dropna()
+        [output.loc['Replacement {} (Thousand households)'.format(i), :] for i in generic_input['index']['Insulation']]).T.dropna()
     df.columns = generic_input['index']['Insulation']
-    make_area_plot(df, 'Replacement (Thousand)',
+    make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), colors=generic_input['colors'], loc='left', left=1.1)
 
-    df = pd.DataFrame([output.loc['Replacement heater {} (Thousand)'.format(i), :] for i in
+    df = pd.DataFrame([output.loc['Replacement heater {} (Thousand households)'.format(i), :] for i in
                        generic_input['index']['Heater']]).T.dropna()
     df.columns = generic_input['index']['Heater']
-    make_area_plot(df, 'Replacement (Thousand)',
+    make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
@@ -58,17 +58,17 @@ def plot_scenario(output, stock, buildings):
     mf_heater_index = [heater for heater in generic_input['index']['Heater']
                        if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
     df = pd.DataFrame(
-        [output.loc['Replacement heater Multi-family {} (Thousand)'.format(i), :] for i in mf_heater_index]).T.dropna()
+        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in mf_heater_index]).T.dropna()
     df.columns = mf_heater_index
-    make_area_plot(df, 'Replacement (Thousand)',
+    make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
 
-    df = pd.DataFrame([output.loc['Replacement heater Single-family {} (Thousand)'.format(i), :] for i in
+    df = pd.DataFrame([output.loc['Replacement heater Single-family {} (Thousand households)'.format(i), :] for i in
                        generic_input['index']['Heater']]).T.dropna()
     df.columns = generic_input['index']['Heater']
-    make_area_plot(df, 'Replacement (Thousand)',
+    make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_sf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
@@ -100,7 +100,6 @@ def plot_scenario(output, stock, buildings):
                            colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
                            scatter=generic_input['public_policies_2019'], loc='left', left=1.2)
 
-
     # graph public finance
     subset = output.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
                          'Subsidies insulation (Billion euro)'], :].T
@@ -109,7 +108,7 @@ def plot_scenario(output, stock, buildings):
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
     if not subset.empty:
-        make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'public_finance.png'),
+        make_area_plot(subset, 'Public finance (Billion euro)', save=os.path.join(buildings.path, 'public_finance.png'),
                        colors=generic_input['colors'],
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
@@ -224,17 +223,21 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Retrofit >= 1 EPC (Thousand)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y),
-                                                  generic_input['retrofit_comparison']),
-                 'Bonus best retrofits (Thousand)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Global retrofits (Thousand)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Retrofit (Thousand households)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Renovation (Thousand households)': ('renovation.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Renovation >= 1 EPC (Thousand households)': (
+                 'renovation_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
+                 generic_input['retrofit_comparison']),
+                 'Bonus best renovation (Thousand households)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Global renovation (Thousand households)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy expenditures (Billion euro)': (
                  'energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement insulation (Thousand)': ('replacement_insulation_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement heater (Thousand)': ('replacement_heater.png', lambda y, _: '{:,.0f}'.format(y))
+                 'Replacement total (Thousand)': ('replacement_total.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement insulation (Thousand)': ('replacement_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Replacement heater (Thousand households)': ('replacement_heater.png', lambda y, _: '{:,.0f}'.format(y))
                  }
 
     for variable, infos in variables.items():
@@ -243,12 +246,13 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
             temp = pd.concat((temp, infos[2]), axis=1)
             temp.sort_index(inplace=True)
         except IndexError:
-            continue
+            pass
 
         try:
             scatter = infos[3]
         except IndexError:
             scatter = None
+            pass
 
         make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
 
@@ -279,14 +283,17 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Investment total {} (Billion euro)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Replacement {} (Thousand)': [
+        'Replacement {} (Thousand households)': [
             ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, generic_input['retrofit_hist'])],
-        'Replacement insulation {} (Thousand)': [
+        'Replacement insulation {} (Thousand households)': [
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Retrofit rate {} (%)': [
+        'Renovation rate {} (%)': [
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Retrofit rate heater {} (%)': [
+        'Renovation rate heater {} (%)': [
             ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
+        'Renovation types {} (Thousand households)': [
+            ('Count', lambda y, _: '{:,.0f}'.format(y), 2)
+        ]
     }
 
     def details_graphs(data, v, inf, folder_img):

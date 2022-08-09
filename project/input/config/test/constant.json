@@ -27,10 +27,10 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
-    "debug_mode": true,
-    "prices_constant": false,
-    "taxes_constant": false,
+    "end": 2031,
+    "debug_mode": false,
+    "prices_constant": true,
+    "taxes_constant": true,
     "demolition_rate": 0.0,
     "construction": false,
     "income_rate": 0.0,
@@ -41,10 +41,11 @@
       "number": 0
     },
     "target_freeriders": 0.85,
+    "preferences_zeros": false,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
-    "renovation_rate_max": 0.5,
+    "renovation_rate_max": 1,
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
@@ -124,4 +125,5 @@
     "share_multi_family": "project/input/share_multifamily.csv",
     "surface_built": "endogenous"
   }
+
 }

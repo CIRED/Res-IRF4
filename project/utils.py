@@ -31,7 +31,8 @@ MEDIUM_SIZE = 18
 BIGGER_SIZE = 20
 
 plt.rc('font', size=BIGGER_SIZE)  # controls default text sizes
-plt.rc('axes', titlesize=BIGGER_SIZE, labelsize=BIGGER_SIZE, labelcolor=COLOR, labelweight='bold')  # fontsize of the axes title of the x and y labels
+plt.rc('axes', titlesize=BIGGER_SIZE, titlecolor=COLOR, titleweight='bold', labelsize=BIGGER_SIZE, labelcolor=COLOR,
+       labelweight='bold')  # fontsize of the axes title of the x and y labels
 plt.rc('xtick', labelsize=BIGGER_SIZE, color=COLOR)  # fontsize of the tick labels
 plt.rc('ytick', labelsize=BIGGER_SIZE, color=COLOR)  # fontsize of the tick labels
 plt.rc('legend', fontsize=MEDIUM_SIZE)  # legend fontsize
@@ -146,7 +147,7 @@ def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, xin
     if title:
         t = title.split(' (')[0]
         unit = title.split(' (')[1].split(')')[0]
-        ax.set_title('{}\n{}'.format({t}, {unit}), loc='left')
+        ax.set_title('{}\n{}'.format(t, unit), loc='left')
 
     if ymin is not None:
         ax.set_ylim(ymin=0)

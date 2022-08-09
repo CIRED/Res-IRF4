@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from building import AgentBuildings
 from input.param import generic_input
-from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters
+from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters, PublicPolicy
 from write_output import plot_scenario
 import logging
 from time import time
@@ -62,12 +62,14 @@ def res_irf(config, path):
 
         if energy_taxes is not None:
             total_taxes = total_taxes.add(energy_taxes, fill_value=0)
+            taxes += [PublicPolicy('energy_taxes', energy_taxes.index[0], energy_taxes.index[-1], energy_taxes, 'tax')]
 
         if config['taxes_constant']:
             total_taxes = pd.concat([total_taxes.loc[year, :]] * total_taxes.shape[0], keys=total_taxes.index,
                                     axis=1).T
 
         energy_vta = energy_prices * generic_input['vta_energy_prices']
+        taxes += [PublicPolicy('energy_vta', energy_vta.index[0], energy_vta.index[-1], energy_vta, 'tax')]
         total_taxes += energy_vta
 
         energy_prices = energy_prices.add(total_taxes, fill_value=0)
@@ -84,13 +86,20 @@ def res_irf(config, path):
             renovation_rate_max = config['renovation_rate_max']
         else:
             renovation_rate_max = 1.0
+
+        preferences_zeros = False
+        if 'preferences_zeros' in config.keys():
+            preferences_zeros = config['preferences_zeros']
+
         buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
                                    param['consumption_ini'], path, param['preferences'],
                                    restrict_heater, ms_heater, choice_insulation, param['performance_insulation'],
                                    year=year, demolition_rate=param['demolition_rate'],
                                    data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                    number_exogenous=config['exogenous_detailed']['number'], logger=logger,
-                                   debug_mode=config['debug_mode'], renovation_rate_max=renovation_rate_max)
+                                   debug_mode=config['debug_mode'], renovation_rate_max=renovation_rate_max,
+                                   preferences_zeros=preferences_zeros
+                                   )
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         logger.info('Calibration energy consumption {}'.format(year))

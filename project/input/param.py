@@ -189,7 +189,8 @@ generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 
                           'Insulation': ['Wall', 'Floor', 'Roof', 'Windows'],
                           'Heater': ['Electricity-Heat pump', 'Electricity-Performance boiler',
                                      'Natural gas-Performance boiler', 'Oil fuel-Performance boiler',
-                                     'Wood fuel-Performance boiler']
+                                     'Wood fuel-Performance boiler'],
+                          'Count': [1, 2, 3, 4, 5]
                           }
 
 colors = {
@@ -231,6 +232,8 @@ colors = {
     "Oil fuel-Performance boiler": "black",
     "Wood fuel-Performance boiler": "saddlebrown",
     "VTA": "grey",
+    "Energy taxes": "blue",
+    "Energy vta": "red",
     "Taxes expenditure": "darkorange",
     "Subsidies heater": "orangered",
     "Subsidies insulation": "darksalmon",
