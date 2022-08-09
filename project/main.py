@@ -129,6 +129,13 @@ if __name__ == '__main__':
                     configuration['MprGlobalRetrofit'] = copy.deepcopy(configuration['Reference'])
                     configuration['MprGlobalRetrofit']['policies']['mpr'][
                         'global_retrofit'] = "project/input/policies/mpr_global_retrofit.csv"
+
+            if 'mpr_no_serenite' in config_sensitivity.keys():
+                if config_sensitivity['mpr_no_serenite']:
+                    configuration['MprNoSerenite'] = copy.deepcopy(configuration['Reference'])
+                    configuration['MprNoSerenite']['policies']['mpr'][
+                        'mpr_serenite'] = None
+
             if 'mpr_no_bonus' in config_sensitivity.keys():
                 if config_sensitivity['mpr_no_bonus']:
                     configuration['MprNoBonus'] = copy.deepcopy(configuration['Reference'])

@@ -66,8 +66,9 @@
         "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "bonus": "project/input/policies/mpr_bonus.csv",
-        "global_retrofit": "project/input/policies/mpr_global_retrofit.csv"
+        "global_retrofit": null,
+        "mpr_serenite": "project/input/policies/mpr_serenite.csv",
+        "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
         "start": 2019,

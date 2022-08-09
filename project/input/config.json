@@ -1,11 +1,11 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "ZP": true,
     "prices_constant": true,
     "mpr_global_retrofit": true,
-    "mpr_no_bonus": true,
-    "prices_factor": 1.5
+    "mpr_no_serenite": true,
+    "mpr_no_bonus": true
   },
   "assessment": {
     "activated": false,
@@ -26,7 +26,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2022,
+    "end": 2050,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -65,7 +65,7 @@
         "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": "project/input/policies/mpr_global_retrofit.csv",
+        "global_retrofit": null,
         "mpr_serenite": "project/input/policies/mpr_serenite.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
