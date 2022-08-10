@@ -2214,7 +2214,7 @@ class AgentBuildings(ThermalBuildings):
 
         non_cumulative_condition = {'mpr': non_cumulative_condition}
 
-        #subsidies_comparison = {}
+        subsidies_comparison = {}
 
         for policy in policies_insulation:
             if policy.name not in self.policies:
@@ -2230,7 +2230,7 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     subsidies_details[policy.name] = temp.copy()
 
-                #subsidies_comparison[policy.name] = subsidies_details[policy.name]
+                subsidies_comparison[policy.name] = subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_best':
                 temp = (reindex_mi(policy.value, self.in_best.index) * self.in_best.T).T
@@ -2284,24 +2284,20 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
 
-        subsidies_comparison =['mpr']
         subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
         if subsidies_non_cumulative:
             for policy in subsidies_non_cumulative:
                 sub = (reindex_mi(policy.value, non_cumulative_condition[policy.name].index) * non_cumulative_condition[
                     policy.name].T).T
                 sub = sub.astype(float)
-                # if policy.name in subsidies_comparison.keys():
-                #     #ici pas sure d'avoir besoin de subsidy comparison en fait
-                #     comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
-                #     temp = comp.where(comp > sub, sub)
-                if policy.name in subsidies_comparison:
-                    comp = reindex_mi(subsidies_details[policy.name], sub.index)
+                if policy.name in subsidies_comparison.keys():
+                    #ici pas sure d'avoir besoin de subsidy comparison en fait
+                    comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
                     temp = comp.where(comp > sub, sub)
                 else:
                     temp = sub
-                update = - subsidies_details[policy.name] + temp
-                subsidies_details[policy.name] += update #on pourrait faire simplement = temp mais après on a le update pour subsidies total ce qui est pas plus mal
+                update = - subsidies_comparison[policy.name] + temp
+                subsidies_details[policy.name] += update
                 subsidies_total += update
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
