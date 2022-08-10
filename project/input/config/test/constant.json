@@ -1,13 +1,13 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "ZP": false,
     "prices_constant": false,
-    "prices_factor": false,
+    "prices_factor": [0.8, 1.2, 1.5, 2],
     "cost_factor": false,
     "renovation_rate_ini": false,
     "target_freeriders": [0.7, 0.8, 0.9],
-    "preferences_zeros": true
+    "preferences_zeros": false
   },
   "assessment": {
     "activated": false,
@@ -28,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2041,
+    "end": 2020,
     "debug_mode": false,
     "prices_constant": true,
     "taxes_constant": true,
@@ -47,6 +47,7 @@
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
     "renovation_rate_max": 1,
+    "calib_scale": true,
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",

@@ -6,7 +6,7 @@ from read_input import read_stock, read_policies, read_exogenous, read_revealed,
 from write_output import plot_scenario
 import logging
 from time import time
-
+import json
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 
@@ -87,9 +87,18 @@ def res_irf(config, path):
         else:
             renovation_rate_max = 1.0
 
+        calib_scale = True
+        if 'calib_scale' in config.keys():
+            calib_scale = config['calib_scale']
+
         preferences_zeros = False
         if 'preferences_zeros' in config.keys():
             preferences_zeros = config['preferences_zeros']
+            if preferences_zeros:
+                calib_scale = False
+
+        with open(os.path.join(path, 'config.json'), 'w') as fp:
+            json.dump(config, fp)
 
         buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
                                    param['consumption_ini'], path, param['preferences'],
@@ -98,7 +107,7 @@ def res_irf(config, path):
                                    data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                    number_exogenous=config['exogenous_detailed']['number'], logger=logger,
                                    debug_mode=config['debug_mode'], renovation_rate_max=renovation_rate_max,
-                                   preferences_zeros=preferences_zeros
+                                   preferences_zeros=preferences_zeros, calib_scale=calib_scale
                                    )
 
         output, stock = pd.DataFrame(), pd.DataFrame()

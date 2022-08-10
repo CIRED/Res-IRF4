@@ -464,12 +464,13 @@ class AgentBuildings(ThermalBuildings):
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences, restrict_heater,
                  ms_heater, choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
                  data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='market_share',
-                 logger=None, debug_mode=False, renovation_rate_max=1.0, preferences_zeros=False):
+                 logger=None, debug_mode=False, renovation_rate_max=1.0, preferences_zeros=False, calib_scale=True):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration, debug_mode=debug_mode)
 
         self.certificate_jump_heater = None
         self.retrofit_with_heater = None
+        self._calib_scale = calib_scale
         self.vta = 0.1
         self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
@@ -1428,7 +1429,7 @@ class AgentBuildings(ThermalBuildings):
 
         @timing
         def calibration_constant_scale_ext(utility, stock, retrofit_rate_ini, target_freeriders, delta_subsidies,
-                                           pref_subsidies, calib_scale=False):
+                                           pref_subsidies):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
 
             Parameters
@@ -1439,7 +1440,6 @@ class AgentBuildings(ThermalBuildings):
             target_freeriders
             delta_subsidies
             pref_subsidies
-            calib_scale: bool, default True
 
             Returns
             -------
@@ -1491,7 +1491,7 @@ class AgentBuildings(ThermalBuildings):
 
             constant = retrofit_rate_ini.copy()
             constant[retrofit_rate_ini > 0] = 0
-            if calib_scale:
+            if self._calib_scale:
                 x = np.append(constant.to_numpy(), 1)
                 root, infodict, _, _ = fsolve(solve, x, args=(
                 utility, stock_retrofit, retrofit_rate_ini, target_freeriders, - delta_subsidies / 1000, pref_subsidies),
@@ -2511,7 +2511,7 @@ class AgentBuildings(ThermalBuildings):
         replaced_by = (flow * market_share.T).T.copy()
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
-        only_heater = (stock - flow).xs(True, level='Heater replacement')
+        only_heater = (stock - flow.reindex(stock.index, fill_value=0)).xs(True, level='Heater replacement')
         certificate_jump = self.certificate_jump_heater.stack()
         rslt = {}
         l = pd.unique(certificate_jump)
@@ -2718,20 +2718,21 @@ class AgentBuildings(ThermalBuildings):
             temp = self.certificate_jump.sum().squeeze().sort_index()
             temp = temp[temp.index.dropna()]
             o = {}
-            for i in temp.index.unique():
-                o['Renovation {} EPC (Thousand households)'.format(i)] = temp.loc[i] / 10 ** 3
-                t = 0
+            for i in temp.index.union(self.certificate_jump_heater.index):
+                t_renovation = 0
+                if i in temp.index:
+                    t_renovation = temp.loc[i]
+                    o['Renovation {} EPC (Thousand households)'.format(i)] = t_renovation / 10 ** 3
+                t_heater = 0
                 if i in self.certificate_jump_heater.index:
-                    t = self.certificate_jump_heater.loc[i]
-                o['Retrofit {} EPC (Thousand households)'.format(i)] = (temp.loc[i] + t) / 10 ** 3
+                    t_heater = self.certificate_jump_heater.loc[i]
+                o['Retrofit {} EPC (Thousand households)'.format(i)] = (t_renovation + t_heater) / 10 ** 3
             o = pd.Series(o).sort_index(ascending=False)
 
             output['Renovation >= 1 EPC (Thousand households)'] = self.certificate_jump.loc[:,
                                                      [i for i in self.certificate_jump.columns if
                                                       i > 0]].sum().sum() / 10 ** 3
             output['Retrofit >= 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >=1])
-            output['Renovation test >= 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >=1])
-
 
             output.update(o.T)
                 # output['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
@@ -2751,7 +2752,6 @@ class AgentBuildings(ThermalBuildings):
             t = temp.groupby('Income owner').sum()
             t.index = t.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
             output.update(t.T / 10 ** 3)
-
 
             # for replacement output need to be presented by technologies (what is used) and by agent (who change)
             temp = self.replacement_heater.sum()

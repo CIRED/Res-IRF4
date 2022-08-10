@@ -131,7 +131,12 @@ def run(path=None):
             if 'preferences_zeros' in config_sensitivity.keys():
                 if config_sensitivity['preferences_zeros']:
                     configuration['PreferencesZeros'] = copy.deepcopy(configuration['Reference'])
-                    configuration['preferences_zeros'] = True
+                    configuration['PreferencesZeros'] = config_sensitivity['preferences_zeros']
+
+            if 'calib_scale' in config_sensitivity.keys():
+                if config_sensitivity['calib_scale']:
+                    configuration['CalibScale'] = copy.deepcopy(configuration['Reference'])
+                    configuration['CalibScale'] = config_sensitivity['calib_scale']
 
             if 'mpr_global_retrofit' in config_sensitivity.keys():
                 if config_sensitivity['mpr_global_retrofit']:
