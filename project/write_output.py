@@ -95,6 +95,8 @@ def plot_scenario(output, stock, buildings):
             format_legend(ax[1], loc='left', left=1.2)
             ax[0].set_title('Realized')
             ax[1].set_title('Model results')
+            save_fig(fig, save=os.path.join(buildings.path, 'policies.png'))
+
         else:
             make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
                            colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),

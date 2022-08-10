@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "ZP": false,
     "prices_constant": false,
     "prices_factor": [0.8, 1.2, 1.5, 2],
@@ -28,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2020,
+    "end": 2051,
     "debug_mode": false,
     "prices_constant": true,
     "taxes_constant": true,

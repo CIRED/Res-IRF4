@@ -103,7 +103,9 @@
         "end": 2020,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       }
     },
     "footprint": {
@@ -191,7 +193,9 @@
         "end": 2020,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       },
       "sub_ad_volarem": {
         "start": 2020,
@@ -284,7 +288,9 @@
         "end": 2020,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       },
       "sub_ad_volarem": {
         "start": 2020,
@@ -377,7 +383,9 @@
         "end": 2020,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       },
       "sub_ad_volarem": {
         "start": 2020,
@@ -470,7 +478,9 @@
         "end": 2020,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       },
       "sub_ad_volarem": {
         "start": 2020,
@@ -563,7 +573,9 @@
         "end": 2020,
         "value": 0.0917729,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
+        "max": "project/input/policies/zil_max.csv",
+        "ad_volarem": true
+
       },
       "sub_ad_volarem": {
         "start": 2020,
