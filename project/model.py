@@ -82,10 +82,9 @@ def res_irf(config, path):
         pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
         logger.info('Creating AgentBuildings object')
+        renovation_rate_max = 1.0
         if 'renovation_rate_max' in config.keys():
             renovation_rate_max = config['renovation_rate_max']
-        else:
-            renovation_rate_max = 1.0
 
         calib_scale = True
         if 'calib_scale' in config.keys():
@@ -97,6 +96,10 @@ def res_irf(config, path):
             if preferences_zeros:
                 calib_scale = False
 
+        debug_mode = False
+        if 'debug_mode' in config.keys():
+            debug_mode = config['debug_mode']
+
         with open(os.path.join(path, 'config.json'), 'w') as fp:
             json.dump(config, fp)
 
@@ -106,7 +109,7 @@ def res_irf(config, path):
                                    year=year, demolition_rate=param['demolition_rate'],
                                    data_calibration=param['data_ceren'], endogenous=config['endogenous'],
                                    number_exogenous=config['exogenous_detailed']['number'], logger=logger,
-                                   debug_mode=config['debug_mode'], renovation_rate_max=renovation_rate_max,
+                                   debug_mode=debug_mode, renovation_rate_max=renovation_rate_max,
                                    preferences_zeros=preferences_zeros, calib_scale=calib_scale
                                    )
 
