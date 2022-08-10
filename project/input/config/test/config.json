@@ -1,9 +1,9 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "ZP": true,
     "prices_constant": true,
-    "prices_factor": [2],
+    "prices_factor": [1.5],
     "renovation_rate_ini": null,
     "mpr_global_retrofit": null,
     "cost_factor": null,
@@ -28,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2041,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -42,9 +42,11 @@
       "number": 0
     },
     "target_freeriders": 0.85,
+    "preferences_zeros": false,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
+    "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
@@ -104,6 +106,7 @@
         "start": 2019,
         "end": 2051,
         "value": 0.0917729,
+        "ad_volarem": true,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       }

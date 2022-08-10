@@ -30,7 +30,8 @@ from model import res_irf
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
-if __name__ == '__main__':
+
+def run(path=None):
     start = time()
 
     parser = argparse.ArgumentParser()
@@ -44,7 +45,9 @@ if __name__ == '__main__':
     if not os.path.isdir('project/output'):
         os.mkdir('project/output')
 
-    with open(args.config) as file:
+    if path is None:
+        path = args.config
+    with open(path) as file:
         configuration = json.load(file)
 
     config_policies = None
@@ -124,6 +127,12 @@ if __name__ == '__main__':
                     for v in values:
                         configuration['FreeridersIni{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['FreeridersIni{:.0f}'.format(v * 100)]['target_freeriders'] = v
+
+            if 'preferences_zeros' in config_sensitivity.keys():
+                if config_sensitivity['preferences_zeros']:
+                    configuration['PreferencesZeros'] = copy.deepcopy(configuration['Reference'])
+                    configuration['preferences_zeros'] = True
+
             if 'mpr_global_retrofit' in config_sensitivity.keys():
                 if config_sensitivity['mpr_global_retrofit']:
                     configuration['MprGlobalRetrofit'] = copy.deepcopy(configuration['Reference'])
@@ -140,6 +149,7 @@ if __name__ == '__main__':
                 if config_sensitivity['mpr_no_bonus']:
                     configuration['MprNoBonus'] = copy.deepcopy(configuration['Reference'])
                     configuration['MprNoBonus']['policies']['mpr']['bonus'] = None
+
         del configuration['sensitivity']
 
     folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
@@ -171,3 +181,7 @@ if __name__ == '__main__':
     except Exception as e:
         logging.exception(e)
         raise e
+
+
+if __name__ == '__main__':
+    run()
