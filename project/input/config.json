@@ -1,10 +1,10 @@
 {
   "sensitivity": {
     "activated": true,
-    "ZP": false,
-    "prices_constant": false,
-    "mpr_global_retrofit": false,
-    "mpr_no_serenite": false,
+    "ZP": true,
+    "prices_constant": true,
+    "mpr_global_retrofit": true,
+    "mpr_no_serenite": true,
     "mpr_no_bonus": true
   },
   "assessment": {
@@ -26,7 +26,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2022,
+    "end": 2050,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
