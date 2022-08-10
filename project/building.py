@@ -419,7 +419,6 @@ class ThermalBuildings:
             self.energy_expenditure_energy_yrs.update({self.year: self.energy_expenditure_energy})
             self.taxes_expenditure_yrs.update({self.year: self.taxes_expenditure})
 
-
     def certificates(self, wall=None, floor=None, roof=None, windows=None, efficiency=None, energy=None):
         wall, floor, roof, windows, efficiency, energy = self.self_prepare(wall=wall, floor=floor, roof=roof,
                                                                            windows=windows, efficiency=efficiency,
@@ -469,10 +468,12 @@ class AgentBuildings(ThermalBuildings):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
                          data_calibration=data_calibration, debug_mode=debug_mode)
 
+        self.certificate_jump_heater = None
         self.retrofit_with_heater = None
         self.vta = 0.1
         self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
+        self._epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
 
         self.logger = logger
         self.policies = []
@@ -656,6 +657,10 @@ class AgentBuildings(ThermalBuildings):
         bill_saved = - energy_bill_sd.sub(agent.energy_bill_sd(prices), axis=0)
         utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill_heater, bill_saved.index)).T / 1000
         utility_bill_saving = utility_bill_saving.loc[:, choice_heater]
+
+        certificate = agent.certificates(efficiency=efficiency)
+        self.certificate_jump_heater = - certificate.replace(self._epc2int).sub(
+            agent.certificates().replace(self._epc2int), axis=0)
 
         utility_subsidies = subsidies_total * self.pref_subsidy_heater / 1000
 
@@ -2201,8 +2206,7 @@ class AgentBuildings(ThermalBuildings):
 
         # certificate_matrix = certificate.set_axis(certificate_before.reindex(certificate.index).values, axis=0)
 
-        epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
-        certificate_jump = - certificate.replace(epc2int).sub(certificate_before.replace(epc2int), axis=0)
+        certificate_jump = - certificate.replace(self._epc2int).sub(certificate_before.replace(self._epc2int), axis=0)
 
         non_cumulative_condition = certificate_jump >= 2
         low_decile_condition = certificate_jump.loc[
@@ -2351,8 +2355,6 @@ class AgentBuildings(ThermalBuildings):
         percentage_energy_saved
         """
 
-
-
         self.certificate_jump = certificate_jump
         self.cost_component = cost_insulation_raw * self.surface_insulation * (1 + tax)
         self.subsidies_details_insulation = subsidies_details
@@ -2361,7 +2363,7 @@ class AgentBuildings(ThermalBuildings):
         self.tax_insulation = tax_insulation
         self.retrofit_rate = retrofit_rate
 
-        #self.global_renovation = percentage_energy_saved > 0.55
+        # self.global_renovation = percentage_energy_saved > 0.55
         self.global_renovation = certificate_jump >= 2
         low_decile_condition = certificate_jump.loc[
             (certificate_jump.index.get_level_values('Income owner') <= 'D4') & (
@@ -2378,90 +2380,6 @@ class AgentBuildings(ThermalBuildings):
             self.tax_insulation_yrs.update({self.year: self.tax_insulation})
             self.retrofit_rate_yrs.update({self.year: self.retrofit_rate})
             self.efficient_renovation = certificate.isin(['A', 'B'])
-
-    @timing
-    def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,
-                      policies_heater, policies_insulation, target_freeriders, supply_constraint=False):
-        """Compute heater replacement and insulation retrofit.
-
-        1. Heater replacement based on current stock segment.
-        2. Knowing heater replacement (and new heating system) calculating retrofit rate by segment and market
-        share by segment.
-        3. Then, managing inflow and outflow.
-
-        Parameters
-        ----------
-        prices: pd.Series
-        cost_heater: pd.Series
-        ms_heater
-        cost_insulation
-        ms_insulation
-        ms_extensive
-        policies_heater
-        policies_insulation
-        supply_constraint: bool
-
-        Returns
-        -------
-        pd.Series
-        """
-        stock = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
-        # self.stock_temp.update({self.year: stock})
-
-        self.logger.debug('Agents: {:,.0f}'.format(stock.shape[0]))
-        retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
-                                                                  ms_extensive, policies_insulation,
-                                                                  target_freeriders, index=stock.index, stock=stock,
-                                                                  supply_constraint=supply_constraint)
-
-        retrofit_rate = reindex_mi(retrofit_rate, stock.index)
-        flow = (retrofit_rate * stock).dropna()
-        replacement_sum = flow.sum().sum()
-        market_share = reindex_mi(market_share, flow.index)
-        replaced_by = (flow * market_share.T).T.copy()
-        assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
-        self.store_information_retrofit(replaced_by, market_share)
-
-        replaced_by = replaced_by.groupby(
-            [c for c in replaced_by.index.names if c != 'Heater replacement']).sum()
-
-        share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
-        temp = pd.concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
-        share = reindex_mi(share, temp.columns, axis=1)
-        share = reindex_mi(share, temp.index)
-        replaced_by = (share * temp).stack('Income tenant').dropna()
-        assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
-
-        to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
-        to_replace = to_replace.groupby(to_replace.index.names).sum()
-        assert round(to_replace.sum(), 0) == round(replacement_sum, 0), 'Sum problem'
-
-        replaced_by = replaced_by.droplevel('Heating system').rename_axis(
-            index={'Heating system final': 'Heating system'})
-
-        replaced_by.index.set_names(
-            {'Wall': 'Wall before', 'Roof': 'Roof before', 'Floor': 'Floor before', 'Windows': 'Windows before'},
-            inplace=True)
-        replaced_by.columns.set_names(
-            {'Wall': 'Wall after', 'Roof': 'Roof after', 'Floor': 'Floor after', 'Windows': 'Windows after'},
-            inplace=True)
-        replaced_by = replaced_by.stack(replaced_by.columns.names).rename('Data')
-        replaced_by = replaced_by.reset_index()
-        for component in ['Wall', 'Floor', 'Roof', 'Windows']:
-            replaced_by[component] = replaced_by['{} before'.format(component)]
-            replaced_by.loc[replaced_by['{} after'.format(component)], component] = self._performance_insulation[component]
-
-        replaced_by.drop(
-            ['Wall before', 'Wall after', 'Roof before', 'Roof after', 'Floor before', 'Floor after', 'Windows before',
-             'Windows after'], axis=1, inplace=True)
-        replaced_by = replaced_by.set_index(self.stock.index.names).loc[:, 'Data']
-
-        to_replace = to_replace.reorder_levels(replaced_by.index.names)
-        flow_retrofit = pd.concat((-to_replace, replaced_by), axis=0)
-        flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
-        assert round(flow_retrofit.sum(), 0) == 0, 'Sum problem'
-
-        return flow_retrofit
 
     @timing
     def store_information_retrofit(self, replaced_by, market_share):
@@ -2505,7 +2423,7 @@ class AgentBuildings(ThermalBuildings):
             rslt[n] += replaced_by.loc[:, g].xs(False, level='Heater replacement').sum().sum()
             rslt[n + 1] += replaced_by.loc[:, g].xs(True, level='Heater replacement').sum().sum()
         self.gest_nb = pd.Series(rslt)
-        
+
         self.retrofit_with_heater = replaced_by.xs(True, level='Heater replacement').sum().sum()
 
         if self._debug_mode:
@@ -2529,7 +2447,8 @@ class AgentBuildings(ThermalBuildings):
             self.investment_insulation_mean.update(
                 {self.year: (market_share * self.cost_insulation_indiv).sum(axis=1).groupby(levels).first()})
             self.investment_insulation_efficient.update(
-                {self.year: (self.efficient_renovation * self.cost_insulation_indiv).mean(axis=1).replace(0, float('nan')).groupby(levels).first()})
+                {self.year: (self.efficient_renovation * self.cost_insulation_indiv).mean(axis=1).replace(0, float(
+                    'nan')).groupby(levels).first()})
 
             self.subsidies_insulation_mean.update(
                 {self.year: (market_share * self.subsidies_insulation_indiv).sum(axis=1).groupby(
@@ -2553,6 +2472,99 @@ class AgentBuildings(ThermalBuildings):
                                             self.subsidies_insulation_efficient[self.year],
                                             self.bill_saved_efficient[self.year])
                 self.private_npv_efficient.update({self.year: private_npv_efficient})
+
+    @timing
+    def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,
+                      policies_heater, policies_insulation, target_freeriders, supply_constraint=False):
+        """Compute heater replacement and insulation retrofit.
+
+        1. Heater replacement based on current stock segment.
+        2. Knowing heater replacement (and new heating system) calculating retrofit rate by segment and market
+        share by segment.
+        3. Then, managing inflow and outflow.
+
+        Parameters
+        ----------
+        prices: pd.Series
+        cost_heater: pd.Series
+        ms_heater
+        cost_insulation
+        ms_insulation
+        ms_extensive
+        policies_heater
+        policies_insulation
+        supply_constraint: bool
+
+        Returns
+        -------
+        pd.Series
+        """
+        stock = self.heater_replacement(prices, cost_heater, ms_heater, policies_heater)
+        # self.stock_temp.update({self.year: stock})
+
+        self.logger.debug('Agents: {:,.0f}'.format(stock.shape[0]))
+        retrofit_rate, market_share = self.insulation_replacement(prices, cost_insulation, ms_insulation,
+                                                                  ms_extensive, policies_insulation,
+                                                                  target_freeriders, index=stock.index, stock=stock,
+                                                                  supply_constraint=supply_constraint)
+
+        retrofit_rate = reindex_mi(retrofit_rate, stock.index)
+        flow = (retrofit_rate * stock).dropna()
+        replacement_sum = flow.sum().sum()
+        market_share = reindex_mi(market_share, flow.index)
+        replaced_by = (flow * market_share.T).T.copy()
+        assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
+
+        only_heater = (stock - flow).xs(True, level='Heater replacement')
+        certificate_jump = self.certificate_jump_heater.stack()
+        rslt = {}
+        l = pd.unique(certificate_jump)
+        for i in l:
+            rslt.update({i: ((certificate_jump == i) * only_heater).sum()})
+        self.certificate_jump_heater = pd.Series(rslt).sort_index()
+
+        self.store_information_retrofit(replaced_by, market_share)
+
+        replaced_by = replaced_by.groupby(
+            [c for c in replaced_by.index.names if c != 'Heater replacement']).sum()
+
+        share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
+        temp = pd.concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
+        share = reindex_mi(share, temp.columns, axis=1)
+        share = reindex_mi(share, temp.index)
+        replaced_by = (share * temp).stack('Income tenant').dropna()
+        assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
+
+        to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
+        to_replace = to_replace.groupby(to_replace.index.names).sum()
+        assert round(to_replace.sum(), 0) == round(replacement_sum, 0), 'Sum problem'
+
+        replaced_by = replaced_by.droplevel('Heating system').rename_axis(
+            index={'Heating system final': 'Heating system'})
+
+        replaced_by.index.set_names(
+            {'Wall': 'Wall before', 'Roof': 'Roof before', 'Floor': 'Floor before', 'Windows': 'Windows before'},
+            inplace=True)
+        replaced_by.columns.set_names(
+            {'Wall': 'Wall after', 'Roof': 'Roof after', 'Floor': 'Floor after', 'Windows': 'Windows after'},
+            inplace=True)
+        replaced_by = replaced_by.stack(replaced_by.columns.names).rename('Data')
+        replaced_by = replaced_by.reset_index()
+        for component in ['Wall', 'Floor', 'Roof', 'Windows']:
+            replaced_by[component] = replaced_by['{} before'.format(component)]
+            replaced_by.loc[replaced_by['{} after'.format(component)], component] = self._performance_insulation[component]
+
+        replaced_by.drop(
+            ['Wall before', 'Wall after', 'Roof before', 'Roof after', 'Floor before', 'Floor after', 'Windows before',
+             'Windows after'], axis=1, inplace=True)
+        replaced_by = replaced_by.set_index(self.stock.index.names).loc[:, 'Data']
+
+        to_replace = to_replace.reorder_levels(replaced_by.index.names)
+        flow_retrofit = pd.concat((-to_replace, replaced_by), axis=0)
+        flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
+        assert round(flow_retrofit.sum(), 0) == 0, 'Sum problem'
+
+        return flow_retrofit
 
     @timing
     def flow_demolition(self):
@@ -2705,12 +2717,27 @@ class AgentBuildings(ThermalBuildings):
             # output['Renovation (Thousand households)'] = self.certificate_jump.sum().sum() / 10 ** 3
             # We need them by income for freerider ratios per income deciles
 
+            # TODO: optimizing: only need certificate_jump summed or by index by not dataframe
+
+            temp = self.certificate_jump.sum().squeeze().sort_index()
+            temp = temp[temp.index.dropna()]
+            o = {}
+            for i in temp.index.unique():
+                o['Renovation {} EPC (Thousand households)'.format(i)] = temp.loc[i] / 10 ** 3
+                t = 0
+                if i in self.certificate_jump_heater.index:
+                    t = self.certificate_jump_heater.loc[i]
+                o['Retrofit {} EPC (Thousand households)'.format(i)] = (temp.loc[i] + t) / 10 ** 3
+            o = pd.Series(o).sort_index(ascending=False)
+
             output['Renovation >= 1 EPC (Thousand households)'] = self.certificate_jump.loc[:,
                                                      [i for i in self.certificate_jump.columns if
                                                       i > 0]].sum().sum() / 10 ** 3
-            for i in range(6):
-                temp = self.certificate_jump.loc[:, i]
-                output['Renovation {} EPC (Thousand households)'.format(i)] = temp.sum() / 10 ** 3
+            output['Retrofit >= 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >=1])
+            output['Renovation test >= 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >=1])
+
+
+            output.update(o.T)
                 # output['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
 
             # output['Efficient retrofits (Thousand)'] = pd.Series(self.efficient_renovation_yrs) / 10**3
@@ -2728,6 +2755,7 @@ class AgentBuildings(ThermalBuildings):
             t = temp.groupby('Income owner').sum()
             t.index = t.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
             output.update(t.T / 10 ** 3)
+
 
             # for replacement output need to be presented by technologies (what is used) and by agent (who change)
             temp = self.replacement_heater.sum()

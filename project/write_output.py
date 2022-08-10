@@ -228,6 +228,9 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
                  'Renovation >= 1 EPC (Thousand households)': (
                  'renovation_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
                  generic_input['retrofit_comparison']),
+                 'Retrofit >= 1 EPC (Thousand households)': (
+                     'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
+                     generic_input['retrofit_comparison']),
                  'Bonus best renovation (Thousand households)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Global renovation (Thousand households)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
