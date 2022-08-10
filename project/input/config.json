@@ -1,11 +1,11 @@
 {
   "sensitivity": {
-    "activated": false,
-    "ZP": false,
-    "prices_constant": false,
-    "mpr_global_retrofit": false,
-    "mpr_no_serenite": false,
-    "mpr_no_bonus": false
+    "activated": true,
+    "ZP": true,
+    "prices_constant": true,
+    "mpr_global_retrofit": true,
+    "mpr_no_serenite": true,
+    "mpr_no_bonus": true
   },
   "assessment": {
     "activated": false,
@@ -67,7 +67,7 @@
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
         "mpr_serenite": "project/input/policies/mpr_serenite.csv",
-        "bonus": null
+        "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
         "start": 2019,
