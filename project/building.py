@@ -1215,7 +1215,7 @@ class AgentBuildings(ThermalBuildings):
 
             return retrofit_rate, utility
 
-        def impact_subsidies(scale, utility, stock, pref_subsidies, delta_subsidies, indicator='freeriders'):
+        def impact_subsidies(scale, utility, stock, delta_subsidies, pref_subsidies, indicator='freeriders'):
             retrofit = retrofit_func(utility * scale)
             flow = (retrofit * stock).sum()
             retrofit = flow / stock.sum()
@@ -1462,7 +1462,7 @@ class AgentBuildings(ThermalBuildings):
                 rslt = retrofit_rate_agg - retrofit_rate_target
 
                 # calibration scale
-                calcul = impact_subsidies(scale, utility_ini, stock_ini, pref_sub, delta_sub, indicator='freeriders')
+                calcul = impact_subsidies(scale, u, stock_ini, delta_sub, pref_sub, indicator='freeriders')
                 rslt = np.append(rslt, calcul - freeride)
 
                 return rslt
@@ -1493,10 +1493,12 @@ class AgentBuildings(ThermalBuildings):
             constant[retrofit_rate_ini > 0] = 0
             if self._calib_scale:
                 x = np.append(constant.to_numpy(), 1)
-                root, infodict, _, _ = fsolve(solve, x, args=(
+                root, infodict, ier, mess = fsolve(solve, x, args=(
                 utility, stock_retrofit, retrofit_rate_ini, target_freeriders, - delta_subsidies / 1000, pref_subsidies),
                               full_output=True)
+                self.logger.info(mess)
                 scale = root[-1]
+                self.logger.info('Scale: {}'.format(scale))
                 constant = pd.Series(root[:-1], index=retrofit_rate_ini.index) * scale
             else:
                 x = constant.to_numpy()
@@ -1852,8 +1854,10 @@ class AgentBuildings(ThermalBuildings):
 
         if self.utility_insulation_extensive is None:
             self.logger.debug('Calibration renovation rate')
-
-            delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
+            if self._utility_extensive == 'market_share':
+                delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
+            else:
+                raise NotImplemented
             pref_subsidies = reindex_mi(self.pref_subsidy_insulation_ext, subsidies_insulation.index).rename(None)
 
             # graphic showing the impact of the scale in a general case
@@ -1861,10 +1865,9 @@ class AgentBuildings(ThermalBuildings):
                 x, free_riders, elasticity = [], [], []
                 for scale in np.arange(0.1, 5, 0.1):
                     x.append(scale)
-                    free_riders.append(impact_subsidies(scale, utility, stock, pref_subsidies, - delta_subsidies_sum / 1000,
+                    free_riders.append(impact_subsidies(scale, utility, stock, - delta_subsidies_sum / 1000, pref_subsidies,
                                                         indicator='freeriders'))
-                    elasticity.append(impact_subsidies(scale, utility, stock, pref_subsidies,
-                                                       subsidies_insulation / 1000 * 0.01,
+                    elasticity.append(impact_subsidies(scale, utility, stock, subsidies_insulation / 1000 * 0.01, pref_subsidies,
                                                        indicator='elasticity'))
 
                 graphs = {'Freeriders cite': free_riders}
@@ -1929,6 +1932,8 @@ class AgentBuildings(ThermalBuildings):
 
             retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
                                                       investment_insulation, bool_zil=bool_zil_ext)
+
+            impact_subsidies(1.0, utility, stock, - delta_subsidies_sum / 1000, self.pref_subsidy_insulation_ext)
 
             # graphics showing the distribution of retrofit rate after calibration
             if self._debug_mode:
