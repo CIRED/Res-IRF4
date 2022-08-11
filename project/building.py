@@ -2921,8 +2921,7 @@ class AgentBuildings(ThermalBuildings):
             output['Investment total HT (Billion euro)'] = output['Investment total (Billion euro)'] - output[
                 'VTA (Billion euro)']
 
-            output['Carbon value (Billion euro)'] = (self.heat_consumption_energy * param[
-                                                                                             'carbon_value_kwh'].loc[
+            output['Carbon value (Billion euro)'] = (self.heat_consumption_energy * param['carbon_value_kwh'].loc[
                                                                                          self.year,
                                                                                          :]).sum() / 10 ** 9
 
@@ -2946,6 +2945,10 @@ class AgentBuildings(ThermalBuildings):
                 temp = subsidies_total.groupby(level).sum() / investment_total.groupby(level).sum()
                 temp.index = temp.index.map(lambda x: 'Share subsidies {} (%)'.format(x))
                 output.update(temp.T)
+
+            output['Investment total HT / households (Thousand euro)'] = output['Investment total HT (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
+            output['Investment total / households (Thousand euro)'] = output['Investment total (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
+            output['Investment insulation / households (Thousand euro)'] = output['Investment insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
 
         output = pd.Series(output).rename(self.year)
         stock = stock.rename(self.year)
