@@ -336,7 +336,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
         indicator_policies(result, folder, config_runs)
 
 
-def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
+def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     folder_policies = os.path.join(folder, 'policies')
     os.mkdir(folder_policies)
@@ -468,7 +468,7 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
     comparison = pd.DataFrame(comparison)
 
     # Efficiency: AP and AP-t scenarios
-    efficiency_scenarios = list(set(comparison.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2050)]))
+    efficiency_scenarios = list(set(comparison.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2051)]))
     indicator = dict()
     if efficiency_scenarios:
         # We want efficiency only for concerned scenario policy (that is cut at t-1)
@@ -476,16 +476,21 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
 
         policy_cost = comp_efficiency.loc['{} (Billion euro)'.format(policy_name)]
         indicator.update({'{} (Billion euro)'.format(policy_name): policy_cost})
+        indicator.update({'Investment total HT (Billion euro)': comp_efficiency.loc['Investment total HT (Billion euro)']})
+
         indicator.update({'Consumption (TWh)': comp_efficiency.loc['Consumption (TWh)']})
         indicator.update({'Consumption standard (TWh)': comp_efficiency.loc['Consumption standard (TWh)']})
         indicator.update({'Emission (MtCO2)': comp_efficiency.loc['Emission (MtCO2)']})
-        indicator.update({"Cost effectiveness (euro/kWh)": - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
-        indicator.update({"Cost effectiveness standard (euro/kWh)": - policy_cost / comp_efficiency.loc[
+        indicator.update({'Cost effectiveness (euro/kWh)': - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
+        indicator.update({'Cost effectiveness standard (euro/kWh)': - policy_cost / comp_efficiency.loc[
             'Consumption standard (TWh)']})
-        indicator.update({"Cost effectiveness carbon (euro/tCO2)": - policy_cost / comp_efficiency.loc[
+        indicator.update({'Cost effectiveness carbon (euro/tCO2)': - policy_cost / comp_efficiency.loc[
             'Emission (MtCO2)'] * 10**3})
-        indicator.update({"Leverage (%)": comp_efficiency.loc['Investment total HT (Billion euro)'] / policy_cost})
-        indicator.update({"Investment / energy savings (€/kWh)": comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
+        indicator.update({'Leverage (%)': comp_efficiency.loc['Investment total HT (Billion euro)'] / policy_cost})
+        indicator.update({'Investment / energy savings (euro/kWh)': comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
+        indicator.update({'Investment / energy savings standard (euro/kWh)': comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Consumption standard (TWh)']})
+        indicator.update({'Investment / emission (euro/tCO2)': comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
+
         indicator = pd.DataFrame(indicator).T
 
         # Retrofit ratio = freerider ratio
@@ -493,27 +498,32 @@ def indicator_policies(result, folder, config, discount_rate=0.032, years=30):
         for s in efficiency_scenarios:
             year = int(s[-4:])
             if year in result['Reference'].columns:
-                indicator.loc['Freeriding retrofit (Thousand)', s] = result[s].loc['Retrofit (Thousand)', year]
-                indicator.loc['Non-freeriding retrofit (Thousand)', s] = result['Reference'].loc['Retrofit (Thousand)', year] - (
-                    result[s].loc['Retrofit (Thousand)', year])
-                indicator.loc['Freeriding retrofit ratio (%)', s] = result[s].loc['Retrofit (Thousand)', year] / (
-                    result['Reference'].loc['Retrofit (Thousand)', year])
+
+                indicator.loc['Intensive margin diff (Thousand euro / households)', s] = result['Reference'].loc['Investment insulation / households (Thousand euro)', year] - result[s].loc['Investment insulation / households (Thousand euro)', year]
+                indicator.loc['Intensive margin diff (%)', s] = indicator.loc['Intensive margin diff (Thousand euro / households)', s] / result['Reference'].loc['Investment insulation / households (Thousand euro)', year]
+                indicator.loc['Freeriding renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
+                indicator.loc['Non-freeriding renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - (
+                    result[s].loc['Renovation (Thousand households)', year])
+                indicator.loc['Freeriding investment diff (Billion euro)', s] = indicator.loc['Freeriding renovation (Thousand households)', s] * 10**3 * indicator.loc['Intensive margin diff (Thousand euro / households)', s] / 10**6
+                indicator.loc['Non-freeriding investment diff (Billion euro)', s] = indicator.loc['Non-freeriding renovation (Thousand households)', s] * 10**3 * result[s].loc['Investment insulation / households (Thousand euro)', year] / 10**6
+                indicator.loc['Freeriding renovation ratio (%)', s] = result[s].loc['Renovation (Thousand households)', year] / (
+                    result['Reference'].loc['Renovation (Thousand households)', year])
                 decile = ['D{}'.format(i) for i in range(1, 11)]
-                df = result[s].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year] / \
-                     result['Reference'].loc[['Retrofit {} (Thousand)'.format(d) for d in decile], year]
-                df.index = ['Freeriding retrofit ratio {} (%)'.format(d) for d in decile]
+                df = result[s].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year] / \
+                     result['Reference'].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year]
+                df.index = ['Freeriding renovation ratio {} (%)'.format(d) for d in decile]
                 df.name = s
                 df = pd.DataFrame(df)
-                #This part to be improved
+                # This part to be improved
                 if set(list(df.index)).issubset(list(indicator.index)):
                     indicator.loc[list(df.index), s] = df[s]
                 else:
                     indicator = pd.concat((indicator, df), axis=0)
 
-                indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Retrofit rate (%)', year] - (
-                    result[s].loc['Retrofit rate (%)', year])
-                indicator.loc['Impact on retrofit rate (%)', s] = (result['Reference'].loc['Retrofit rate (%)', year] - (
-                    result[s].loc['Retrofit rate (%)', year])) / comparison.loc['{} (Billion euro)'.format(policy_name), s]
+                indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Renovation rate (%)', year] - (
+                    result[s].loc['Renovation rate (%)', year])
+                """indicator.loc['Impact on retrofit rate (%)', s] = (result['Reference'].loc['Renovation rate (%)', year] - (
+                    result[s].loc['Renovation rate (%)', year])) / comparison.loc['{} (Billion euro)'.format(policy_name), s]"""
     else:
         indicator = pd.DataFrame(indicator).T
 
