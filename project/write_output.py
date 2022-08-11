@@ -532,10 +532,13 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     def socioeconomic_npv(data, scenarios, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
         """Calculate socioeconomic NPV.
         Double difference is calculated with : scenario - reference
+        NPV is presented as such for ZP+1: ZP+1 - ZP
         If the scenario requires more investment than the reference, then the difference of investments is
         positive, and it is taken into account in the NPV as a negative impact: - Investment total
         If the scenario results in less energy consumed then the reference, then energy savings is positive,
         and taken into account in the NPV as a positive account.
+
+        NPV is presented as AP - AP-1 for AP-1, opposit signs to always represent the net effect of the policy
 
         Parameters
         ----------
@@ -569,14 +572,19 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
             temp.update({'Well-being benefit': df['Loss of well-being (Billion euro)']})
             temp.update({'Health savings': df['Health expenditure (Billion euro)']})
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
-            temp = - pd.Series(temp) #minus sign for convention
+            if 'AP' in s:
+                temp = pd.Series(temp)
+                title = 'AP - ({})'.format(s)
+            else:
+                temp = - pd.Series(temp)
+                title = '({})- ZP'.format(s)
 
             if save:
-                waterfall_chart(temp, title=s,
+                waterfall_chart(temp, title=title,
                                 save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))),
                                 colors=generic_input['colors'])
 
-            npv[s] = temp
+            npv[title] = temp
 
         npv = pd.DataFrame(npv)
         if save:

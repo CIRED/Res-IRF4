@@ -560,7 +560,8 @@ class AgentBuildings(ThermalBuildings):
         self.certificate_jump = None
         self.gest_nb = None
 
-        self.global_renovation, self.in_best, self.out_worst = None, None, None
+        self.global_renovation_high_income, self.global_renovation_low_income = None, None
+        self.in_best, self.out_worst = None, None
         self.bonus_best, self.bonus_worst = None, None
         self.market_share = None
         self.replacement_heater, self.heater_replaced = None, None
@@ -599,7 +600,8 @@ class AgentBuildings(ThermalBuildings):
             self.subsidies_details_insulation_yrs = {}
             self.tax_insulation_yrs = {}
             self.retrofit_rate_yrs = {}
-            self.global_renovation_yrs = {}
+            self.global_renovation_high_income_yrs = {}
+            self.global_renovation_low_income_yrs = {}
             self.bonus_best_yrs = {}
             self.bonus_worst_yrs = {}
 
@@ -2365,13 +2367,13 @@ class AgentBuildings(ThermalBuildings):
         self.retrofit_rate = retrofit_rate
 
         # self.global_renovation = percentage_energy_saved > 0.55
-        self.global_renovation = certificate_jump >= 2
-        low_decile_condition = certificate_jump.loc[
-            (certificate_jump.index.get_level_values('Income owner') <= 'D4') & (
-                        certificate_jump.index.get_level_values('Income owner') != 'D10')] >= 1
-        low_decile_condition = reindex_mi(low_decile_condition, self.global_renovation.index)
-        self.global_renovation = low_decile_condition.where(low_decile_condition > self.global_renovation,
-                                                            self.global_renovation)
+        self.global_renovation_high_income = certificate_jump.loc[
+            (certificate_jump.index.get_level_values('Income owner') > 'D4') | (
+                        certificate_jump.index.get_level_values('Income owner') == 'D10')] >= 2
+        self.global_renovation_low_income = certificate_jump.loc[
+                                                 (certificate_jump.index.get_level_values('Income owner') <= 'D4') & (
+                                                         certificate_jump.index.get_level_values(
+                                                             'Income owner') != 'D10')] >= 1
 
         if self._debug_mode:
             self.cost_component_yrs.update({self.year: self.cost_component})
@@ -2393,7 +2395,8 @@ class AgentBuildings(ThermalBuildings):
         """
 
         levels = [i for i in replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
-        self.global_renovation = (replaced_by * self.global_renovation).sum().sum()
+        self.global_renovation_high_income = (replaced_by * self.global_renovation_high_income).sum().sum()
+        self.global_renovation_low_income = (replaced_by * self.global_renovation_low_income).sum().sum()
         self.bonus_best = (replaced_by * self.in_best).sum().sum()
         self.bonus_worst = (replaced_by * self.out_worst).sum().sum()
         self.replacement_insulation = replaced_by.groupby(levels).sum()
@@ -2428,7 +2431,8 @@ class AgentBuildings(ThermalBuildings):
         self.retrofit_with_heater = replaced_by.xs(True, level='Heater replacement').sum().sum()
 
         if self._debug_mode:
-            self.global_renovation_yrs.update({self.year: self.global_renovation})
+            self.global_renovation_high_income_yrs.update({self.year: self.global_renovation_high_income})
+            self.global_renovation_low_income_yrs.update({self.year: self.global_renovation_low_income})
             self.bonus_best_yrs.update({self.year: self.bonus_best})
             self.bonus_worst_yrs.update({self.year: self.bonus_worst})
             self.replacement_insulation_yrs.update({self.year: self.replacement_insulation})
@@ -2743,7 +2747,9 @@ class AgentBuildings(ThermalBuildings):
                 # output['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
 
             # output['Efficient retrofits (Thousand)'] = pd.Series(self.efficient_renovation_yrs) / 10**3
-            output['Global renovation (Thousand households)'] = self.global_renovation / 10 ** 3
+            output['Global renovation high income (Thousand households)'] = self.global_renovation_high_income / 10 ** 3
+            output['Global renovation low income (Thousand households)'] = self.global_renovation_low_income / 10 ** 3
+            output['Global renovation (Thousand households)'] = output['Global renovation high income (Thousand households)'] + output['Global renovation low income (Thousand households)']
             output['Bonus best renovation (Thousand households)'] = self.bonus_best / 10 ** 3
             output['Bonus worst renovation (Thousand households)'] = self.bonus_worst / 10 ** 3
             output['Percentage of global renovation (% households)'] = output['Global renovation (Thousand households)'] / output[

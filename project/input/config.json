@@ -21,7 +21,7 @@
     "AP-2040": false,
     "Discount rate": 0.032,
     "Lifetime": 30,
-    "energy_prices": "project/input/energy_prices.csv",
+    "energy_prices": "project/input/energy_prices_ht.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
