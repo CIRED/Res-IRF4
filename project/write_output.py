@@ -22,7 +22,7 @@ import os
 
 from input.param import generic_input
 from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    assessment_scenarios, format_ax, format_legend, save_fig
+    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot
 
 
 def plot_scenario(output, stock, buildings):
@@ -334,6 +334,37 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
 
     if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
         indicator_policies(result, folder, config_runs)
+
+    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_sensitivity is not None:
+        variables = {'Consumption (TWh)': ('consumption_hist_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
+                                           generic_input['consumption_total_hist'],
+                                           generic_input['consumption_total_objectives']),
+                     'Emission (MtCO2)': ('emission_uncertainty.png', lambda y, _: '{:,.0f}'.format(y)),
+                     'Retrofit >= 1 EPC (Thousand households)': (
+                         'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
+                         generic_input['retrofit_comparison']),
+                     'Renovation >= 1 EPC (Thousand households)': (
+                         'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
+                         generic_input['retrofit_comparison']),
+                     }
+        for variable, infos in variables.items():
+            print(variable)
+            temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
+            columns = temp.columns
+            try:
+                temp = pd.concat((temp, infos[2]), axis=1)
+                temp.sort_index(inplace=True)
+            except IndexError:
+                pass
+
+            try:
+                scatter = infos[3]
+            except IndexError:
+                scatter = None
+                pass
+
+            make_uncertainty_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1],
+                                  scatter=scatter, columns=columns)
 
 
 def indicator_policies(result, folder, config, discount_rate=0.045, years=30):

@@ -6,7 +6,7 @@
     "prices_factor": false,
     "cost_factor": false,
     "renovation_rate_ini": false,
-    "target_freeriders": false,
+    "target_freeriders": [0.5, 0.7, 0.9],
     "preferences_zeros": false
   },
   "assessment": {
@@ -28,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2051,
+    "end": 2031,
     "debug_mode": false,
     "prices_constant": true,
     "taxes_constant": true,

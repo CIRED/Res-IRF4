@@ -1233,12 +1233,6 @@ class AgentBuildings(ThermalBuildings):
             if indicator == 'freeriders':
                 return min(flow, flow_plus) / max(flow, flow_plus)
 
-        def calibration_intensive(utility, stock, ms_insulation, retrofit_rate_ini, solver='iteration'):
-            if solver == 'iteration':
-                return calibration_intensive_iteration(utility, stock, ms_insulation, retrofit_rate_ini)
-            elif solver == 'fsolve':
-                return calibration_intensive_fsolve(utility, stock, ms_insulation, retrofit_rate_ini)
-
         @timing
         def calibration_intensive_fsolve(utility, stock, ms_insulation, retrofit_rate_ini):
             def solve(constant, utility_ref, ms_insulation, flow_retrofit):
@@ -1377,6 +1371,12 @@ class AgentBuildings(ThermalBuildings):
             constant = pd.concat((constant_insulation, constant), axis=1).T
             constant.index.names = ['Housing type']
             return constant
+
+        def calibration_intensive(utility, stock, ms_insulation, retrofit_rate_ini, solver='iteration'):
+            if solver == 'iteration':
+                return calibration_intensive_iteration(utility, stock, ms_insulation, retrofit_rate_ini)
+            elif solver == 'fsolve':
+                return calibration_intensive_fsolve(utility, stock, ms_insulation, retrofit_rate_ini)
 
         def calculation_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation,
                                          delta_subsidies, target_invest=0.2, utility_zil=utility_zil):

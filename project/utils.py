@@ -494,3 +494,43 @@ def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
     format_legend(ax)
     save_fig(fig, save=save)
 
+
+def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ymin=0, save=None, scatter=None,
+                          columns=None, ncol=3, offset=1, loc='upper', left=1.04):
+    """Plot multi scenarios and uncertainty area between lower value and higher value of scenarios.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+        Columns represent one scenario
+    title: str
+    detailed: bool, default False
+    format_y: func
+    ymin: float or int
+    """
+
+    subset = df.loc[:, columns]
+    others = df.loc[:, [c for c in df.columns if c not in columns]]
+
+    df_min = subset.min(axis=1)
+    df_max = subset.max(axis=1)
+    df_ref = df.loc[:, 'Reference']
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    fig.subplots_adjust(top=0.85)
+    if not others.empty:
+        others.plot(ax=ax)
+
+    if detailed:
+        subset.plot(ax=ax)
+    df_ref.plot(ax=ax, c='black')
+    plt.fill_between(df_min.index, df_min.values, df_max.values, alpha=0.4)
+
+    if scatter is not None:
+        scatter.plot(ax=ax, style='.', ms=15, c='red')
+
+    format_ax(ax, title=title, xinteger=True, format_y=format_y, ymin=ymin)
+    format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
+
+    save_fig(fig, save=save)
+
