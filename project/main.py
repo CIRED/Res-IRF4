@@ -157,36 +157,44 @@ def run(path=None):
 
         del configuration['sensitivity']
 
-    folder = os.path.join('project/output', '{}{}'.format(name_policy, datetime.today().strftime('%Y%m%d_%H%M%S')))
+    t = datetime.today().strftime('%Y%m%d_%H%M%S')
+    folder = os.path.join('project/output', '{}{}'.format(name_policy, t))
     os.mkdir(folder)
 
-    logging.basicConfig(filename=os.path.join(folder, 'root_log.log'),
-                        level=logging.DEBUG,
-                        format=LOG_FORMATTER)
-    logging.getLogger('matplotlib.font_manager').disabled = True
-    logging.getLogger('matplotlib.axes').disabled = True
+    logger = logging.getLogger('log_{}'.format(t))
+    logger.setLevel('DEBUG')
+    logger.propagate = False
+    # file handler
+    file_handler = logging.FileHandler(os.path.join(folder, 'root_log.log'))
+    file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
+    logger.addHandler(file_handler)
 
     if args.year:
         for key in configuration.keys():
             configuration[key]['end'] = int(args.year)
 
-    logging.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
+    logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
-        logging.debug('Launching processes')
+        logger.debug('Launching processes')
         with Pool() as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}
         stocks = {i[0]: i[2] for i in results}
 
-        logging.debug('Parsing results')
+        logger.debug('Parsing results')
         grouped_output(result, folder, config_policies, config_sensitivity)
 
-        logging.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
+        logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
-        logging.exception(e)
+        logger.exception(e)
         raise e
 
 
 if __name__ == '__main__':
+
+    logging.basicConfig()
+    logging.getLogger('matplotlib.font_manager').disabled = True
+    logging.getLogger('matplotlib.axes').disabled = True
+
     run()

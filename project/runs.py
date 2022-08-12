@@ -17,8 +17,13 @@
 import os
 import argparse
 from main import run
+import logging
 
 if __name__ == '__main__':
+
+    logging.basicConfig()
+    logging.getLogger('matplotlib.font_manager').disabled = True
+    logging.getLogger('matplotlib.axes').disabled = True
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')

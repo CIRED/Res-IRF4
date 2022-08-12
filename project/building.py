@@ -745,7 +745,6 @@ class AgentBuildings(ThermalBuildings):
         probability_replacement = probability_replacement.reindex(market_share.index)
         return market_share, probability_replacement
 
-    @timing
     def heater_replacement(self, prices, cost_heater, ms_heater, policies_heater, probability_replacement=1/20,
                            index=None):
         """Function returns new building stock after heater replacement.
@@ -929,7 +928,6 @@ class AgentBuildings(ThermalBuildings):
             self.subsidies_heater_yrs.update({self.year: self.subsidies_heater})
             self.heater_replaced_yrs.update({self.year: replaced_by})
 
-    @timing
     def calibration_constant_heater(self, utility, ms_heater):
         """Constant to match the observed market-share.
 
@@ -983,7 +981,6 @@ class AgentBuildings(ThermalBuildings):
 
         return constant
 
-    @timing
     def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None,
                             levels_heater='Heating system'):
         """Constitute building components' performance.
@@ -1060,7 +1057,6 @@ class AgentBuildings(ThermalBuildings):
         certificate = reindex_mi(certificate, index)
         return consumption_sd, certificate
 
-    @timing
     def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
 
@@ -1081,7 +1077,6 @@ class AgentBuildings(ThermalBuildings):
         cost.loc[:, idx[:, :, :, True]] = (cost.loc[:, idx[:, :, :, True]].T + cost_insulation['Windows']).T
         return cost
 
-    @timing
     def prepare_subsidy_insulation(self, subsidies_insulation):
         """Constitute insulation choice set subsidies. Subsidies are equal to the sum of each individual subsidy.
 
@@ -1111,7 +1106,6 @@ class AgentBuildings(ThermalBuildings):
                               names=self.surface_insulation.index.names)
         return subsidies
 
-    @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation=None,
                             retrofit_rate_ini=None, utility_zil=None, stock=None, supply_constraint=False,
                             delta_subsidies=None, target_freeriders=0.85):
@@ -1233,7 +1227,6 @@ class AgentBuildings(ThermalBuildings):
             if indicator == 'freeriders':
                 return min(flow, flow_plus) / max(flow, flow_plus)
 
-        @timing
         def calibration_intensive_fsolve(utility, stock, ms_insulation, retrofit_rate_ini):
             def solve(constant, utility_ref, ms_insulation, flow_retrofit):
                 # constant = np.append(0, constant)
@@ -1289,7 +1282,6 @@ class AgentBuildings(ThermalBuildings):
             details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
             return constant
 
-        @timing
         def calibration_intensive_iteration(utility, stock, ms_insulation, retrofit_rate_ini, iteration=100):
             """Calibrate alternative-specific constant to match observed market-share.
 
@@ -1429,7 +1421,6 @@ class AgentBuildings(ThermalBuildings):
             return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -0.5 * delta_subsidies,
                          target_invest, utility_zil) + target_invest
 
-        @timing
         def calibration_constant_scale_ext(utility, stock, retrofit_rate_ini, target_freeriders, delta_subsidies,
                                            pref_subsidies):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
@@ -2027,7 +2018,6 @@ class AgentBuildings(ThermalBuildings):
         return retrofit_rate, market_share
 
     @staticmethod
-    @timing
     def exogenous_retrofit(index, choice_insulation):
         """Format retrofit rate and market share for each segment.
 
@@ -2054,7 +2044,6 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
-    @timing
     def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation, retrofit_rate_ini, policies_insulation,
                                target_freeriders, index=None, stock=None, supply_constraint=False):
         """Calculate insulation retrofit in the dwelling stock.
@@ -2154,7 +2143,6 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
-    @timing
     def apply_subsidies_insulation(self, policies_insulation, cost_insulation, surface, certificate, certificate_before,
                                    percentage_energy_saved):
         """Calculate subsidies amount for each possible insulation choice.
@@ -2330,7 +2318,6 @@ class AgentBuildings(ThermalBuildings):
 
         return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
 
-    @timing
     def store_information_insulation(self, certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                      tax_insulation, subsidies_details, subsidies_total, retrofit_rate,
                                      percentage_energy_saved):
@@ -2384,7 +2371,6 @@ class AgentBuildings(ThermalBuildings):
             self.retrofit_rate_yrs.update({self.year: self.retrofit_rate})
             self.efficient_renovation = certificate.isin(['A', 'B'])
 
-    @timing
     def store_information_retrofit(self, replaced_by, market_share):
         """Calculate and store main outputs based on yearly retrofit.
 
@@ -2478,7 +2464,6 @@ class AgentBuildings(ThermalBuildings):
                                             self.bill_saved_efficient[self.year])
                 self.private_npv_efficient.update({self.year: private_npv_efficient})
 
-    @timing
     def flow_retrofit(self, prices, cost_heater, ms_heater, cost_insulation, ms_insulation, ms_extensive,
                       policies_heater, policies_insulation, target_freeriders, supply_constraint=False):
         """Compute heater replacement and insulation retrofit.
@@ -2571,7 +2556,6 @@ class AgentBuildings(ThermalBuildings):
 
         return flow_retrofit
 
-    @timing
     def flow_demolition(self):
         """Demolition of E, F and G buildings based on their share in the mobile stock.
 
@@ -2579,6 +2563,7 @@ class AgentBuildings(ThermalBuildings):
         -------
         pd.Series
         """
+        self.logger.info('Demolition')
         stock_demolition = self.stock_mobile[self.certificate.isin(self._target_demolition)]
         if stock_demolition.sum() < self._demolition_total:
             self._target_demolition = ['G', 'F', 'E', 'D']
@@ -2591,7 +2576,6 @@ class AgentBuildings(ThermalBuildings):
         flow_demolition = (stock_demolition * self._demolition_total).dropna()
         return flow_demolition.reorder_levels(self.stock.index.names)
 
-    @timing
     def parse_output_run(self, param):
         # renovation : envelope
         # retrofit : envelope and/or heating system
