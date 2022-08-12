@@ -77,7 +77,7 @@ def plot_scenario(output, stock, buildings):
     subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i!= 'subsidies_cap'], :]
     taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
 
-    subset = pd.concat((subsidies, -taxes_expenditures), axis=0)
+    subset = pd.concat((subsidies, -taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax']],:]), axis=0)
     subset.fillna(0, inplace=True)
     subset = subset.loc[:, (subset != 0).any(axis=0)].T
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
@@ -89,8 +89,8 @@ def plot_scenario(output, stock, buildings):
             subset.index = subset.index.astype(int)
             subset.plot.area(ax=ax[1], stacked=True, color=generic_input['colors'])
             scatter.T.plot.bar(ax=ax[0], stacked=True, color=generic_input['colors'], legend=False, width=1.5, rot=0)
-            ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=0)
-            ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=0)
+            ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
+            ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
             subset.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
             format_legend(ax[1], loc='left', left=1.2)
             ax[0].set_title('Realized')
