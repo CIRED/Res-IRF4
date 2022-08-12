@@ -28,13 +28,13 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2025,
+    "end": 2051,
     "debug_mode": false,
-    "prices_constant": true,
-    "taxes_constant": true,
-    "demolition_rate": 0.0,
-    "construction": false,
-    "income_rate": 0.0,
+    "prices_constant": false,
+    "taxes_constant": false,
+    "demolition_rate": 0.0035,
+    "construction": true,
+    "income_rate": 0.012,
     "start": 2018,
     "endogenous": true,
     "supply_constraint": false,
@@ -46,8 +46,7 @@
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
-    "renovation_rate_max": 1,
-    "calib_scale": true,
+    "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "ms_insulation": "project/input/revealed_data/market_share_insulation.csv",
@@ -65,7 +64,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -74,7 +73,7 @@
       },
       "cee": {
         "start": 2019,
-        "end": 2019,
+        "end": 2051,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -82,45 +81,39 @@
       },
       "cap": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
         "start": 2019,
-        "end": 2019,
+        "end": 2051,
         "tax": "project/input/policies/carbon_tax.csv",
         "emission": "project/input/policies/carbon_tax_emission.csv"
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": 0.17,
         "cap": 16000
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2019,
-        "value": 0.05
+        "end": 2051,
+        "value": 0.055
       },
       "zero_interest_loan": {
         "start": 2019,
-        "end": 2019,
+        "end": 2051,
         "value": 0.0917729,
+        "ad_volarem": true,
         "min": 5000,
-        "max": "project/input/policies/zil_max.csv",
-        "ad_volarem": true
-
-      },
-      "sub_ad_volarem": {
-        "start": 2019,
-        "end": 2019,
-        "value": 0.3
+        "max": "project/input/policies/zil_max.csv"
       }
     },
     "footprint": {
-      "Traditional material": 0.5,
-      "Bio material": 0.5,
+      "Traditional material": 1.0,
+      "Bio material": 0.0,
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
@@ -128,5 +121,4 @@
     "share_multi_family": "project/input/share_multifamily.csv",
     "surface_built": "endogenous"
   }
-
 }

@@ -566,10 +566,11 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     else:
         indicator = pd.DataFrame(indicator).T
 
-        # Effectiveness : AP/AP-1 and ZP/ ZP+1 scenarios
+    indicator.sort_index(axis=1, inplace=True)
 
     def socioeconomic_npv(data, scenarios, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
         """Calculate socioeconomic NPV.
+
         Double difference is calculated with : scenario - reference
         NPV is presented as such for ZP+1: ZP+1 - ZP
         If the scenario requires more investment than the reference, then the difference of investments is
@@ -632,6 +633,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         npv.loc['NPV', :] = npv.sum()
         return npv
 
+    # Effectiveness : AP/AP-1 and ZP/ ZP+1 scenarios
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
         se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, save=folder_policies)
