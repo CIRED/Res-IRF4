@@ -19,10 +19,10 @@
     "ZP": true,
     "ZP+1": true,
     "AP-2020": true,
-    "AP-2025": false,
-    "AP-2030": false,
-    "AP-2035": false,
-    "AP-2040": false,
+    "AP-2025": true,
+    "AP-2030": true,
+    "AP-2035": true,
+    "AP-2040": true,
     "Discount rate": 0.045,
     "Lifetime": 30,
     "energy_prices": "project/input/energy_prices_ht.csv",
@@ -30,7 +30,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2051,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -63,7 +63,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -91,7 +91,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": 0.17,
         "cap": 16000
@@ -112,8 +112,8 @@
       }
     },
     "footprint": {
-      "Traditional material": 0.5,
-      "Bio material": 0.5,
+      "Traditional material": 1.0,
+      "Bio material": 0.0,
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },

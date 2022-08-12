@@ -28,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2023,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -112,8 +112,8 @@
       }
     },
     "footprint": {
-      "Traditional material": 0.5,
-      "Bio material": 0.5,
+      "Traditional material": 1.0,
+      "Bio material": 0.0,
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },

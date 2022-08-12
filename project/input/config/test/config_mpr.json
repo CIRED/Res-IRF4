@@ -6,23 +6,21 @@
     "prices_factor": 2,
     "cost_factor": 2,
     "retrofit_rate_ini": "project/input/revealed_data/extensive_margin_insulation_low.csv",
-    "target_freeriders": 0.75,
-    "energy_prices": "project/input/energy_prices.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
-    "carbon_emission": "project/input/policies/carbon_emission.csv"
+    "target_freeriders": 0.75
   },
   "assessment": {
     "activated": true,
-    "Policy name": "cee",
+    "Policy name": "mpr",
     "AP": "Reference",
     "AP-1": true,
     "ZP": true,
     "ZP+1": true,
-    "AP-2020": true,
-    "AP-2025": true,
-    "AP-2030": true,
-    "AP-2035": true,
-    "AP-2040": true,
+    "AP-2020": false,
+    "AP-2023": true,
+    "AP-2024": true,
+    "AP-2030": false,
+    "AP-2035": false,
+    "AP-2040": false,
     "Discount rate": 0.045,
     "Lifetime": 30,
     "energy_prices": "project/input/energy_prices_ht.csv",
@@ -30,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2051,
+    "end": 2025,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -112,8 +110,8 @@
       }
     },
     "footprint": {
-      "Traditional material": 1.0,
-      "Bio material": 0.0,
+      "Traditional material": 0.5,
+      "Bio material": 0.5,
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
@@ -121,5 +119,4 @@
     "share_multi_family": "project/input/share_multifamily.csv",
     "surface_built": "endogenous"
   }
-
 }

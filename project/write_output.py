@@ -98,7 +98,7 @@ def plot_scenario(output, stock, buildings):
             save_fig(fig, save=os.path.join(buildings.path, 'policies.png'))
 
         else:
-            make_area_plot(subset, 'Billion euro', save=os.path.join(buildings.path, 'policies.png'),
+            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
                            colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
                            scatter=generic_input['public_policies_2019'], loc='left', left=1.2)
 
@@ -486,14 +486,22 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                                                     :] - ref.loc[var, :]) * discount.T * carbon_value).sum() / 10**3
 
         var = '{} (Billion euro)'.format(policy_name)
-        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
-                             index=ref.loc[var, :].index)
 
-        if var in result[s].index: #model calibrated without Mpr so can be missing
-            rslt[var] = (((result[s].loc[var, :]).fillna(0) - ref.loc[var, :]) * discount.T).sum()
+        if var in result[s].index and var in ref.index:
+            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
+                                 index=ref.loc[var, :].index)
+            rslt[var] = (((result[s].loc[var, :]).fillna(0) - ref.loc[var, :].fillna(0)) * discount.T).sum()
             # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
-        else:
+        elif var in ref.index:
+            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
+                                 index=ref.loc[var, :].index)
             rslt[var] = (- ref.loc[var, :] * discount.T).sum()
+        elif var in result[s].index:
+            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(result[s].loc[var, :].shape[0])],
+                                 index=result[s].loc[var, :].index)
+            rslt[var] = (result[s].loc[var, :] * discount.T).sum()
+        else:
+            rslt[var] = 0
         comparison[s] = rslt
 
     comparison = pd.DataFrame(comparison)

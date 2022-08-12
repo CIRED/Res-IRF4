@@ -2091,7 +2091,6 @@ class AgentBuildings(ThermalBuildings):
         consumption_sd = self.prepare_consumption(choice_insulation, index=index)[0]
         heat_consumption_sd_before = surface * agent.heating_consumption_sd()
         energy_saved = - (consumption_sd.T * surface).T.sub(heat_consumption_sd_before, axis=0).dropna()
-        percentage_energy_saved = energy_saved.div(heat_consumption_sd_before, axis=0)
 
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = reindex_mi(cost_insulation, surface.index)
@@ -2103,7 +2102,7 @@ class AgentBuildings(ThermalBuildings):
             cost_insulation, surface,
             certificate,
             certificate_before,
-            percentage_energy_saved)
+            )
 
         if self._endogenous:
 
@@ -2139,12 +2138,12 @@ class AgentBuildings(ThermalBuildings):
 
         self.store_information_insulation(certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                           tax_insulation, subsidies_details, subsidies_total, retrofit_rate,
-                                          percentage_energy_saved)
+                                          )
 
         return retrofit_rate, market_share
 
     def apply_subsidies_insulation(self, policies_insulation, cost_insulation, surface, certificate, certificate_before,
-                                   percentage_energy_saved):
+                                   ):
         """Calculate subsidies amount for each possible insulation choice.
 
         Parameters
@@ -2158,8 +2157,6 @@ class AgentBuildings(ThermalBuildings):
             Certificate by segment after insulation replacement for each possible insulation choice.
         certificate_before: : pd.Series
             Certificate by segment before.
-        percentage_energy_saved : pd.DataFrame
-            Ratio of energy saved for each possible insulation works, per houshold
 
         Returns
         -------
@@ -2189,9 +2186,6 @@ class AgentBuildings(ThermalBuildings):
             int)).T.astype(bool)
         self.in_best = (certificate.isin(['A', 'B']).astype(int).T * (~certificate_before.isin(['A', 'B'])).astype(
             int)).T.astype(bool)
-
-        #non_cumulative_condition = percentage_energy_saved > 0.55
-
 
         target_0 = certificate.isin(['D', 'C', 'B', 'A']).astype(int).mul(
             certificate_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
@@ -2320,7 +2314,7 @@ class AgentBuildings(ThermalBuildings):
 
     def store_information_insulation(self, certificate, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                      tax_insulation, subsidies_details, subsidies_total, retrofit_rate,
-                                     percentage_energy_saved):
+                                     ):
         """Store insulation information.
 
         Parameters
@@ -2342,7 +2336,6 @@ class AgentBuildings(ThermalBuildings):
         subsidies_total: pd.DataFrame
             Total mount of subsidies for each dwelling and each insulation gesture (€).
         retrofit_rate: pd.Series
-        percentage_energy_saved
         """
 
         self.certificate_jump = certificate_jump
@@ -2353,7 +2346,6 @@ class AgentBuildings(ThermalBuildings):
         self.tax_insulation = tax_insulation
         self.retrofit_rate = retrofit_rate
 
-        # self.global_renovation = percentage_energy_saved > 0.55
         self.global_renovation_high_income = certificate_jump.loc[
             (certificate_jump.index.get_level_values('Income owner') > 'D4') | (
                         certificate_jump.index.get_level_values('Income owner') == 'D10')] >= 2
