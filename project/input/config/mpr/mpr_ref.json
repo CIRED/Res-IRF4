@@ -15,7 +15,7 @@
     "AP-1": true,
     "ZP": true,
     "ZP+1": true,
-    "AP-2020": true,
+    "AP-2020": false,
     "AP-2025": true,
     "AP-2030": true,
     "AP-2035": true,
@@ -111,8 +111,8 @@
       }
     },
     "footprint": {
-      "Traditional material": 0.5,
-      "Bio material": 0.5,
+      "Traditional material": 1,
+      "Bio material": 0,
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
