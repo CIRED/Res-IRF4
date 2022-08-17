@@ -10,7 +10,7 @@
   },
   "assessment": {
     "activated": true,
-    "Policy name": "mpr",
+    "Policy name": "bonus",
     "AP": "Reference",
     "AP-1": true,
     "ZP": true,
@@ -68,7 +68,11 @@
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
         "mpr_serenite": "project/input/policies/mpr_serenite.csv",
-        "bonus": null
+        "bonus":  {
+          "start": 2021,
+          "end": 2051,
+          "value": "project/input/policies/mpr_global_retrofit.csv"
+        }
       },
       "cee": {
         "start": 2019,

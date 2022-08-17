@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "ZP": false,
     "prices_constant": false,
     "mpr_global_retrofit": false,
@@ -9,17 +9,17 @@
     "target_freeriders": [0.45, 0.60, 0.70, 0.85]
   },
   "assessment": {
-    "activated": false,
-    "Policy name": "mpr",
+    "activated": true,
+    "Policy name": "mpr_serenite",
     "AP": "Reference",
     "AP-1": true,
     "ZP": true,
     "ZP+1": true,
-    "AP-2020": false,
-    "AP-2025": false,
-    "AP-2030": false,
-    "AP-2035": false,
-    "AP-2040": false,
+    "AP-2020": true,
+    "AP-2025": true,
+    "AP-2030": true,
+    "AP-2035": true,
+    "AP-2040": true,
     "Discount rate": 0.045,
     "Lifetime": 30,
     "energy_prices": "project/input/energy_prices_ht.csv",
@@ -40,7 +40,7 @@
     "exogenous_detailed": {
       "number": 0
     },
-    "target_freeriders": 0.85,
+    "target_freeriders": 0.7,
     "preferences_zeros": false,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
@@ -67,7 +67,11 @@
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
-        "mpr_serenite": "project/input/policies/mpr_serenite.csv",
+        "mpr_serenite": {
+          "start":  2021,
+          "end": 2051,
+          "value": "project/input/policies/mpr_serenite.csv"
+        },
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "cee": {
