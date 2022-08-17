@@ -599,7 +599,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
             temp = dict()
             temp.update({'Investment': df['Investment total HT (Billion euro)']})
             if embodied_emission:
-                temp.update({'Embodied emission additional': - df['Carbon footprint (Billion euro)']})
+                temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
                                       df['Simple difference Health expenditure (Billion euro)']
