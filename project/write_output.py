@@ -282,7 +282,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
         'Consumption {} (TWh)': [
             ('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['consumption_hist'])],
         'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
-        'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
+        'Subsidies total {} (Million euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
                                               ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                               ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
@@ -568,7 +568,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     indicator.sort_index(axis=1, inplace=True)
 
-    def socioeconomic_npv(data, scenarios, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
+    def socioeconomic_npv(data, scenarios, pol_name, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
         """Calculate socioeconomic NPV.
 
         Double difference is calculated with : scenario - reference
@@ -614,10 +614,10 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
             if 'AP' in s:
                 temp = pd.Series(temp)
-                title = 'AP - ({})'.format(s)
+                title = pol_name + ' : AP - ({})'.format(s)
             else:
                 temp = - pd.Series(temp)
-                title = '({})- ZP'.format(s)
+                title = pol_name + ' : ({})- ZP'.format(s)
 
             if save:
                 if cofp:
@@ -652,7 +652,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     # Effectiveness : AP/AP-1 and ZP/ ZP+1 scenarios
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
-        se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, save=folder_policies)
+        se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, policy_name, save=folder_policies)
         if indicator is not None:
             if set(list(se_npv.index)).issubset(list(indicator.index)):
                 indicator.loc[list(se_npv.index), s] = se_npv[s]

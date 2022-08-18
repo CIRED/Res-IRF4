@@ -2863,11 +2863,11 @@ class AgentBuildings(ThermalBuildings):
                                                                                                            fill_value=0)
             output['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10 ** 9
             temp = subsidies_total.groupby('Income owner').sum()
-            temp.index = temp.index.map(lambda x: 'Subsidies total {} (Billion euro)'.format(x))
-            output.update(temp.T / 10 ** 9)
+            temp.index = temp.index.map(lambda x: 'Subsidies total {} (Million euro)'.format(x))
+            output.update(temp.T / 10 ** 6)
             temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
-            temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Billion euro)'.format(x[0], x[1]))
-            output.update(temp.T / 10 ** 9)
+            temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
+            output.update(temp.T / 10 ** 6)
 
             subsidies = None
             for gest, subsidies_details in {'heater': self.subsidies_details_heater,
