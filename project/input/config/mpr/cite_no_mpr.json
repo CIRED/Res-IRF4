@@ -5,10 +5,10 @@
     "prices_constant": false,
     "mpr_global_retrofit": false,
     "mpr_no_serenite": false,
-    "mpr_no_bonus": false,
+    "mpr_no_bonus": false
   },
   "assessment": {
-    "activated": true,
+    "activated": false,
     "Policy name": "cite",
     "AP": "Reference",
     "AP-1": true,
@@ -25,7 +25,7 @@
     "carbon_value": "project/input/policies/carbon_value.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
-  "Reference": {
+  "CITE": {
     "end": 2050,
     "debug_mode": false,
     "prices_constant": false,
@@ -119,7 +119,6 @@
     "share_multi_family": "project/input/share_multifamily.csv",
     "surface_built": "endogenous"
   },
-  ,
   "MPR": {
     "end": 2050,
     "debug_mode": false,
