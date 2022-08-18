@@ -140,7 +140,7 @@ def plot_scenario(output, stock, buildings):
     temp = output.loc[['Consumption {} (TWh)'.format(i) for i in l], :]
     temp.index = l
     temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
-    make_area_plot(temp, 'Consumption (TWh)', colors=generic_input['colors'],
+    make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Consumption (TWh)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'consumption.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
@@ -154,7 +154,7 @@ def plot_scenario(output, stock, buildings):
     temp = output.loc[['Emission {} (MtCO2)'.format(i) for i in l], :]
     temp.index = l
     temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
-    make_area_plot(temp, 'Emission (MtCO2)', colors=generic_input['colors'],
+    make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Emission (MtCO2)', colors=generic_input['colors'],
                    save=os.path.join(buildings.path, 'emission.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2)
 
