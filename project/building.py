@@ -2284,12 +2284,12 @@ class AgentBuildings(ThermalBuildings):
                     policy.name].T).T
                 sub = sub.astype(float)
                 if policy.name in subsidies_comparison.keys():
-                    #ici pas sure d'avoir besoin de subsidy comparison en fait
                     comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
                     temp = comp.where(comp > sub, sub)
+                    update = - subsidies_comparison[policy.name] + temp
                 else:
-                    temp = sub
-                update = - subsidies_comparison[policy.name] + temp
+                    update = sub
+                #update = - subsidies_comparison[policy.name] + temp
                 subsidies_details[policy.name] += update
                 subsidies_total += update
 
