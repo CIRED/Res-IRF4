@@ -65,7 +65,7 @@ generic_input['consumption_total_hist'] = pd.read_csv('project/input/revealed_da
 
 generic_input['consumption_total_objectives'] = pd.Series([207, 176, 146], index=[2023, 2030, 2050], name='Objectives')
 
-generic_input['emissions_total_objectives'] = pd.Series([25.5, 0], index=[2030, 2050], name='Objectives')
+generic_input['emissions_total_objectives'] = pd.Series([23, 0], index=[2030, 2050], name='Objectives')
 
 generic_input['low_eff_objectives'] = pd.Series([0], index=[2050], name='Objectives')
 
