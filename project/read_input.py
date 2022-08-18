@@ -95,19 +95,37 @@ def read_policies(config):
         insulation = pd.read_csv(data['insulation'], index_col=[0])
 
         if data['global_retrofit']:
-            global_retrofit = pd.read_csv(data['global_retrofit'], index_col=[0]).squeeze('columns')
-            l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
+            if isinstance(data['global_retrofit'], dict):
+                global_retrofit = pd.read_csv(data['global_retrofit']['value'], index_col=[0]).squeeze('columns')
+                l.append(PublicPolicy('mpr', data['global_retrofit']['start'], data['global_retrofit']['end'], global_retrofit, 'subsidy_non_cumulative',
+                                  gest='insulation'))
+            else:
+                global_retrofit = pd.read_csv(data['global_retrofit'], index_col=[0]).squeeze('columns')
+                l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
                                   gest='insulation'))
 
+
         if data['mpr_serenite']:
-            mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
-            l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
+            if isinstance(data['mpr_serenite'], dict):
+                mpr_serenite = pd.read_csv(data['mpr_serenite']['value'], index_col=[0]).squeeze('columns')
+                l.append(PublicPolicy('mpr', data['mpr_serenite']['start'], data['mpr_serenite']['end'], mpr_serenite, 'subsidy_non_cumulative',
                                   gest='insulation'))
+            else:
+                mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
+                l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
+                                  gest='insulation'))
+
         if data['bonus']:
-            bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
-            bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
-            l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus_best', gest='insulation'))
-            l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus_worst', gest='insulation'))
+            if isinstance(data['bonus'], dict):
+                bonus_best = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')
+                bonus_worst = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')
+                l.append(PublicPolicy('mpr', data['bonus']['start'], data['bonus']['end'], bonus_best, 'bonus_best', gest='insulation'))
+                l.append(PublicPolicy('mpr', data['bonus']['start'], data['bonus']['end'], bonus_worst, 'bonus_worst', gest='insulation'))
+            else:
+                bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
+                bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
+                l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus_best', gest='insulation'))
+                l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus_worst', gest='insulation'))
 
         l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))

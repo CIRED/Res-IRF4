@@ -485,9 +485,10 @@ def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
 
     ax.xaxis.label.set_visible(False)
     ax.yaxis.label.set_visible(False)
+    y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
 
     for _, y in total.iterrows():
-        ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + 3), ha="center")
+        ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + y_range /20 ), ha="center")
 
     ax.set_xticklabels(data.index, rotation=0)
 

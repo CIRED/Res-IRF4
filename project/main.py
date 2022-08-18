@@ -60,7 +60,17 @@ def run(path=None):
 
             if config_policies['AP-1']:
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
-                configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
+                if config_policies['Policy name'] in ['global_retrofit', 'bonus', 'mpr_serenite']:
+                    configuration['AP-1']['policies']['mpr'][config_policies['Policy name']]['end'] = \
+                    configuration['Reference'][
+                        'start'] + 2
+                else:
+                    configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
+                                                                                               'start'] + 2
+                if config_policies['Policy name'] == 'mpr':
+                    for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
+                        if isinstance(configuration['AP-1']['policies']['mpr'][options], dict):
+                            configuration['AP-1']['policies']['mpr'][options]['end'] = configuration['Reference'][
                                                                                                'start'] + 2
 
             if config_policies['ZP']:
@@ -69,9 +79,25 @@ def run(path=None):
                     policy['end'] = configuration['Reference']['start'] + 2
                     configuration['ZP']['policies'][name] = policy
 
+                    if name == 'mpr':
+                        for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
+                            if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
+                                configuration['ZP']['policies']['mpr'][options]['end'] = configuration['Reference'][
+                                                                                               'start'] + 2
+
             if config_policies['ZP'] and config_policies['ZP+1']:
                 configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
-                configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
+                if config_policies['Policy name'] in ['global_retrofit', 'bonus', 'mpr_serenite']:
+                    configuration['ZP+1']['policies']['mpr'][config_policies['Policy name']]['end'] = \
+                    configuration['Reference']['end']
+                else:
+                    configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
+                    'end']
+
+                if config_policies['Policy name'] == 'mpr':
+                    for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
+                        if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
+                            configuration['ZP+1']['policies']['mpr'][options]['end'] = configuration['Reference'][
                     'end']
 
             list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
@@ -79,7 +105,15 @@ def run(path=None):
             for year in list_years:
                 if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end']:
                     configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
-                    configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
+                    if config_policies['Policy name'] in ['global_retrofit', 'bonus', 'mpr_serenite']:
+                        configuration['AP-{}'.format(year)]['policies']['mpr'][config_policies['Policy name']]['end'] = year
+                    else:
+                        configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
+                    if config_policies['Policy name'] == 'mpr':
+                        for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
+                            if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
+                                configuration['AP-{}'.format(year)]['policies']['mpr'][options]['end'] = year
+
                     configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']

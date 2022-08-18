@@ -599,7 +599,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
             temp = dict()
             temp.update({'Investment': df['Investment total HT (Billion euro)']})
             if embodied_emission:
-                temp.update({'Embodied emission additional': - df['Carbon footprint (Billion euro)']})
+                temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
                                       df['Simple difference Health expenditure (Billion euro)']
@@ -620,15 +620,31 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                 title = '({})- ZP'.format(s)
 
             if save:
-                waterfall_chart(temp, title=title,
-                                save=os.path.join(save, 'npv_{}.png'.format(s.lower().replace(' ', '_'))),
+                if cofp:
+                    waterfall_chart(temp, title=title,
+                                save=os.path.join(save, 'npv_{}_cofp.png'.format(s.lower().replace(' ', '_'))),
+                                colors=generic_input['colors'])
+
+                    waterfall_chart(temp.loc[temp.index != 'Cofp'], title=title,
+                                save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
+                                colors=generic_input['colors'])
+                else:
+                    waterfall_chart(temp, title=title,
+                                save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
                                 colors=generic_input['colors'])
 
             npv[title] = temp
 
         npv = pd.DataFrame(npv)
         if save:
-            assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')), colors=generic_input['colors'])
+            if cofp:
+                assessment_scenarios(npv.T, save=os.path.join(save, 'npv_cofp.png'.lower().replace(' ', '_')), colors=generic_input['colors'])
+                assessment_scenarios(npv.loc[npv.index != 'Cofp'].T, save=os.path.join(save, 'npv_no_cofp.png'.lower().replace(' ', '_')),
+                                     colors=generic_input['colors'])
+            else:
+                assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')),
+                                     colors=generic_input['colors'])
+
 
         npv.loc['NPV', :] = npv.sum()
         return npv
