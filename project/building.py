@@ -2609,11 +2609,11 @@ class AgentBuildings(ThermalBuildings):
         temp = emission.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
         temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
-        output.update(temp.T / 10 ** 9)
+        output.update(temp.T / 10 ** 12)
 
         temp = emission.groupby('Energy').sum()
         temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
-        output.update(temp.T / 10 ** 9)
+        output.update(temp.T / 10 ** 12)
 
         output['Stock (Million)'] = stock.sum() / 10 ** 6
 

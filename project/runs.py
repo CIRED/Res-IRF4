@@ -32,4 +32,6 @@ if __name__ == '__main__':
     configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
 
     for config in configs:
+        # add try/except to continue if one config fail
+
         run(path=config)
