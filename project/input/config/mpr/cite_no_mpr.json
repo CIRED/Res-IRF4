@@ -26,7 +26,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "CITE": {
-    "end": 2050,
+    "end": 2051,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -120,7 +120,7 @@
     "surface_built": "endogenous"
   },
   "MPR": {
-    "end": 2050,
+    "end": 2051,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
