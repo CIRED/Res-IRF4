@@ -55,11 +55,11 @@ def plot_scenario(output, stock, buildings):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
 
-    mf_heater_index = [heater for heater in generic_input['index']['Heater']
-                       if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
+    #mf_heater_index = [heater for heater in generic_input['index']['Heater']
+    #                   if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
     df = pd.DataFrame(
-        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in mf_heater_index]).T.dropna()
-    df.columns = mf_heater_index
+        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in generic_input['index']['Heater']]).T.dropna()
+    df.columns = generic_input['index']['Heater']
     make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),

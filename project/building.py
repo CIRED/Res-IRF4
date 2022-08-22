@@ -2747,10 +2747,13 @@ class AgentBuildings(ThermalBuildings):
             t.index = t.index.map(lambda x: 'Replacement heater {} (Thousand households)'.format(x))
             output.update((t / 10 ** 3).T)
 
-            temp = self.replacement_heater.sum(axis=1)
+            """
+            # summing accoridng to heating system beafore instead of final 
+            temp = self.replacement_heater.sum(axis=1) 
             t = temp.groupby(['Heating system', 'Housing type']).sum()
             t.index = t.index.map(lambda x: 'Replacement heater {} {} (Thousand households)'.format(x[0], x[1]))
             output.update((t / 10 ** 3).T)
+            """
 
             t = self.replacement_heater.groupby('Housing type').sum().loc['Multi-family']
             t.index = t.index.map(lambda x: 'Replacement heater Multi-family {} (Thousand households)'.format(x))
