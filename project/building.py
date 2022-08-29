@@ -2497,6 +2497,11 @@ class AgentBuildings(ThermalBuildings):
         replaced_by = (flow * market_share.T).T.copy()
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
+        mask = self.subsidies_details_insulation["zero_interest_loan"]
+        mask[mask > 0] = 1
+        zil_count = (replaced_by.fillna(0) * mask).sum().sum()
+        self.zil_count = zil_count.round()
+
         only_heater = (stock - flow.reindex(stock.index, fill_value=0)).xs(True, level='Heater replacement')
         certificate_jump = self.certificate_jump_heater.stack()
         rslt = {}
@@ -2889,7 +2894,7 @@ class AgentBuildings(ThermalBuildings):
                 subsidies = subsidies.groupby(subsidies.index).sum()
                 for i in subsidies.index:
                     output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9
-
+            output['Zero Interest Loan headcount'] = self.zil_count
             taxes_expenditures = self.taxes_expenditure_details
             taxes_expenditures = pd.DataFrame(taxes_expenditures).sum()
             taxes_expenditures.index = taxes_expenditures.index.map(
