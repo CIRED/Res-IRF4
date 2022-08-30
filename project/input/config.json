@@ -105,6 +105,7 @@
         "end": 2051,
         "value": 0.0917729,
         "ad_volarem": true,
+        "design2019": true,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       }
