@@ -50,21 +50,29 @@ class PublicPolicy:
         self.cost_min = cost_min
         self.design = design
 
-    def cost_targeted(self, cost_insulation, target_subsidies=None):
+    def cost_targeted(self, cost_insulation, certificate, energy_saved_3uses,  target_subsidies=None):
         cost = cost_insulation.copy()
         idx = pd.IndexSlice
         if self.design:
-            cost[cost.loc[:, idx[False, False, False, True]] > 7000] = 7000
-            cost[cost.loc[:, [c for c in cost.columns if (sum(idx[c]) == 1)]] > 15000] = 15000 # It's overlapping with the line just above but 15000>7000 so not a problem
-            cost[cost.loc[:, [c for c in cost.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
-            cost[cost.loc[:, [c for c in cost.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
+            target_0 = certificate.isin(['E','D', 'C', 'B', 'A']).astype(bool)
+            target_1 = energy_saved_3uses[energy_saved_3uses >= 0.35].fillna(0).astype(bool)
+            target_global = target_0 & target_1 # Find another way to do that
+            cost_global = cost[target_global].fillna(0)
+            cost_global[cost_global > 50000] = 50000 # Useless cause doesn't exist
+
+            cost_isol= cost[~target_global].fillna(0)
+            cost_isol[cost_isol.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
+            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 1)]] > 15000] = 15000  # It's overlapping with the line just above but 15000>7000 so not a problem
+            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
+            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
+            cost = cost_global + cost_isol
         else:
-            if self.cost_max is not None:
+            if self.target is not None and target_subsidies is not None:
+                cost = cost[target_subsidies].fillna(0)
+        if self.cost_max is not None:
                 cost_max = reindex_mi(self.cost_max, cost.index)
                 cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
                 cost[cost > cost_max] = cost_max
-            if self.target is not None and target_subsidies is not None:
-                cost = cost[target_subsidies].fillna(0)
         if self.cost_min is not None:
             cost_min = reindex_mi(self.cost_min, cost.index)
             cost_min = pd.concat([cost_min] * cost.shape[1], axis=1).set_axis(

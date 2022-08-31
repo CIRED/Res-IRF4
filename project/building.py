@@ -2092,6 +2092,13 @@ class AgentBuildings(ThermalBuildings):
         heat_consumption_sd_before = surface * agent.heating_consumption_sd()
         energy_saved = - (consumption_sd.T * surface).T.sub(heat_consumption_sd_before, axis=0).dropna()
 
+        #It will not work properly cause it's not primary consumption in thermal.model_3uses_consumption() but final sd consumption
+        consumption_sd_3uses = thermal.model_3uses_consumption(consumption_sd)
+        consumption_before_3uses = thermal.model_3uses_consumption(heat_consumption_sd_before)
+        energy_saved_3uses = (- (consumption_sd_3uses.T * surface).T.sub(consumption_before_3uses, axis=0)).div(
+            consumption_before_3uses, axis=0).dropna()
+
+
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = reindex_mi(cost_insulation, surface.index)
         cost_insulation = (cost_insulation.T * surface.rename(None)).T
@@ -2101,8 +2108,7 @@ class AgentBuildings(ThermalBuildings):
             policies_insulation,
             cost_insulation, surface,
             certificate,
-            certificate_before,
-            )
+            certificate_before, energy_saved_3uses)
 
         if self._endogenous:
 
@@ -2143,7 +2149,7 @@ class AgentBuildings(ThermalBuildings):
         return retrofit_rate, market_share
 
     def apply_subsidies_insulation(self, policies_insulation, cost_insulation, surface, certificate, certificate_before,
-                                   ):
+                                   energy_saved_3uses):
         """Calculate subsidies amount for each possible insulation choice.
 
         Parameters
@@ -2246,7 +2252,7 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'subsidy_ad_volarem':
 
-                cost = policy.cost_targeted(cost_insulation, target_subsidies=target_subsidies)
+                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, target_subsidies=target_subsidies)
 
                 if isinstance(policy.value, pd.Series):
                     temp = reindex_mi(policy.value, cost.index)
@@ -2258,7 +2264,7 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'zero_interest_loan':
 
-                cost = policy.cost_targeted(cost_insulation, target_subsidies=target_subsidies)
+                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, target_subsidies=target_subsidies)
 
                 """cost = cost_insulation.copy()
                 if policy.cost_max is not None:
