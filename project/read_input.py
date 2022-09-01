@@ -56,11 +56,11 @@ class PublicPolicy:
         if self.design:
             target_0 = certificate.isin(['E','D', 'C', 'B', 'A']).astype(bool)
             target_1 = energy_saved_3uses[energy_saved_3uses >= 0.35].fillna(0).astype(bool)
-            target_global = target_0 & target_1 # Find another way to do that
+            target_global = target_0 & target_1
             cost_global = cost[target_global].fillna(0)
             cost_global[cost_global > 50000] = 50000 # Useless cause doesn't exist
 
-            cost_isol= cost[~target_global].fillna(0)
+            cost_isol = cost[~target_global].fillna(0)
             cost_isol[cost_isol.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
             cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 1)]] > 15000] = 15000  # It's overlapping with the line just above but 15000>7000 so not a problem
             cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 2)]] > 25000] = 25000

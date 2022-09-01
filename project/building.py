@@ -572,6 +572,7 @@ class AgentBuildings(ThermalBuildings):
         self.replacement_insulation, self.retrofit_rate = None, None
         self.cost_component, self.investment_insulation = None, None
         self.tax_insulation, self.taxed_insulation = None, None
+        self.zil_count, self.av_amount = None, None
         self.subsidies_details_insulation, self.subsidies_insulation = None, None
 
         self._share_decision_maker = stock.groupby(
@@ -2261,6 +2262,8 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     subsidies_details[policy.name] = policy.value * cost
                     subsidies_total += subsidies_details[policy.name]
+                if policy.name == 'zero_interest_loan':
+                    self.zil_loaned = cost
 
             elif policy.policy == 'zero_interest_loan':
 
@@ -2282,6 +2285,8 @@ class AgentBuildings(ThermalBuildings):
 
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
+                self.zil_loaned = cost
+
 
         subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
         if subsidies_non_cumulative:
@@ -2503,10 +2508,14 @@ class AgentBuildings(ThermalBuildings):
         replaced_by = (flow * market_share.T).T.copy()
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
-        mask = self.subsidies_details_insulation["zero_interest_loan"]
-        mask[mask > 0] = 1
-        zil_count = (replaced_by.fillna(0) * mask).sum().sum()
-        self.zil_count = zil_count.round()
+        if "zero_interest_loan" in self.subsidies_details_insulation.keys():
+            mask = self.subsidies_details_insulation["zero_interest_loan"]
+            loaned = self.zil_loaned
+            mask[mask > 0] = 1
+            total_loaned = (replaced_by.fillna(0) * loaned).sum().sum()
+            zil_count = (replaced_by.fillna(0) * mask).sum().sum()
+            self.av_amount = (total_loaned / zil_count).round()
+            self.zil_count = zil_count.round()
 
         only_heater = (stock - flow.reindex(stock.index, fill_value=0)).xs(True, level='Heater replacement')
         certificate_jump = self.certificate_jump_heater.stack()
@@ -2899,8 +2908,9 @@ class AgentBuildings(ThermalBuildings):
 
                 subsidies = subsidies.groupby(subsidies.index).sum()
                 for i in subsidies.index:
-                    output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9
-            output['Zero Interest Loan headcount'] = self.zil_count
+                    output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 6
+            output['Zero interest loan headcount'] = self.zil_count
+            output['Zero interest loan average amount'] = self.av_amount
             taxes_expenditures = self.taxes_expenditure_details
             taxes_expenditures = pd.DataFrame(taxes_expenditures).sum()
             taxes_expenditures.index = taxes_expenditures.index.map(
