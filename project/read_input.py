@@ -65,15 +65,12 @@ class PublicPolicy:
 
             cost_single = cost[~target_global].fillna(0)
             cost_single[cost_single.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
-            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 15000] = 15000 # It's overlapping with the line just above but 15000>7000 so not a problem
-             cost_single[cost_single.loc[[l for l in cost_single.index if (l[0] == False)], [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 15000] = 15000
-            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
-            # cost_single[cost_single.loc[[l for l in cost_single.index if (l[0] == False)], [c for c in cost_single.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
-            # cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 25000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) == 1)]]] = 25000 - cost_heater
-            # cost_single.xs(False, level='Heater replacement').index ça de donne ceux qu'on a pas remplacé
-            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
-            # cost_single[cost_single.loc[[l for l in cost_single.index if (l[0] == False)] , [c for c in cost_single.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
-            # cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) > 1)]] > 30000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) > 1)]]] = 30000 - cost_heater
+            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 15000] = 15000
+            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
+            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 25000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) == 1)]]] = 25000 - cost_heater
+            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[: , [c for c in cost_single.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
+            #Old way [k for k in cost_single.index if (k[0] == False)]
+            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) > 1)]] > 30000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) > 1)]]] = 30000 - cost_heater
             cost = cost_global + cost_single
         else:
             if self.target is not None and target_subsidies is not None:
