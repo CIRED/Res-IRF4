@@ -2178,6 +2178,7 @@ class AgentBuildings(ThermalBuildings):
         frame = certificate.copy()
         subsidies_total = pd.DataFrame(0, index=frame.index, columns=frame.columns)
         subsidies_details = {}
+        cost_heater = self.cost_heater #NOT the original cost
 
         tax = self.vta
         p = [p for p in policies_insulation if 'reduced_tax' == p.policy]
@@ -2253,7 +2254,7 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'subsidy_ad_volarem':
 
-                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, target_subsidies=target_subsidies)
+                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, cost_heater, target_subsidies=target_subsidies)
 
                 if isinstance(policy.value, pd.Series):
                     temp = reindex_mi(policy.value, cost.index)
@@ -2267,7 +2268,7 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'zero_interest_loan':
 
-                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, target_subsidies=target_subsidies)
+                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, cost_heater, target_subsidies=target_subsidies)
 
                 """cost = cost_insulation.copy()
                 if policy.cost_max is not None:
