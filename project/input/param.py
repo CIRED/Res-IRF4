@@ -93,23 +93,6 @@ generic_input['stock_ini'] = 29037000
 generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
 
-"""with open('project/input/parameters_thermal_module.pkl', 'rb') as f:
-    generic_input['thermal_parameters'] = pickle.load(f)
-
-
-param['certificate_bounds'] = {'A': (0, 39.59394228117988),
-                               'B': (39.59394228117988, 71.8798550383082),
-                               'C': (71.8798550383082, 119.92500210928785),
-                               'D': (119.92500210928785, 183.81313518374748),
-                               'E': (183.81313518374748, 264.83029117086653),
-                               'F': (264.83029117086653, 394.25890705145184),
-                               'G': (394.25890705145184, 1000)}
-param['coefficient'] = pd.Series([0.891000, 0.791331], index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'))
-generic_input['thermal_parameters'] = param
-param['logistic_regression_coefficient'] = pd.read_csv('project/input/logistic_regression_coefficient_epc.csv', index_col=[0])
-param['logistic_regression_coefficient'].columns = ['Intercept', 'Proxy_conso_square', 'Housing type']
-param['logistic_regression_coefficient'].index.names = ['Performance']"""
-
 generic_input['ratio_surface'] = pd.DataFrame(
     [[0.97, 0.75, 0.8, 0.11], [0.90, 0, 0, 0.15]],
     index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),

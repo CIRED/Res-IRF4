@@ -188,7 +188,7 @@ def read_policies(config):
         else:
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                            gest='insulation', target=True, cost_max=data_max, cost_min=data['min'], design=data['design2019'])]
+                             gest='insulation', target=True, cost_max=data_max, cost_min=data['min'], design=data['design2019'])]
 
     def read_reduced_tax(data):
         l = list()
@@ -261,16 +261,12 @@ def read_revealed(config):
     ms_heater = pd.read_csv(config['ms_heater'], index_col=[0, 1])
     ms_heater.columns.set_names('Heating system final', inplace=True)
 
-    # Values are over 0.01, but this allows to replace the 0 with Nan if there are any left
+    """
+    #Values are over 0.01, but this allows to replace the 0 with Nan if there are any left
     restrict_heater = ms_heater < 0.01
-    # restrict_heater.loc['Electricity-Heat pump', ['Electricity-Performance boiler', 'Natural gas-Performance boiler', 'Oil fuel-Performance boiler']] = True
-    # restrict_heater.loc['Electricity-Performance boiler', ['Oil fuel-Performance boiler']] = True
-    # restrict_heater.loc['Natural gas-Performance boiler', ['Oil fuel-Performance boiler']] = True
-    # restrict_heater.loc['Wood fuel-Performance boiler', ['Oil fuel-Performance boiler']] = True
-
     ms_heater[restrict_heater] = float('nan')
     # renormalizing (not really useful because input is normalized)
-    ms_heater = (ms_heater.T / ms_heater.sum(axis=1)).T
+    ms_heater = (ms_heater.T / ms_heater.sum(axis=1)).T"""
 
     #ms_heater = ms_heater.dropna(axis=1, how='all')
     choice_heater = list(ms_heater.columns)
@@ -281,7 +277,7 @@ def read_revealed(config):
     ms_intensive = pd.read_csv(config['ms_insulation'], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(
         decimals=3)
 
-    return efficiency, choice_insulation, ms_heater, restrict_heater, choice_heater, renovation_rate_ini, ms_intensive
+    return efficiency, choice_insulation, ms_heater, choice_heater, renovation_rate_ini, ms_intensive
 
 
 def parse_parameters(config, param, stock):

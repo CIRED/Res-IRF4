@@ -105,7 +105,7 @@
         "min": 5000,
         "max": "project/input/policies/zil_max.csv",
         "ad_volarem": false,
-       "design2019": true
+        "design2019": true
       }
     },
     "footprint": {
