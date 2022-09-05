@@ -37,7 +37,7 @@ class PublicPolicy:
     policy : {'energy_taxes', 'subsidies'}
 
     """
-    def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None):
+    def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None, design=None):
         self.name = name
         self.start = start
         self.end = end
@@ -48,22 +48,36 @@ class PublicPolicy:
         self.target = target
         self.cost_max = cost_max
         self.cost_min = cost_min
+        self.design = design
 
-    def cost_targeted(self, cost_insulation, target_subsidies=None):
+    def cost_targeted(self, cost_insulation, certificate, energy_saved_3uses,  target_subsidies=None):
         cost = cost_insulation.copy()
+        idx = pd.IndexSlice
+        if self.design:
+            target_0 = certificate.isin(['E','D', 'C', 'B', 'A']).astype(bool)
+            target_1 = energy_saved_3uses[energy_saved_3uses >= 0.35].fillna(0).astype(bool)
+            target_global = target_0 & target_1
+            cost_global = cost[target_global].fillna(0)
+            cost_global[cost_global > 50000] = 50000 # Useless cause doesn't exist
+
+            cost_isol = cost[~target_global].fillna(0)
+            cost_isol[cost_isol.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
+            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 1)]] > 15000] = 15000  # It's overlapping with the line just above but 15000>7000 so not a problem
+            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
+            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
+            cost = cost_global + cost_isol
+        else:
+            if self.target is not None and target_subsidies is not None:
+                cost = cost[target_subsidies].fillna(0)
         if self.cost_max is not None:
-            cost_max = reindex_mi(self.cost_max, cost.index)
-            cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(
-                cost.columns, axis=1)
-            cost[cost > cost_max] = cost_max
+                cost_max = reindex_mi(self.cost_max, cost.index)
+                cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
+                cost[cost > cost_max] = cost_max
         if self.cost_min is not None:
             cost_min = reindex_mi(self.cost_min, cost.index)
             cost_min = pd.concat([cost_min] * cost.shape[1], axis=1).set_axis(
                 cost.columns, axis=1)
             cost[cost < cost_min] = 0
-        if self.target is not None and target_subsidies is not None:
-            cost = cost[target_subsidies].fillna(0)
-
         return cost
 
 
@@ -170,11 +184,11 @@ def read_policies(config):
         if data['ad_volarem']:
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
-                             target=True, cost_min=data['min'], cost_max=data_max, gest='insulation')]
+                             target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', design=data['design2019'])]
         else:
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                            gest='insulation', target=True, cost_max=data_max, cost_min=data['min'])]
+                            gest='insulation', target=True, cost_max=data_max, cost_min=data['min'], design=data['design2019'])]
 
     def read_reduced_tax(data):
         l = list()

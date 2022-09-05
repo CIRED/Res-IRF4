@@ -55,11 +55,11 @@ def plot_scenario(output, stock, buildings):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=generic_input['colors'], loc='left', left=1.25)
 
-    mf_heater_index = [heater for heater in generic_input['index']['Heater']
-                       if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
+    #mf_heater_index = [heater for heater in generic_input['index']['Heater']
+    #                   if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
     df = pd.DataFrame(
-        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in mf_heater_index]).T.dropna()
-    df.columns = mf_heater_index
+        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in generic_input['index']['Heater']]).T.dropna()
+    df.columns = generic_input['index']['Heater']
     make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
@@ -95,7 +95,11 @@ def plot_scenario(output, stock, buildings):
             format_legend(ax[1], loc='left', left=1.2)
             ax[0].set_title('Realized')
             ax[1].set_title('Model results')
-            save_fig(fig, save=os.path.join(buildings.path, 'policies.png'))
+            save_fig(fig, save=os.path.join(buildings.path, 'policies_validation.png'))
+
+            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
+                           colors=generic_input['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                           loc='left', left=1.2)
 
         else:
             make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
@@ -221,7 +225,8 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
                                        generic_input['consumption_total_objectives']),
                  'Consumption standard (TWh)': ('consumption_standard.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
-                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y), None,
+                                       generic_input['emissions_total_objectives']),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
@@ -282,7 +287,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
         'Consumption {} (TWh)': [
             ('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, generic_input['consumption_hist'])],
         'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
-        'Subsidies total {} (Billion euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
+        'Subsidies total {} (Million euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
                                               ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                               ],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
@@ -568,7 +573,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
 
     indicator.sort_index(axis=1, inplace=True)
 
-    def socioeconomic_npv(data, scenarios, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
+    def socioeconomic_npv(data, scenarios, pol_name, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
         """Calculate socioeconomic NPV.
 
         Double difference is calculated with : scenario - reference
@@ -614,10 +619,10 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
             if 'AP' in s:
                 temp = pd.Series(temp)
-                title = 'AP - ({})'.format(s)
+                title = pol_name + ' : AP - ({})'.format(s)
             else:
                 temp = - pd.Series(temp)
-                title = '({})- ZP'.format(s)
+                title = pol_name + ' : ({})- ZP'.format(s)
 
             if save:
                 if cofp:
@@ -652,7 +657,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
     # Effectiveness : AP/AP-1 and ZP/ ZP+1 scenarios
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
-        se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, save=folder_policies)
+        se_npv = socioeconomic_npv(comparison, effectiveness_scenarios, policy_name, save=folder_policies)
         if indicator is not None:
             if set(list(se_npv.index)).issubset(list(indicator.index)):
                 indicator.loc[list(se_npv.index), s] = se_npv[s]

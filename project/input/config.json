@@ -1,21 +1,21 @@
 {
   "sensitivity": {
     "activated": true,
-    "ZP": true,
-    "prices_constant": true,
+    "ZP": false,
+    "prices_constant": false,
     "mpr_global_retrofit": true,
     "mpr_no_serenite": true,
     "mpr_no_bonus": true
   },
   "assessment": {
     "activated": false,
-    "Policy name": "cite",
+    "Policy name": "global_retrofit",
     "AP": "Reference",
     "AP-1": true,
     "ZP": true,
     "ZP+1": true,
     "AP-2020": false,
-    "AP-2025": false,
+    "AP-2025": true,
     "AP-2030": false,
     "AP-2035": false,
     "AP-2040": false,
@@ -26,7 +26,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2050,
+    "end": 2051,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -39,7 +39,7 @@
     "exogenous_detailed": {
       "number": 0
     },
-    "target_freeriders": 0.85,
+    "target_freeriders": 0.7,
     "preferences_zeros": false,
     "building_stock": "project/input/building_stock_sdes2018.csv",
     "population": "project/input/population.csv",
@@ -65,7 +65,7 @@
         "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
+        "global_retrofit":  null,
         "mpr_serenite": "project/input/policies/mpr_serenite.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
@@ -105,13 +105,14 @@
         "end": 2051,
         "value": 0.0917729,
         "ad_volarem": true,
+        "design2019": true,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       }
     },
     "footprint": {
-      "Traditional material": 0.5,
-      "Bio material": 0.5,
+      "Traditional material": 1,
+      "Bio material": 0,
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
