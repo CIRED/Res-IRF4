@@ -29,9 +29,6 @@ def res_irf(config, path):
     """
     os.mkdir(path)
 
-    # logging.getLogger('matplotlib.font_manager').disabled = True
-    # logging.getLogger('matplotlib.axes').disabled = True
-
     logger = logging.getLogger('log_{}'.format(path.split('/')[-1].lower()))
     logger.setLevel('DEBUG')
     logger.propagate = False

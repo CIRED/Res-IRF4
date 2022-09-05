@@ -2017,6 +2017,42 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
+    def prepare_analysis(self, index, prices, cost_insulation_raw):
+        """Function returns bill saved and cost for buildings stock retrofit.
+
+        Not implemented yet but should be able to calculate private and social indicator.
+        Make cost abatement cost graphs, payback period graphs.
+
+        Parameters
+        ----------
+        index
+        prices
+        cost_insulation_raw
+
+        Returns
+        -------
+
+        """
+
+        if index is None:
+            index = self.stock.index
+
+        agent = self.new(pd.Series(index=index, dtype=float))
+
+        energy_prices = agent.energy_prices(prices)
+        energy_bill_sd_before = agent.energy_bill_sd(prices)
+
+        choice_insulation = self._choice_insulation
+        consumption_sd = self.prepare_consumption(choice_insulation, index=index)[0]
+        energy_bill_sd = (consumption_sd.T * energy_prices * agent.surface).T
+
+        bill_saved = - energy_bill_sd.sub(energy_bill_sd_before, axis=0).dropna()
+        bill_saved.index.rename({'Heating system': 'Heating system final'}, inplace=True)
+        bill_saved.index.rename({'Heating system before': 'Heating system'}, inplace=True)
+
+        cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
+        pass
+
     @staticmethod
     def exogenous_retrofit(index, choice_insulation):
         """Format retrofit rate and market share for each segment.
