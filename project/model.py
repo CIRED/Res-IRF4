@@ -130,10 +130,10 @@ def res_irf(config, path):
             buildings.year = year
             buildings.add_flows([- buildings.flow_demolition()])
             flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, cost_insulation,
-                                                    ms_insulation=ms_intensive,
-                                                    renovation_rate_ini=renovation_rate_ini,
                                                     policies_heater=[p for p in policies_heater if (year >= p.start) and (year < p.end)],
                                                     policies_insulation=[p for p in policies_insulation if (year >= p.start) and (year < p.end)],
+                                                    ms_insulation=ms_intensive,
+                                                    renovation_rate_ini=renovation_rate_ini,
                                                     target_freeriders=config['target_freeriders'],
                                                     ms_heater=ms_heater,
                                                     supply_constraint=config['supply_constraint'])

@@ -200,7 +200,6 @@ def read_policies(config):
     def read_ad_volarem(data):
         l = list()
         value = data['value']
-        #value = pd.read_csv(data['value'], header=[0], index_col=[0]).squeeze().rename(None)
         l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
                               gest='heater'))
         l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
@@ -242,7 +241,6 @@ def read_exogenous(config):
     energy_taxes = pd.read_csv(config['energy_taxes'], index_col=[0])
     energy_taxes.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
 
-    # energy_prices =
     return energy_prices, energy_taxes, cost_heater, cost_insulation
 
 
