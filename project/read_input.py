@@ -50,7 +50,7 @@ class PublicPolicy:
         self.cost_min = cost_min
         self.design = design
 
-    def cost_targeted(self, cost_insulation, certificate=None, energy_saved_3uses=None,  target_subsidies=None):
+    def cost_targeted(self, cost_insulation, certificate, energy_saved_3uses, cost_heater,  target_subsidies=None):
         cost = cost_insulation.copy()
         idx = pd.IndexSlice
         if self.design:
@@ -58,14 +58,20 @@ class PublicPolicy:
             target_1 = energy_saved_3uses[energy_saved_3uses >= 0.35].fillna(0).astype(bool)
             target_global = target_0 & target_1
             cost_global = cost[target_global].fillna(0)
-            cost_global[cost_global > 50000] = 50000 # Useless cause doesn't exist
+            cost_heater = reindex_mi(cost_heater, cost.index)
+            cost_heater[cost_heater.index.get_level_values("Heater replacement") == False] = 0
+            cost_heater = pd.concat([cost_heater] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
+            cost_global[cost_global > 50000 - cost_heater] = 50000 - cost_heater # Works for 590 cells in the full isolation retrofits columns
 
-            cost_isol = cost[~target_global].fillna(0)
-            cost_isol[cost_isol.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
-            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 1)]] > 15000] = 15000  # It's overlapping with the line just above but 15000>7000 so not a problem
-            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
-            cost_isol[cost_isol.loc[:, [c for c in cost_isol.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
-            cost = cost_global + cost_isol
+            cost_single = cost[~target_global].fillna(0)
+            cost_single[cost_single.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
+            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 15000] = 15000
+            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
+            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 25000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) == 1)]]] = 25000 - cost_heater
+            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[: , [c for c in cost_single.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
+            #Old way [k for k in cost_single.index if (k[0] == False)]
+            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) > 1)]] > 30000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) > 1)]]] = 30000 - cost_heater
+            cost = cost_global + cost_single
         else:
             if self.target is not None and target_subsidies is not None:
                 cost = cost[target_subsidies].fillna(0)
