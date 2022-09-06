@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-import pandas as pd
+from pandas import Series, Index
 from model import initialize
 from read_input import PublicPolicy
 
@@ -82,7 +82,7 @@ def simple_resirf(sub_heater, sub_insulation, buildings, energy_price, taxes, po
 
     """
     # TODO: target specifically heat pump
-    sub_heater = pd.Series(sub_heater, index=pd.Index(['Electricity-Heat pump'], name='Heating system'))
+    sub_heater = Series(sub_heater, index=Index(['Electricity-Heat pump'], name='Heating system'))
     policies_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
     policies_heater.append(PublicPolicy('sub_heater_optim', year, year + 1, sub_heater, 'subsidy_ad_volarem',
                                         gest='heater'))

@@ -50,7 +50,7 @@ class PublicPolicy:
         self.cost_min = cost_min
         self.design = design
 
-    def cost_targeted(self, cost_insulation, certificate, energy_saved_3uses,  target_subsidies=None):
+    def cost_targeted(self, cost_insulation, certificate=None, energy_saved_3uses=None,  target_subsidies=None):
         cost = cost_insulation.copy()
         idx = pd.IndexSlice
         if self.design:
