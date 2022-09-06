@@ -101,6 +101,7 @@
         "value": 0.055
       },
       "zero_interest_loan": {
+        "new": true,
         "start": 2019,
         "end": 2051,
         "value": 0.0917729,

@@ -81,10 +81,10 @@ class PublicPolicy:
         if self.new and self.name == 'zero_interest_loan':
             target_global = target_subsidies[n]
             cost_global = cost[target_global].fillna(0).copy()
-            cost_included_global = reindex_mi(cost_included, cost_global.index)
-            cost_included_global[cost_included_global.index.get_level_values("Heater replacement") == False] = 0
-            cost_included_global = pd.concat([cost_included_global] * cost_global.shape[1], axis=1).set_axis(cost_global.columns, axis=1)
-            cost_global[cost_global > 50000 - cost_included_global] = 50000 - cost_included_global
+            cost_included = reindex_mi(cost_included, cost_global.index)
+            cost_included[cost_included.index.get_level_values("Heater replacement") == False] = 0
+            cost_included = pd.concat([cost_included] * cost_global.shape[1], axis=1).set_axis(cost_global.columns, axis=1)
+            cost_global[cost_global > 50000 - cost_included] = 50000 - cost_included
 
             cost_no_global = cost[~target_global].fillna(0).copy()
             # windows specific cap
@@ -97,20 +97,10 @@ class PublicPolicy:
 
             cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000
             cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000
-            cost_no_global[one_insulation]
+            cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000
+            cost_no_global[cost_no_global.loc[:, one_insulation ] > 25000 - cost_included[:, one_insulation]] = 25000 - cost_included
+            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included[:, two_insulation]] = 30000 - cost_included
 
-            cost_no_global[cost_no_global.xs(False, level="Heater replacement", drop_level=False).loc[:,
-                        [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]] > 15000] = 15000
-            cost_no_global[cost_no_global.xs(False, level="Heater replacement", drop_level=False).loc[:,
-                        [c for c in cost_no_global.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
-
-            cost_no_global[
-                cost_no_global.loc[:, [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]] > 25000 - cost_included.loc[:, [c for c in cost_included.columns if (sum(idx[c]) == 1)]]] = 25000 - cost_included
-
-            cost_no_global[cost_no_global.xs(False, level="Heater replacement", drop_level=False).loc[:,
-                        [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
-            # Old way [k for k in cost_single.index if (k[0] == False)]
-            cost_no_global[cost_no_global.loc[:, [c for c in cost_no_global.columns if (sum(idx[c]) > 1)]] > 30000 - cost_included.loc[:, [c for c in cost_included.columns if (sum(idx[c]) > 1)]]] = 30000 - cost_included
             cost = cost_global + cost_no_global
 
 
