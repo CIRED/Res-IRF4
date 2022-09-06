@@ -37,7 +37,8 @@ class PublicPolicy:
     policy : {'energy_taxes', 'subsidies'}
 
     """
-    def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None, design=None):
+    def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
+                 new=None):
         self.name = name
         self.start = start
         self.end = end
@@ -48,37 +49,75 @@ class PublicPolicy:
         self.target = target
         self.cost_max = cost_max
         self.cost_min = cost_min
-        self.design = design
+        self.new = new
 
-    def cost_targeted(self, cost_insulation, certificate, energy_saved_3uses, cost_heater,  target_subsidies=None):
+    def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
+        """
+
+        Parameters
+        ----------
+        cost_insulation: pd.DataFrame
+        certificate
+        energy_saved_3uses
+        cost_heater
+        target_subsidies
+
+        Returns
+        -------
+
+        """
         cost = cost_insulation.copy()
         idx = pd.IndexSlice
-        if self.design:
-            target_0 = certificate.isin(['E','D', 'C', 'B', 'A']).astype(bool)
-            target_1 = energy_saved_3uses[energy_saved_3uses >= 0.35].fillna(0).astype(bool)
-            target_global = target_0 & target_1
-            cost_global = cost[target_global].fillna(0)
-            cost_heater = reindex_mi(cost_heater, cost.index)
-            cost_heater[cost_heater.index.get_level_values("Heater replacement") == False] = 0
-            cost_heater = pd.concat([cost_heater] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
-            cost_global[cost_global > 50000 - cost_heater] = 50000 - cost_heater # Works for 590 cells in the full isolation retrofits columns
+        target = None
+        if self.target is not None and target_subsidies is not None:
+            n = 'old'
+            if self.new:
+                n = 'new'
+            n = '{}_{}'.format(self.name, n)
+            target = target_subsidies[n]
+            if not self.new:
+                cost = cost[target].fillna(0)
 
-            cost_single = cost[~target_global].fillna(0)
-            cost_single[cost_single.loc[:, idx[False, False, False, True]] > 7000] = 7000 #useless cause doesn't exist
-            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 15000] = 15000
-            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
-            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) == 1)]] > 25000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) == 1)]]] = 25000 - cost_heater
-            cost_single[cost_single.xs(False, level = "Heater replacement", drop_level = False).loc[: , [c for c in cost_single.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
-            #Old way [k for k in cost_single.index if (k[0] == False)]
-            cost_single[cost_single.loc[:, [c for c in cost_single.columns if (sum(idx[c]) > 1)]] > 30000 - cost_heater.loc[:, [c for c in cost_heater.columns if (sum(idx[c]) > 1)]]] = 30000 - cost_heater
-            cost = cost_global + cost_single
-        else:
-            if self.target is not None and target_subsidies is not None:
-                cost = cost[target_subsidies].fillna(0)
+        if self.new and self.name == 'zero_interest_loan':
+            target_global = target_subsidies[n]
+            cost_global = cost[target_global].fillna(0).copy()
+            cost_included_global = reindex_mi(cost_included, cost_global.index)
+            cost_included_global[cost_included_global.index.get_level_values("Heater replacement") == False] = 0
+            cost_included_global = pd.concat([cost_included_global] * cost_global.shape[1], axis=1).set_axis(cost_global.columns, axis=1)
+            cost_global[cost_global > 50000 - cost_included_global] = 50000 - cost_included_global
+
+            cost_no_global = cost[~target_global].fillna(0).copy()
+            # windows specific cap
+            cost_no_global[cost_no_global.loc[:, idx[False, False, False, True]] > 7000] = 7000
+
+            one_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]
+            two_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) == 2)]
+            more_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]
+            no_switch_idx = cost_no_global.xs(False, level='Heater replacement', drop_level=False).index
+
+            cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000
+            cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000
+            cost_no_global[one_insulation]
+
+            cost_no_global[cost_no_global.xs(False, level="Heater replacement", drop_level=False).loc[:,
+                        [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]] > 15000] = 15000
+            cost_no_global[cost_no_global.xs(False, level="Heater replacement", drop_level=False).loc[:,
+                        [c for c in cost_no_global.columns if (sum(idx[c]) == 2)]] > 25000] = 25000
+
+            cost_no_global[
+                cost_no_global.loc[:, [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]] > 25000 - cost_included.loc[:, [c for c in cost_included.columns if (sum(idx[c]) == 1)]]] = 25000 - cost_included
+
+            cost_no_global[cost_no_global.xs(False, level="Heater replacement", drop_level=False).loc[:,
+                        [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]] > 30000] = 30000
+            # Old way [k for k in cost_single.index if (k[0] == False)]
+            cost_no_global[cost_no_global.loc[:, [c for c in cost_no_global.columns if (sum(idx[c]) > 1)]] > 30000 - cost_included.loc[:, [c for c in cost_included.columns if (sum(idx[c]) > 1)]]] = 30000 - cost_included
+            cost = cost_global + cost_no_global
+
+
         if self.cost_max is not None:
-                cost_max = reindex_mi(self.cost_max, cost.index)
-                cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
-                cost[cost > cost_max] = cost_max
+            cost_max = reindex_mi(self.cost_max, cost.index)
+            cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
+            cost[cost > cost_max] = cost_max
         if self.cost_min is not None:
             cost_min = reindex_mi(self.cost_min, cost.index)
             cost_min = pd.concat([cost_min] * cost.shape[1], axis=1).set_axis(
@@ -118,18 +157,17 @@ def read_policies(config):
             if isinstance(data['global_retrofit'], dict):
                 global_retrofit = pd.read_csv(data['global_retrofit']['value'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['global_retrofit']['start'], data['global_retrofit']['end'], global_retrofit, 'subsidy_non_cumulative',
-                                  gest='insulation'))
+                                      gest='insulation'))
             else:
                 global_retrofit = pd.read_csv(data['global_retrofit'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
-                                  gest='insulation'))
-
+                                      gest='insulation'))
 
         if data['mpr_serenite']:
             if isinstance(data['mpr_serenite'], dict):
                 mpr_serenite = pd.read_csv(data['mpr_serenite']['value'], index_col=[0]).squeeze('columns')
-                l.append(PublicPolicy('mpr', data['mpr_serenite']['start'], data['mpr_serenite']['end'], mpr_serenite, 'subsidy_non_cumulative',
-                                  gest='insulation'))
+                l.append(PublicPolicy('mpr', data['mpr_serenite']['start'], data['mpr_serenite']['end'], mpr_serenite,
+                                      'subsidy_non_cumulative', gest='insulation'))
             else:
                 mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
@@ -190,11 +228,11 @@ def read_policies(config):
         if data['ad_volarem']:
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
-                             target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', design=data['design2019'])]
+                             target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
         else:
             return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                             gest='insulation', target=True, cost_max=data_max, cost_min=data['min'], design=data['design2019'])]
+                             gest='insulation', target=True, cost_max=data_max, cost_min=data['min'], new=data['new'])]
 
     def read_reduced_tax(data):
         l = list()

@@ -90,28 +90,7 @@ def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, rati
     return consumption
 
 
-def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, ratio_surface,
-                                conversion=CONVERSION):
-    """Convert final to primary heating consumption.
-
-    Parameters
-    ----------
-    u_wall
-    u_floor
-    u_roof
-    u_windows
-    dh
-    efficiency
-    energy
-    ratio_surface
-    conversion
-
-    Returns
-    -------
-
-    """
-    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, ratio_surface)
-
+def final2primary(heat_consumption, energy, conversion=CONVERSION):
     if isinstance(heat_consumption, pd.Series):
         primary_heat_consumption = heat_consumption.copy()
         primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * conversion
@@ -136,6 +115,29 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficien
             return primary_heat_consumption
         else:
             raise 'Energy DataFrame do not match indexes and columns'
+
+
+def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, ratio_surface,
+                                conversion=CONVERSION):
+    """Convert final to primary heating consumption.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    dh
+    efficiency
+    energy
+    ratio_surface
+    conversion
+
+    Returns
+    -------
+    """
+    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, ratio_surface)
+    return final2primary(heat_consumption, energy, conversion=conversion)
 
 
 def certificate(df):
