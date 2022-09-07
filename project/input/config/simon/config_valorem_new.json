@@ -18,8 +18,8 @@
     "AP-2020": true,
     "AP-2025": true,
     "AP-2030": true,
-    "AP-2035": true,
-    "AP-2040": true,
+    "AP-2035": false,
+    "AP-2040": false,
     "Discount rate": 0.045,
     "Lifetime": 26,
     "energy_prices": "project/input/energy_prices_ht.csv",
@@ -99,13 +99,13 @@
         "value": 0.055
       },
       "zero_interest_loan": {
+        "new": true,
         "start": 2019,
         "end": 2031,
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv",
-        "ad_volarem": true,
-       "design2019": true
+        "ad_volarem": true
       }
     },
     "footprint": {
