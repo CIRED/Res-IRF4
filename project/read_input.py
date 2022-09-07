@@ -98,8 +98,8 @@ class PublicPolicy:
             cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000
             cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000
             cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000
-            cost_no_global[cost_no_global.loc[:, one_insulation ] > 25000 - cost_included[:, one_insulation]] = 25000 - cost_included
-            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included[:, two_insulation]] = 30000 - cost_included
+            cost_no_global[cost_no_global.loc[:, one_insulation ] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included
+            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included
 
             cost = cost_global + cost_no_global
 
