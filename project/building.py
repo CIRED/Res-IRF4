@@ -2326,8 +2326,8 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'zero_interest_loan':
 
-                cost = policy.cost_targeted(cost_insulation, certificate, energy_saved_3uses, self.cost_heater.copy(),
-                                            target_subsidies=target_subsidies)
+                cost = policy.cost_targeted(cost_insulation, target_subsidies=target_subsidies,
+                                            cost_included=self.cost_heater.copy())
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
                 self.zil_loaned = cost.copy()
