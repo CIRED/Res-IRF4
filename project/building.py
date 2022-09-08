@@ -2528,7 +2528,7 @@ class AgentBuildings(ThermalBuildings):
         cost_heater: Series
         ms_heater: DataFrame
         cost_insulation
-        ms_insulation: DataFrame
+        ms_insulation: Series
         renovation_rate_ini: Series
         policies_heater: list
         List of policies for heating system.
