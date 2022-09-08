@@ -1,12 +1,14 @@
 import os
 import pandas as pd
-from building import AgentBuildings
-from input.param import generic_input
-from read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters, PublicPolicy
-from write_output import plot_scenario
 import logging
 from time import time
 import json
+
+from project.building import AgentBuildings
+from project.input.param import generic_input
+from project.read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters, PublicPolicy
+from project.write_output import plot_scenario
+
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 

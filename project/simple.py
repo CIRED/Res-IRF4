@@ -2,8 +2,9 @@ import os
 import json
 import logging
 from pandas import Series, Index
-from model import initialize
-from read_input import PublicPolicy
+
+from project.model import initialize
+from project.read_input import PublicPolicy
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 

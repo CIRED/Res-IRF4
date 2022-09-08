@@ -17,8 +17,9 @@
 
 import pandas as pd
 from itertools import product
-from utils import reindex_mi
 import logging
+
+from project.utils import reindex_mi
 
 logger = logging.getLogger(__name__)
 
@@ -323,7 +324,7 @@ def parse_parameters(config, param, stock):
     -------
 
     """
-    from dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
+    from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 
     population = pd.read_csv(config['population'], header=None, index_col=[0]).squeeze('columns')
     param['population_total'] = population

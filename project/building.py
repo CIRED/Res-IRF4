@@ -21,9 +21,9 @@ from numpy import exp, log, zeros, ones, append, arange, array
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 
-from input.param import generic_input
-from utils import make_plot, format_ax, save_fig, format_legend, reindex_mi
-import thermal
+from project.utils import make_plot, format_ax, save_fig, format_legend, reindex_mi
+import project.thermal as thermal
+from project.input.param import generic_input
 
 
 class ThermalBuildings:

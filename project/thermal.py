@@ -16,7 +16,8 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 import numpy as np
 import pandas as pd
-from utils import reindex_mi
+
+from project.utils import reindex_mi
 
 """LOGISTIC_COEFFICIENT = pd.read_csv('project/input/logistic_regression_coefficient_epc.csv', index_col=[0])
 LOGISTIC_COEFFICIENT.columns = ['Intercept', 'Proxy_conso_square']

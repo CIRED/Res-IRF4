@@ -20,8 +20,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from input.param import generic_input
-from utils import reverse_dict, make_plot, reindex_mi, make_grouped_subplots, make_area_plot, waterfall_chart, \
+from project.input.param import generic_input
+from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot
 
 

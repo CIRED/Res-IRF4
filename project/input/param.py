@@ -16,7 +16,7 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import pandas as pd
-import pickle
+from importlib import resources
 
 generic_input = dict()
 generic_input['pop_housing_min'] = 2
@@ -53,6 +53,7 @@ generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
 generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
+
 consumption_hist = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0], header=[0])
 generic_input['consumption_hist'] = {k: pd.Series(item, name='Historic') for k, item in
                                      consumption_hist.to_dict().items()}

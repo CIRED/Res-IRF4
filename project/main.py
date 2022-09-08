@@ -25,8 +25,8 @@ from datetime import datetime
 import re
 import argparse
 
-from write_output import grouped_output
-from model import res_irf
+from project.write_output import grouped_output
+from project.model import res_irf
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
