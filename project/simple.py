@@ -81,11 +81,11 @@ def simple_resirf(sub_heater, sub_insulation, buildings, energy_price, taxes, po
     Annual health cost. Sum of health expenditure, social cost of mortality and loss of well-being [Billion euro]
 
     """
-    # TODO: target specifically heat pump
-    sub_heater = Series(sub_heater, index=Index(['Electricity-Heat pump'], name='Heating system'))
+
+    sub_heater = Series(sub_heater, index=Index(['Electricity-Heat pump'], name='Heating system final'))
     policies_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
     policies_heater.append(PublicPolicy('sub_heater_optim', year, year + 1, sub_heater, 'subsidy_ad_volarem',
-                                        gest='heater'))
+                                        gest='heater', by='columns'))
 
     policies_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
     policies_insulation.append(PublicPolicy('sub_insulation_optim', year, year + 1, sub_insulation, 'subsidy_ad_volarem',
@@ -102,11 +102,14 @@ def simple_resirf(sub_heater, sub_insulation, buildings, energy_price, taxes, po
     # output
     electricity = buildings.heat_consumption_energy['Electricity'] / 10**9
     gas = buildings.heat_consumption_energy['Natural gas'] / 10**9
+    wood = buildings.heat_consumption_energy['Wood fuel'] / 10**9
+    oil = buildings.heat_consumption_energy['Oil fuel'] / 10**9
+
     investment = (buildings.investment_heater.sum().sum() + buildings.investment_insulation.sum().sum()) / 10**9
     subsidies = (buildings.subsidies_heater.sum().sum() + buildings.subsidies_insulation.sum().sum()) / 10**9
     health_cost, _ = buildings.health_cost(param)
 
-    return electricity, gas, investment, subsidies, health_cost
+    return electricity, gas, wood, oil, investment, subsidies, health_cost
 
 
 sub_insulation, sub_heater = 0.1, 0.1
