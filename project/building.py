@@ -2967,7 +2967,7 @@ class AgentBuildings(ThermalBuildings):
                 for i in subsidies.index:
                     output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 6
             output['Zero interest loan headcount'] = self.zil_count
-            output['Zero interest loan average amount'] = self.av_amount
+            output['Zero interest loan average amount'] = self.zil_loaned_avg
             taxes_expenditures = self.taxes_expenditure_details
             taxes_expenditures = DataFrame(taxes_expenditures).sum()
             taxes_expenditures.index = taxes_expenditures.index.map(

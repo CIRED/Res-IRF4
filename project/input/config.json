@@ -101,11 +101,11 @@
         "value": 0.055
       },
       "zero_interest_loan": {
+        "new": true,
         "start": 2019,
         "end": 2051,
         "value": 0.0917729,
         "ad_volarem": true,
-        "design2019": true,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       }
