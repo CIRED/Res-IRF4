@@ -38,7 +38,7 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None):
+                 new=None, by='index'):
         self.name = name
         self.start = start
         self.end = end
@@ -50,6 +50,7 @@ class PublicPolicy:
         self.cost_max = cost_max
         self.cost_min = cost_min
         self.new = new
+        self.by = by
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
@@ -57,10 +58,8 @@ class PublicPolicy:
         Parameters
         ----------
         cost_insulation: pd.DataFrame
-        certificate
-        energy_saved_3uses
-        cost_heater
         target_subsidies
+        cost_included
 
         Returns
         -------
@@ -98,11 +97,10 @@ class PublicPolicy:
             cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000
             cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000
             cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000
-            cost_no_global[cost_no_global.loc[:, one_insulation ] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included
+            cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included
             cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included
 
             cost = cost_global + cost_no_global
-
 
         if self.cost_max is not None:
             cost_max = reindex_mi(self.cost_max, cost.index)
@@ -204,9 +202,9 @@ def read_policies(config):
 
     def read_cite(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
+        heater = pd.read_csv(data['heater'], index_col=[0]).squeeze()
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
-                              cap=data['cap']))
+                              cap=data['cap'], by='columns'))
         l.append(
             PublicPolicy('cite', data['start'], data['end'], data['insulation'], 'subsidy_ad_volarem', gest='insulation',
                          cap=data['cap']))

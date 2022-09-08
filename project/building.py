@@ -873,9 +873,14 @@ class AgentBuildings(ThermalBuildings):
                     sub = reindex_mi(sub, frame.index).fillna(0)
 
                 if isinstance(policy.value, Series):
-                    sub = policy.value.to_frame().dot(cost_heater.to_frame().T)
-                    sub = reindex_mi(sub, frame.index).fillna(0)
-
+                    if policy.by == 'index':
+                        sub = policy.value.to_frame().dot(cost_heater.to_frame().T)
+                        sub = reindex_mi(sub, frame.index).fillna(0)
+                    elif policy.by == 'columns':
+                        sub = (policy.value * cost_heater).fillna(0).reindex(frame.columns)
+                        sub = concat([sub] * frame.shape[0], keys=frame.index, names=frame.index.names, axis=1).T
+                    else:
+                        raise NotImplemented
                 if policy.cap:
                     sub[sub > policy.cap] = sub
             else:
