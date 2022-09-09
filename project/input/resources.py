@@ -16,10 +16,9 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 from pandas import DataFrame, Series, read_csv
-from importlib import resources
+from project.utils import get_pandas
 
-
-def get_consumption_hist() -> DataFrame:
+"""def get_consumption_hist() -> DataFrame:
     with resources.path('project.input.resources_dir', 'hist_consumption.csv') as df:
         return read_csv(df, index_col=[0], header=[0])
 
@@ -41,15 +40,16 @@ def get_retrofit_comparison() -> DataFrame:
 
 def get_calibration_data() -> Series:
     with resources.path('project.input.resources_dir', 'data_ceren.csv') as df:
-        return read_csv(df, index_col=[0]).squeeze()
+        return read_csv(df, index_col=[0]).squeeze()"""
 
 
 resources_data = dict()
 
-consumption_hist = get_consumption_hist()
+consumption_hist = get_pandas('project/input/resources_dir/hist_consumption.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
 resources_data['consumption_hist'] = {k: Series(item, name='Historic') for k, item in consumption_hist.to_dict().items()}
 
-resources_data['consumption_total_hist'] = get_consumption_total_hist()
+consumption_total_hist = get_pandas('project/input/resources_dir/hist_consumption_total.csv', lambda x: read_csv(x, index_col=[0], header=None).squeeze().rename('Historic'))
+resources_data['consumption_total_hist'] = consumption_total_hist
 
 resources_data['consumption_total_objectives'] = Series([207, 176, 146], index=[2028, 2030, 2050], name='Objectives')
 
@@ -58,18 +58,19 @@ resources_data['emissions_total_objectives'] = Series([23, 0], index=[2030, 2050
 resources_data['low_eff_objectives'] = Series([0], index=[2050], name='Objectives')
 
 
-resources_data['retrofit_hist'] = get_retrofit_hist()
+resources_data['retrofit_hist'] = get_pandas('project/input/resources_dir/hist_retrofit.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
 resources_data['retrofit_hist'] = {k: DataFrame({2019: item}).T / 10 ** 3 for k, item in
                                    resources_data['retrofit_hist'].T.to_dict().items()}
 
-
-resources_data['retrofit_comparison'] = get_retrofit_comparison()
+retrofit_comparison = get_pandas('project/input/resources_dir/retrofit_comparison_resirf3.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
+resources_data['retrofit_comparison'] = retrofit_comparison
 
 resources_data['public_policies_2019'] = DataFrame([1.88, 1.05, 0, 1.32, 0.56],
                                                    index=['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan'],
                                                    columns=[2019])
 
-resources_data['data_calibration'] = get_calibration_data()
+calibration_data = get_pandas('project/input/resources_dir/data_ceren.csv', lambda x: read_csv(x, index_col=[0]).squeeze())
+resources_data['data_calibration'] = calibration_data
 
 resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],

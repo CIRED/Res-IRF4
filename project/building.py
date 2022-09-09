@@ -456,12 +456,12 @@ class AgentBuildings(ThermalBuildings):
 
     """
 
-    def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences,
+    def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path, preferences,
                  choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
                  endogenous=True, number_exogenous=300000, utility_extensive='market_share',
                  logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True):
-        super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
-                        debug_mode=debug_mode)
+        super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=year,
+                         debug_mode=debug_mode)
 
         self.certificate_jump_heater = None
         self.retrofit_with_heater = None

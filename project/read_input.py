@@ -321,7 +321,7 @@ def read_exogenous(config):
 
 def read_revealed(config):
     # efficiency = pd.read_csv(config['efficiency'], index_col=[0]).squeeze('columns')
-    efficiency = get_pandas(config['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze)
+    efficiency = get_pandas(config['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
     choice_insulation = {'Wall': [False, True], 'Floor': [False, True], 'Roof': [False, True], 'Windows': [False, True]}
     names = list(choice_insulation.keys())
