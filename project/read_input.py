@@ -16,15 +16,13 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import pandas as pd
-from itertools import product
 import logging
-
+import copy
 
 from project.utils import reindex_mi, get_pandas
+from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 
 logger = logging.getLogger(__name__)
-
-
 
 
 class PublicPolicy:
@@ -116,7 +114,6 @@ class PublicPolicy:
                 cost.columns, axis=1)
             cost[cost < cost_min] = 0
         return cost
-
 
 
 def read_stock(config):
@@ -297,53 +294,98 @@ def read_policies(config):
     return policies_heater, policies_insulation, taxes
 
 
-def read_exogenous(config):
+def read_inputs(config, other_inputs):
+
+    inputs = dict()
+    idx = range(config['start'], config['end'])
+
+    inputs.update(other_inputs)
+
     cost_heater = get_pandas(config['cost_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-    cost_heater *= config['cost_factor']
+    inputs.update({'cost_heater': cost_heater})
 
-    # cost_heater = pd.read_csv(config['cost_heater'], index_col=[0]).squeeze('columns').rename(None) *
     cost_insulation = get_pandas(config['cost_insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-    cost_insulation *= config['cost_factor']
+    inputs.update({'cost_insulation': cost_insulation})
 
-    # cost_insulation = pd.read_csv(config['cost_insulation'], index_col=[0]).squeeze('columns').rename(None)
+    energy_prices = get_pandas(config['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+    inputs.update({'energy_prices': energy_prices.loc[:config['end'], :]})
 
-    energy_prices = get_pandas(config['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]))
-    # energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
-    energy_prices.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
+    energy_taxes = get_pandas(config['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+    inputs.update({'energy_taxes': energy_taxes.loc[:config['end'], :]})
 
-    # energy_taxes = pd.read_csv(config['energy_taxes'], index_col=[0])
-    energy_taxes = get_pandas(config['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]))
-
-    energy_taxes.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
-
-    return energy_prices, energy_taxes, cost_heater, cost_insulation
-
-
-def read_revealed(config):
-    # efficiency = pd.read_csv(config['efficiency'], index_col=[0]).squeeze('columns')
     efficiency = get_pandas(config['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-    choice_insulation = {'Wall': [False, True], 'Floor': [False, True], 'Roof': [False, True], 'Windows': [False, True]}
-    names = list(choice_insulation.keys())
-    choice_insulation = list(product(*[i for i in choice_insulation.values()]))
-    choice_insulation.remove((False, False, False, False))
-    choice_insulation = pd.MultiIndex.from_tuples(choice_insulation, names=names)
+    inputs.update({'efficiency': efficiency})
 
     ms_heater = get_pandas(config['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     ms_heater.columns.set_names('Heating system final', inplace=True)
-    choice_heater = list(ms_heater.columns)
+    inputs.update({'ms_heater': ms_heater})
 
-    # df = pd.read_csv(config['renovation_rate_ini'])
     df = get_pandas(config['renovation_rate_ini'])
     renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
+    inputs.update({'renovation_rate_ini': renovation_rate_ini})
 
-    # ms_intensive = pd.read_csv(config['ms_insulation'], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(decimals=3)
     ms_intensive = get_pandas(config['ms_insulation'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
+    inputs.update({'ms_intensive': ms_intensive})
 
-    return efficiency, choice_insulation, ms_heater, choice_heater, renovation_rate_ini, ms_intensive
+    population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+    inputs.update({'population': population.loc[:config['end']]})
+
+    inputs.update({'stock_ini': other_inputs['stock_ini']})
+
+    if config['pop_housing'] is None:
+        inputs.update({'pop_housing_min': other_inputs['pop_housing_min']})
+        inputs.update({'factor_pop_housing': other_inputs['factor_pop_housing']})
+    else:
+        pop_housing = get_pandas(config['pop_housing'],
+                                          lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        inputs.update({'pop_housing': pop_housing.loc[:config['end']]})
+
+    if config['share_multi_family'] is None:
+        inputs.update({'factor_multi_family': other_inputs['factor_multi_family']})
+    else:
+        share_multi_family = get_pandas(config['share_multi_family'],
+                                                 lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        inputs.update({'share_multi_family': share_multi_family})
+
+    inputs.update({'available_income': other_inputs['available_income']})
+    inputs.update({'income_rate': config['income_rate']})
+    inputs.update({'demolition_rate': config['demolition_rate']})
+
+    if config['surface_built'] is None:
+        inputs.update({'surface': other_inputs['surface']})
+        inputs.update({'surface_max': other_inputs['surface_max']})
+        inputs.update({'surface_elasticity': other_inputs['surface_elasticity']})
+    else:
+        surface_built = get_pandas(config['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+        inputs.update({'surface_built': surface_built})
+
+    ms_heater_built = get_pandas(config['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
+    ms_heater_built.columns.set_names(['Heating system'], inplace=True)
+    ms_heater_built.index.set_names(['Housing type'], inplace=True)
+    inputs.update({'ms_heater_built': ms_heater_built})
+
+    inputs.update({'performance_insulation': other_inputs['performance_insulation']})
+
+    df = get_pandas(config['health_cost'], lambda x: pd.read_csv(x, index_col=[0, 1]))
+    inputs.update({'health_cost': df.sum(axis=1).rename('Health cost')})
+
+    carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+    inputs.update({'carbon_value': carbon_value.loc[idx]})
+
+    carbon_emission = get_pandas(config['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
+    inputs.update({'carbon_emission': carbon_emission.loc[idx, :]})
+
+    footprint_built = get_pandas(config['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
+    inputs.update({'footprint_built': footprint_built})
+    footprint_renovation = get_pandas(config['footprint']['renovation'], lambda x: pd.read_csv(x, index_col=[0, 1]))
+    inputs.update({'footprint_renovation': footprint_renovation})
+
+    inputs.update({'traditional_material': config['footprint']['Traditional material']})
+    inputs.update({'bio_material': config['footprint']['Bio material']})
+    return inputs
 
 
-def parse_parameters(config, param, stock):
+def parse_inputs(inputs, config, stock):
     """Macro module : run exogenous dynamic parameters.
 
     Parameters
@@ -356,61 +398,63 @@ def parse_parameters(config, param, stock):
     -------
 
     """
-    from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 
-    # population = pd.read_csv(config['population'], header=None, index_col=[0]).squeeze('columns')
-    population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+    parsed_inputs = copy.deepcopy(inputs)
 
-    param['population_total'] = population
-    param['sizing_factor'] = stock.sum() / param['stock_ini']
-    param['population'] = population * param['sizing_factor']
+    parsed_inputs['cost_heater'] *= config['cost_factor']
+    parsed_inputs['cost_insulation'] *= config['cost_factor']
+    parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
+    parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
+
+    parsed_inputs['population_total'] = inputs['population']
+    parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
+    parsed_inputs['population'] = inputs['population'] * parsed_inputs['sizing_factor']
 
     if config['pop_housing'] is None:
-        param['stock_need'], param['pop_housing'] = stock_need(param['population'],
-                                                               param['population'][config['start']] / stock.sum(),
-                                                               param['pop_housing_min'],
-                                                               config['start'], param['factor_pop_housing'])
+        parsed_inputs['stock_need'], parsed_inputs['pop_housing'] = stock_need(parsed_inputs['population'],
+                                                                               parsed_inputs['population'][
+                                                                                   config['start']] / stock.sum(),
+                                                                               inputs['pop_housing_min'],
+                                                                               config['start'],
+                                                                               inputs['factor_pop_housing'])
+
     elif config['pop_housing'] == 'constant':
         pass
     else:
-        param['pop_housing'] = get_pandas(config['pop_housing'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        # param['pop_housing'] = pd.read_csv(config['pop_housing'], index_col=[0], header=None).squeeze()
-        param['stock_need'] = param['population'] / param['pop_housing']
+        parsed_inputs['stock_need'] = inputs['population'] / inputs['pop_housing']
 
     if config['share_multi_family'] is None:
-        param['share_multi_family'] = share_multi_family(param['stock_need'], param['factor_multi_family'])
+        parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
+                                                                 inputs['factor_multi_family'])
     elif config['share_multi_family'] == 'constant':
         pass
     else:
-        param['share_multi_family'] = get_pandas(config['share_multi_family'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        # param['share_multi_family'] = pd.read_csv(config['share_multi_family'], index_col=[0], header=None).squeeze()
+        parsed_inputs['share_multi_family'] = inputs['share_multi_family']
 
     idx = range(config['start'], config['end'])
-    param['available_income'] = pd.Series(
-        [param['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
-    param['available_income_pop'] = (param['available_income'] / param['population_total']).dropna()
+    parsed_inputs['available_income'] = pd.Series(
+        [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
-    param['demolition_rate'] = config['demolition_rate']
-    param['flow_demolition'] = pd.Series(param['demolition_rate'] * stock.sum(), index=idx[1:])
+    parsed_inputs['available_income_pop'] = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
 
-    param['flow_need'] = param['stock_need'] - param['stock_need'].shift(1)
-    param['flow_construction'] = param['flow_need'] + param['flow_demolition']
+    parsed_inputs['flow_demolition'] = pd.Series(input['demolition_rate'] * stock.sum(), index=idx[1:])
+    parsed_inputs['flow_need'] = parsed_inputs['stock_need'] - parsed_inputs['stock_need'].shift(1)
+    parsed_inputs['flow_construction'] = parsed_inputs['flow_need'] + parsed_inputs['flow_demolition']
 
-    if config['surface_built'] == 'endogenous':
-        surface_built = evolution_surface_built(param['surface'].xs(False, level='Existing'), param['surface_max'],
-                                                param['surface_elasticity'], param['available_income_pop'])
-    elif config['surface_built'] == 'surface_built':
+    if config['surface_built'] is None:
+        surface_built = evolution_surface_built(inputs['surface'].xs(False, level='Existing'), inputs['surface_max'],
+                                                inputs['surface_elasticity'], parsed_inputs['available_income_pop'])
+    elif config['surface_built'] == 'constant':
         pass
     else:
-        surface_built = get_pandas(config['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-        # surface_built = pd.read_csv(config['surface_built'], index_col=[0]).squeeze().rename(None)
+        surface_built = inputs['surface_built']
 
-    surface_existing = pd.concat([param['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
+    surface_existing = pd.concat([parsed_inputs['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
                                  keys=surface_built.columns)
-    param['surface'] = pd.concat((surface_existing, surface_built), axis=0, keys=[True, False], names=['Existing'])
+    parsed_inputs['surface'] = pd.concat((surface_existing, surface_built), axis=0, keys=[True, False], names=['Existing'])
 
-    type_built = share_type_built(param['stock_need'], param['share_multi_family'], param['flow_construction']) * param[
-        'flow_construction']
+    type_built = share_type_built(parsed_inputs['stock_need'], parsed_inputs['share_multi_family'],
+                                  parsed_inputs['flow_construction']) * parsed_inputs['flow_construction']
 
     share_decision_maker = stock.groupby(
         ['Occupancy status', 'Housing type', 'Income owner', 'Income tenant']).sum().unstack(
@@ -420,92 +464,79 @@ def parse_parameters(config, param, stock):
     construction = (reindex_mi(type_built, share_decision_maker.columns, axis=1) * share_decision_maker).stack(
         ['Occupancy status', 'Income owner', 'Income tenant']).fillna(0)
 
-    # ms_heater_built = pd.read_csv(config['ms_heater_built'], index_col=[0], header=[0])
-    ms_heater_built = get_pandas(config['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
-
-    ms_heater_built.columns.set_names(['Heating system'], inplace=True)
-    ms_heater_built.index.set_names(['Housing type'], inplace=True)
-
-    ms_heater_built = reindex_mi(ms_heater_built, construction.index).stack()
+    ms_heater_built = reindex_mi(inputs['ms_heater_built'], construction.index).stack()
     construction = (reindex_mi(construction, ms_heater_built.index).T * ms_heater_built).T
     construction = construction.loc[(construction != 0).any(axis=1)]
 
-    performance_insulation = pd.concat([pd.Series(param['performance_insulation'])] * construction.shape[0], axis=1,
+    performance_insulation = pd.concat([pd.Series(inputs['performance_insulation'])] * construction.shape[0], axis=1,
                                        keys=construction.index).T
-    param['flow_built'] = pd.concat((construction, performance_insulation), axis=1).set_index(
+
+    parsed_inputs['flow_built'] = pd.concat((construction, performance_insulation), axis=1).set_index(
         list(performance_insulation.keys()), append=True)
 
-    param['flow_built'] = pd.concat([param['flow_built']], keys=[False], names=['Existing']).reorder_levels(
-        stock.index.names)
+    parsed_inputs['flow_built'] = pd.concat([parsed_inputs['flow_built']], keys=[False],
+                                            names=['Existing']).reorder_levels(stock.index.names)
 
     if not config['construction']:
-        param['flow_built'][param['flow_built'] > 0] = 0
+        parsed_inputs['flow_built'][parsed_inputs['flow_built'] > 0] = 0
 
-    df = get_pandas(config['health_cost'], lambda x: pd.read_csv(x, index_col=[0, 1]))
-    param['health_expenditure'] = df['Health expenditure']
-    param['mortality_cost'] = df['Social cost of mortality']
-    param['loss_well_being'] = df['Loss of well-being']
-    # param['carbon_value'] = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze('columns')
-    param['carbon_value'] = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+    df = inputs['health_cost']
+    parsed_inputs['health_expenditure'] = df['Health expenditure']
+    parsed_inputs['mortality_cost'] = df['Social cost of mortality']
+    parsed_inputs['loss_well_being'] = df['Loss of well-being']
+    parsed_inputs['carbon_value_kwh'] = (parsed_inputs['carbon_value'] * parsed_inputs['carbon_emission'].T).T.dropna() / 10**6
 
-    # param['carbon_emission'] = pd.read_csv(config['carbon_emission'], index_col=[0])
-    param['carbon_emission'] = get_pandas(config['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]))
-    param['carbon_value_kwh'] = (param['carbon_value'] * param['carbon_emission'].T).T.dropna() / 10**6
+    carbon_footprint_built = inputs['footprint_built'].loc[:, 'Carbon content (kgCO2/m2)']
+    carbon_footprint_built = inputs['traditional_material'] * carbon_footprint_built[
+        'Traditional material'] + inputs['bio_material'] * carbon_footprint_built['Bio material']
+    parsed_inputs['carbon_footprint_built'] = carbon_footprint_built
 
-    summary_param = dict()
-    summary_param['Sizing factor (%)'] = pd.Series(param['sizing_factor'], index=param['population'].index)
-    summary_param['Total population (Millions)'] = param['population'] / 10**6
-    summary_param['Income (Billions euro)'] = param['available_income'] * param['sizing_factor'] / 10**9
-    summary_param['Buildings stock (Millions)'] = param['stock_need'] / 10**6
-    summary_param['Buildings additional (Thousands)'] = param['flow_need'] / 10**6
-    summary_param['Buildings built (Thousands)'] = param['flow_construction'] / 10**3
-    summary_param['Buildings demolished (Thousands)'] = param['flow_demolition'] / 10**3
-    summary_param['Person by housing'] = param['pop_housing']
-    summary_param['Share multi-family (%)'] = param['share_multi_family']
+    embodied_energy_built = inputs['footprint_built'].loc[:, 'Grey energy (kWh/m2)']
+    embodied_energy_built = inputs['traditional_material'] * embodied_energy_built[
+        'Traditional material'] + inputs['bio_material'] * embodied_energy_built['Bio material']
+    parsed_inputs['embodied_energy_built'] = embodied_energy_built
 
-    temp = param['surface'].xs(True, level='Existing', drop_level=True)
+    carbon_footprint_renovation = inputs['footprint_renovation'].xs('Carbon content (kgCO2/m2)', level='Content')
+    parsed_inputs['carbon_footprint_renovation'] = carbon_footprint_renovation.loc['Traditional material', :] * inputs[
+        'traditional_material'] + carbon_footprint_renovation.loc['Bio material', :] * inputs['bio_material']
+    embodied_energy_renovation = inputs['footprint_renovation'].xs('Grey energy (kWh/m2)', level='Content')
+    parsed_inputs['embodied_energy_renovation'] = embodied_energy_renovation.loc['Traditional material', :] * inputs[
+        'traditional_material'] + embodied_energy_renovation.loc['Bio material', :] * inputs['bio_material']
+
+    temp = parsed_inputs['surface'].xs(False, level='Existing', drop_level=True)
+    temp = (parsed_inputs['flow_built'].groupby(temp.index.names).sum() * temp).sum() / 10**6
+    parsed_inputs['Surface construction (Million m2)'] = temp
+
+    parsed_inputs['Carbon footprint construction (MtCO2)'] = (parsed_inputs['Surface construction (Million m2)'] * parsed_inputs['carbon_footprint_built']) / 10**3
+    parsed_inputs['Embodied energy construction (TWh PE)'] = (parsed_inputs['Surface construction (Million m2)'] * parsed_inputs['embodied_energy_built']) / 10**3
+    return parsed_inputs
+
+
+def dump_inputs(parsed_inputs):
+    
+    summary_input = dict()
+    summary_input['Sizing factor (%)'] = pd.Series(parsed_inputs['sizing_factor'], index=parsed_inputs['population'].index)
+    summary_input['Total population (Millions)'] = parsed_inputs['population'] / 10**6
+    summary_input['Income (Billions euro)'] = parsed_inputs['available_income'] * parsed_inputs['sizing_factor'] / 10**9
+    summary_input['Buildings stock (Millions)'] = parsed_inputs['stock_need'] / 10**6
+    summary_input['Buildings additional (Thousands)'] = parsed_inputs['flow_need'] / 10**6
+    summary_input['Buildings built (Thousands)'] = parsed_inputs['flow_construction'] / 10**3
+    summary_input['Buildings demolished (Thousands)'] = parsed_inputs['flow_demolition'] / 10**3
+    summary_input['Person by housing'] = parsed_inputs['pop_housing']
+    summary_input['Share multi-family (%)'] = parsed_inputs['share_multi_family']
+
+    temp = parsed_inputs['surface'].xs(True, level='Existing', drop_level=True)
     temp.index = temp.index.map(lambda x: 'Surface existing {} - {} (m2/dwelling)'.format(x[0], x[1]))
-    summary_param.update(temp.T)
+    summary_input.update(temp.T)
 
-    footprint_built = get_pandas(config['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
-    # footprint_built = pd.read_csv(config['footprint']['construction'], index_col=[0])
-    carbon_footprint_built = footprint_built.loc[:, 'Carbon content (kgCO2/m2)']
-    carbon_footprint_built = config['footprint']['Traditional material'] * carbon_footprint_built[
-        'Traditional material'] + config['footprint']['Bio material'] * carbon_footprint_built['Bio material']
-
-    embodied_energy_built = footprint_built.loc[:, 'Grey energy (kWh/m2)']
-    embodied_energy_built = config['footprint']['Traditional material'] * embodied_energy_built[
-        'Traditional material'] + config['footprint']['Bio material'] * embodied_energy_built['Bio material']
-
-    footprint_renovation = get_pandas(config['footprint']['renovation'], lambda x: pd.read_csv(x, index_col=[0, 1]))
-    # footprint_renovation = pd.read_csv(config['footprint']['renovation'], index_col=[0, 1])
-    carbon_footprint_renovation = footprint_renovation.xs('Carbon content (kgCO2/m2)', level='Content')
-    param['carbon_footprint_renovation'] = carbon_footprint_renovation.loc['Traditional material', :] * config['footprint'][
-        'Traditional material'] + carbon_footprint_renovation.loc['Bio material', :] * config['footprint'][
-                                      'Bio material']
-    embodied_energy_renovation = footprint_renovation.xs('Grey energy (kWh/m2)', level='Content')
-    param['embodied_energy_renovation'] = embodied_energy_renovation.loc['Traditional material', :] * config['footprint'][
-        'Traditional material'] + embodied_energy_renovation.loc['Bio material', :] * config['footprint'][
-                                      'Bio material']
-
-    temp = param['surface'].xs(False, level='Existing', drop_level=True)
+    temp = parsed_inputs['surface'].xs(False, level='Existing', drop_level=True)
     temp.index = temp.index.map(lambda x: 'Surface construction {} - {} (m2/dwelling)'.format(x[0], x[1]))
-    summary_param.update(temp.T)
+    summary_input.update(temp.T)
 
-    temp = param['surface'].xs(False, level='Existing', drop_level=True)
-    temp = (param['flow_built'].groupby(temp.index.names).sum() * temp).sum() / 10**6
-    summary_param['Surface construction (Million m2)'] = temp
+    summary_input['Surface construction (Million m2)'] = parsed_inputs['Surface construction (Million m2)']
+    summary_input['Carbon footprint construction (MtCO2)'] = parsed_inputs['Carbon footprint construction (MtCO2)']
+    summary_input['Embodied energy construction (TWh PE)'] = parsed_inputs['Embodied energy construction (TWh PE)']
 
-    summary_param['Carbon footprint construction (MtCO2)'] = (summary_param[
-                                                                  'Surface construction (Million m2)'] * carbon_footprint_built) / 10**3
-    param['Carbon footprint construction (MtCO2)'] = summary_param['Carbon footprint construction (MtCO2)']
+    summary_input = pd.DataFrame(summary_input)
+    return summary_input
 
-    summary_param['Embodied energy construction (TWh PE)'] = (summary_param[
-                                                                  'Surface construction (Million m2)'] * embodied_energy_built) / 10**3
-    param['Embodied energy construction (TWh PE)'] = summary_param['Embodied energy construction (TWh PE)']
-
-    param['Surface construction (Million m2)'] = summary_param['Surface construction (Million m2)']
-
-    summary_param = pd.DataFrame(summary_param)
-    # summary_param = summary_param.loc[config['start']:, :]
-    return param, summary_param

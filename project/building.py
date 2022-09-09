@@ -25,6 +25,7 @@ from project.utils import make_plot, format_ax, save_fig, format_legend, reindex
 import project.thermal as thermal
 from project.input.param import generic_input
 from project.input.resources import resources_data
+from itertools import product
 
 
 class ThermalBuildings:
@@ -457,7 +458,7 @@ class AgentBuildings(ThermalBuildings):
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path, preferences,
-                 choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
+                 performance_insulation, demolition_rate=0.0, year=2018,
                  endogenous=True, number_exogenous=300000, utility_extensive='market_share',
                  logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=year,
@@ -541,6 +542,13 @@ class AgentBuildings(ThermalBuildings):
         self._target_exogenous = ['F', 'G']
         self._market_share_exogenous = None
         self._number_exogenous = number_exogenous
+
+        choice_insulation = {'Wall': [False, True], 'Floor': [False, True], 'Roof': [False, True],
+                             'Windows': [False, True]}
+        names = list(choice_insulation.keys())
+        choice_insulation = list(product(*[i for i in choice_insulation.values()]))
+        choice_insulation.remove((False, False, False, False))
+        choice_insulation = MultiIndex.from_tuples(choice_insulation, names=names)
 
         self._choice_insulation = choice_insulation
         self._performance_insulation = performance_insulation

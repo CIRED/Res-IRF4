@@ -18,31 +18,6 @@
 from pandas import DataFrame, Series, read_csv
 from project.utils import get_pandas
 
-"""def get_consumption_hist() -> DataFrame:
-    with resources.path('project.input.resources_dir', 'hist_consumption.csv') as df:
-        return read_csv(df, index_col=[0], header=[0])
-
-
-def get_consumption_total_hist() -> Series:
-    with resources.path('project.input.resources_dir', 'hist_consumption_total.csv') as df:
-        return read_csv(df, index_col=[0], header=None).squeeze().rename('Historic')
-
-
-def get_retrofit_hist() -> DataFrame:
-    with resources.path('project.input.resources_dir', 'hist_retrofit.csv') as df:
-        return read_csv(df, index_col=[0], header=[0])
-
-
-def get_retrofit_comparison() -> DataFrame:
-    with resources.path('project.input.resources_dir', 'retrofit_comparison_resirf3.csv') as df:
-        return read_csv(df, index_col=[0], header=[0])
-
-
-def get_calibration_data() -> Series:
-    with resources.path('project.input.resources_dir', 'data_ceren.csv') as df:
-        return read_csv(df, index_col=[0]).squeeze()"""
-
-
 resources_data = dict()
 
 consumption_hist = get_pandas('project/input/resources_dir/hist_consumption.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
@@ -71,6 +46,15 @@ resources_data['public_policies_2019'] = DataFrame([1.88, 1.05, 0, 1.32, 0.56],
 
 calibration_data = get_pandas('project/input/resources_dir/data_ceren.csv', lambda x: read_csv(x, index_col=[0]).squeeze())
 resources_data['data_calibration'] = calibration_data
+
+resources_data['investment_per_renovating_houshold_decision_maker'] = {k: pd.DataFrame([9100], index=['TREMI 2019'],
+                                                                                      columns=[2019]).T for k in [
+    'Single-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']] + [
+    'Multi-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']]}
+
+resources_data['investment_per_renovating_houshold_income_owner'] = {k:  pd.DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
+                                  ['D{}'.format(i) for i in range(1, 11)]}
+
 
 resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],

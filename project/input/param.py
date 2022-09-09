@@ -26,6 +26,7 @@ generic_input['available_income'] = 1421 * 10**9
 generic_input['price_index'] = 1
 generic_input['income'] = pd.Series([10030, 15910, 19730, 23680, 28150, 33320, 39260, 46450, 57230, 102880],
                                     index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10']))
+generic_input['stock_ini'] = 29037000
 
 surface_elasticity = pd.Series({('Single-family', 'Owner-occupied'): 0.2,
                                 ('Single-family', 'Privately rented'): 0.2,
@@ -52,17 +53,6 @@ generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
 generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
-
-generic_input['investment_per_renovating_houshold_decision_maker'] = {k: pd.DataFrame([9100], index=['TREMI 2019'],
-                                                                                      columns=[2019]).T for k in [
-    'Single-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']] + [
-    'Multi-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']]}
-
-generic_input['investment_per_renovating_houshold_income_owner'] = {k:  pd.DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
-                                  ['D{}'.format(i) for i in range(1, 11)]}
-
-generic_input['stock_ini'] = 29037000
-
 generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
 
@@ -72,7 +62,6 @@ generic_input['ratio_surface'] = pd.DataFrame(
     columns=['Wall', 'Floor', 'Roof', 'Windows'])
 
 subsidy_preferences_heater = 0.167
-# bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
 bill_saving_preferences = get_pandas('project/input/bill_saving_preferences.csv', lambda x: pd.read_csv(x, index_col=[0, 1]))
 subsidy_loan_preferences_heater = 0.473
 subsidy_loan_preferences_insulation = 0.343
@@ -117,19 +106,21 @@ generic_input['preferences']['insulation'] = {'investment': investment_preferenc
                                               'zero_interest_loan': subsidy_loan_preferences_heater
                                               }
 
-
-generic_input['supply'] = {
-    'factor_max': 30,
-    'factor_min': 0.8,
-    'factor_norm': 1,
-    'utilization_norm': 0.8
-}
-
-
 generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 1),
                                            'Floor': round(1 / 3.6, 1),
                                            'Roof': round(1 / 8.6, 1),
                                            'Windows': 1.3}
 
 generic_input['surface'] = get_pandas('project/input/surface.csv', lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze().rename(None))
+
+
+
+"""generic_input['supply'] = {
+    'factor_max': 30,
+    'factor_min': 0.8,
+    'factor_norm': 1,
+    'utilization_norm': 0.8
+}"""
+
+
 

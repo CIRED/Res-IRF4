@@ -7,7 +7,7 @@ import json
 from project.building import AgentBuildings
 from project.input.param import generic_input
 
-from project.read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters, PublicPolicy
+from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, PublicPolicy
 from project.write_output import plot_scenario
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
@@ -16,10 +16,13 @@ LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(messag
 def initialize(config, path, logger):
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
-    param, summary_param = parse_parameters(config, generic_input, stock)
-    energy_prices, energy_taxes, cost_heater, cost_insulation = read_exogenous(config)
-    efficiency, choice_insulation, ms_heater, choice_heater, renovation_rate_ini, ms_intensive = read_revealed(
-        config)
+    inputs = read_inputs(config, generic_input)
+    parsed_inputs = parse_inputs(inputs, config, stock)
+    summary_inputs = dump_inputs(parsed_inputs)
+
+    energy_prices = parsed_inputs['energy_prices'].copy()
+    energy_taxes = parsed_inputs['energy_taxes'].copy()
+
 
     if config['prices_constant']:
         energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
@@ -42,13 +45,13 @@ def initialize(config, path, logger):
     total_taxes += energy_vta
 
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
-    param['energy_prices'] = energy_prices
+    parsed_inputs['energy_prices'] = energy_prices
 
     t = total_taxes.copy()
     t.columns = t.columns.map(lambda x: 'Taxes {} (euro/kWh)'.format(x))
     temp = energy_prices.copy()
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
-    pd.concat((summary_param, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+    pd.concat((summary_inputs, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
 
     logger.info('Creating AgentBuildings object')
     renovation_rate_max = 1.0
@@ -72,15 +75,15 @@ def initialize(config, path, logger):
     with open(os.path.join(path, 'config.json'), 'w') as fp:
         json.dump(config, fp)
 
-    buildings = AgentBuildings(stock, param['surface'], generic_input['ratio_surface'], efficiency, param['income'],
-                               param['consumption_ini'], path, param['preferences'], choice_insulation,
-                               param['performance_insulation'],
-                               year=year, demolition_rate=param['demolition_rate'],
-                               endogenous=config['endogenous'],
-                               number_exogenous=config['exogenous_detailed']['number'], logger=logger,
-                               debug_mode=debug_mode, preferences_zeros=preferences_zeros, calib_scale=calib_scale
-                               )
-    return buildings, energy_prices, taxes, param, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation
+    buildings = AgentBuildings(stock, parsed_inputs['surface'], parsed_inputs['ratio_surface'], parsed_inputs['efficiency'],
+                               parsed_inputs['income'], parsed_inputs['consumption_ini'], path, parsed_inputs['preferences'],
+                               parsed_inputs['performance_insulation'],
+                               year=year, demolition_rate=parsed_inputs['demolition_rate'],
+                               endogenous=config['endogenous'], logger=logger)
+
+    return buildings, energy_prices, taxes, parsed_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
+           parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[
+               'renovation_rate_ini'], policies_heater, policies_insulation
 
 
 def res_irf(config, path):
@@ -117,13 +120,13 @@ def res_irf(config, path):
     try:
         logger.info('Reading input')
 
-        buildings, energy_prices, taxes, param, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation = initialize(
+        buildings, energy_prices, taxes, parsed_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation = initialize(
             config, path, logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         logger.info('Calibration energy consumption {}'.format(buildings.first_year))
         buildings.calculate(energy_prices.loc[buildings.first_year, :], taxes)
-        s, o = buildings.parse_output_run(param)
+        s, o = buildings.parse_output_run(parsed_inputs)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
@@ -138,12 +141,11 @@ def res_irf(config, path):
                                                     ms_insulation=ms_intensive,
                                                     renovation_rate_ini=renovation_rate_ini,
                                                     target_freeriders=config['target_freeriders'],
-                                                    ms_heater=ms_heater,
-                                                    supply_constraint=config['supply_constraint'])
-            buildings.add_flows([flow_retrofit, param['flow_built'].loc[:, year]])
+                                                    ms_heater=ms_heater)
+            buildings.add_flows([flow_retrofit, parsed_inputs['flow_built'].loc[:, year]])
             buildings.calculate(energy_prices.loc[year, :], taxes)
             logger.info('Writing output')
-            s, o = buildings.parse_output_run(param)
+            s, o = buildings.parse_output_run(parsed_inputs)
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
