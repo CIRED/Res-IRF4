@@ -6,6 +6,7 @@ import json
 
 from project.building import AgentBuildings
 from project.input.param import generic_input
+
 from project.read_input import read_stock, read_policies, read_exogenous, read_revealed, parse_parameters, PublicPolicy
 from project.write_output import plot_scenario
 
@@ -75,7 +76,7 @@ def initialize(config, path, logger):
                                param['consumption_ini'], path, param['preferences'], choice_insulation,
                                param['performance_insulation'],
                                year=year, demolition_rate=param['demolition_rate'],
-                               data_calibration=param['data_ceren'], endogenous=config['endogenous'],
+                               endogenous=config['endogenous'],
                                number_exogenous=config['exogenous_detailed']['number'], logger=logger,
                                debug_mode=debug_mode, preferences_zeros=preferences_zeros, calib_scale=calib_scale
                                )

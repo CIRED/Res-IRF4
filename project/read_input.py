@@ -19,9 +19,12 @@ import pandas as pd
 from itertools import product
 import logging
 
-from project.utils import reindex_mi
+
+from project.utils import reindex_mi, get_pandas
 
 logger = logging.getLogger(__name__)
+
+
 
 
 class PublicPolicy:
@@ -115,8 +118,12 @@ class PublicPolicy:
         return cost
 
 
+
 def read_stock(config):
-    stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze('columns')
+
+    stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze())
+
+    # stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze('columns')
     year = config['start']
 
     stock = pd.concat([stock], keys=[True], names=['Existing'])
@@ -139,38 +146,61 @@ def read_stock(config):
 def read_policies(config):
     def read_mpr(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
-        insulation = pd.read_csv(data['insulation'], index_col=[0])
+        heater = get_pandas(data['heater'],
+                            lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system'))
+        insulation = get_pandas(data['insulation'],
+                                lambda x: pd.read_csv(x, index_col=[0]))
+
+
+
+        """heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
+        insulation = pd.read_csv(data['insulation'], index_col=[0])"""
 
         if data['global_retrofit']:
             if isinstance(data['global_retrofit'], dict):
-                global_retrofit = pd.read_csv(data['global_retrofit']['value'], index_col=[0]).squeeze('columns')
+                global_retrofit = get_pandas(data['global_retrofit']['value'],
+                                             lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+                # global_retrofit = pd.read_csv(data['global_retrofit']['value'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['global_retrofit']['start'], data['global_retrofit']['end'], global_retrofit, 'subsidy_non_cumulative',
                                       gest='insulation'))
             else:
-                global_retrofit = pd.read_csv(data['global_retrofit'], index_col=[0]).squeeze('columns')
+                global_retrofit = get_pandas(data['global_retrofit'],
+                                             lambda x: pd.read_csv(x, index_col=[0]).squeeze())
                 l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
                                       gest='insulation'))
 
         if data['mpr_serenite']:
             if isinstance(data['mpr_serenite'], dict):
-                mpr_serenite = pd.read_csv(data['mpr_serenite']['value'], index_col=[0]).squeeze('columns')
+
+                mpr_serenite = get_pandas(data['mpr_serenite']['value'],
+                                          lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+                # mpr_serenite = pd.read_csv(data['mpr_serenite']['value'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['mpr_serenite']['start'], data['mpr_serenite']['end'], mpr_serenite,
                                       'subsidy_non_cumulative', gest='insulation'))
             else:
-                mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
+                mpr_serenite = get_pandas(data['mpr_serenite'],
+                                          lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+                # mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
                                   gest='insulation'))
 
         if data['bonus']:
             if isinstance(data['bonus'], dict):
-                bonus_best = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')
-                bonus_worst = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')
+                bonus_best = get_pandas(data['bonus']['value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+                bonus_worst = get_pandas(data['bonus']['value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+                """bonus_best = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')
+                bonus_worst = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')"""
                 l.append(PublicPolicy('mpr', data['bonus']['start'], data['bonus']['end'], bonus_best, 'bonus_best', gest='insulation'))
                 l.append(PublicPolicy('mpr', data['bonus']['start'], data['bonus']['end'], bonus_worst, 'bonus_worst', gest='insulation'))
             else:
-                bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
-                bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
+                bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+                bonus_worst = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+                """bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
+                bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')"""
                 l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus_best', gest='insulation'))
                 l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus_worst', gest='insulation'))
 
@@ -181,9 +211,9 @@ def read_policies(config):
 
     def read_cee(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
-        insulation = pd.read_csv(data['insulation'], index_col=[0])
-        tax = pd.read_csv(data['tax'], index_col=[0])
+        heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system'))
+        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
+        tax = get_pandas(data['tax'], lambda x: pd.read_csv(x, index_col=[0]))
 
         l.append(PublicPolicy('cee', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax'))
         l.append(PublicPolicy('cee', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
@@ -191,19 +221,23 @@ def read_policies(config):
         return l
 
     def read_cap(data):
-        cap = pd.read_csv(data['insulation'], index_col=[0]).squeeze('columns')
+        cap = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         return [PublicPolicy('subsidies_cap', data['start'], data['end'], cap, 'subsidies_cap', gest='insulation')]
 
     def read_carbon_tax(data):
-        tax = pd.read_csv(data['tax'], index_col=[0]).squeeze('columns')
-        emission = pd.read_csv(data['emission'], index_col=[0]).squeeze('columns')
+        tax = get_pandas(data['tax'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        # tax = pd.read_csv(data['tax'], index_col=[0]).squeeze('columns')
+        emission = get_pandas(data['emission'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        # emission = pd.read_csv(data['emission'], index_col=[0]).squeeze('columns')
         tax = (tax * emission).fillna(0) / 10 ** 6
         tax = tax.loc[(tax != 0).any(axis=1)]
         return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax')]
 
     def read_cite(data):
         l = list()
-        heater = pd.read_csv(data['heater'], index_col=[0]).squeeze()
+        heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+        # heater = pd.read_csv(data['heater'], index_col=[0]).squeeze()
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
                               cap=data['cap'], by='columns'))
         l.append(
@@ -212,7 +246,9 @@ def read_policies(config):
         return l
 
     def read_zil(data):
-        data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
+        data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+        # data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
 
         if data['ad_volarem']:
             return [
@@ -262,23 +298,30 @@ def read_policies(config):
 
 
 def read_exogenous(config):
+    cost_heater = get_pandas(config['cost_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+    cost_heater *= config['cost_factor']
 
-    cost_heater = pd.read_csv(config['cost_heater'], index_col=[0]).squeeze('columns').rename(None) * config[
-        'cost_factor']
-    cost_insulation = pd.read_csv(config['cost_insulation'], index_col=[0]).squeeze('columns').rename(None) * config[
-        'cost_factor']
+    # cost_heater = pd.read_csv(config['cost_heater'], index_col=[0]).squeeze('columns').rename(None) *
+    cost_insulation = get_pandas(config['cost_insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+    cost_insulation *= config['cost_factor']
 
-    energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
+    # cost_insulation = pd.read_csv(config['cost_insulation'], index_col=[0]).squeeze('columns').rename(None)
+
+    energy_prices = get_pandas(config['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]))
+    # energy_prices = pd.read_csv(config['energy_prices'], index_col=[0])
     energy_prices.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
 
-    energy_taxes = pd.read_csv(config['energy_taxes'], index_col=[0])
+    # energy_taxes = pd.read_csv(config['energy_taxes'], index_col=[0])
+    energy_taxes = get_pandas(config['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]))
+
     energy_taxes.loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
 
     return energy_prices, energy_taxes, cost_heater, cost_insulation
 
 
 def read_revealed(config):
-    efficiency = pd.read_csv(config['efficiency'], index_col=[0]).squeeze('columns')
+    # efficiency = pd.read_csv(config['efficiency'], index_col=[0]).squeeze('columns')
+    efficiency = get_pandas(config['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze)
 
     choice_insulation = {'Wall': [False, True], 'Floor': [False, True], 'Roof': [False, True], 'Windows': [False, True]}
     names = list(choice_insulation.keys())
@@ -286,27 +329,16 @@ def read_revealed(config):
     choice_insulation.remove((False, False, False, False))
     choice_insulation = pd.MultiIndex.from_tuples(choice_insulation, names=names)
 
-    # ms_heater = pd.read_csv(config['ms_heater'], index_col=[0])
-
-    #for housing type MS
-    ms_heater = pd.read_csv(config['ms_heater'], index_col=[0, 1])
+    ms_heater = get_pandas(config['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     ms_heater.columns.set_names('Heating system final', inplace=True)
-
-    """
-    #Values are over 0.01, but this allows to replace the 0 with Nan if there are any left
-    restrict_heater = ms_heater < 0.01
-    ms_heater[restrict_heater] = float('nan')
-    # renormalizing (not really useful because input is normalized)
-    ms_heater = (ms_heater.T / ms_heater.sum(axis=1)).T"""
-
-    #ms_heater = ms_heater.dropna(axis=1, how='all')
     choice_heater = list(ms_heater.columns)
 
-    df = pd.read_csv(config['renovation_rate_ini'])
+    # df = pd.read_csv(config['renovation_rate_ini'])
+    df = get_pandas(config['renovation_rate_ini'])
     renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
 
-    ms_intensive = pd.read_csv(config['ms_insulation'], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(
-        decimals=3)
+    # ms_intensive = pd.read_csv(config['ms_insulation'], index_col=[0, 1, 2, 3]).squeeze('columns').rename(None).round(decimals=3)
+    ms_intensive = get_pandas(config['ms_insulation'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
 
     return efficiency, choice_insulation, ms_heater, choice_heater, renovation_rate_ini, ms_intensive
 
@@ -326,7 +358,9 @@ def parse_parameters(config, param, stock):
     """
     from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 
-    population = pd.read_csv(config['population'], header=None, index_col=[0]).squeeze('columns')
+    # population = pd.read_csv(config['population'], header=None, index_col=[0]).squeeze('columns')
+    population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+
     param['population_total'] = population
     param['sizing_factor'] = stock.sum() / param['stock_ini']
     param['population'] = population * param['sizing_factor']
@@ -339,7 +373,8 @@ def parse_parameters(config, param, stock):
     elif config['pop_housing'] == 'constant':
         pass
     else:
-        param['pop_housing'] = pd.read_csv(config['pop_housing'], index_col=[0], header=None).squeeze()
+        param['pop_housing'] = get_pandas(config['pop_housing'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        # param['pop_housing'] = pd.read_csv(config['pop_housing'], index_col=[0], header=None).squeeze()
         param['stock_need'] = param['population'] / param['pop_housing']
 
     if config['share_multi_family'] is None:
@@ -347,12 +382,13 @@ def parse_parameters(config, param, stock):
     elif config['share_multi_family'] == 'constant':
         pass
     else:
-        param['share_multi_family'] = pd.read_csv(config['share_multi_family'], index_col=[0], header=None).squeeze()
+        param['share_multi_family'] = get_pandas(config['share_multi_family'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        # param['share_multi_family'] = pd.read_csv(config['share_multi_family'], index_col=[0], header=None).squeeze()
 
     idx = range(config['start'], config['end'])
     param['available_income'] = pd.Series(
         [param['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
-    param['available_income_pop'] = param['available_income'] / param['population_total']
+    param['available_income_pop'] = (param['available_income'] / param['population_total']).dropna()
 
     param['demolition_rate'] = config['demolition_rate']
     param['flow_demolition'] = pd.Series(param['demolition_rate'] * stock.sum(), index=idx[1:])
@@ -366,7 +402,8 @@ def parse_parameters(config, param, stock):
     elif config['surface_built'] == 'surface_built':
         pass
     else:
-        surface_built = pd.read_csv(config['surface_built'], index_col=[0]).squeeze().rename(None)
+        surface_built = get_pandas(config['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+        # surface_built = pd.read_csv(config['surface_built'], index_col=[0]).squeeze().rename(None)
 
     surface_existing = pd.concat([param['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
                                  keys=surface_built.columns)
@@ -383,7 +420,9 @@ def parse_parameters(config, param, stock):
     construction = (reindex_mi(type_built, share_decision_maker.columns, axis=1) * share_decision_maker).stack(
         ['Occupancy status', 'Income owner', 'Income tenant']).fillna(0)
 
-    ms_heater_built = pd.read_csv(config['ms_heater_built'], index_col=[0], header=[0])
+    # ms_heater_built = pd.read_csv(config['ms_heater_built'], index_col=[0], header=[0])
+    ms_heater_built = get_pandas(config['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
+
     ms_heater_built.columns.set_names(['Heating system'], inplace=True)
     ms_heater_built.index.set_names(['Housing type'], inplace=True)
 
@@ -402,15 +441,16 @@ def parse_parameters(config, param, stock):
     if not config['construction']:
         param['flow_built'][param['flow_built'] > 0] = 0
 
-    df = pd.read_csv(config['health_cost'], index_col=[0, 1])
+    df = get_pandas(config['health_cost'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     param['health_expenditure'] = df['Health expenditure']
     param['mortality_cost'] = df['Social cost of mortality']
     param['loss_well_being'] = df['Loss of well-being']
-    param['carbon_value'] = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze('columns')
-    param['carbon_emission'] = pd.read_csv(config['carbon_emission'], index_col=[0])
-    param['carbon_value_kwh'] = (param['carbon_value'] * param['carbon_emission'].T).T.dropna() / 10**6
+    # param['carbon_value'] = pd.read_csv(config['carbon_value'], index_col=[0]).squeeze('columns')
+    param['carbon_value'] = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
-    param['data_ceren'] = pd.read_csv(config['data_ceren'], index_col=[0]).squeeze('columns')
+    # param['carbon_emission'] = pd.read_csv(config['carbon_emission'], index_col=[0])
+    param['carbon_emission'] = get_pandas(config['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]))
+    param['carbon_value_kwh'] = (param['carbon_value'] * param['carbon_emission'].T).T.dropna() / 10**6
 
     summary_param = dict()
     summary_param['Sizing factor (%)'] = pd.Series(param['sizing_factor'], index=param['population'].index)
@@ -427,7 +467,8 @@ def parse_parameters(config, param, stock):
     temp.index = temp.index.map(lambda x: 'Surface existing {} - {} (m2/dwelling)'.format(x[0], x[1]))
     summary_param.update(temp.T)
 
-    footprint_built = pd.read_csv(config['footprint']['construction'], index_col=[0])
+    footprint_built = get_pandas(config['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
+    # footprint_built = pd.read_csv(config['footprint']['construction'], index_col=[0])
     carbon_footprint_built = footprint_built.loc[:, 'Carbon content (kgCO2/m2)']
     carbon_footprint_built = config['footprint']['Traditional material'] * carbon_footprint_built[
         'Traditional material'] + config['footprint']['Bio material'] * carbon_footprint_built['Bio material']
@@ -436,7 +477,8 @@ def parse_parameters(config, param, stock):
     embodied_energy_built = config['footprint']['Traditional material'] * embodied_energy_built[
         'Traditional material'] + config['footprint']['Bio material'] * embodied_energy_built['Bio material']
 
-    footprint_renovation = pd.read_csv(config['footprint']['renovation'], index_col=[0, 1])
+    footprint_renovation = get_pandas(config['footprint']['renovation'], lambda x: pd.read_csv(x, index_col=[0, 1]))
+    # footprint_renovation = pd.read_csv(config['footprint']['renovation'], index_col=[0, 1])
     carbon_footprint_renovation = footprint_renovation.xs('Carbon content (kgCO2/m2)', level='Content')
     param['carbon_footprint_renovation'] = carbon_footprint_renovation.loc['Traditional material', :] * config['footprint'][
         'Traditional material'] + carbon_footprint_renovation.loc['Bio material', :] * config['footprint'][

@@ -57,7 +57,7 @@ buildings.calculate(energy_prices.loc[year, :], taxes)
 
 # run
 def simple_resirf(sub_heater, sub_insulation, buildings, energy_price, taxes, policies_heater,
-                  policies_insulation, year, param):
+                  policies_insulation, year, param, cost_heater, cost_insulation):
     """Calculate energy consumption and investment cost.
 
     Parameters
@@ -83,14 +83,16 @@ def simple_resirf(sub_heater, sub_insulation, buildings, energy_price, taxes, po
 
     """
 
-    sub_heater = Series(sub_heater, index=Index(['Electricity-Heat pump'], name='Heating system final'))
     policies_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
-    policies_heater.append(PublicPolicy('sub_heater_optim', year, year + 1, sub_heater, 'subsidy_ad_volarem',
-                                        gest='heater', by='columns'))
+    if sub_heater is not None:
+        sub_heater = Series(sub_heater, index=Index(['Electricity-Heat pump'], name='Heating system final'))
+        policies_heater.append(PublicPolicy('sub_heater_optim', year, year + 1, sub_heater, 'subsidy_ad_volarem',
+                                            gest='heater', by='columns'))
 
     policies_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-    policies_insulation.append(PublicPolicy('sub_insulation_optim', year, year + 1, sub_insulation, 'subsidy_ad_volarem',
-                               gest='insulation'))
+    if sub_insulation is not None:
+        policies_insulation.append(PublicPolicy('sub_insulation_optim', year, year + 1, sub_insulation, 'subsidy_ad_volarem',
+                                   gest='insulation'))
 
     buildings.year = year
     buildings.add_flows([- buildings.flow_demolition()])
@@ -109,12 +111,18 @@ def simple_resirf(sub_heater, sub_insulation, buildings, energy_price, taxes, po
     investment = (buildings.investment_heater.sum().sum() + buildings.investment_insulation.sum().sum()) / 10**9
     subsidies = (buildings.subsidies_heater.sum().sum() + buildings.subsidies_insulation.sum().sum()) / 10**9
     health_cost, _ = buildings.health_cost(param)
+    heat_pump = buildings.replacement_heater.sum().loc['Electricity-Heat pump'] / 10**3
 
-    return electricity, gas, wood, oil, investment, subsidies, health_cost
+    return electricity, gas, wood, oil, investment, subsidies, health_cost, heat_pump
 
 
-sub_insulation, sub_heater = 0.1, 0.1
 year += 1
+sub_insulation, sub_heater = None, 0.1
 y = simple_resirf(sub_heater, sub_insulation, buildings, energy_prices.loc[year, :], taxes, policies_heater,
-                  policies_insulation, year, param)
+                  policies_insulation, year, param, cost_heater, cost_insulation)
+print(y)
+
+sub_insulation, sub_heater = None, 0.9
+y = simple_resirf(sub_heater, sub_insulation, buildings, energy_prices.loc[year, :], taxes, policies_heater,
+                  policies_insulation, year, param, cost_heater, cost_insulation)
 print(y)

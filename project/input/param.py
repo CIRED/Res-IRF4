@@ -16,7 +16,7 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import pandas as pd
-from importlib import resources
+from project.utils import get_pandas
 
 generic_input = dict()
 generic_input['pop_housing_min'] = 2
@@ -24,7 +24,6 @@ generic_input['factor_pop_housing'] = -0.007
 generic_input['factor_multi_family'] = 0.87
 generic_input['available_income'] = 1421 * 10**9
 generic_input['price_index'] = 1
-
 generic_input['income'] = pd.Series([10030, 15910, 19730, 23680, 28150, 33320, 39260, 46450, 57230, 102880],
                                     index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10']))
 
@@ -54,33 +53,6 @@ generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
                                                             name='Heating energy'))
 
-consumption_hist = pd.read_csv('project/input/revealed_data/hist_consumption.csv', index_col=[0], header=[0])
-generic_input['consumption_hist'] = {k: pd.Series(item, name='Historic') for k, item in
-                                     consumption_hist.to_dict().items()}
-
-"""generic_input['consumption_hist'] = {k: pd.Series(item).set_axis(pd.Series(item).index.astype(int)).rename('Historic')
-                                     for k, item in generic_input['consumption_hist'].T.to_dict().items()}"""
-
-generic_input['consumption_total_hist'] = pd.read_csv('project/input/revealed_data/hist_consumption_total.csv',
-                                                      index_col=[0], header=None).squeeze().rename('Historic')
-
-generic_input['consumption_total_objectives'] = pd.Series([207, 176, 146], index=[2028, 2030, 2050], name='Objectives')
-
-generic_input['emissions_total_objectives'] = pd.Series([23, 0], index=[2030, 2050], name='Objectives')
-
-generic_input['low_eff_objectives'] = pd.Series([0], index=[2050], name='Objectives')
-
-generic_input['retrofit_hist'] = pd.read_csv('project/input/revealed_data/hist_retrofit.csv', index_col=[0],
-                                             header=[0])
-generic_input['retrofit_hist'] = {k: pd.DataFrame({2019: item}).T / 10**3 for k, item in
-                                  generic_input['retrofit_hist'].T.to_dict().items()}
-generic_input['retrofit_comparison'] = pd.read_csv('project/input/revealed_data/retrofit_comparison_resirf3.csv',
-                                                   index_col=[0], header=[0])
-
-generic_input['public_policies_2019'] = pd.DataFrame([1.88, 1.05, 0, 1.32, 0.56],
-                                                     index=['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan'],
-                                                     columns=[2019])
-
 generic_input['investment_per_renovating_houshold_decision_maker'] = {k: pd.DataFrame([9100], index=['TREMI 2019'],
                                                                                       columns=[2019]).T for k in [
     'Single-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']] + [
@@ -100,7 +72,8 @@ generic_input['ratio_surface'] = pd.DataFrame(
     columns=['Wall', 'Floor', 'Roof', 'Windows'])
 
 subsidy_preferences_heater = 0.167
-bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
+# bill_saving_preferences = pd.read_csv('project/input/bill_saving_preferences.csv', index_col=[0, 1])
+bill_saving_preferences = get_pandas('project/input/bill_saving_preferences.csv', lambda x: pd.read_csv(x, index_col=[0, 1]))
 subsidy_loan_preferences_heater = 0.473
 subsidy_loan_preferences_insulation = 0.343
 inertia = 0.8299
@@ -158,96 +131,5 @@ generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 1),
                                            'Roof': round(1 / 8.6, 1),
                                            'Windows': 1.3}
 
-generic_input['surface'] = pd.read_csv('project/input/surface.csv', index_col=[0, 1, 2]).squeeze('columns').rename(None)
+generic_input['surface'] = get_pandas('project/input/surface.csv', lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze().rename(None))
 
-generic_input['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
-                          'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
-                          'Occupation status': ['Owner-occupied', 'Privately rented', 'Social-housing'],
-                          'Housing type': ['Single-family', 'Multi-family'],
-                          'Performance': ['G', 'F', 'E', 'D', 'C', 'B', 'A'],
-                          'Heating energy': ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
-                          'Decision maker': ['Single-family - Owner-occupied', 'Multi-family - Owner-occupied',
-                                             'Single-family - Privately rented', 'Multi-family - Privately rented',
-                                             'Single-family - Social-housing', 'Multi-family - Social-housing'
-                                             ],
-                          'Insulation': ['Wall', 'Floor', 'Roof', 'Windows'],
-                          'Heater': ['Electricity-Heat pump', 'Electricity-Performance boiler',
-                                     'Natural gas-Performance boiler', 'Oil fuel-Performance boiler',
-                                     'Wood fuel-Performance boiler'],
-                          'Count': [1, 2, 3, 4, 5]
-                          }
-
-colors = {
-    "Owner-occupied": "lightcoral",
-    "Privately rented": "chocolate",
-    "Social-housing": "orange",
-    "Single-family": "brown",
-    "Multi-family": "darkolivegreen",
-    "Single-family - Owner-occupied": "firebrick",
-    "Multi-family - Owner-occupied": "salmon",
-    "Single-family - Privately rented": "darkgreen",
-    "Multi-family - Privately rented": "mediumseagreen",
-    "Single-family - Social-housing": "darkorange",
-    "Multi-family - Social-housing": "chocolate",
-    "G": "black",
-    "F": "dimgrey",
-    "E": "grey",
-    "D": "darkgrey",
-    "C": "darkgreen",
-    "B": "forestgreen",
-    "A": "limegreen",
-    "D1": "black",
-    "D2": "maroon",
-    "D3": "darkred",
-    "D4": "brown",
-    "D5": "firebrick",
-    "D6": "orangered",
-    "D7": "tomato",
-    "D8": "lightcoral",
-    "D9": "lightsalmon",
-    "D10": "darksalmon",
-    "Electricity": "darkorange",
-    "Natural gas": "slategrey",
-    "Oil fuel": "black",
-    "Wood fuel": "saddlebrown",
-    "Electricity-Heat pump": "sandybrown",
-    "Electricity-Performance boiler": "darkorange",
-    "Natural gas-Performance boiler": "slategrey",
-    "Oil fuel-Performance boiler": "black",
-    "Wood fuel-Performance boiler": "saddlebrown",
-    "VTA": "grey",
-    "Energy taxes": "blue",
-    "Energy vta": "red",
-    "Taxes expenditure": "darkorange",
-    "Subsidies heater": "orangered",
-    "Subsidies insulation": "darksalmon",
-    "Reduced tax": "darkolivegreen",
-    "Cee": "tomato",
-    "Cee tax": "red",
-    "Cite": "blue",
-    "Zero interest loan": "darkred",
-    "Over cap": "grey",
-    "Carbon tax": "rebeccapurple",
-    "Mpr": "darkmagenta",
-    'Sub ad volarem': "darkorange",
-    "Sub merit": "slategrey",
-    "Existing": "tomato",
-    "New": "lightgrey",
-    "Renovation": "brown",
-    "Construction": "dimgrey",
-    'Investment': 'firebrick',
-    'Embodied emission additional': 'darkgreen',
-    'Cofp': 'grey',
-    'Energy saving': 'darkorange',
-    'Emission saving': 'forestgreen',
-    'Well-being benefit': 'royalblue',
-    'Health savings': 'blue',
-    'Mortality reduction benefit': 'lightblue',
-    'Social NPV': 'black',
-    'Windows': 'royalblue',
-    'Roof': 'darkorange',
-    'Floor': 'grey',
-    'Wall': 'darkslategrey'
-}
-
-generic_input['colors'] = colors

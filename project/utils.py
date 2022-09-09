@@ -24,6 +24,8 @@ from matplotlib.ticker import MaxNLocator
 from collections import defaultdict
 from functools import wraps
 from time import time
+from importlib import resources
+from pathlib import Path
 
 COLOR = 'dimgrey'
 SMALL_SIZE = 10
@@ -41,6 +43,12 @@ plt.rc('lines', lw=3.5)
 plt.rc('axes', lw=3.5, edgecolor=COLOR)
 
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
+
+
+def get_pandas(path, func=lambda x: pd.read_csv(x)):
+    path = Path(path)
+    with resources.path(str(path.parent).replace('/', '.'), path.name) as df:
+        return func(df)
 
 
 def timing(f):

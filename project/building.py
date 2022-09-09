@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 from project.utils import make_plot, format_ax, save_fig, format_legend, reindex_mi
 import project.thermal as thermal
 from project.input.param import generic_input
+from project.input.resources import resources_data
 
 
 class ThermalBuildings:
@@ -43,7 +44,6 @@ class ThermalBuildings:
     consumption_ini: Series
     path: str
     year: int, default 2018
-    data_calibration: default None
 
     Attributes:
     ----------
@@ -75,7 +75,7 @@ class ThermalBuildings:
 
     """
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=2018,
-                 data_calibration=None, debug_mode=False):
+                 debug_mode=False):
 
         self._debug_mode = debug_mode
 
@@ -99,7 +99,6 @@ class ThermalBuildings:
 
         self._consumption_ini = consumption_ini
         self.coefficient_consumption = None
-        self._data_calibration = data_calibration
 
         self._surface_yrs = surface
         self._surface = surface.loc[:, year]
@@ -380,8 +379,8 @@ class ThermalBuildings:
             validation.update(temp)
 
             validation = Series(validation)
-            if self._data_calibration is not None:
-                validation = concat((validation, self._data_calibration), keys=['Calcul', 'Data'], axis=1)
+            if resources_data['data_calibration'] is not None:
+                validation = concat((validation, resources_data['data_calibration']), keys=['Calcul', 'Data'], axis=1)
                 validation['Error'] = (validation['Calcul'] - validation['Data']) / validation['Data']
 
             validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
@@ -459,10 +458,10 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, param, efficiency, income, consumption_ini, path, preferences,
                  choice_insulation, performance_insulation, demolition_rate=0.0, year=2018,
-                 data_calibration=None, endogenous=True, number_exogenous=300000, utility_extensive='market_share',
+                 endogenous=True, number_exogenous=300000, utility_extensive='market_share',
                  logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True):
         super().__init__(stock, surface, param, efficiency, income, consumption_ini, path, year=year,
-                         data_calibration=data_calibration, debug_mode=debug_mode)
+                        debug_mode=debug_mode)
 
         self.certificate_jump_heater = None
         self.retrofit_with_heater = None
