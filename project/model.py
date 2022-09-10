@@ -5,7 +5,6 @@ from time import time
 import json
 
 from project.building import AgentBuildings
-from project.input.param import generic_input
 
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, PublicPolicy
 from project.write_output import plot_scenario
@@ -13,64 +12,69 @@ from project.write_output import plot_scenario
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 
-def initialize(config, path, logger):
+def config2inputs(config):
+    """Create main Python object from configuration file.
+
+    Parameters
+    ----------
+    config
+
+    Returns
+    -------
+
+    """
+
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
-    inputs = read_inputs(config, generic_input)
-    parsed_inputs = parse_inputs(inputs, config, stock)
-    summary_inputs = dump_inputs(parsed_inputs)
+    inputs = read_inputs(config)
 
-    energy_prices = parsed_inputs['energy_prices'].copy()
-    energy_taxes = parsed_inputs['energy_taxes'].copy()
+    return inputs, stock, year, policies_heater, policies_insulation, taxes
 
 
-    if config['prices_constant']:
-        energy_prices = pd.concat([energy_prices.loc[year, :]] * energy_prices.shape[0], keys=energy_prices.index,
-                                  axis=1).T
+def select_post_inputs(parsed_inputs):
+    """Inputs used during post-treatment but not used during the iteration.
 
-    total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
-    for t in taxes:
-        total_taxes = total_taxes.add(t.value, fill_value=0)
+    Parameters
+    ----------
+    parsed_inputs: dict
 
-    if energy_taxes is not None:
-        total_taxes = total_taxes.add(energy_taxes, fill_value=0)
-        taxes += [PublicPolicy('energy_taxes', energy_taxes.index[0], energy_taxes.index[-1], energy_taxes, 'tax')]
+    Returns
+    -------
+    dict
+    """
 
-    if config['taxes_constant']:
-        total_taxes = pd.concat([total_taxes.loc[year, :]] * total_taxes.shape[0], keys=total_taxes.index,
-                                axis=1).T
+    vars = ['carbon_emission', 'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
+            'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
+            'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh']
 
-    energy_vta = energy_prices * generic_input['vta_energy_prices']
-    taxes += [PublicPolicy('energy_vta', energy_vta.index[0], energy_vta.index[-1], energy_vta, 'tax')]
-    total_taxes += energy_vta
+    return {key: item for key, item in parsed_inputs.items() if key in vars}
 
-    energy_prices = energy_prices.add(total_taxes, fill_value=0)
-    parsed_inputs['energy_prices'] = energy_prices
 
-    t = total_taxes.copy()
-    t.columns = t.columns.map(lambda x: 'Taxes {} (euro/kWh)'.format(x))
-    temp = energy_prices.copy()
-    temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
-    pd.concat((summary_inputs, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, config, path, logger):
+    """Create main Python objects read by model.
+
+    Parameters
+    ----------
+    inputs
+    stock
+    year
+    policies_heater
+    policies_insulation
+    taxes
+    config
+    path
+    logger
+
+    Returns
+    -------
+
+    """
+
+    parsed_inputs = parse_inputs(inputs, taxes, config, stock)
+    dump_inputs(parsed_inputs, path)
+    post_inputs = select_post_inputs(parsed_inputs)
 
     logger.info('Creating AgentBuildings object')
-    renovation_rate_max = 1.0
-    if 'renovation_rate_max' in config.keys():
-        renovation_rate_max = config['renovation_rate_max']
-
-    calib_scale = True
-    if 'calib_scale' in config.keys():
-        calib_scale = config['calib_scale']
-
-    preferences_zeros = False
-    if 'preferences_zeros' in config.keys():
-        preferences_zeros = config['preferences_zeros']
-        if preferences_zeros:
-            calib_scale = False
-
-    debug_mode = False
-    if 'debug_mode' in config.keys():
-        debug_mode = config['debug_mode']
 
     with open(os.path.join(path, 'config.json'), 'w') as fp:
         json.dump(config, fp)
@@ -81,9 +85,30 @@ def initialize(config, path, logger):
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['endogenous'], logger=logger)
 
-    return buildings, energy_prices, taxes, parsed_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
+    return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[
-               'renovation_rate_ini'], policies_heater, policies_insulation
+               'renovation_rate_ini'], policies_heater, policies_insulation, parsed_inputs['flow_built']
+
+
+def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
+                   post_inputs, logger,  ms_heater=None,  ms_insulation=None, renovation_rate_ini=None,
+                   target_freeriders=None):
+
+    logger.info('Run {}'.format(year))
+    buildings.year = year
+    buildings.add_flows([- buildings.flow_demolition()])
+    flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation,
+                                            policies_heater=p_heater,
+                                            policies_insulation=p_insulation,
+                                            ms_insulation=ms_insulation,
+                                            renovation_rate_ini=renovation_rate_ini,
+                                            target_freeriders=target_freeriders,
+                                            ms_heater=ms_heater)
+    buildings.add_flows([flow_retrofit, flow_built])
+    buildings.calculate(prices, taxes)
+    logger.info('Writing output')
+    s, o = buildings.parse_output_run(post_inputs)
+    return buildings, s, o
 
 
 def res_irf(config, path):
@@ -120,32 +145,31 @@ def res_irf(config, path):
     try:
         logger.info('Reading input')
 
-        buildings, energy_prices, taxes, parsed_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation = initialize(
-            config, path, logger)
+        inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(
+            inputs, stock, year, policies_heater, policies_insulation, taxes, config, path, logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         logger.info('Calibration energy consumption {}'.format(buildings.first_year))
         buildings.calculate(energy_prices.loc[buildings.first_year, :], taxes)
-        s, o = buildings.parse_output_run(parsed_inputs)
+        s, o = buildings.parse_output_run(post_inputs)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
         for year in range(config['start'] + 1, config['end']):
             start = time()
-            logger.info('Run {}'.format(year))
-            buildings.year = year
-            buildings.add_flows([- buildings.flow_demolition()])
-            flow_retrofit = buildings.flow_retrofit(energy_prices.loc[year, :], cost_heater, cost_insulation,
-                                                    policies_heater=[p for p in policies_heater if (year >= p.start) and (year < p.end)],
-                                                    policies_insulation=[p for p in policies_insulation if (year >= p.start) and (year < p.end)],
-                                                    ms_insulation=ms_intensive,
-                                                    renovation_rate_ini=renovation_rate_ini,
-                                                    target_freeriders=config['target_freeriders'],
-                                                    ms_heater=ms_heater)
-            buildings.add_flows([flow_retrofit, parsed_inputs['flow_built'].loc[:, year]])
-            buildings.calculate(energy_prices.loc[year, :], taxes)
-            logger.info('Writing output')
-            s, o = buildings.parse_output_run(parsed_inputs)
+
+            prices = energy_prices.loc[year, :]
+            p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
+            p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
+            f_built = flow_built.loc[:, year]
+            target_freeriders = config['target_freeriders']
+
+            buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
+                                             p_insulation, f_built, year, post_inputs, logger,
+                                             ms_insulation=ms_intensive, renovation_rate_ini=renovation_rate_ini,
+                                             target_freeriders=target_freeriders, ms_heater=ms_heater)
+
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
@@ -160,5 +184,4 @@ def res_irf(config, path):
 
     except Exception as e:
         logger.exception(e)
-        # logging.error(traceback.format_exc())
         raise e

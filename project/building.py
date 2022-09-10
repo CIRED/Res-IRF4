@@ -2664,7 +2664,27 @@ class AgentBuildings(ThermalBuildings):
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
 
-    def parse_output_run(self, param):
+    def parse_output_run(self, inputs):
+        """
+
+        Parameters
+        ----------
+        inputs: dict
+            Exogenous data for post-treatment.
+            'carbon_emission'
+            'population'
+            'surface'
+            'embodied_energy_renovation'
+            'carbon_footprint_renovation'
+            'Carbon footprint construction (MtCO2)'
+            'health_expenditure', 'mortality_cost', 'loss_well_being'
+            'Embodied energy construction (TWh PE)'
+
+        Returns
+        -------
+
+        """
+
         # renovation : envelope
         # retrofit : envelope and/or heating system
 
@@ -2690,7 +2710,7 @@ class AgentBuildings(ThermalBuildings):
         output.update(temp.T / 10 ** 9)
 
         c = self.add_energy(consumption)
-        emission = reindex_mi(param['carbon_emission'].T.rename_axis('Energy', axis=0), c.index).loc[:,
+        emission = reindex_mi(inputs['carbon_emission'].T.rename_axis('Energy', axis=0), c.index).loc[:,
                    self.year] * c
 
         output['Emission (MtCO2)'] = emission.sum() / 10 ** 12
@@ -2708,7 +2728,7 @@ class AgentBuildings(ThermalBuildings):
 
         output['Surface (Million m2)'] = (self.stock * self.surface).sum() / 10 ** 6
         output['Surface (m2/person)'] = (
-                    output['Surface (Million m2)'] / (param['population'].loc[self.year] / 10 ** 6))
+                    output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
         output['Consumption standard (kWh/m2)'] = (output['Consumption standard (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
@@ -2873,15 +2893,15 @@ class AgentBuildings(ThermalBuildings):
 
                 cost = self.cost_component.loc[:, i]
                 t = reindex_mi(cost, temp.index) * temp
-                surface = reindex_mi(param['surface'].loc[:, self.year], t.index)
+                surface = reindex_mi(inputs['surface'].loc[:, self.year], t.index)
                 o['Investment {} (Billion euro)'.format(i)] = (t * surface).sum() / 10 ** 9
 
-                surface = reindex_mi(param['surface'].loc[:, self.year], temp.index)
+                surface = reindex_mi(inputs['surface'].loc[:, self.year], temp.index)
                 o['Embodied energy {} (TWh PE)'.format(i)] = (temp * surface *
-                                                                   param['embodied_energy_renovation'][
+                                                                   inputs['embodied_energy_renovation'][
                                                                        i]).sum() / 10 ** 9
                 o['Carbon footprint {} (MtCO2)'.format(i)] = (temp * surface *
-                                                                   param['carbon_footprint_renovation'][
+                                                                   inputs['carbon_footprint_renovation'][
                                                                        i]).sum() / 10 ** 9
             output['Replacement insulation (Thousand)'] = sum(
                 [o['Replacement {} (Thousand households)'.format(i)] for i in
@@ -2894,7 +2914,7 @@ class AgentBuildings(ThermalBuildings):
                 'Embodied energy Floor (TWh PE)'] + output['Embodied energy Roof (TWh PE)'] + output[
                                                                 'Embodied energy Windows (TWh PE)']
 
-            output['Embodied energy construction (TWh PE)'] = param['Embodied energy construction (TWh PE)'].loc[
+            output['Embodied energy construction (TWh PE)'] = inputs['Embodied energy construction (TWh PE)'].loc[
                 self.year]
             output['Embodied energy (TWh PE)'] = output['Embodied energy renovation (TWh PE)'] + output[
                 'Embodied energy construction (TWh PE)']
@@ -2903,7 +2923,7 @@ class AgentBuildings(ThermalBuildings):
                 'Carbon footprint Floor (MtCO2)'] + output['Carbon footprint Roof (MtCO2)'] + output[
                                                                 'Carbon footprint Windows (MtCO2)']
 
-            output['Carbon footprint construction (MtCO2)'] = param['Carbon footprint construction (MtCO2)'].loc[
+            output['Carbon footprint construction (MtCO2)'] = inputs['Carbon footprint construction (MtCO2)'].loc[
                 self.year]
             output['Carbon footprint (MtCO2)'] = output['Carbon footprint renovation (MtCO2)'] + output[
                 'Carbon footprint construction (MtCO2)']
@@ -3001,17 +3021,12 @@ class AgentBuildings(ThermalBuildings):
             output['Investment total HT (Billion euro)'] = output['Investment total (Billion euro)'] - output[
                 'VTA (Billion euro)']
 
-            output['Carbon value (Billion euro)'] = (self.heat_consumption_energy * param['carbon_value_kwh'].loc[
+            output['Carbon value (Billion euro)'] = (self.heat_consumption_energy * inputs['carbon_value_kwh'].loc[
                                                                                          self.year,
                                                                                          :]).sum() / 10 ** 9
 
-            """health_cost = {'health_expenditure': 'Health expenditure (Billion euro)',
-                           'mortality_cost': 'Social cost of mortality (Billion euro)',
-                           'loss_well_being': 'Loss of well-being (Billion euro)'}
-            for key, item in health_cost.items():
-                output[item] = (stock * reindex_mi(param[key], stock.index)).sum() / 10 ** 9"""
 
-            output['Health cost (Billion euro)'], o = self.health_cost(param)
+            output['Health cost (Billion euro)'], o = self.health_cost(inputs)
             output.update(o)
 
             output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output[

@@ -16,13 +16,13 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import pandas as pd
-import logging
+from pandas import Series, DataFrame, concat, MultiIndex, Index
 import copy
+import os
 
 from project.utils import reindex_mi, get_pandas
 from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
-
-logger = logging.getLogger(__name__)
+from project.input.param import generic_input
 
 
 class PublicPolicy:
@@ -148,17 +148,11 @@ def read_policies(config):
         insulation = get_pandas(data['insulation'],
                                 lambda x: pd.read_csv(x, index_col=[0]))
 
-
-
-        """heater = pd.read_csv(data['heater'], index_col=[0, 1]).squeeze('columns').unstack('Heating system')
-        insulation = pd.read_csv(data['insulation'], index_col=[0])"""
-
         if data['global_retrofit']:
             if isinstance(data['global_retrofit'], dict):
                 global_retrofit = get_pandas(data['global_retrofit']['value'],
                                              lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
-                # global_retrofit = pd.read_csv(data['global_retrofit']['value'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['global_retrofit']['start'], data['global_retrofit']['end'], global_retrofit, 'subsidy_non_cumulative',
                                       gest='insulation'))
             else:
@@ -172,14 +166,12 @@ def read_policies(config):
 
                 mpr_serenite = get_pandas(data['mpr_serenite']['value'],
                                           lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-                # mpr_serenite = pd.read_csv(data['mpr_serenite']['value'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['mpr_serenite']['start'], data['mpr_serenite']['end'], mpr_serenite,
                                       'subsidy_non_cumulative', gest='insulation'))
             else:
                 mpr_serenite = get_pandas(data['mpr_serenite'],
                                           lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
-                # mpr_serenite = pd.read_csv(data['mpr_serenite'], index_col=[0]).squeeze('columns')
                 l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
                                   gest='insulation'))
 
@@ -223,9 +215,7 @@ def read_policies(config):
 
     def read_carbon_tax(data):
         tax = get_pandas(data['tax'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        # tax = pd.read_csv(data['tax'], index_col=[0]).squeeze('columns')
         emission = get_pandas(data['emission'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        # emission = pd.read_csv(data['emission'], index_col=[0]).squeeze('columns')
         tax = (tax * emission).fillna(0) / 10 ** 6
         tax = tax.loc[(tax != 0).any(axis=1)]
         return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax')]
@@ -233,8 +223,6 @@ def read_policies(config):
     def read_cite(data):
         l = list()
         heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-        # heater = pd.read_csv(data['heater'], index_col=[0]).squeeze()
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
                               cap=data['cap'], by='columns'))
         l.append(
@@ -244,8 +232,6 @@ def read_policies(config):
 
     def read_zil(data):
         data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-        # data_max = pd.read_csv(data['max'], index_col=[0]).squeeze()
 
         if data['ad_volarem']:
             return [
@@ -294,7 +280,20 @@ def read_policies(config):
     return policies_heater, policies_insulation, taxes
 
 
-def read_inputs(config, other_inputs):
+def read_inputs(config, other_inputs=generic_input):
+    """Read all inputs in Python object and concatenate in one dict.
+
+    Parameters
+    ----------
+    config: dict
+        Configuration dictionary with path to data.
+    other_inputs: dict
+        Other inputs that are manually inserted in param.py
+
+    Returns
+    -------
+    dict
+    """
 
     inputs = dict()
     idx = range(config['start'], config['end'])
@@ -367,7 +366,7 @@ def read_inputs(config, other_inputs):
     inputs.update({'performance_insulation': other_inputs['performance_insulation']})
 
     df = get_pandas(config['health_cost'], lambda x: pd.read_csv(x, index_col=[0, 1]))
-    inputs.update({'health_cost': df.sum(axis=1).rename('Health cost')})
+    inputs.update({'health_cost': df})
 
     carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
     inputs.update({'carbon_value': carbon_value.loc[idx]})
@@ -385,19 +384,26 @@ def read_inputs(config, other_inputs):
     return inputs
 
 
-def parse_inputs(inputs, config, stock):
+def parse_inputs(inputs, taxes, config, stock):
     """Macro module : run exogenous dynamic parameters.
 
     Parameters
     ----------
-    config
-    param
-    stock
+    inputs: dict
+        Raw inputs read as Python object.
+    taxes: list
+    config: dict
+        Configuration file.
+    stock: Series
+        Building stock.
 
     Returns
     -------
-
+    dict
+        Parsed input
     """
+
+    idx = range(config['start'], config['end'])
 
     parsed_inputs = copy.deepcopy(inputs)
 
@@ -410,44 +416,33 @@ def parse_inputs(inputs, config, stock):
     parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
     parsed_inputs['population'] = inputs['population'] * parsed_inputs['sizing_factor']
 
-    if config['pop_housing'] is None:
+    if 'pop_housing' in parsed_inputs.keys():
+        parsed_inputs['stock_need'] = parsed_inputs['population'] / parsed_inputs['pop_housing']
+    else:
         parsed_inputs['stock_need'], parsed_inputs['pop_housing'] = stock_need(parsed_inputs['population'],
                                                                                parsed_inputs['population'][
                                                                                    config['start']] / stock.sum(),
                                                                                inputs['pop_housing_min'],
                                                                                config['start'],
                                                                                inputs['factor_pop_housing'])
-
-    elif config['pop_housing'] == 'constant':
-        pass
-    else:
-        parsed_inputs['stock_need'] = inputs['population'] / inputs['pop_housing']
-
-    if config['share_multi_family'] is None:
+    if 'share_multi_family' not in inputs.keys():
         parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
                                                                  inputs['factor_multi_family'])
-    elif config['share_multi_family'] == 'constant':
-        pass
-    else:
-        parsed_inputs['share_multi_family'] = inputs['share_multi_family']
 
-    idx = range(config['start'], config['end'])
     parsed_inputs['available_income'] = pd.Series(
         [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
     parsed_inputs['available_income_pop'] = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
 
-    parsed_inputs['flow_demolition'] = pd.Series(input['demolition_rate'] * stock.sum(), index=idx[1:])
+    parsed_inputs['flow_demolition'] = pd.Series(inputs['demolition_rate'] * stock.sum(), index=idx[1:])
     parsed_inputs['flow_need'] = parsed_inputs['stock_need'] - parsed_inputs['stock_need'].shift(1)
     parsed_inputs['flow_construction'] = parsed_inputs['flow_need'] + parsed_inputs['flow_demolition']
 
-    if config['surface_built'] is None:
+    if 'surface_built' in inputs.keys():
+        surface_built = inputs['surface_built']
+    else:
         surface_built = evolution_surface_built(inputs['surface'].xs(False, level='Existing'), inputs['surface_max'],
                                                 inputs['surface_elasticity'], parsed_inputs['available_income_pop'])
-    elif config['surface_built'] == 'constant':
-        pass
-    else:
-        surface_built = inputs['surface_built']
 
     surface_existing = pd.concat([parsed_inputs['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
                                  keys=surface_built.columns)
@@ -509,10 +504,49 @@ def parse_inputs(inputs, config, stock):
 
     parsed_inputs['Carbon footprint construction (MtCO2)'] = (parsed_inputs['Surface construction (Million m2)'] * parsed_inputs['carbon_footprint_built']) / 10**3
     parsed_inputs['Embodied energy construction (TWh PE)'] = (parsed_inputs['Surface construction (Million m2)'] * parsed_inputs['embodied_energy_built']) / 10**3
+
+    energy_prices = parsed_inputs['energy_prices'].copy()
+    energy_taxes = parsed_inputs['energy_taxes'].copy()
+
+    if config['prices_constant']:
+        energy_prices = pd.concat([energy_prices.loc[config['start'], :]] * energy_prices.shape[0], keys=energy_prices.index,
+                                  axis=1).T
+
+    total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
+    for t in taxes:
+        total_taxes = total_taxes.add(t.value, fill_value=0)
+
+    if energy_taxes is not None:
+        total_taxes = total_taxes.add(energy_taxes, fill_value=0)
+        taxes += [PublicPolicy('energy_taxes', energy_taxes.index[0], energy_taxes.index[-1], energy_taxes, 'tax')]
+
+    if config['taxes_constant']:
+        total_taxes = pd.concat([total_taxes.loc[config['start'], :]] * total_taxes.shape[0], keys=total_taxes.index,
+                                axis=1).T
+
+    energy_vta = energy_prices * inputs['vta_energy_prices']
+    taxes += [PublicPolicy('energy_vta', energy_vta.index[0], energy_vta.index[-1], energy_vta, 'tax')]
+    total_taxes += energy_vta
+    parsed_inputs['taxes'] = taxes
+    parsed_inputs['total_taxes'] = total_taxes
+
+    energy_prices = energy_prices.add(total_taxes, fill_value=0)
+    parsed_inputs['energy_prices'] = energy_prices
+
     return parsed_inputs
 
 
-def dump_inputs(parsed_inputs):
+def dump_inputs(parsed_inputs, path):
+    """Create summary input DataFrame.
+
+    Parameters
+    ----------
+    parsed_inputs: dict
+
+    Returns
+    -------
+    DataFrame
+    """
     
     summary_input = dict()
     summary_input['Sizing factor (%)'] = pd.Series(parsed_inputs['sizing_factor'], index=parsed_inputs['population'].index)
@@ -538,5 +572,102 @@ def dump_inputs(parsed_inputs):
     summary_input['Embodied energy construction (TWh PE)'] = parsed_inputs['Embodied energy construction (TWh PE)']
 
     summary_input = pd.DataFrame(summary_input)
+
+    t = parsed_inputs['total_taxes'].copy()
+    t.columns = t.columns.map(lambda x: 'Taxes {} (euro/kWh)'.format(x))
+    temp = parsed_inputs['energy_prices'].copy()
+    temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
+    pd.concat((summary_input, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+
     return summary_input
 
+
+def dict2data_inputs(inputs):
+    """Grouped all inputs in the same DataFrame.
+
+    Process is useful to implement a global sensitivity analysis.
+
+    Returns
+    -------
+    DataFrame
+    """
+    data = DataFrame(columns=['variables', 'index', 'value'])
+    metadata = DataFrame(columns=['variables', 'type', 'name', 'index', 'columns'])
+    for key, item in inputs.items():
+        i = True
+
+        if isinstance(item, dict):
+            metadata = concat((metadata.T, Series({'variables': key, 'type': type(item).__name__})), axis=1).T
+            i = False
+            item = Series(item)
+
+        if isinstance(item, (float, int)):
+            data = concat((data.T, Series({'variables': key, 'value': item})), axis=1).T
+            metadata = concat((metadata.T, Series({'variables': key, 'type': type(item).__name__})), axis=1).T
+
+        if isinstance(item, DataFrame):
+            metadata = concat((metadata.T, Series({'variables': key, 'type': type(item).__name__,
+                                                   'index': item.index.names.copy(),
+                                                   'columns': item.columns.names.copy()})), axis=1).T
+            i = False
+            item = item.stack(item.columns.names)
+
+        if isinstance(item, Series):
+            if i:
+                metadata = concat((metadata.T, Series({'variables': key, 'type': type(item).__name__, 'name': item.name,
+                                                       'index': item.index.names.copy()})), axis=1).T
+
+            if isinstance(item.index, MultiIndex):
+                item.index = item.index.to_flat_index()
+
+            item.index = item.index.rename('index')
+            df = concat([item.rename('value').reset_index()], keys=[key], names=['variables']).reset_index('variables')
+            data = concat((data, df), axis=0)
+
+    data = data.astype({'variables': 'string', 'value': 'float64'})
+    data.reset_index(drop=True, inplace=True)
+    return data
+
+
+def data2dict_inputs(data, metadata):
+    """Parse aggregate data pandas and return dict fill with several inputs.
+
+    Parameters
+    ----------
+    data: DataFrame
+        Model data input.
+    metadata: DataFrame
+        Additional information to find out how to parse data.
+
+    Returns
+    -------
+    dict
+    """
+
+    def parse_index(n, index_values):
+        if len(n) == 1:
+            idx = Index(index_values, name=n[0])
+        else:
+            idx = MultiIndex.from_tuples(index_values)
+            idx.names = n
+        return idx
+
+    parsed_input = dict()
+    for variables, df in data.groupby('variables'):
+        meta = metadata[metadata['variables'] == variables]
+        if meta['type'].iloc[0] == 'int':
+            parsed_input.update({variables: int(df['value'].iloc[0])})
+        elif meta['type'].iloc[0] == 'float':
+            parsed_input.update({variables: float(df['value'].iloc[0])})
+        elif meta['type'].iloc[0] == 'Series':
+            idx = parse_index(meta['index'].iloc[0], df['index'].values)
+            parsed_input.update({variables: Series(df['value'].values, name=str(meta['name'].iloc[0]), index=idx)})
+        elif meta['type'].iloc[0] == 'DataFrame':
+            idx = parse_index(meta['index'].iloc[0] + meta['columns'].iloc[0], df['index'].values)
+            parsed_input.update({variables: Series(df['value'].values, name=str(meta['name'].iloc[0]), index=idx).unstack(
+                meta['columns'].iloc[0])})
+
+        elif meta['type'].iloc[0] == 'dict':
+            parsed_input.update({variables: Series(df['value'].values, index=df['index'].values).to_dict()})
+
+    return parsed_input

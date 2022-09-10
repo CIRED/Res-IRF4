@@ -117,8 +117,8 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "pop_housing": "project/input/pop_housing.csv",
-    "share_multi_family": "project/input/share_multifamily.csv",
-    "surface_built": "endogenous"
+    "pop_housing": null,
+    "share_multi_family": null,
+    "surface_built": null
   }
 }
