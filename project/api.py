@@ -27,6 +27,18 @@ ms_heater, renovation_rate_ini, ms_intensive = read_revealed(config, inputs)
 
 
 
+self.subsidies_details_insulation
+self.certificate_jump_heater
+
+2022-09-12 11:31:17,888 - 83610 - log_reference - INFO - Run time 2020: 43 seconds.
+
+2022-09-12 11:42:08,908 - 83716 - log_reference - INFO - Run time 2020: 38 seconds.
+
+2022-09-12 11:50:43,303 - 83920 - log_reference - INFO - Run time 2020: 32 seconds.
+
+2022-09-12 12:51:38,277 - 87797 - log_reference - INFO - Run time 2020: 32 seconds.
+
+2022-09-14 09:30:13,140 - 96799 - log_reference - INFO - Run time 2020: 30 seconds.
 
 print('break')
 print('break')

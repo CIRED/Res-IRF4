@@ -51,7 +51,7 @@ def model_3uses_consumption(df, a=0.846102, b=1.029880):
     return (df ** a) * np.exp(b)
 
 
-def heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, ratio_surface):
+def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, dh):
     """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
 
     Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
@@ -118,7 +118,7 @@ def final2primary(heat_consumption, energy, conversion=CONVERSION):
             raise 'Energy DataFrame do not match indexes and columns'
 
 
-def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, ratio_surface,
+def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, energy, ratio_surface, dh,
                                 conversion=CONVERSION):
     """Convert final to primary heating consumption.
 
@@ -137,7 +137,8 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficien
     Returns
     -------
     """
-    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, ratio_surface)
+    # data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, dh)
     return final2primary(heat_consumption, energy, conversion=conversion)
 
 

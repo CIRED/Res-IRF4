@@ -212,7 +212,7 @@ def save_fig(fig, save=None, bbox_inches='tight'):
         plt.show()
 
 
-def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True):
+def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True):
     """Make plot.
 
     Parameters
@@ -224,7 +224,8 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     save: str, optional
     scatter: pd.Series, default None
     """
-    df.index = df.index.astype(int)
+    if integer:
+        df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     if colors is None:

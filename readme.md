@@ -28,7 +28,7 @@ specific functions. Use only with care and caution._**
    - Type: `conda activate envResIRF`
 
 **Step 4**: **Launch Res-IRF**
-   - Launch from Res-IRF root folder:
+   - Launch from Res-IRF root folder (not from `/project`):
    - `python project/main.py -c project/input/config/config.json`
    - `project/input/config.json` is the path to the configuration file
 
@@ -52,6 +52,16 @@ In the `output/ddmmyyyy_hhmm` folder:
 - One folder for each scenario declared in the configuration file with detailed outputs:
     - `output.csv` detailed output readable directly with an Excel-like tool
 - `.png` graphs comparing scenarios launch in the same config file.
+
+## API
+
+It is also possible to get data and Python object directly (useful to create its own scripts).  
+`config = get_config()` allows to get the Reference configuration file.    
+`inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)`: create Python objects from raw data.  
+Finally:  
+`buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, config, path)`
+parse and create Python objects used by Res-IRF.  
+Moreover, the user can use all the methods of AgentBuildings object `buildings` defined in buildings.py.  
 
 
 ## About the authors
