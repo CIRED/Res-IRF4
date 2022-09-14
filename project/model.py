@@ -117,7 +117,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     buildings.add_flows([flow_retrofit, flow_built])
     buildings.calculate(prices, taxes)
     buildings.logger.info('Writing output')
-    if False:
+    if buildings.detailed_mode:
         s, o = buildings.parse_output_run(post_inputs)
     else:
         s = buildings.simple_stock()
