@@ -121,7 +121,12 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
         s, o = buildings.parse_output_run(post_inputs)
     else:
         s = buildings.simple_stock()
-        o = buildings.heat_consumption_energy
+        o = dict()
+        o['Electricity'] = buildings.heat_consumption_energy['Electricity'] / 10 ** 9
+        o['Natural gas'] = buildings.heat_consumption_energy['Natural gas'] / 10 ** 9
+        o['Wood fuel'] = buildings.heat_consumption_energy['Wood fuel'] / 10 ** 9
+        o['Oil fuel'] = buildings.heat_consumption_energy['Oil fuel'] / 10 ** 9
+
     return buildings, s, o
 
 

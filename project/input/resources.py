@@ -55,7 +55,7 @@ resources_data['investment_per_renovating_houshold_decision_maker'] = {k: DataFr
 resources_data['investment_per_renovating_houshold_income_owner'] = {k:  DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
                                   ['D{}'.format(i) for i in range(1, 11)]}
 
-
+# CategoricalIndex(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], ordered=True)
 resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Occupation status': ['Owner-occupied', 'Privately rented', 'Social-housing'],

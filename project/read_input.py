@@ -116,6 +116,8 @@ class PublicPolicy:
         return cost
 
 
+
+
 def read_stock(config):
 
     stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze())
@@ -135,6 +137,11 @@ def read_stock(config):
 
     stock['Heating system'] = stock['Heating energy'] + '-' + stock['Heating system']
     stock = stock.set_index(['Heating system'], append=True).loc[:, 'Stock buildings']
+
+    """levels_category = ['Housing type', 'Occupancy status', 'Income tenant', 'Income owner', 'Heating system']
+    stock = stock.reset_index(levels_category).astype({i: 'category' for i in levels_category}).set_index(
+        levels_category, append=True).squeeze()"""
+
     stock = stock.reorder_levels(idx_names)
 
     return stock, year
@@ -381,6 +388,13 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'traditional_material': config['footprint']['Traditional material']})
     inputs.update({'bio_material': config['footprint']['Bio material']})
+
+    """levels_category = ['Housing type', 'Occupancy status', 'Income tenant', 'Income owner', 'Heating system']
+    for key, item in inputs.items():
+        if isinstance(item, (Series, DataFrame)):
+            level = [i for i in item.index.names if i in levels_category]
+            inputs[key] = item.reset_index(level).astype({i: 'category' for i in level}).set_index(
+                level, append=True).squeeze()"""
     return inputs
 
 

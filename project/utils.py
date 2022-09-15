@@ -50,6 +50,11 @@ def get_pandas(path, func=lambda x: pd.read_csv(x)):
     with resources.path(str(path.parent).replace('/', '.'), path.name) as df:
         return func(df)
 
+def convert_index_types(df, levels):
+    df.index.astype({'Existing': 'category', 'Occupancy status': 'category', 'Income owner': 'category',
+                        'Income tenant': 'category', 'Housing type': 'category', 'Heating system': 'category'})
+    df.reset_index()
+
 
 def timing(f):
     @wraps(f)
