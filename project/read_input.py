@@ -567,7 +567,7 @@ def dump_inputs(parsed_inputs, path):
     summary_input['Total population (Millions)'] = parsed_inputs['population'] / 10**6
     summary_input['Income (Billions euro)'] = parsed_inputs['available_income'] * parsed_inputs['sizing_factor'] / 10**9
     summary_input['Buildings stock (Millions)'] = parsed_inputs['stock_need'] / 10**6
-    summary_input['Buildings additional (Thousands)'] = parsed_inputs['flow_need'] / 10**6
+    summary_input['Buildings additional (Thousands)'] = parsed_inputs['flow_need'] / 10**3
     summary_input['Buildings built (Thousands)'] = parsed_inputs['flow_construction'] / 10**3
     summary_input['Buildings demolished (Thousands)'] = parsed_inputs['flow_demolition'] / 10**3
     summary_input['Person by housing'] = parsed_inputs['pop_housing']

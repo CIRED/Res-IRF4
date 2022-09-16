@@ -2759,7 +2759,7 @@ class AgentBuildings(ThermalBuildings):
 
                 subsidies = subsidies.groupby(subsidies.index).sum()
                 for i in subsidies.index:
-                    output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 6
+                    output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9
             output['Zero interest loan headcount'] = self.zil_count
             output['Zero interest loan average amount'] = self.zil_loaned_avg
             taxes_expenditures = self.taxes_expenditure_details
@@ -2786,7 +2786,6 @@ class AgentBuildings(ThermalBuildings):
             output['Carbon value (Billion euro)'] = (self.heat_consumption_energy * inputs['carbon_value_kwh'].loc[
                                                                                          self.year,
                                                                                          :]).sum() / 10 ** 9
-
 
             output['Health cost (Billion euro)'], o = self.health_cost(inputs)
             output.update(o)
