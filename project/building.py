@@ -710,7 +710,6 @@ class AgentBuildings(ThermalBuildings):
         probability_replacement = probability_replacement.reindex(market_share.index)
         return market_share, probability_replacement
 
-    @timing
     def heater_replacement(self, prices, cost_heater, policies_heater, ms_heater=None, probability_replacement=1/20,
                            index=None):
         """Function returns new building stock after heater replacement.
@@ -798,7 +797,6 @@ class AgentBuildings(ThermalBuildings):
 
         return stock
 
-    @timing
     def apply_subsidies_heater(self, policies_heater, cost_heater, frame):
         """Calculate subsidies for each dwelling and each heating system.
 
@@ -863,7 +861,6 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total += subsidies_details[policy.name]
         return cost_heater, tax_heater, subsidies_details, subsidies_total
 
-    @timing
     def store_information_heater(self, cost_heater, subsidies_total, subsidies_details, replacement, tax_heater,
                                  replaced_by):
         """Store information yearly heater replacement.
@@ -948,7 +945,6 @@ class AgentBuildings(ThermalBuildings):
 
         return constant
 
-    @timing
     def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None,
                             level_heater='Heating system'):
         """Calculate standard energy consumption and energy performance certificate for each choice insulation for all
@@ -1038,7 +1034,6 @@ class AgentBuildings(ThermalBuildings):
 
         return consumption_sd, primary_consumption_3uses, certificate
 
-    @timing
     def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
 
@@ -1064,7 +1059,6 @@ class AgentBuildings(ThermalBuildings):
             # to reduce run time but doesn't seem to be very useful
             return self.prepared_cost_insulation
 
-    @timing
     def prepare_subsidy_insulation(self, subsidies_insulation):
         """Constitute insulation choice set subsidies. Subsidies are equal to the sum of each individual subsidy.
 
@@ -1094,7 +1088,6 @@ class AgentBuildings(ThermalBuildings):
                               names=self.surface_insulation.index.names)
         return subsidies
 
-    @timing
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation=None,
                             renovation_rate_ini=None, utility_zil=None, stock=None, supply_constraint=False,
                             delta_subsidies=None, target_freeriders=0.85):
@@ -1897,7 +1890,6 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
-    @timing
     def insulation_replacement(self, prices, cost_insulation_raw, ms_insulation=None, renovation_rate_ini=None,
                                policies_insulation=None, target_freeriders=None, index=None, stock=None,
                                supply_constraint=False):
@@ -2029,7 +2021,6 @@ class AgentBuildings(ThermalBuildings):
 
         return target_subsidies
 
-    @timing
     def apply_subsidies_insulation(self, index, policies_insulation, cost_insulation, surface, certificate, certificate_before,
                                    energy_saved_3uses):
         """Calculate subsidies amount for each possible insulation choice.
@@ -2184,7 +2175,6 @@ class AgentBuildings(ThermalBuildings):
 
         return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
 
-    @timing
     def store_information_insulation(self, certificate_jump, cost_insulation_raw, tax, cost_insulation,
                                      tax_insulation, subsidies_details, subsidies_total, retrofit_rate,
                                      ):
@@ -2227,7 +2217,6 @@ class AgentBuildings(ThermalBuildings):
                                                          certificate_jump.index.get_level_values(
                                                              'Income owner') != 'D10')] >= 1
 
-    @timing
     def store_information_retrofit(self, replaced_by):
         """Calculate and store main outputs based on yearly retrofit.
 
@@ -2273,7 +2262,6 @@ class AgentBuildings(ThermalBuildings):
 
         self.retrofit_with_heater = replaced_by.xs(True, level='Heater replacement').sum().sum()
 
-    @timing
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
                       ms_heater=None, ms_insulation=None, renovation_rate_ini=None, target_freeriders=None,
                       supply_constraint=False,
@@ -2393,7 +2381,6 @@ class AgentBuildings(ThermalBuildings):
 
         return flow_retrofit
 
-    @timing
     def flow_demolition(self):
         """Demolition of E, F and G buildings based on their share in the mobile stock.
 
@@ -2426,7 +2413,6 @@ class AgentBuildings(ThermalBuildings):
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
 
-    @timing
     def parse_output_run(self, inputs):
         """
 
