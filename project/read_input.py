@@ -180,7 +180,7 @@ def read_policies(config):
                                           lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
                 l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
-                                  gest='insulation'))
+                                      gest='insulation'))
 
         if data['bonus']:
             if isinstance(data['bonus'], dict):

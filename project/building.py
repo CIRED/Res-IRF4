@@ -29,7 +29,6 @@ import project.thermal as thermal
 from project.input.param import generic_input
 from project.input.resources import resources_data
 from itertools import product
-import time
 
 
 class ThermalBuildings:
@@ -2072,9 +2071,9 @@ class AgentBuildings(ThermalBuildings):
         # self.out_worst = ((~certificate.isin(['G', 'F'])).astype(int).T * certificate_before.isin(['G', 'F']).astype(int)).T.astype(bool)
         # self.in_best = (certificate.isin(['A', 'B']).astype(int).T * (~certificate_before.isin(['A', 'B'])).astype(int)).T.astype(bool)
         self.out_worst = (~certificate.isin(['G', 'F'])).T.multiply(certificate_before.isin(['G', 'F'])).T
-        self.out_worst = reindex_mi(self.out_worst, index)
+        self.out_worst = reindex_mi(self.out_worst, index).fillna(False).astype('float')
         self.in_best = (certificate.isin(['A', 'B'])).T.multiply(~certificate_before.isin(['A', 'B'])).T
-        self.in_best = reindex_mi(self.out_worst, index)
+        self.in_best = reindex_mi(self.out_worst, index).fillna(False).astype('float')
 
         target_subsidies = AgentBuildings.define_policy_target(certificate, certificate_before, energy_saved_3uses)
 
@@ -2097,7 +2096,6 @@ class AgentBuildings(ThermalBuildings):
                 self.policies += [policy.name]
 
             if policy.policy == 'subsidy_target':
-                s = time.time()
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                    index).T * surface).T
                 subsidies_total += temp
@@ -2308,9 +2306,7 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
 
-        s = time.time()
         stock = self.heater_replacement(prices, cost_heater, policies_heater, ms_heater=ms_heater)
-        print(time.time()-s)
 
         self.logger.debug('Agents: {:,.0f}'.format(stock.shape[0]))
         stock_existing = stock.xs(True, level='Existing', drop_level=False)
@@ -2325,9 +2321,7 @@ class AgentBuildings(ThermalBuildings):
         flow = (retrofit_rate * stock).dropna()
         replacement_sum = flow.sum().sum()
 
-        s = time.time()
-        replaced_by = (flow * market_share.T).T#.copy()
-        print(time.time()-s)
+        replaced_by = (flow * market_share.T).T
 
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
@@ -2348,7 +2342,6 @@ class AgentBuildings(ThermalBuildings):
         self.certificate_jump_heater = Series(rslt).sort_index()
         if self.detailed_mode:
             self.store_information_retrofit(replaced_by)
-        print(time.time()-s)
 
         # removing heater replacement level
         replaced_by = replaced_by.groupby(
@@ -2361,12 +2354,10 @@ class AgentBuildings(ThermalBuildings):
         share = reindex_mi(share, temp.index)
         replaced_by = (share * temp).stack('Income tenant').dropna()
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
-        print(time.time()-s)
 
         to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
         to_replace = to_replace.groupby(to_replace.index.names).sum()
         assert round(to_replace.sum(), 0) == round(replacement_sum, 0), 'Sum problem'
-        print(time.time()-s)
 
         replaced_by = replaced_by.droplevel('Heating system').rename_axis(
             index={'Heating system final': 'Heating system'})
@@ -2378,24 +2369,18 @@ class AgentBuildings(ThermalBuildings):
             {'Wall': 'Wall after', 'Roof': 'Roof after', 'Floor': 'Floor after', 'Windows': 'Windows after'},
             inplace=True)
         replaced_by = replaced_by.stack(replaced_by.columns.names).rename('Data')
-        """replaced_by = replaced_by.astype(
-            {'Occupancy status': 'category', 'Income owner': 'category', 'Income tenant': 'category',
-             'Housing type': 'category', 'Heating system': 'category'})"""
+
         replaced_by = replaced_by[replaced_by > 0]
 
         replaced_by = replaced_by.reset_index()
-        print(time.time()-s)
 
         for component in ['Wall', 'Floor', 'Roof', 'Windows']:
             replaced_by[component] = replaced_by['{} before'.format(component)]
             replaced_by.loc[replaced_by['{} after'.format(component)], component] = self._performance_insulation[component]
-        print(time.time()-s)
 
-        s = time.time()
         replaced_by.drop(
             ['Wall before', 'Wall after', 'Roof before', 'Roof after', 'Floor before', 'Floor after', 'Windows before',
              'Windows after'], axis=1, inplace=True)
-        print(time.time()-s)
 
         replaced_by = replaced_by.set_index(self.stock.index.names).loc[:, 'Data']
         replaced_by = replaced_by.groupby(replaced_by.index.names).sum()

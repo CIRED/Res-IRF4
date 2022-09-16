@@ -28,7 +28,7 @@
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -63,7 +63,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -72,7 +72,7 @@
       },
       "cee": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -80,31 +80,31 @@
       },
       "cap": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "tax": "project/input/policies/carbon_tax.csv",
         "emission": "project/input/policies/carbon_tax_emission.csv"
       },
       "cite": {
         "start": 2019,
-        "end": 2020,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": 0.17,
         "cap": 16000
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "value": 0.055
       },
       "zero_interest_loan": {
-        "new": true,
+        "new": false,
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "value": 0.0917729,
         "ad_volarem": true,
         "min": 5000,
