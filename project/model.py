@@ -5,7 +5,7 @@ from time import time
 import json
 from importlib import resources
 
-from project.building import AgentBuildings
+from project.building import AgentBuildings, ThermalBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, PublicPolicy
 from project.write_output import plot_scenario
 
@@ -57,6 +57,29 @@ def select_post_inputs(parsed_inputs):
             'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
+
+
+def get_inputs(path):
+    """Initialize thermal buildings object based on inpuut dictionnary.
+
+    Parameters
+    ----------
+    inputs: dict
+    stock: pd.Series
+    path: str
+
+    Returns
+    -------
+    ThermalBuildings
+    """
+    config = get_config()
+    inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(
+        inputs, stock, year, policies_heater, policies_insulation, taxes, config, path)
+    output = {'buildings': buildings, 'energy_prices': energy_prices, 'cost_insulation': cost_insulation,
+              'carbon_emission': post_inputs['carbon_emission'], 'carbon_value_kwh': post_inputs['carbon_value_kwh']}
+
+    return output
 
 
 def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, config, path, logger=None):
@@ -115,12 +138,12 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             target_freeriders=target_freeriders,
                                             ms_heater=ms_heater)
     buildings.add_flows([flow_retrofit, flow_built])
-    buildings.calculate(prices, taxes)
+    buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.detailed_mode:
         s, o = buildings.parse_output_run(post_inputs)
     else:
-        s = buildings.simple_stock()
+        s = buildings.simplified_stock()
         o = dict()
         o['Electricity'] = buildings.heat_consumption_energy['Electricity'] / 10 ** 9
         o['Natural gas'] = buildings.heat_consumption_energy['Natural gas'] / 10 ** 9
@@ -184,7 +207,7 @@ def res_irf(config, path):
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calculate(energy_prices.loc[buildings.first_year, :], taxes)
+        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
         s, o = buildings.parse_output_run(post_inputs)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
