@@ -116,7 +116,8 @@ def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes,
                                parsed_inputs['income'], parsed_inputs['consumption_ini'], path, parsed_inputs['preferences'],
                                parsed_inputs['performance_insulation'],
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
-                               endogenous=config['endogenous'], logger=logger)
+                               endogenous=config['endogenous'], logger=logger,
+                               remove_market_failures=parsed_inputs['remove_market_failures'])
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[

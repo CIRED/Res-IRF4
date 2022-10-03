@@ -545,6 +545,11 @@ def parse_inputs(inputs, taxes, config, stock):
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
     parsed_inputs['energy_prices'] = energy_prices
 
+    if config['remove_market_failures']:
+        parsed_inputs['remove_market_failures'] = config['remove_market_failures']
+    else:
+        parsed_inputs['remove_market_failures'] = None
+
     return parsed_inputs
 
 
