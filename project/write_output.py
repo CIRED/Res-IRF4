@@ -48,8 +48,8 @@ def plot_scenario(output, stock, buildings):
                    format_y=lambda y, _: '{:.0f}'.format(y), colors=resources_data['colors'], loc='left', left=1.1)
 
     df = pd.DataFrame([output.loc['Replacement heater {} (Thousand households)'.format(i), :] for i in
-                       resources_data['index']['Heater']]).T.dropna()
-    df.columns = resources_data['index']['Heater']
+                       resources_data['index']['Heating system']]).T.dropna()
+    df.columns = resources_data['index']['Heating system']
     make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
@@ -58,16 +58,16 @@ def plot_scenario(output, stock, buildings):
     #mf_heater_index = [heater for heater in resources_data['index']['Heater']
     #                   if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
     df = pd.DataFrame(
-        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heater']]).T.dropna()
-    df.columns = resources_data['index']['Heater']
+        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
+    df.columns = resources_data['index']['Heating system']
     make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
     df = pd.DataFrame([output.loc['Replacement heater Single-family {} (Thousand households)'.format(i), :] for i in
-                       resources_data['index']['Heater']]).T.dropna()
-    df.columns = resources_data['index']['Heater']
+                       resources_data['index']['Heating system']]).T.dropna()
+    df.columns = resources_data['index']['Heating system']
     make_area_plot(df, 'Replacement (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_sf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
@@ -168,8 +168,8 @@ def plot_scenario(output, stock, buildings):
                    save=os.path.join(buildings.path, 'stock_performance.png'), total=False,
                    loc='left')
 
-    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Heating energy']], :].T
-    df.columns = resources_data['index']['Heating energy']
+    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
+    df.columns = resources_data['index']['Energy']
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
@@ -285,7 +285,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
 
     variables_output = {
         'Consumption {} (TWh)': [
-            ('Heating energy', lambda y, _: '{:,.0f}'.format(y), 2, resources_data['consumption_hist'])],
+            ('Energy', lambda y, _: '{:,.0f}'.format(y), 2, resources_data['consumption_hist'])],
         'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
         'Subsidies total {} (Million euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
                                               ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
@@ -454,7 +454,7 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
             rslt[var] = double_difference(ref.loc[var, :], result[s].loc[var, :],
                                           values=None)
 
-        for energy in resources_data['index']['Heating energy']:
+        for energy in resources_data['index']['Energy']:
             var = 'Consumption {} (TWh)'.format(energy)
             rslt[var] = double_difference(ref.loc[var, :], result[s].loc[var, :],
                                           values=None)
@@ -611,9 +611,9 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                                       ) * factor_cofp})
 
             temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
-                                              for i in resources_data['index']['Heating energy'])})
+                                              for i in resources_data['index']['Energy'])})
             temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
-                                                for i in resources_data['index']['Heating energy'])})
+                                                for i in resources_data['index']['Energy'])})
             temp.update({'Well-being benefit': df['Loss of well-being (Billion euro)']})
             temp.update({'Health savings': df['Health expenditure (Billion euro)']})
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
