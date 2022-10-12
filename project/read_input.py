@@ -441,8 +441,18 @@ def parse_inputs(inputs, taxes, config, stock):
         parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
                                                                  inputs['factor_multi_family'])
 
-    parsed_inputs['available_income'] = pd.Series(
-        [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
+    if type(config['income_rate']) is str:
+        income_rate = get_pandas(config['income_rate'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        available_income =  pd.Series(index=idx, dtype='float64')
+        inc = inputs['available_income']
+        available_income[idx[0]] = inc
+        for i in range(config['start'] + 1, config['end']):
+            inc = inc * (1 + income_rate[i])
+            available_income[i] = inc
+        parsed_inputs['available_income'] = available_income
+    else:
+        parsed_inputs['available_income'] = pd.Series(
+            [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
     parsed_inputs['available_income_pop'] = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
 
