@@ -334,6 +334,10 @@ def read_inputs(config, other_inputs=generic_input):
     population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'population': population.loc[:config['end']]})
 
+    if config['pop_housing'] is not None:
+        pop_housing = get_pandas(config['pop_housing'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        inputs.update({'pop_housing': pop_housing.loc[:config['end']]})
+
     inputs.update({'stock_ini': other_inputs['stock_ini']})
 
     if config['pop_housing'] is None:

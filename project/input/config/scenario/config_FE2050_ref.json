@@ -117,7 +117,7 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "pop_housing": null,
+    "pop_housing": "project/input/pop_hounsing_RTE-ref.csv",
     "share_multi_family": null,
     "surface_built": null,
     "remove_market_failures": {
