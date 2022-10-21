@@ -96,13 +96,14 @@ class PublicPolicy:
             more_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]
             no_switch_idx = cost_no_global.xs(False, level='Heater replacement', drop_level=False).index
 
-            cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000
-            cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000
-            cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000
-            cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included
-            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included
+            cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000 # count_cap_effect = 400
+            cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000 # count_cap_effect = 270
+            cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000 # count_cap_effect = 320
+            cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included # count_cap_effect = 1306
+            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included # count_cap_effect = 2954
 
             cost = cost_global + cost_no_global
+            #count_cap_effect = pd.DataFrame([cost_global > 50000 - cost_included][0], index=cost_global.index, columns=cost_global.columns).sum().sum()
 
         if self.cost_max is not None:
             cost_max = reindex_mi(self.cost_max, cost.index)
@@ -334,10 +335,6 @@ def read_inputs(config, other_inputs=generic_input):
     population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'population': population.loc[:config['end']]})
 
-    if config['pop_housing'] is not None:
-        pop_housing = get_pandas(config['pop_housing'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        inputs.update({'pop_housing': pop_housing.loc[:config['end']]})
-
     inputs.update({'stock_ini': other_inputs['stock_ini']})
 
     if config['pop_housing'] is None:
@@ -445,18 +442,8 @@ def parse_inputs(inputs, taxes, config, stock):
         parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
                                                                  inputs['factor_multi_family'])
 
-    if type(config['income_rate']) is str:
-        income_rate = get_pandas(config['income_rate'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        available_income =  pd.Series(index=idx, dtype='float64')
-        inc = inputs['available_income']
-        available_income[idx[0]] = inc
-        for i in range(config['start'] + 1, config['end']):
-            inc = inc * (1 + income_rate[i])
-            available_income[i] = inc
-        parsed_inputs['available_income'] = available_income
-    else:
-        parsed_inputs['available_income'] = pd.Series(
-            [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
+    parsed_inputs['available_income'] = pd.Series(
+        [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
     parsed_inputs['available_income_pop'] = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
 
