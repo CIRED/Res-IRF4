@@ -594,8 +594,6 @@ class AgentBuildings(ThermalBuildings):
 
         self._remove_market_failures = remove_market_failures
 
-
-
     def add_flows(self, flows):
         """Update stock attribute by adding flow series.
 
@@ -1733,57 +1731,6 @@ class AgentBuildings(ThermalBuildings):
             elif solver == 'fsolve':
                 return calibration_intensive_fsolve(utility, stock, ms_insulation, retrofit_rate_ini)
 
-        def calculation_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation,
-                                         delta_subsidies, target_invest=0.2, utility_zil=utility_zil):
-            """ This function can be adapted to calibrate intensive margin on Risch 2020 result. (using target_invest)
-            However, for now just returns percentage of intesive margin difference
-
-            Parameters
-            ----------
-            stock
-            retrofit_rate_ini
-            bill_saved: DataFrame
-            subsidies_total: DataFrame
-            cost_insulation: DataFrame
-            delta_subsidies: DataFrame, policies used to calibrate the scale.
-            target_invest: float
-            utility_zil
-
-            Returns
-            -------
-
-            """
-            if 'Performance' in retrofit_rate_ini.index.names:
-                stock = self.add_certificate(stock)
-            flow_retrofit = stock * reindex_mi(retrofit_rate_ini, stock.index)
-            flow_retrofit = flow_retrofit.droplevel('Performance').dropna()
-
-            def solve(scale, flow_retrofit, bill_saved, subsidies_total, cost_insulation, delta_subsidies,
-                      target_invest, utility_zil):
-                scale = float(scale)
-                ms_before, _ = to_market_share(bill_saved, subsidies_total, cost_insulation,
-                                               utility_zil=utility_zil, scale=scale)
-                investment_insulation_before = (cost_insulation.reindex(ms_before.index) * ms_before).sum(axis=1)
-                investment_insulation_before = (investment_insulation_before * flow_retrofit).sum() / flow_retrofit.sum()
-                new_sub = subsidies_total + delta_subsidies
-                ms_after, _ = to_market_share(bill_saved, new_sub, cost_insulation, utility_zil=utility_zil,
-                                              scale=scale)
-                investment_insulation_after = (cost_insulation.reindex(ms_after.index) * ms_after).sum(axis=1)
-                investment_insulation_after = (investment_insulation_after * flow_retrofit).sum() / flow_retrofit.sum()
-
-                delta_invest = (
-                                       investment_insulation_before - investment_insulation_after) / investment_insulation_before
-                return delta_invest - target_invest
-
-            x0 = ones(1)
-
-            """scale = fsolve(solve, x0, args=(
-                flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies,
-                target_invest, utility_zil))"""
-
-            return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -0.5 * delta_subsidies,
-                         target_invest, utility_zil) + target_invest
-
         def calibration_constant_scale_ext(utility, stock, retrofit_rate_ini, target_freeriders, delta_subsidies,
                                            pref_subsidies):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
@@ -1874,6 +1821,58 @@ class AgentBuildings(ThermalBuildings):
             details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
             return constant, scale
+
+        def calculation_intensive_margin(stock, retrofit_rate_ini, bill_saved, subsidies_total, cost_insulation,
+                                         delta_subsidies, target_invest=0.2, utility_zil=utility_zil):
+            """ This function can be adapted to calibrate intensive margin on Risch 2020 result. (using target_invest)
+            However, for now just returns percentage of intesive margin difference
+
+            Parameters
+            ----------
+            stock
+            retrofit_rate_ini
+            bill_saved: DataFrame
+            subsidies_total: DataFrame
+            cost_insulation: DataFrame
+            delta_subsidies: DataFrame, policies used to calibrate the scale.
+            target_invest: float
+            utility_zil
+
+            Returns
+            -------
+
+            """
+            if 'Performance' in retrofit_rate_ini.index.names:
+                stock = self.add_certificate(stock)
+            flow_retrofit = stock * reindex_mi(retrofit_rate_ini, stock.index)
+            flow_retrofit = flow_retrofit.droplevel('Performance').dropna()
+
+            def solve(scale, flow_retrofit, bill_saved, subsidies_total, cost_insulation, delta_subsidies,
+                      target_invest, utility_zil):
+                scale = float(scale)
+                ms_before, _ = to_market_share(bill_saved, subsidies_total, cost_insulation,
+                                               utility_zil=utility_zil, scale=scale)
+                investment_insulation_before = (cost_insulation.reindex(ms_before.index) * ms_before).sum(axis=1)
+                investment_insulation_before = (investment_insulation_before * flow_retrofit).sum() / flow_retrofit.sum()
+                new_sub = subsidies_total + delta_subsidies
+                ms_after, _ = to_market_share(bill_saved, new_sub, cost_insulation, utility_zil=utility_zil,
+                                              scale=scale)
+                investment_insulation_after = (cost_insulation.reindex(ms_after.index) * ms_after).sum(axis=1)
+                investment_insulation_after = (investment_insulation_after * flow_retrofit).sum() / flow_retrofit.sum()
+
+                delta_invest = (
+                                       investment_insulation_before - investment_insulation_after) / investment_insulation_before
+                return delta_invest - target_invest
+
+            x0 = ones(1)
+
+            """scale = fsolve(solve, x0, args=(
+                flow_retrofit, bill_saved, subsidies_total, cost_insulation, -delta_subsidies,
+                target_invest, utility_zil))"""
+
+            return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -0.5 * delta_subsidies,
+                         target_invest, utility_zil) + target_invest
+
 
         def supply_interaction(retrofit_rate, stock, investment_insulation):
             """NOT IMPLEMENTED YET.
@@ -2300,7 +2299,6 @@ class AgentBuildings(ThermalBuildings):
             if self._remove_market_failures['credit constraint']:
                 self.pref_bill_insulation_int = pd.Series(self.pref_bill_insulation_int.loc['D10'], index=self.pref_bill_insulation_int.index)
                 self.pref_bill_insulation_ext = pd.Series(self.pref_bill_insulation_ext.loc['D10'], index=self.pref_bill_insulation_ext.index)
-
 
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
                       ms_heater=None, ms_insulation=None, renovation_rate_ini=None, target_freeriders=None,

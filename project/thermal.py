@@ -23,7 +23,7 @@ from project.utils import reindex_mi
 LOGISTIC_COEFFICIENT.columns = ['Intercept', 'Proxy_conso_square']
 LOGISTIC_COEFFICIENT.index.names = ['Performance']"""
 CONVERSION = 2.3
-DHH = 55706
+HDD = 55706
 CERTIFICATE_3USES_BOUNDARIES = {
     'A': [0, 50],
     'B': [50, 90],
@@ -33,6 +33,108 @@ CERTIFICATE_3USES_BOUNDARIES = {
     'F': [330, 450],
     'G': [450, 1000],
 }
+
+
+# Transmission heat losses
+THERMAL_BRIDGING = {'Minimal': 0,
+                    'Low': 0.05,
+                    'Medium': 0.1,
+                    'High': 0.15}
+FACTOR_SOIL = 0.5
+
+# Ventilation heat losses
+HEAT_CAPACITY_AIR = 0.34 # Wh/m3.K
+
+AIR_TIGHTNESS_INFILTRATION = {'Minimal': 0.05,
+                              'Low': 0.1,
+                              'Medium': 0.2,
+                              'High': 0.5}
+
+ROOM_HEIGHT = 2.5 # m
+VENTILATION_TYPES = {'Ventilation naturelle': 0.4,
+                     'VMC SF auto et VMC double flux': 0.3,
+                     'VMC SF hydrogérable': 0.2}
+
+# Heat transfer
+FACTOR_NON_UNIFORM = 0.9
+TEMP_INT = 19 #°C
+
+# Solar heat load
+FACTOR_SHADING = 0.6
+FACTOR_FRACTION = 0.3
+FACTOR_NON_PERPENDICULAR = 0.9
+
+# Internal heat sources
+INTERNAL_HEAT_SOURCES = 4.17 # W/m2
+
+# Gain factor
+INTERNAL_HEAT_CAPACITY = 45 # Wh/m2.K
+A_0 = 0.8
+TAU_0 = 30
+
+FACTOR_TABULA_3CL = 0.9
+
+# Climatic data
+TEMP_EXT = 7.1 #°C
+DAYS_HEATING_SEASON = 209
+HDD_EQ = (TEMP_INT - TEMP_EXT) * 24 * DAYS_HEATING_SEASON
+SOLAR_ENERGY_TRANSMITTANCE = 0.62 #
+SOLAR_RADIATION = 306.4 # kWh/m2.an
+
+
+def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
+                              th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium'):
+    """Monthly stead-state space heating consumption.
+
+    Parameters
+    ----------
+    u_wall: pd.Series
+    u_floor: pd.Series
+    u_roof: pd.Series
+    u_windows: pd.Series
+    ratio_surface: pd.Series
+    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
+    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
+    infiltration: {'Minimal', 'Low', 'Medium', 'High'}
+
+    Returns
+    -------
+
+    """
+    data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    ratio_surface.loc[:, 'Floor'] *= FACTOR_SOIL
+    surface_components = reindex_mi(ratio_surface, data.index)
+
+    coefficient_transmission_transfer = (surface_components * data).sum(axis=1)
+    coefficient_transmission_transfer += surface_components.sum(axis=1) * THERMAL_BRIDGING[th_bridging]
+
+    coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * (VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]) * ROOM_HEIGHT
+
+    coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - TEMP_EXT) * DAYS_HEATING_SEASON
+
+    heat_transfer = (coefficient_ventilation_transfer + coefficient_transmission_transfer) * coefficient_climatic
+
+    solar_load = FACTOR_SHADING * (1 - FACTOR_FRACTION) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * SOLAR_RADIATION * surface_components.loc[:, 'Windows']
+
+    internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * DAYS_HEATING_SEASON
+
+    time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
+    a_h = A_0 + time_constant / TAU_0
+    heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
+    gain_utilization_factor = (1 - heat_balance_ratio**a_h) / (1 - heat_balance_ratio**(a_h + 1))
+
+    heat_gains = solar_load + internal_heat_sources
+
+    heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL
+    return heat_need
+
+
+def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency):
+
+    heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface)
+    return heat_need / efficiency
+
+
 
 
 def model_heating_consumption(df, a=0.921323, b=0.634717):
@@ -51,7 +153,7 @@ def model_3uses_consumption(df, a=0.846102, b=1.029880):
     return (df ** a) * np.exp(b)
 
 
-def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, dh):
+def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd):
     """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
 
     Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
@@ -76,16 +178,16 @@ def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_su
 
     if isinstance(partial_losses, (pd.Series, pd.DataFrame)):
         if partial_losses.index.equals(efficiency.index):
-            indicator_losses = partial_losses / efficiency * dh / 1000
+            indicator_losses = partial_losses / efficiency * hdd / 1000
             consumption = model_heating_consumption(indicator_losses).rename('Consumption')
 
         else:
-            indicator_losses = (partial_losses * dh / 1000).to_frame().dot(
+            indicator_losses = (partial_losses * hdd / 1000).to_frame().dot(
                 (1 / efficiency).to_frame().T)
             consumption = model_heating_consumption(indicator_losses)
 
     else:
-        indicator_losses = partial_losses / efficiency * dh / 1000
+        indicator_losses = partial_losses / efficiency * hdd / 1000
         consumption = model_heating_consumption(indicator_losses).rename('Consumption')
 
     return consumption
@@ -118,7 +220,7 @@ def final2primary(heat_consumption, energy, conversion=CONVERSION):
             raise 'Energy DataFrame do not match indexes and columns'
 
 
-def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, energy, ratio_surface, dh,
+def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, energy, ratio_surface, hdd,
                                 conversion=CONVERSION):
     """Convert final to primary heating consumption.
 
@@ -138,7 +240,7 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, 
     -------
     """
     # data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
-    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, dh)
+    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd)
     return final2primary(heat_consumption, energy, conversion=conversion)
 
 
@@ -176,7 +278,7 @@ def certificate(df):
                 return key
 
 
-def certificate_buildings(u_wall, u_floor, u_roof, u_windows, dh, efficiency, energy, ratio_surface):
+def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, energy, ratio_surface):
     """Returns energy performance certificate.
 
     Parameters
@@ -198,105 +300,7 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, dh, efficiency, en
         Certificates for all buildings in the stock.
 
     """
-    primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency,
+    primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, hdd, efficiency,
                                                            energy, ratio_surface, conversion=CONVERSION)
     return primary_heat_consumption, certificate(primary_heat_consumption)
 
-
-def _certificate(primary_consumption, single_family=None):
-    if single_family is None:
-        single_family = pd.Series(primary_consumption.index.get_level_values('Housing type') == 'Single-family',
-                                  index=primary_consumption.index, name='Single-family')
-    else:
-        if single_family:
-            single_family = pd.Series(True, index=primary_consumption.index, name='Single-family')
-        else:
-            single_family = pd.Series(False, index=primary_consumption.index, name='Single-family')
-
-    df = pd.concat((primary_consumption.rename('Consumption'), single_family), axis=1)
-
-    def func(ds):
-        LOGISTIC_COEFFICIENT = None
-        y = LOGISTIC_COEFFICIENT['Intercept'] + LOGISTIC_COEFFICIENT['Proxy_conso_square'] * ds['Consumption']
-        proba = np.exp(y) / (np.exp(y).sum())
-        return proba.idxmax()
-
-    performance = df.apply(func, axis=1)
-    return performance
-
-
-def _heating_consumption(u_wall, u_floor, u_roof, u_windows, dh, efficiency, param):
-    """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
-
-    Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
-
-    Parameters
-    ----------
-    u_wall: float or pd.Series
-    u_floor: float or pd.Series
-    u_roof: float or pd.Series
-    u_windows: float or pd.Series
-    dh: float or pd.Series
-    efficiency: float or pd.Series
-    param: dict
-
-    Returns
-    -------
-    float or pd.Series or pd.DataFrame
-        Standard space heating consumption.
-    """
-    data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
-    partial_losses = (reindex_mi(param['ratio_surface'], data.index) * data).sum(axis=1)
-
-    if isinstance(partial_losses, (pd.Series, pd.DataFrame)):
-        if partial_losses.index.equals(efficiency.index):
-            indicator_losses = partial_losses / efficiency * dh / 1000
-            consumption = (reindex_mi(param['coefficient'], indicator_losses.index) * indicator_losses).rename('Consumption')
-
-        else:
-            indicator_losses = (partial_losses * dh / 1000).to_frame().dot(
-                (1 / efficiency).to_frame().T)
-
-            consumption = (reindex_mi(param['coefficient'], indicator_losses.index) * indicator_losses.T).T
-
-    else:
-        indicator_losses = partial_losses / efficiency * dh / 1000
-        consumption = (reindex_mi(param['coefficient'], indicator_losses.index) * indicator_losses).rename('Consumption')
-
-    return consumption
-
-
-def _certificate(conso, certificate_bounds):
-    """Returns energy performance certificate based on space heating energy consumption.
-
-    Parameters
-    ----------
-    conso: float or pd.Series or pd.DataFrame
-        Space heating energy consumption.
-    certificate_bounds: dict
-        Energy consumption bounds that define certificate.
-
-    Returns
-    -------
-    float or pd.Series or pd.DataFrame
-        Energy performance certificate.
-    """
-
-    if isinstance(conso, pd.Series):
-        certificate = pd.Series(dtype=str, index=conso.index)
-        for key, item in certificate_bounds.items():
-            cond = (conso > item[0]) & (conso <= item[1])
-            certificate[cond] = key
-        return certificate
-
-    elif isinstance(conso, pd.DataFrame):
-        certificate = pd.DataFrame(dtype=str, index=conso.index, columns=conso.columns)
-        for key, item in certificate_bounds.items():
-            cond = (conso > item[0]) & (conso <= item[1])
-            certificate[cond] = key
-        return certificate
-
-    elif isinstance(conso, float):
-        for key, item in certificate_bounds.items():
-            if (conso > item[0]) & (conso <= item[1]):
-                return key

@@ -56,8 +56,13 @@ generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
 generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
 
-generic_input['ratio_surface'] = pd.DataFrame(
+"""generic_input['ratio_surface'] = pd.DataFrame(
     [[0.97, 0.75, 0.8, 0.11], [0.90, 0, 0, 0.15]],
+    index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
+    columns=['Wall', 'Floor', 'Roof', 'Windows'])"""
+
+generic_input['ratio_surface'] = pd.DataFrame(
+    [[1.2, 0.96, 0.98, 0.15], [0.90, 0, 0, 0.15]],
     index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
     columns=['Wall', 'Floor', 'Roof', 'Windows'])
 
