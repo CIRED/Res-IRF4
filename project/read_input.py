@@ -96,13 +96,14 @@ class PublicPolicy:
             more_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]
             no_switch_idx = cost_no_global.xs(False, level='Heater replacement', drop_level=False).index
 
-            cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000
-            cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000
-            cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000
-            cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included
-            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included
+            cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000 # count_cap_effect = 400
+            cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000 # count_cap_effect = 270
+            cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000 # count_cap_effect = 320
+            cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included # count_cap_effect = 1306
+            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included # count_cap_effect = 2954
 
             cost = cost_global + cost_no_global
+            #count_cap_effect = pd.DataFrame([cost_global > 50000 - cost_included][0], index=cost_global.index, columns=cost_global.columns).sum().sum()
 
         if self.cost_max is not None:
             cost_max = reindex_mi(self.cost_max, cost.index)
