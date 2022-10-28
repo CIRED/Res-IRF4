@@ -91,6 +91,12 @@
     },
     "pop_housing": null,
     "share_multi_family": null,
-    "surface_built": null
+    "surface_built": null,
+      "remove_market_failures": {
+      "landlord": true,
+      "multi-family": false,
+      "credit constraint": false
+    }
+
   }
 }
