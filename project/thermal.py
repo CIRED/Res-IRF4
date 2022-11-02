@@ -81,10 +81,27 @@ HDD_EQ = (TEMP_INT - TEMP_EXT) * 24 * DAYS_HEATING_SEASON
 SOLAR_ENERGY_TRANSMITTANCE = 0.62 #
 SOLAR_RADIATION = 306.4 # kWh/m2.an
 
+DHW_NEED = pd.Series([15.3, 19.8], index=pd.Index(['Single-family',	'Multi-family'], name='Housing type')) # kWh/m2.a
+DHW_EFFICIENCY = {'Electricity-Performance boiler': 0.7,
+                  'Electricity-Heat pump': 2.5,
+                  'Natural gas-Performance boiler': 0.6,
+                  'Natural gas-Standard boiler': 0.6,
+                  'Oil fuel-Performance boiler': 0.6,
+                  'Oil fuel-Standard boiler': 0.6,
+                  'Wood fuel-Performance boiler': 0.6,
+                  'Wood fuel-Standard boiler': 0.6
+                  }
+
+
+C_LIGHT = 0.9
+P_LIGHT = 1.4 # W/m2
+HOURS_LIGHT = 2123 # h
+
 
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
-                              th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium'):
-    """Monthly stead-state space heating consumption.
+                              th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
+                              air_rate=None, unobserved=None):
+    """Monthly stead-state space heating need.
 
     Parameters
     ----------
@@ -96,11 +113,23 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
     vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
     infiltration: {'Minimal', 'Low', 'Medium', 'High'}
+    air_rate: default None
+    unobserved: {'Minimal', 'High'}, default None
 
     Returns
     -------
 
     """
+    if unobserved == 'Minimal':
+        th_bridging = 'Minimal'
+        vent_types = 'VMC SF hydrogérable'
+        infiltration = 'Minimal'
+    elif unobserved == 'High':
+        th_bridging = 'High'
+        vent_types = 'Ventilation naturelle'
+        infiltration = 'High'
+
+
     data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
     ratio_surface.loc[:, 'Floor'] *= FACTOR_SOIL
     surface_components = reindex_mi(ratio_surface, data.index)
@@ -108,7 +137,10 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     coefficient_transmission_transfer = (surface_components * data).sum(axis=1)
     coefficient_transmission_transfer += surface_components.sum(axis=1) * THERMAL_BRIDGING[th_bridging]
 
-    coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * (VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]) * ROOM_HEIGHT
+    if air_rate is None:
+        air_rate = VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]
+
+    coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
 
     coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - TEMP_EXT) * DAYS_HEATING_SEASON
 
@@ -129,11 +161,114 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     return heat_need
 
 
-def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency):
+def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
+                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
+                               air_rate=None, unobserved=None
+                               ):
+    """Monthly stead-state space heating final energy delivered.
 
-    heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface)
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    ratio_surface
+    efficiency
+
+    Returns
+    -------
+
+    """
+    heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
+                                          th_bridging=th_bridging, vent_types=vent_types,
+                                          infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
+                                          )
     return heat_need / efficiency
 
+
+def conventional_dhw_final(index):
+    """Calculate dhw final energy consumption.
+
+    Parameters
+    ----------
+    index: pd.MultiIndex
+
+    Returns
+    -------
+
+    """
+    efficiency = pd.Series(index.get_level_values('Heating system')).astype('object').replace(DHW_EFFICIENCY).set_axis(index, axis=0)
+    dhw_need = DHW_NEED.reindex(index.get_level_values('Housing type')).set_axis(index, axis=0)
+    return dhw_need / efficiency
+
+
+def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency, index,
+                              th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
+                              air_rate=None, unobserved=None
+                              ):
+    """Space heating conventional, and energy performance certificate.
+
+    Method before july 2021.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    ratio_surface
+    efficiency
+    index
+
+    Returns
+    -------
+
+    """
+
+    heating_final = conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
+                                               th_bridging=th_bridging, vent_types=vent_types,
+                                               infiltration=infiltration, air_rate=air_rate, unobserved=unobserved
+                                               )
+    dhw_final = conventional_dhw_final(index)
+    ac_final = 0
+    energy_final = heating_final + dhw_final + ac_final
+    energy_primary = final2primary(energy_final, index.get_level_values('Energy'))
+    performance = find_certificate(energy_primary)
+    return performance, energy_primary
+
+
+def find_certificate(primary_consumption):
+    """Returns energy performance certificate based on space heating energy consumption.
+
+    Parameters
+    ----------
+    df: float or pd.Series or pd.DataFrame
+        Space heating energy consumption (kWh PE / m2.year)
+    Returns
+    -------
+    float or pd.Series or pd.DataFrame
+        Energy performance certificate.
+    """
+
+    if isinstance(primary_consumption, pd.Series):
+        certificate = pd.Series(dtype=str, index=primary_consumption.index)
+        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+            cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
+            certificate[cond] = key
+        return certificate
+
+    elif isinstance(primary_consumption, pd.DataFrame):
+        certificate = pd.DataFrame(dtype=str, index=primary_consumption.index, columns=primary_consumption.columns)
+        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+            cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
+            certificate[cond] = key
+        return certificate
+
+    elif isinstance(primary_consumption, float):
+        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+            if (primary_consumption > item[0]) & (primary_consumption <= item[1]):
+                return key
 
 
 
@@ -164,7 +299,7 @@ def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_su
     u_floor: float or pd.Series
     u_roof: float or pd.Series
     u_windows: float or pd.Series
-    dh: float or pd.Series
+    hdd: float or pd.Series
     efficiency: float or pd.Series
     ratio_surface: pd.Series
 
@@ -230,7 +365,7 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, 
     u_floor
     u_roof
     u_windows
-    dh
+    hdd
     efficiency
     energy
     ratio_surface
