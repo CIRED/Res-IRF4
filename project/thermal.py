@@ -78,7 +78,7 @@ FACTOR_TABULA_3CL = 0.9
 TEMP_EXT = 7.1 #°C
 DAYS_HEATING_SEASON = 209
 HDD_EQ = (TEMP_INT - TEMP_EXT) * 24 * DAYS_HEATING_SEASON
-SOLAR_ENERGY_TRANSMITTANCE = 0.62 #
+SOLAR_ENERGY_TRANSMITTANCE = 0.62
 SOLAR_RADIATION = 306.4 # kWh/m2.an
 
 DHW_NEED = pd.Series([15.3, 19.8], index=pd.Index(['Single-family',	'Multi-family'], name='Housing type')) # kWh/m2.a
@@ -128,7 +128,6 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         th_bridging = 'High'
         vent_types = 'Ventilation naturelle'
         infiltration = 'High'
-
 
     data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
     ratio_surface.loc[:, 'Floor'] *= FACTOR_SOIL
