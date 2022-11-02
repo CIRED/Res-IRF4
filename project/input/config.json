@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2051,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -91,12 +91,6 @@
     },
     "pop_housing": null,
     "share_multi_family": null,
-    "surface_built": null,
-      "remove_market_failures": {
-      "landlord": true,
-      "multi-family": false,
-      "credit constraint": false
-    }
-
+    "surface_built": null
   }
 }
