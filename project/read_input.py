@@ -247,17 +247,16 @@ def read_policies(config):
         return l
 
     def read_zil(data):
-        """
-        Creates a zero_interest_loan PublicPolicy instance.
-        "new" is a specific attribute of zero_interest_loan,
-        if it is true the zil will be implemented with gesture and not epc jumps requirements.
-        "ad_valorem" means the policy will be considered as a subvention in the DCM,
-        if it's False, the DCM will have another coefficient of preference associated to a dummy variable zil.
+        """Creates a zero_interest_loan PublicPolicy instance.
 
+        "new" is a specific attribute of zero_interest_loan,
+            if it is true the zil will be implemented with gesture and not epc jumps requirements.
+        "ad_valorem" means the policy will be considered as a subvention in the DCM,
+            if it's False, the DCM will have another coefficient of preference associated to a dummy variable zil.
 
         Parameters
         ----------
-        data: Dict
+        data: dict
             it's the config dictionary.
 
         Returns
