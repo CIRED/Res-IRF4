@@ -1,0 +1,65 @@
+Housing type,Heating system,Heating system final,
+Multi-family,Electricity-Heat pump,Electricity-Heat pump,0
+Multi-family,Electricity-Performance boiler,Electricity-Heat pump,0
+Multi-family,Electricity-Performance boiler,Electricity-Performance boiler,0.873
+Multi-family,Natural gas-Performance boiler,Electricity-Heat pump,0
+Multi-family,Natural gas-Performance boiler,Electricity-Performance boiler,1.777
+Multi-family,Natural gas-Performance boiler,Natural gas-Performance boiler,1.875
+Multi-family,Natural gas-Standard boiler,Electricity-Heat pump,0
+Multi-family,Oil fuel-Performance boiler,Electricity-Heat pump,0
+Multi-family,Oil fuel-Performance boiler,Electricity-Performance boiler,1.966
+Multi-family,Oil fuel-Performance boiler,Natural gas-Performance boiler,2.781
+Multi-family,Oil fuel-Standard boiler,Electricity-Heat pump,0
+Multi-family,Wood fuel-Performance boiler,Electricity-Heat pump,0
+Multi-family,Wood fuel-Standard boiler,Electricity-Heat pump,0
+Single-family,Electricity-Heat pump,Electricity-Heat pump,0
+Single-family,Electricity-Heat pump,Wood fuel-Performance boiler,0.267
+Single-family,Electricity-Performance boiler,Electricity-Heat pump,0
+Single-family,Electricity-Performance boiler,Electricity-Performance boiler,1.598
+Single-family,Electricity-Performance boiler,Wood fuel-Performance boiler,1.494
+Single-family,Natural gas-Performance boiler,Electricity-Heat pump,0
+Single-family,Natural gas-Performance boiler,Natural gas-Performance boiler,1.299
+Single-family,Natural gas-Performance boiler,Wood fuel-Performance boiler,0.459
+Single-family,Natural gas-Standard boiler,Electricity-Heat pump,0
+Single-family,Natural gas-Standard boiler,Natural gas-Performance boiler,1.857
+Single-family,Natural gas-Standard boiler,Wood fuel-Performance boiler,0.359
+Single-family,Oil fuel-Performance boiler,Electricity-Heat pump,0
+Single-family,Oil fuel-Performance boiler,Electricity-Performance boiler,2.614
+Single-family,Oil fuel-Performance boiler,Wood fuel-Performance boiler,2.883
+Single-family,Oil fuel-Standard boiler,Electricity-Heat pump,0
+Single-family,Oil fuel-Standard boiler,Electricity-Performance boiler,2.164
+Single-family,Oil fuel-Standard boiler,Wood fuel-Performance boiler,2.828
+Single-family,Wood fuel-Performance boiler,Electricity-Heat pump,0
+Single-family,Wood fuel-Performance boiler,Electricity-Performance boiler,2.514
+Single-family,Wood fuel-Performance boiler,Natural gas-Performance boiler,0.583
+Single-family,Wood fuel-Performance boiler,Wood fuel-Performance boiler,1.904
+Single-family,Wood fuel-Standard boiler,Electricity-Heat pump,0
+Single-family,Wood fuel-Standard boiler,Electricity-Performance boiler,2.384
+Single-family,Wood fuel-Standard boiler,Natural gas-Performance boiler,0.534
+Single-family,Wood fuel-Standard boiler,Wood fuel-Performance boiler,2.73
+Multi-family,Electricity-Heat pump,Electricity-Performance boiler,
+Multi-family,Electricity-Heat pump,Natural gas-Performance boiler,
+Multi-family,Electricity-Heat pump,Oil fuel-Performance boiler,
+Multi-family,Electricity-Heat pump,Wood fuel-Performance boiler,
+Multi-family,Electricity-Performance boiler,Natural gas-Performance boiler,
+Multi-family,Electricity-Performance boiler,Oil fuel-Performance boiler,
+Multi-family,Electricity-Performance boiler,Wood fuel-Performance boiler,
+Multi-family,Natural gas-Performance boiler,Oil fuel-Performance boiler,
+Multi-family,Natural gas-Performance boiler,Wood fuel-Performance boiler,
+Multi-family,Oil fuel-Performance boiler,Oil fuel-Performance boiler,
+Multi-family,Oil fuel-Performance boiler,Wood fuel-Performance boiler,
+Single-family,Electricity-Heat pump,Electricity-Performance boiler,
+Single-family,Electricity-Heat pump,Natural gas-Performance boiler,
+Single-family,Electricity-Heat pump,Oil fuel-Performance boiler,
+Single-family,Electricity-Performance boiler,Natural gas-Performance boiler,
+Single-family,Electricity-Performance boiler,Oil fuel-Performance boiler,
+Single-family,Natural gas-Performance boiler,Electricity-Performance boiler,
+Single-family,Natural gas-Performance boiler,Oil fuel-Performance boiler,
+Single-family,Natural gas-Standard boiler,Electricity-Performance boiler,
+Single-family,Natural gas-Standard boiler,Oil fuel-Performance boiler,
+Single-family,Oil fuel-Performance boiler,Natural gas-Performance boiler,
+Single-family,Oil fuel-Performance boiler,Oil fuel-Performance boiler,
+Single-family,Oil fuel-Standard boiler,Natural gas-Performance boiler,
+Single-family,Oil fuel-Standard boiler,Oil fuel-Performance boiler,
+Single-family,Wood fuel-Performance boiler,Oil fuel-Performance boiler,
+Single-family,Wood fuel-Standard boiler,Oil fuel-Performance boiler,

@@ -18,13 +18,13 @@
 import os
 
 import pandas as pd
-from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique
+from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique, read_csv
 from numpy import exp, log, zeros, ones, append, arange, array
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import logging
 
-from project.utils import make_plot, format_ax, save_fig, format_legend, reindex_mi, timing
+from project.utils import make_plot, format_ax, save_fig, format_legend, reindex_mi, timing, get_pandas
 from project.input.param import generic_input
 from project.input.resources import resources_data
 import project.thermal as thermal
@@ -1120,9 +1120,9 @@ class AgentBuildings(ThermalBuildings):
         c_before = reindex_mi(certificate_before, index)
         index = c_before[c_before > 'B'].index
 
+        # before include the change of heating system
         _, consumption_3uses_before, certificate_before = self.consumption_standard(index,
-                                                                                        level_heater='Heating system final')
-
+                                                                                    level_heater='Heating system final')
         certificate_before = certificate_before[certificate_before > 'B']
         consumption_3uses_before = consumption_3uses_before.loc[certificate_before.index]
 
@@ -1130,7 +1130,6 @@ class AgentBuildings(ThermalBuildings):
 
         _, consumption_3uses, certificate = self.prepare_consumption(self._choice_insulation, index=index,
                                                                      level_heater='Heating system final')
-
         energy_saved_3uses = ((consumption_3uses_before - consumption_3uses.T) / consumption_3uses_before).T
         energy_saved_3uses.dropna(inplace=True)
 
@@ -1373,8 +1372,6 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        certificate: DataFrame
-            Energy performance certificate after retrofitting insulation.
         certificate_jump: DataFrame
             Number of epc jump.
         cost_insulation_raw: Series
@@ -3025,3 +3022,51 @@ class AgentBuildings(ThermalBuildings):
                        })
 
         return output
+
+    def calibration_exogenous(self, energy_prices, taxes, path_heater=None, path_insulation_int=None,
+                              path_insulation_ext=None,
+                              scale=1.19651508552344):
+        """Function calibrating buildings object with exogenous data.
+
+        Parameters
+        ----------
+        energy_prices: Series
+            Energy prices for year y. Index are energy carriers {'Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'}.
+        taxes: Series
+            Energy taxes for year y.
+        """
+        # calibration energy consumption first year
+        self.calculate_consumption(energy_prices.loc[self.first_year, :], taxes)
+
+        # calibration flow retrofit second year
+        self.year = 2019
+
+        if path_heater is not None:
+            calibration_constant_heater = read_csv(path_heater, index_col=[0, 1, 2]).squeeze()
+        else:
+            calibration_constant_heater = get_pandas('project/input/calibration/calibration_constant_heater.csv',
+                                                     lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze())
+        self.constant_heater = calibration_constant_heater.unstack('Heating system final')
+        self._choice_heater = list(self.constant_heater.columns)
+
+        if path_insulation_int is not None:
+            calibration_constant_insulation = read_csv(path_insulation_int, index_col=[0, 1, 2, 3]).squeeze()
+        else:
+            calibration_constant_insulation = get_pandas('project/input/calibration/calibration_constant_insulation.csv',
+                                                         lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze())
+        self.constant_insulation_intensive = calibration_constant_insulation
+
+        if path_insulation_ext is not None:
+            calibration_constant_extensive = read_csv(path_insulation_ext, index_col=[0, 1, 2, 3]).squeeze()
+        else:
+            calibration_constant_extensive = get_pandas('project/input/calibration/calibration_constant_extensive.csv',
+                                                         lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze())
+        self.constant_insulation_extensive = calibration_constant_extensive.dropna()
+
+        self.scale_ext = scale
+
+
+
+
+
+

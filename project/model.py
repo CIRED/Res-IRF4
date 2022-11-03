@@ -82,7 +82,7 @@ def get_inputs(path):
     return output
 
 
-def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, config, path, logger=None):
+def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, path, config=None, logger=None):
     """Create main Python objects read by model.
 
     Parameters
@@ -101,6 +101,9 @@ def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes,
     -------
 
     """
+
+    if config is None:
+        config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
     dump_inputs(parsed_inputs, path)
@@ -204,7 +207,7 @@ def res_irf(config, path):
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
         buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(
-            inputs, stock, year, policies_heater, policies_insulation, taxes, config, path, logger)
+            inputs, stock, year, policies_heater, policies_insulation, taxes, path, config, logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))

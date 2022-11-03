@@ -409,7 +409,7 @@ def certificate(df):
     float or pd.Series or pd.DataFrame
         Energy performance certificate.
     """
-    primary_consumption = model_3uses_consumption(df)
+    primary_consumption = stat_model_3uses_consumption(df)
 
     if isinstance(primary_consumption, pd.Series):
         certificate = pd.Series(dtype=str, index=primary_consumption.index)
