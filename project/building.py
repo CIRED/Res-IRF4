@@ -258,7 +258,7 @@ class ThermalBuildings:
             # housing_type = Series(idx.get_level_values('Housing type'), index=idx)
 
             # consumption = thermal.heating_consumption(wall, floor, roof, windows, efficiency, self._ratio_surface)
-            consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface,
+            consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                              efficiency)
 
             # energy = heating_system.str.split('-').str[0].rename('Energy')
@@ -266,7 +266,7 @@ class ThermalBuildings:
             # consumption_primary = thermal.final2primary(consumption, energy)
             # consumption_3uses = thermal.model_3uses_consumption(consumption_primary)
             certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
-                                                                               self._ratio_surface,
+                                                                               self._ratio_surface.copy(),
                                                                                efficiency, idx)
 
             # mistake: certificate = thermal.certificate(consumption_primary)
@@ -1345,9 +1345,13 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_uncaped = subsidies_total.copy()
-        for sub in ['reduced_tax', 'zero_interest_loan']:
-            if sub in subsidies_details.keys():
-                subsidies_uncaped -= subsidies_details[sub]
+
+        if 'reduced_tax' in subsidies_details.keys():
+            subsidies_uncaped -= subsidies_details['reduced_tax']
+
+        zil = [p for p in policies_insulation if p.policy == 'subsidy_ad_volarem' and p.name == 'zero_interest_loan']
+        if 'zero_interest_loan' in subsidies_details.keys() and zil is []:
+            subsidies_uncaped -= subsidies_details['zero_interest_loan']
 
         if subsidies_cap:
             subsidies_cap = subsidies_cap[0]
