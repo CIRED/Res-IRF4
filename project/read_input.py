@@ -56,15 +56,28 @@ class PublicPolicy:
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
+        Gives the amount of the cost of a gesture for a segment over which the subvention applies.
+
+        If self.new, cost global is the amount loaned for gestures which are considered as 'global renovations',
+        and thus caped by the proper maximum zil amount tacking the heater replacement into account.
+        Also, cost_no_global are the amount loaned for individual or bunch renovations actions.
+
 
         Parameters
         ----------
         cost_insulation: pd.DataFrame
-        target_subsidies
-        cost_included
+            Cost of an insulation gesture
+        target_subsidies: pd.DataFrame
+            Boolean values. If self.new it corresponds to the global renovations
+        cost_included: pd.DataFrame
+            After tax cost of a heater
+
 
         Returns
         -------
+        cost: pd.DataFrame
+            Each cell of the DataFrame corresponds to the cost after subventions of a specific gesture and segment
+
 
         """
         cost = cost_insulation.copy()
@@ -79,31 +92,31 @@ class PublicPolicy:
             if not self.new:
                 cost = cost[target].fillna(0)
 
-        if self.new and self.name == 'zero_interest_loan':
-            target_global = target_subsidies[n]
-            cost_global = cost[target_global].fillna(0).copy()
-            cost_included = reindex_mi(cost_included, cost_global.index)
-            cost_included[cost_included.index.get_level_values("Heater replacement") == False] = 0
-            cost_included = pd.concat([cost_included] * cost_global.shape[1], axis=1).set_axis(cost_global.columns, axis=1)
-            cost_global[cost_global > 50000 - cost_included] = 50000 - cost_included
+            if self.new and self.name == 'zero_interest_loan':
+                target_global = target_subsidies[n]
+                cost_global = cost[target_global].fillna(0).copy()
+                cost_included = reindex_mi(cost_included, cost_global.index)
+                cost_included[cost_included.index.get_level_values("Heater replacement") == False] = 0
+                cost_included = pd.concat([cost_included] * cost_global.shape[1], axis=1).set_axis(cost_global.columns, axis=1)
+                cost_global[cost_global > 50000 - cost_included] = 50000 - cost_included
 
-            cost_no_global = cost[~target_global].fillna(0).copy()
-            # windows specific cap
-            cost_no_global[cost_no_global.loc[:, idx[False, False, False, True]] > 7000] = 7000
+                cost_no_global = cost[~target_global].fillna(0).copy()
+                # windows specific cap
+                cost_no_global[cost_no_global.loc[:, idx[False, False, False, True]] > 7000] = 7000
 
-            one_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]
-            two_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) == 2)]
-            more_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]
-            no_switch_idx = cost_no_global.xs(False, level='Heater replacement', drop_level=False).index
+                one_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) == 1)]
+                two_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) == 2)]
+                more_insulation = [c for c in cost_no_global.columns if (sum(idx[c]) > 2)]
+                no_switch_idx = cost_no_global.xs(False, level='Heater replacement', drop_level=False).index
 
-            cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000 # count_cap_effect = 400
-            cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000 # count_cap_effect = 270
-            cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000 # count_cap_effect = 320
-            cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included # count_cap_effect = 1306
-            cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included # count_cap_effect = 2954
+                cost_no_global[cost_no_global.loc[no_switch_idx, one_insulation] > 15000] = 15000 # count_cap_effect = 400
+                cost_no_global[cost_no_global.loc[no_switch_idx, two_insulation] > 25000] = 25000 # count_cap_effect = 270
+                cost_no_global[cost_no_global.loc[no_switch_idx, more_insulation] > 30000] = 30000 # count_cap_effect = 320
+                cost_no_global[cost_no_global.loc[:, one_insulation] > 25000 - cost_included.loc[:, one_insulation]] = 25000 - cost_included # count_cap_effect = 1306
+                cost_no_global[cost_no_global.loc[:, two_insulation] > 30000 - cost_included.loc[:, two_insulation]] = 30000 - cost_included # count_cap_effect = 2954
 
-            cost = cost_global + cost_no_global
-            #count_cap_effect = pd.DataFrame([cost_global > 50000 - cost_included][0], index=cost_global.index, columns=cost_global.columns).sum().sum()
+                cost = cost_global + cost_no_global
+                #count_cap_effect = pd.DataFrame([cost_global > 50000 - cost_included][0], index=cost_global.index, columns=cost_global.columns).sum().sum()
 
         if self.cost_max is not None:
             cost_max = reindex_mi(self.cost_max, cost.index)
@@ -234,6 +247,23 @@ def read_policies(config):
         return l
 
     def read_zil(data):
+        """
+        Creates a zero_interest_loan PublicPolicy instance.
+        "new" is a specific attribute of zero_interest_loan,
+        if it is true the zil will be implemented with gesture and not epc jumps requirements.
+        "ad_valorem" means the policy will be considered as a subvention in the DCM,
+        if it's False, the DCM will have another coefficient of preference associated to a dummy variable zil.
+
+
+        Parameters
+        ----------
+        data: Dict
+            it's the config dictionary.
+
+        Returns
+        -------
+        PublicPolicy instance with zero_interest_loan attributes
+        """
         data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
         if data['ad_volarem']:

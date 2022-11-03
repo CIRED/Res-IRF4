@@ -1184,6 +1184,11 @@ class AgentBuildings(ThermalBuildings):
     def define_policy_target(certificate, certificate_before, energy_saved_3uses):
         """Define target.
 
+        zero_interest_loan_old is the target in terms of EPC jump.
+        zero_interest_loan_new is the requirement to be eligible to a 'global renovation' program,
+        the renovation must reduce of 35% the conventional primary energy need
+        and the resulting building must not be of G or F epc level.
+
         Parameters
         ----------
         certificate
@@ -1192,6 +1197,8 @@ class AgentBuildings(ThermalBuildings):
 
         Returns
         -------
+        target_subsidies: pd.DataFrame
+            Each cell, a gesture and a segment, is a boolean which is True if it is targeted by the policy
 
         """
         target_subsidies = {}
