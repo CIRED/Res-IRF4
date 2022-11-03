@@ -25,9 +25,10 @@ import matplotlib.pyplot as plt
 import logging
 
 from project.utils import make_plot, format_ax, save_fig, format_legend, reindex_mi, timing
-import project.thermal as thermal
 from project.input.param import generic_input
 from project.input.resources import resources_data
+import project.thermal as thermal
+
 from itertools import product
 
 
@@ -89,7 +90,6 @@ class ThermalBuildings:
 
         self._efficiency = efficiency
         self._ratio_surface = ratio_surface
-        self._dh = 55706
         self.path = path
         self.path_calibration = os.path.join(path, 'calibration')
         if not os.path.isdir(self.path_calibration):
@@ -175,7 +175,7 @@ class ThermalBuildings:
         self.stock_yrs.update({self.year: self.stock})
 
         consumption_sd, _, certificate = self.consumption_standard(stock.index)
-        self.heat_consumption_sd = self.stock * self.surface * reindex_mi(consumption_sd, stock.index)
+        self.heat_consumption_sd = self.surface * reindex_mi(consumption_sd, stock.index)
         self.certificate = reindex_mi(certificate, stock.index)
 
     def simplified_stock(self, energy_level=False):
@@ -230,6 +230,7 @@ class ThermalBuildings:
         Parameters
         ----------
         indexes: MultiIndex, Index
+        level_heater: {'Heating system', 'Heating system final'}, default 'Heating system'
 
         Returns
         -------
@@ -256,13 +257,19 @@ class ThermalBuildings:
             efficiency = to_numeric(heating_system.replace(self._efficiency))
             # housing_type = Series(idx.get_level_values('Housing type'), index=idx)
 
-            consumption = thermal.heating_consumption(wall, floor, roof, windows, efficiency, self._ratio_surface,
-                                                      self._dh)
-            energy = heating_system.str.split('-').str[0].rename('Energy')
+            # consumption = thermal.heating_consumption(wall, floor, roof, windows, efficiency, self._ratio_surface)
+            consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface,
+                                                             efficiency)
+
+            # energy = heating_system.str.split('-').str[0].rename('Energy')
             # model_3uses_consumption
-            consumption_primary = thermal.final2primary(consumption, energy)
-            consumption_3uses = thermal.model_3uses_consumption(consumption_primary)
-            certificate = thermal.certificate(consumption_primary)
+            # consumption_primary = thermal.final2primary(consumption, energy)
+            # consumption_3uses = thermal.model_3uses_consumption(consumption_primary)
+            certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
+                                                                               self._ratio_surface,
+                                                                               efficiency, idx)
+
+            # mistake: certificate = thermal.certificate(consumption_primary)
 
             self.consumption_sd_building = concat((self.consumption_sd_building, consumption))
             self.consumption_sd_building.index = MultiIndex.from_tuples(
@@ -290,9 +297,9 @@ class ThermalBuildings:
         return consumption_sd, consumption_3uses, certificate
 
     def consumption_actual(self, prices, consumption=None):
-        """Space heating consumption based on standard space heating consumption and heating intensity.
+        """Space heating consumption based on standard space heating consumption and heating intensity (kWh/a).
 
-        Space heating consumption is in kWh/year.
+        Space heating consumption is in kWh/building.a
         Equation is based on Allibe (2012).
 
         Parameters
@@ -305,11 +312,11 @@ class ThermalBuildings:
         """
 
         if consumption is None:
-            consumption = self.heat_consumption_sd
+            consumption = self.heat_consumption_sd.copy()
         else:
             consumption = consumption.copy()
 
-        energy_bill = self.energy_bill(prices, consumption)
+        energy_bill = AgentBuildings.energy_bill(prices, consumption)
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
             heating_intensity = -0.191 * budget_share.apply(log) + 0.1105
@@ -336,7 +343,9 @@ class ThermalBuildings:
         -------
 
         """
-        self.heat_consumption = self.consumption_actual(prices)
+
+        self.heat_consumption = self.consumption_actual(prices) * self.stock
+
         heat_consumption_energy = self.heat_consumption.groupby(self.energy).sum()
         if self.coefficient_consumption is None:
 
@@ -419,7 +428,25 @@ class ThermalBuildings:
 
         self.taxes_expenditure = total_taxes
 
-    def energy_bill(self, prices, consumption, level_heater='Heating system'):
+    @staticmethod
+    def energy_bill(prices, consumption, level_heater='Heating system'):
+        """Calculate energy bill by dwelling for each stock segment (€/dwelling.a).
+
+        Parameters
+        ----------
+        prices: Series
+            Energy prices for year (€/kWh)
+        consumption: Series
+            Energy consumption by dwelling (kWh/dwelling.a)
+        level_heater
+            Heating system level to calculate the bill. Enable to calculate energy bill before or after change of
+            heating system.
+
+        Returns
+        -------
+        pd.Series
+            Energy bill by dwelling for each stock segment (€/dwelling)
+        """
 
         index = consumption.index
 
@@ -430,9 +457,11 @@ class ThermalBuildings:
         prices.index = index
 
         if isinstance(consumption, pd.Series):
-            return reindex_mi(consumption, index) * reindex_mi(self._surface, index) * prices
+            # * reindex_mi(self._surface, index)
+            return reindex_mi(consumption, index) * prices
         else:
-            return (reindex_mi(consumption, index).T * reindex_mi(self._surface, index) * prices).T
+            # * reindex_mi(self._surface, index)
+            return (reindex_mi(consumption, index).T * prices).T
 
 
 class AgentBuildings(ThermalBuildings):
@@ -957,8 +986,8 @@ class AgentBuildings(ThermalBuildings):
         energy_bill_sd = ((heat_consumption_sd * prices_re).T * reindex_mi(self._surface, index)).T
 
         consumption_before = self.consumption_standard(index, level_heater='Heating system')[0]
-        consumption_before = reindex_mi(consumption_before, index)
-        energy_bill_before = self.energy_bill(prices, consumption_before)
+        consumption_before = reindex_mi(consumption_before, index) * reindex_mi(self._surface, index)
+        energy_bill_before = AgentBuildings.energy_bill(prices, consumption_before)
 
         bill_saved = - energy_bill_sd.sub(energy_bill_before, axis=0)
         utility_bill_saving = (bill_saved.T * reindex_mi(self.pref_bill_heater, bill_saved.index)).T / 1000
@@ -1521,13 +1550,14 @@ class AgentBuildings(ThermalBuildings):
                 utility_intensive += utility_zil
 
             if self.constant_insulation_intensive is not None:
-                constant = reindex_mi(self.constant_insulation_intensive, utility_intensive.index)
-                utility_intensive += constant
+                # constant = reindex_mi(self.constant_insulation_intensive, utility_intensive.index)
+                utility_intensive += self.constant_insulation_intensive
 
             # removing floor and roof insulation for multi-family
-            cond1 = utility_intensive.index.get_level_values('Housing type') == 'Multi-family'
-            cond2 = (utility_intensive.columns.get_level_values('Floor') == True) | (utility_intensive.columns.get_level_values('Roof') == True)
-            utility_intensive.loc[cond1, cond2] = float('nan')
+            if False:
+                cond1 = utility_intensive.index.get_level_values('Housing type') == 'Multi-family'
+                cond2 = (utility_intensive.columns.get_level_values('Floor') == True) | (utility_intensive.columns.get_level_values('Roof') == True)
+                utility_intensive.loc[cond1, cond2] = float('nan')
 
             market_share = (exp(scale * utility_intensive).T / exp(scale * utility_intensive).sum(axis=1)).T
             return market_share, utility_intensive
@@ -1643,7 +1673,8 @@ class AgentBuildings(ThermalBuildings):
             details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
             return constant
 
-        def calibration_intensive_iteration(utility, stock, ms_insulation, retrofit_rate_ini, iteration=100):
+        def calibration_intensive_iteration(utility, stock, ms_insulation, retrofit_rate_ini, iteration=100,
+                                            all=True):
             """Calibrate alternative-specific constant to match observed market-share.
 
             Parameters
@@ -1653,77 +1684,107 @@ class AgentBuildings(ThermalBuildings):
                 Observed market-share.
             retrofit_rate_ini: Series
                 Observed renovation rate.
+
             Returns
             -------
             Series
             """
+
             if 'Performance' in retrofit_rate_ini.index.names:
                 stock = self.add_certificate(stock)
 
-            # single-family
-            stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
-            flow_retrofit = stock_single * reindex_mi(retrofit_rate_ini, stock_single.index)
+            if all:
+                flow_retrofit = stock * reindex_mi(retrofit_rate_ini, stock.index)
+                utility_ref = reindex_mi(utility, flow_retrofit.index).dropna()
+                constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
+                constant[constant > 0] = 0
+                market_share_ini, market_share_agg = None, None
+                for i in range(iteration):
+                    _utility = (utility_ref + constant).copy()
+                    constant.iloc[0] = 0
+                    market_share = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+                    agg = (market_share.T * flow_retrofit).T
+                    market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
+                    if i == 0:
+                        market_share_ini = market_share_agg.copy()
+                    constant = constant + log(ms_insulation / market_share_agg)
 
-            utility_ref = reindex_mi(utility, flow_retrofit.index).dropna()
+                    if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
+                        self.logger.debug('Constant intensive optim worked')
+                        break
 
-            constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
-            constant[constant > 0] = 0
-            market_share_ini, market_share_agg = None, None
-            for i in range(iteration):
-                _utility = (utility_ref + constant).copy()
                 constant.iloc[0] = 0
-                market_share = (exp(_utility).T / exp(_utility).sum(axis=1)).T
-                agg = (market_share.T * flow_retrofit).T
-                market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
-                if i == 0:
-                    market_share_ini = market_share_agg.copy()
-                constant = constant + log(ms_insulation / market_share_agg)
+                details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
+                                 keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
 
-                if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
-                    self.logger.debug('Constant intensive optim worked')
-                    break
+                return constant
 
-            constant.iloc[0] = 0
-            details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
-                                keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_single.csv'))
-            constant_insulation = constant.rename('Single-family')
+            else:
+                # single-family
+                stock_single = stock.xs('Single-family', level='Housing type', drop_level=False)
+                flow_retrofit = stock_single * reindex_mi(retrofit_rate_ini, stock_single.index)
 
-            # multi-family
-            ms_insulation = ms_insulation.xs(False, level='Floor', drop_level=False).xs(False, level='Roof', drop_level=False)
-            ms_insulation = ms_insulation / ms_insulation.sum()
+                utility_ref = reindex_mi(utility, flow_retrofit.index).dropna()
 
-            stock_multi = stock.xs('Multi-family', level='Housing type', drop_level=False)
-            flow_retrofit = stock_multi * reindex_mi(retrofit_rate_ini, stock_multi.index)
+                constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
+                constant[constant > 0] = 0
+                market_share_ini, market_share_agg = None, None
+                for i in range(iteration):
+                    _utility = (utility_ref + constant).copy()
+                    constant.iloc[0] = 0
+                    market_share = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+                    agg = (market_share.T * flow_retrofit).T
+                    market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
+                    if i == 0:
+                        market_share_ini = market_share_agg.copy()
+                    constant = constant + log(ms_insulation / market_share_agg)
 
-            utility_ref = reindex_mi(utility, flow_retrofit.index).dropna(how='all', axis=0).dropna(how='all', axis=1)
+                    if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
+                        self.logger.debug('Constant intensive optim worked')
+                        break
 
-            constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
-            constant[constant > 0] = 0
-            market_share_ini, market_share_agg = None, None
-            for i in range(iteration):
-                _utility = (utility_ref + constant).copy()
                 constant.iloc[0] = 0
-                market_share = (exp(_utility).T / exp(_utility).sum(axis=1)).T
-                agg = (market_share.T * flow_retrofit).T
-                market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
-                if i == 0:
-                    market_share_ini = market_share_agg.copy()
-                constant = constant + log(ms_insulation / market_share_agg)
+                details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
+                                    keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_single.csv'))
+                constant_insulation = constant.rename('Single-family')
 
-                if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
-                    self.logger.debug('Constant intensive optim worked')
-                    break
+                # multi-family
+                ms_insulation = ms_insulation.xs(False, level='Floor', drop_level=False).xs(False, level='Roof', drop_level=False)
+                ms_insulation = ms_insulation / ms_insulation.sum()
 
-            constant.iloc[0] = 0
-            details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
-                                keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_multi.csv'))
-            constant = constant.rename('Multi-family')
+                stock_multi = stock.xs('Multi-family', level='Housing type', drop_level=False)
+                flow_retrofit = stock_multi * reindex_mi(retrofit_rate_ini, stock_multi.index)
 
-            constant = concat((constant_insulation, constant), axis=1).T
-            constant.index.names = ['Housing type']
-            return constant
+                utility_ref = reindex_mi(utility, flow_retrofit.index).dropna(how='all', axis=0).dropna(how='all', axis=1)
+
+                constant = ms_insulation.reindex(utility_ref.columns, axis=0).copy()
+                constant[constant > 0] = 0
+                market_share_ini, market_share_agg = None, None
+                for i in range(iteration):
+                    _utility = (utility_ref + constant).copy()
+                    constant.iloc[0] = 0
+                    market_share = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+                    agg = (market_share.T * flow_retrofit).T
+                    market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
+                    if i == 0:
+                        market_share_ini = market_share_agg.copy()
+                    constant = constant + log(ms_insulation / market_share_agg)
+
+                    if (market_share_agg.round(decimals=2) == ms_insulation.round(decimals=2)).all():
+                        self.logger.debug('Constant intensive optim worked')
+                        break
+
+                constant.iloc[0] = 0
+                details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
+                                    keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_multi.csv'))
+                constant = constant.rename('Multi-family')
+
+                constant = concat((constant_insulation, constant), axis=1).T
+                constant.index.names = ['Housing type']
+                return constant
 
         def calibration_intensive(utility, stock, ms_insulation, retrofit_rate_ini, solver='iteration'):
             if solver == 'iteration':
@@ -1794,6 +1855,9 @@ class AgentBuildings(ThermalBuildings):
 
             constant = retrofit_rate_ini.copy()
             constant[retrofit_rate_ini > 0] = 0
+            a = stock.groupby(retrofit_rate_ini.index.names).mean()
+            b = utility.groupby(retrofit_rate_ini.index.names).mean()
+            pd.concat((retrofit_rate_ini, a, b), axis=1)
             if self._calib_scale:
                 x = append(constant.to_numpy(), 1)
                 root, infodict, ier, mess = fsolve(solve, x, args=(
@@ -1872,7 +1936,6 @@ class AgentBuildings(ThermalBuildings):
 
             return solve(1, flow_retrofit, bill_saved, subsidies_total, cost_insulation, -0.5 * delta_subsidies,
                          target_invest, utility_zil) + target_invest
-
 
         def supply_interaction(retrofit_rate, stock, investment_insulation):
             """NOT IMPLEMENTED YET.
@@ -1956,8 +2019,8 @@ class AgentBuildings(ThermalBuildings):
         cost_insulation = reindex_mi(cost_insulation, index)
 
         consumption_before = self.consumption_standard(index, level_heater='Heating system final')[0]
-        consumption_before = reindex_mi(consumption_before, index)
-        energy_bill_before = self.energy_bill(prices, consumption_before, level_heater='Heating system final')
+        consumption_before = reindex_mi(consumption_before, index) * reindex_mi(self._surface, index)
+        energy_bill_before = AgentBuildings.energy_bill(prices, consumption_before, level_heater='Heating system final')
 
         consumption_sd = self.prepare_consumption(self._choice_insulation, index=index,
                                                   level_heater='Heating system final')[0]
@@ -2081,6 +2144,14 @@ class AgentBuildings(ThermalBuildings):
             if utility_zil is not None:
                 bool_zil_ext.index = MultiIndex.from_tuples(bool_zil_ext.index).set_names(
                     bool_zil.index.names)
+
+        idx = bill_saved_insulation[bill_saved_insulation <= 0].index
+        bill_saved_insulation.drop(idx, inplace=True)
+        subsidies_insulation.drop(idx, inplace=True)
+        # More index in investment_insulation
+        investment_insulation.drop(idx, inplace=True)
+        if bool_zil_ext:
+            bool_zil_ext.drop(idx, inplace=True)
 
         retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
                                                   bool_zil=bool_zil_ext)
@@ -2483,6 +2554,7 @@ class AgentBuildings(ThermalBuildings):
         stock = self.simplified_stock()
 
         output = dict()
+        #  * self.stock *
         output['Consumption standard (TWh)'] = self.heat_consumption_sd.sum() / 10 ** 9
 
         consumption = self.heat_consumption_calib

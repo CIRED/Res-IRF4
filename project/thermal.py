@@ -106,6 +106,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     Parameters
     ----------
     u_wall: pd.Series
+        Index should include Housing type {'Single-family', 'Multi-family'}.
     u_floor: pd.Series
     u_roof: pd.Series
     u_windows: pd.Series
@@ -118,8 +119,9 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
     Returns
     -------
-
+    Conventional heating need (kWh/m2.a)
     """
+
     if unobserved == 'Minimal':
         th_bridging = 'Minimal'
         vent_types = 'VMC SF hydrogérable'
@@ -168,12 +170,17 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
 
     Parameters
     ----------
-    u_wall
-    u_floor
-    u_roof
-    u_windows
-    ratio_surface
-    efficiency
+    u_wall: pd.Series
+    u_floor: pd.Series
+    u_roof: pd.Series
+    u_windows: pd.Series
+    ratio_surface: pd.Series
+    efficiency: pd.Series
+    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
+    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
+    infiltration: {'Minimal', 'Low', 'Medium', 'High'}
+    air_rate: default None
+    unobserved: {'Minimal', 'High'}, default None
 
     Returns
     -------
@@ -212,13 +219,19 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
     Parameters
     ----------
-    u_wall
-    u_floor
-    u_roof
-    u_windows
-    ratio_surface
-    efficiency
-    index
+    u_wall: pd.Series
+    u_floor: pd.Series
+    u_roof: pd.Series
+    u_windows: pd.Series
+    ratio_surface: pd.Series
+    efficiency: pd.Series
+    index: pd.MultiIndex or pd.Index
+        Index should include Housing type and Energy.
+    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
+    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
+    infiltration: {'Minimal', 'Low', 'Medium', 'High'}
+    air_rate: default None
+    unobserved: {'Minimal', 'High'}, default None
 
     Returns
     -------
@@ -232,17 +245,22 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     dhw_final = conventional_dhw_final(index)
     ac_final = 0
     energy_final = heating_final + dhw_final + ac_final
-    energy_primary = final2primary(energy_final, index.get_level_values('Energy'))
+    if 'Energy' not in index.names:
+        energy_carrier = index.get_level_values('Heating system').str.split('-').str[0].rename('Energy')
+    else:
+        energy_carrier = index.get_level_values('Energy')
+
+    energy_primary = final2primary(energy_final, energy_carrier)
     performance = find_certificate(energy_primary)
     return performance, energy_primary
 
 
 def find_certificate(primary_consumption):
-    """Returns energy performance certificate based on space heating energy consumption.
+    """Returns energy performance certificate from A to G.
 
     Parameters
     ----------
-    df: float or pd.Series or pd.DataFrame
+    primary_consumption: float or pd.Series or pd.DataFrame
         Space heating energy consumption (kWh PE / m2.year)
     Returns
     -------
@@ -270,24 +288,25 @@ def find_certificate(primary_consumption):
                 return key
 
 
+def stat_model_heating_consumption(df, a=0.921323, b=0.634717):
+    """Statistical model based on ADEME DPE data.
 
-def model_heating_consumption(df, a=0.921323, b=0.634717):
-    """
     X = (Deper_mur + Deper_baie + Deper_plancher + Deper_plafond) / Efficiency * DDH
     Conso = X ** 1.746973 * exp(1.536192)
     """
     return (df ** a) * np.exp(b)
 
 
-def model_3uses_consumption(df, a=0.846102, b=1.029880):
-    """
+def stat_model_3uses_consumption(df, a=0.846102, b=1.029880):
+    """Statistical model based on ADEME DPE data.
+
     X = Primary space hating energy consumption (kWh EP / m2)
     Conso = X ** 0.846102 * exp(1.029880)
     """
     return (df ** a) * np.exp(b)
 
 
-def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd):
+def stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd):
     """Calculate space heating consumption in kWh/m2.year based on insulation performance and heating system efficiency.
 
     Function simulates the 3CL-method, and use parameters to estimate unobserved variables.
@@ -313,16 +332,16 @@ def heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_su
     if isinstance(partial_losses, (pd.Series, pd.DataFrame)):
         if partial_losses.index.equals(efficiency.index):
             indicator_losses = partial_losses / efficiency * hdd / 1000
-            consumption = model_heating_consumption(indicator_losses).rename('Consumption')
+            consumption = stat_model_heating_consumption(indicator_losses).rename('Consumption')
 
         else:
             indicator_losses = (partial_losses * hdd / 1000).to_frame().dot(
                 (1 / efficiency).to_frame().T)
-            consumption = model_heating_consumption(indicator_losses)
+            consumption = stat_model_heating_consumption(indicator_losses)
 
     else:
         indicator_losses = partial_losses / efficiency * hdd / 1000
-        consumption = model_heating_consumption(indicator_losses).rename('Consumption')
+        consumption = stat_model_heating_consumption(indicator_losses).rename('Consumption')
 
     return consumption
 
@@ -374,7 +393,7 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, 
     -------
     """
     # data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
-    heat_consumption = heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd)
+    heat_consumption = stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd)
     return final2primary(heat_consumption, energy, conversion=conversion)
 
 

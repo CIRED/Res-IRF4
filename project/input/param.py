@@ -62,7 +62,7 @@ generic_input['vta_energy_prices'] = pd.Series(
     columns=['Wall', 'Floor', 'Roof', 'Windows'])"""
 
 generic_input['ratio_surface'] = pd.DataFrame(
-    [[1.2, 0.96, 0.98, 0.15], [0.90, 0, 0, 0.15]],
+    [[1.42, 0.75, 0.77, 0.17], [0.78, 0.28, 0.29, 0.19]],
     index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
     columns=['Wall', 'Floor', 'Roof', 'Windows'])
 

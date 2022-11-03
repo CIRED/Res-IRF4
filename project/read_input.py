@@ -118,31 +118,28 @@ class PublicPolicy:
 
 
 def read_stock(config):
+    """Read initial building stock.
 
-    stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze())
+    Parameters
+    ----------
+    config: dict
 
-    # stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze('columns')
+    Returns
+    -------
+    pd.Series
+        MultiIndex Series with building stock attributes as levels.
+    """
+
+    stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8]).squeeze())
+
+    # stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()
     year = config['start']
 
     stock = pd.concat([stock], keys=[True], names=['Existing'])
-
     idx_names = ['Existing', 'Occupancy status', 'Income owner', 'Income tenant', 'Housing type',
                  'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
-    stock = stock.reset_index(level=['Heating energy', 'Heating system'])
-    stock['Heating system'].replace({3: 'Heat pump'}, inplace=True)
-    stock['Heating system'].replace({0.95: 'Performance boiler'}, inplace=True)
-    stock['Heating system'].replace({0.85: 'Performance boiler'}, inplace=True)
-    stock['Heating system'].replace({0.75: 'Standard boiler'}, inplace=True)
-
-    stock['Heating system'] = stock['Heating energy'] + '-' + stock['Heating system']
-    stock = stock.set_index(['Heating system'], append=True).loc[:, 'Stock buildings']
-
-    """levels_category = ['Housing type', 'Occupancy status', 'Income tenant', 'Income owner', 'Heating system']
-    stock = stock.reset_index(levels_category).astype({i: 'category' for i in levels_category}).set_index(
-        levels_category, append=True).squeeze()"""
 
     stock = stock.reorder_levels(idx_names)
-
     return stock, year
 
 
@@ -546,7 +543,7 @@ def parse_inputs(inputs, taxes, config, stock):
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
     parsed_inputs['energy_prices'] = energy_prices
 
-    if config['remove_market_failures']:
+    if config.get('remove_market_failures'):
         parsed_inputs['remove_market_failures'] = config['remove_market_failures']
     else:
         parsed_inputs['remove_market_failures'] = None
