@@ -55,7 +55,6 @@ resources_data['investment_per_renovating_houshold_decision_maker'] = {k: DataFr
 resources_data['investment_per_renovating_houshold_income_owner'] = {k:  DataFrame([9100], index=['TREMI 2019'], columns=[2019]).T for k in
                                   ['D{}'.format(i) for i in range(1, 11)]}
 
-# CategoricalIndex(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], ordered=True)
 resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Occupation status': ['Owner-occupied', 'Privately rented', 'Social-housing'],
@@ -72,6 +71,8 @@ resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6',
                                               'Wood fuel-Performance boiler'],
                            'Count': [1, 2, 3, 4, 5]
                            }
+
+resources_data['quintiles'] = ['C1', 'C2', 'C3', 'C4', 'C5']
 
 colors = {
     "Owner-occupied": "lightcoral",
@@ -92,6 +93,11 @@ colors = {
     "C": "darkgreen",
     "B": "forestgreen",
     "A": "limegreen",
+    "C1": "black",
+    "C2": "darkred",
+    "C3": "firebrick",
+    "C4": "orangered",
+    "C5": "lightcoral",
     "D1": "black",
     "D2": "maroon",
     "D3": "darkred",

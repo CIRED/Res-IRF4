@@ -16,7 +16,6 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import os
 
@@ -38,6 +37,10 @@ def plot_scenario(output, stock, buildings):
     ax.set_xlabel('Cumulated buildings stock (Million)')
     format_legend(ax, labels=t.columns)
     save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))"""
+
+    if buildings.quintiles:
+        resources_data['index']['Income tenant'] = resources_data['quintiles']
+        resources_data['index']['Income owner'] = resources_data['quintiles']
 
     # graph
     df = pd.DataFrame(
@@ -182,7 +185,7 @@ def plot_scenario(output, stock, buildings):
                    save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False)"""
 
 
-def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
+def grouped_output(result, folder, config_runs=None, config_sensitivity=None, quintiles=None):
     """Grouped scenarios output.
 
     Renovation expenditure discounted (Billion euro)
@@ -208,14 +211,20 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
 
     Parameters
     ----------
-    result
-    folder
-    config_runs: dict
+    result: dict
+    folder: str
+    config_runs: dict or None, default None
+    config_sensitivity: dict or None, default None
+    quintiles: bool, default None
+
 
     Returns
     -------
 
     """
+    if quintiles:
+        resources_data['index']['Income tenant'] = resources_data['quintiles']
+        resources_data['index']['Income owner'] = resources_data['quintiles']
 
     folder_img = os.path.join(folder, 'img')
     os.mkdir(folder_img)
@@ -279,9 +288,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None):
             variables}
         return {k: i for k, i in temp.items() if not i.empty}
 
-    # 'Heating intensity {} (%)': [('Income tenant', lambda y, _: '{:,.0%}'.format(y))],
-    # 'Investment per insulation action {} (euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y), 10, None, resources_data['investment_per_renovating_houshold_income_owner'] ),
-    #                                                        ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2, None, resources_data['investment_per_renovating_houshold_decision_maker'])],
 
     variables_output = {
         'Consumption {} (TWh)': [

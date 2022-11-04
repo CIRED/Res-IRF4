@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2021,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -93,6 +93,7 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
+    "quintiles": true,
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null,

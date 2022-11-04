@@ -495,7 +495,7 @@ class AgentBuildings(ThermalBuildings):
                  performance_insulation, demolition_rate=0.0, year=2018,
                  endogenous=True, number_exogenous=300000, utility_extensive='market_share',
                  logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True, detailed_mode=True,
-                 remove_market_failures=None
+                 remove_market_failures=None, quintiles=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=year,
                          debug_mode=debug_mode)
@@ -509,6 +509,7 @@ class AgentBuildings(ThermalBuildings):
         self.lifetime_insulation = 30
         self._epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
 
+        self.quintiles = quintiles
         self.detailed_mode = detailed_mode
 
         if logger is None:

@@ -25,7 +25,8 @@ generic_input['factor_multi_family'] = 0.87
 generic_input['available_income'] = 1421 * 10**9
 generic_input['price_index'] = 1
 generic_input['income'] = pd.Series([10030, 15910, 19730, 23680, 28150, 33320, 39260, 46450, 57230, 102880],
-                                    index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10']))
+                                    index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
+                                                   name='Income'))
 generic_input['stock_ini'] = 29037000
 
 surface_elasticity = pd.Series({('Single-family', 'Owner-occupied'): 0.2,

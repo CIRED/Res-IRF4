@@ -36,8 +36,86 @@ def config2inputs(config=None):
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
     inputs = read_inputs(config)
+    if config['quintiles']:
+        stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
+                                                                                policies_insulation, inputs)
 
     return inputs, stock, year, policies_heater, policies_insulation, taxes
+
+
+def deciles2quintiles(stock, policies_heater, policies_insulation, inputs):
+    """Change all inputs from deciles to quintiles.
+
+    Parameters
+    ----------
+    stock
+    policies_heater
+    policies_insulation
+    inputs
+
+    Returns
+    -------
+
+    """
+
+    replace = {'D1': 'C1', 'D2': 'C1',
+               'D3': 'C2', 'D4': 'C2',
+               'D5': 'C3', 'D6': 'C3',
+               'D7': 'C4', 'D8': 'C4',
+               'D9': 'C5', 'D10': 'C5'}
+
+    def apply_to_pandas(data, func='mean'):
+        level_income = []
+        for key in ['Income owner', 'Income tenant', 'Income']:
+            if key in data.index.names:
+                level_income += [key]
+
+        for level in level_income:
+            names = None
+            if isinstance(data.index, pd.MultiIndex):
+                names = data.index.names
+
+            data = data.rename(index=replace, level=level)
+
+            if func == 'mean':
+                data = data.groupby(data.index).mean()
+            elif func == 'sum':
+                data = data.groupby(data.index).sum()
+
+            if names:
+                data.index = pd.MultiIndex.from_tuples(data.index)
+                data.index.names = names
+
+        return data
+
+    for key, item in inputs.items():
+        if isinstance(item, (pd.Series, pd.DataFrame)):
+            inputs[key] = apply_to_pandas(item)
+        elif isinstance(item, dict):
+            for k, i in item.items():
+                if isinstance(i, (pd.Series, pd.DataFrame)):
+                    inputs[key][k] = apply_to_pandas(i)
+                elif isinstance(i, dict):
+                    for kk, ii in i.items():
+                        if isinstance(ii, (pd.Series, pd.DataFrame)):
+                            inputs[key][k][kk] = apply_to_pandas(ii)
+                        elif isinstance(ii, dict):
+                            for kkk, iii in ii.items():
+                                if isinstance(iii, (pd.Series, pd.DataFrame)):
+                                    inputs[key][k][kk][kkk] = apply_to_pandas(iii)
+
+    stock = apply_to_pandas(stock, func='sum')
+
+    for policy in policies_insulation + policies_heater:
+        attributes = [a for a in dir(policy) if not a.startswith('__') and getattr(policy, a) is not None]
+        for att in attributes:
+            item = getattr(policy, att)
+            if isinstance(item, (pd.Series, pd.DataFrame)):
+                setattr(policy, att, apply_to_pandas(item))
+            if isinstance(item, dict):
+                print(item)
+
+    return stock, policies_heater, policies_insulation, inputs
 
 
 def select_post_inputs(parsed_inputs):
@@ -83,7 +161,7 @@ def get_inputs(path):
     return output
 
 
-def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, path, config=None, logger=None):
+def initialize(inputs, stock, year, taxes, path, config=None, logger=None):
     """Create main Python objects read by model.
 
     Parameters
@@ -91,8 +169,6 @@ def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes,
     inputs
     stock
     year
-    policies_heater
-    policies_insulation
     taxes
     config
     path
@@ -121,11 +197,12 @@ def initialize(inputs, stock, year, policies_heater, policies_insulation, taxes,
                                parsed_inputs['performance_insulation'],
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['endogenous'], logger=logger,
-                               remove_market_failures=parsed_inputs['remove_market_failures'])
+                               remove_market_failures=config.get('remove_market_failures'),
+                               quintiles=config.get('quintiles'))
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[
-               'renovation_rate_ini'], policies_heater, policies_insulation, parsed_inputs['flow_built']
+               'renovation_rate_ini'], parsed_inputs['flow_built']
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
@@ -207,8 +284,8 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(
-            inputs, stock, year, policies_heater, policies_insulation, taxes, path, config, logger)
+        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
+            inputs, stock, year, taxes, path, config, logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))

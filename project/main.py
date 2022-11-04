@@ -217,7 +217,8 @@ def run(path=None):
         stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
-        grouped_output(result, folder, config_policies, config_sensitivity)
+        grouped_output(result, folder, config_policies, config_sensitivity,
+                       quintiles=configuration.get('Reference').get('quintiles'))
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
