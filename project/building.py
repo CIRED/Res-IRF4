@@ -1252,8 +1252,7 @@ class AgentBuildings(ThermalBuildings):
 
         tax_insulation = cost_insulation * tax
         cost_insulation += tax_insulation
-        # self.out_worst = ((~certificate.isin(['G', 'F'])).astype(int).T * certificate_before.isin(['G', 'F']).astype(int)).T.astype(bool)
-        # self.in_best = (certificate.isin(['A', 'B']).astype(int).T * (~certificate_before.isin(['A', 'B'])).astype(int)).T.astype(bool)
+
         self.out_worst = (~certificate.isin(['G', 'F'])).T.multiply(certificate_before.isin(['G', 'F'])).T
         self.out_worst = reindex_mi(self.out_worst, index).fillna(False).astype('float')
         self.in_best = (certificate.isin(['A', 'B'])).T.multiply(~certificate_before.isin(['A', 'B'])).T
@@ -1272,9 +1271,9 @@ class AgentBuildings(ThermalBuildings):
         non_cumulative_condition = low_decile_condition.where(low_decile_condition > non_cumulative_condition,
                                                               non_cumulative_condition)
 
-        non_cumulative_condition = {'mpr': non_cumulative_condition}
+        non_cumulative_condition = {'mpr_serenite': non_cumulative_condition}
 
-        subsidies_comparison = {}
+        # subsidies_comparison = {}
         for policy in policies_insulation:
             if policy.name not in self.policies:
                 self.policies += [policy.name]
@@ -1289,7 +1288,7 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     subsidies_details[policy.name] = temp.copy()
 
-                subsidies_comparison[policy.name] = subsidies_details[policy.name]
+                # subsidies_comparison[policy.name] = subsidies_details[policy.name]
 
             elif policy.policy == 'bonus_best':
                 temp = (reindex_mi(policy.value, self.in_best.index) * self.in_best.T).T
@@ -1334,20 +1333,21 @@ class AgentBuildings(ThermalBuildings):
                 self.zil_loaned = cost.copy()
 
         subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
-        if subsidies_non_cumulative:
+        if subsidies_non_cumulative is not []:
             for policy in subsidies_non_cumulative:
                 sub = (reindex_mi(policy.value, non_cumulative_condition[policy.name].index) * non_cumulative_condition[
                     policy.name].T).T
                 sub = sub.astype(float)
-                if policy.name in subsidies_comparison.keys():
-                    comp = reindex_mi(subsidies_comparison[policy.name], sub.index)
-                    temp = comp.where(comp > sub, sub)
-                    update = - subsidies_comparison[policy.name] + temp
-                else:
-                    update = sub
-                #update = - subsidies_comparison[policy.name] + temp
-                subsidies_details[policy.name] += update
-                subsidies_total += update
+                for name in policy.non_cumulative:
+                    # TODO: could be a bug here when policy.non_cumulative are all there and when non cumulative alone
+                    if name in subsidies_details.keys():
+                        subsidies_total -= subsidies_details[name]
+                        comp = reindex_mi(subsidies_details[name], sub.index)
+                        temp = comp.where(comp > sub, 0)
+                        subsidies_details[name] = temp.copy()
+                        temp = sub.where(sub > comp, 0)
+                        subsidies_details[policy.name] = temp.copy()
+                        subsidies_total += subsidies_details[name] + subsidies_details[policy.name]
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_uncaped = subsidies_total.copy()
@@ -1365,9 +1365,18 @@ class AgentBuildings(ThermalBuildings):
             cap = (reindex_mi(cost_insulation, index).T * subsidies_cap).T
             over_cap = subsidies_uncaped > cap
             subsidies_details['over_cap'] = (subsidies_uncaped - cap)[over_cap].fillna(0)
-            if 'mpr' in subsidies_details.keys():
-                subsidies_details['mpr'] -= subsidies_details['over_cap']
+            remaining = subsidies_details['over_cap'].copy()
+            if 'mpr_serenite' in subsidies_details.keys():
+                temp = subsidies_details['over_cap'].where(
+                    subsidies_details['over_cap'] <= subsidies_details['mpr_serenite'],
+                    subsidies_details['mpr_serenite'])
+                subsidies_details['mpr_serenite'] -= temp
+                remaining = subsidies_details['over_cap'] - temp
+                assert (subsidies_details['mpr_serenite'].values >= 0).all(), 'MPR Serenite got negative values'
+            if 'mpr' in subsidies_details.keys() and not (remaining > 0).any().any():
+                subsidies_details['mpr'] -= remaining
                 assert (subsidies_details['mpr'].values >= 0).all(), 'MPR got negative values'
+
             subsidies_total -= subsidies_details['over_cap']
 
         return cost_insulation, tax_insulation, tax, subsidies_details, subsidies_total, certificate_jump
@@ -1457,6 +1466,14 @@ class AgentBuildings(ThermalBuildings):
 
         self.retrofit_with_heater = replaced_by.xs(True, level='Heater replacement').sum().sum()
 
+        key = 'zero_interest_loan'
+        if key in self.subsidies_details_insulation.keys():
+            mask = self.subsidies_details_insulation[key].copy()
+            mask[mask > 0] = 1
+            self.zil_count = (replaced_by.fillna(0) * mask).sum().sum()
+            total_loaned = (replaced_by.fillna(0) * self.zil_loaned).sum().sum()
+            self.zil_loaned_avg = total_loaned / self.zil_count
+
     def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
 
@@ -1494,21 +1511,21 @@ class AgentBuildings(ThermalBuildings):
         DataFrame
             Multiindex columns. Levels are Wall, Floor, Roof and Windows and values are boolean.
         """
-        subsidy = DataFrame(0, index=subsidies_insulation.index, columns=self._choice_insulation)
         idx = IndexSlice
         subsidies = {}
         for i in self.surface_insulation.index:
+            subsidy = DataFrame(0, index=subsidies_insulation.index, columns=self._choice_insulation)
             subsidy.loc[:, idx[True, :, :, :]] = subsidy.loc[:, idx[True, :, :, :]].add(
-                subsidies_insulation['Wall'], axis=0) * self.surface_insulation.loc[i, 'Wall']
+                subsidies_insulation['Wall'] * self.surface_insulation.loc[i, 'Wall'], axis=0)
             subsidy.loc[:, idx[:, True, :, :]] = subsidy.loc[:, idx[:, True, :, :]].add(
-                subsidies_insulation['Floor'], axis=0) * self.surface_insulation.loc[i, 'Floor']
+                subsidies_insulation['Floor'] * self.surface_insulation.loc[i, 'Floor'], axis=0)
             subsidy.loc[:, idx[:, :, True, :]] = subsidy.loc[:, idx[:, :, True, :]].add(
-                subsidies_insulation['Roof'], axis=0) * self.surface_insulation.loc[i, 'Roof']
+                subsidies_insulation['Roof'] * self.surface_insulation.loc[i, 'Roof'], axis=0)
             subsidy.loc[:, idx[:, :, :, True]] = subsidy.loc[:, idx[:, :, :, True]].add(
-                subsidies_insulation['Windows'], axis=0) * self.surface_insulation.loc[i, 'Windows']
+                subsidies_insulation['Windows'] * self.surface_insulation.loc[i, 'Windows'], axis=0)
             subsidies[i] = subsidy.copy()
         subsidies = concat(list(subsidies.values()), axis=0, keys=self.surface_insulation.index,
-                              names=self.surface_insulation.index.names)
+                           names=self.surface_insulation.index.names)
         return subsidies
 
     def endogenous_retrofit(self, index, prices, subsidies_total, cost_insulation, ms_insulation=None,
@@ -1611,11 +1628,27 @@ class AgentBuildings(ThermalBuildings):
             return retrofit_rate, utility
 
         def impact_subsidies(scale, utility, stock, delta_subsidies, pref_subsidies, indicator='freeriders'):
+            """Calculate freeriders due to implementation of subsidy.
+
+            Parameters
+            ----------
+            scale: int
+            utility: Series
+            stock: Series
+            delta_subsidies: Series
+            pref_subsidies: Series
+            indicator: {'freeriders', 'elasticity'}
+
+            Returns
+            -------
+            float
+            """
+
             retrofit = retrofit_func(utility * scale)
             flow = (retrofit * stock).sum()
             retrofit = flow / stock.sum()
 
-            utility_plus = (utility + pref_subsidies * delta_subsidies) * scale
+            utility_plus = (utility + pref_subsidies * delta_subsidies).dropna() * scale
             retrofit_plus = retrofit_func(utility_plus)
             flow_plus = (retrofit_plus * stock).sum()
             retrofit_plus = flow_plus / stock.sum()
@@ -2044,7 +2077,7 @@ class AgentBuildings(ThermalBuildings):
         if self.constant_insulation_intensive is None:
             self.logger.info('Calibration intensive')
             self.constant_insulation_intensive = calibration_intensive(utility_intensive, stock, ms_insulation,
-                                                                      renovation_rate_ini, solver='iteration')
+                                                                       renovation_rate_ini, solver='iteration')
             market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_insulation,
                                                               utility_zil=utility_zil)
 
@@ -2433,14 +2466,6 @@ class AgentBuildings(ThermalBuildings):
 
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
-        key = 'zero_interest_loan'
-        if key in self.subsidies_details_insulation.keys():
-            mask = self.subsidies_details_insulation[key].copy()
-            mask[mask > 0] = 1
-            self.zil_count = (replaced_by.fillna(0) * mask).sum().sum()
-            total_loaned = (replaced_by.fillna(0) * self.zil_loaned).sum().sum()
-            self.zil_loaned_avg = total_loaned / self.zil_count
-
         only_heater = (stock - flow.reindex(stock.index, fill_value=0)).xs(True, level='Heater replacement')
         certificate_jump = self.certificate_jump_heater.stack()
         rslt = {}
@@ -2562,8 +2587,7 @@ class AgentBuildings(ThermalBuildings):
         stock = self.simplified_stock()
 
         output = dict()
-        #  * self.stock *
-        output['Consumption standard (TWh)'] = self.heat_consumption_sd.sum() / 10 ** 9
+        output['Consumption standard (TWh)'] = (self.heat_consumption_sd * self.stock).sum() / 10 ** 9
 
         consumption = self.heat_consumption_calib
         output['Consumption (TWh)'] = consumption.sum() / 10 ** 9

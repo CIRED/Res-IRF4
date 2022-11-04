@@ -40,7 +40,7 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None, by='index'):
+                 new=None, by='index', non_cumulative=None):
         self.name = name
         self.start = start
         self.end = end
@@ -53,6 +53,7 @@ class PublicPolicy:
         self.cost_min = cost_min
         self.new = new
         self.by = by
+        self.non_cumulative = non_cumulative
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
@@ -177,20 +178,6 @@ def read_policies(config):
                 l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
                                       gest='insulation'))
 
-        if data['mpr_serenite']:
-            if isinstance(data['mpr_serenite'], dict):
-
-                mpr_serenite = get_pandas(data['mpr_serenite']['value'],
-                                          lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-                l.append(PublicPolicy('mpr', data['mpr_serenite']['start'], data['mpr_serenite']['end'], mpr_serenite,
-                                      'subsidy_non_cumulative', gest='insulation'))
-            else:
-                mpr_serenite = get_pandas(data['mpr_serenite'],
-                                          lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-                l.append(PublicPolicy('mpr', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
-                                      gest='insulation'))
-
         if data['bonus']:
             if isinstance(data['bonus'], dict):
                 bonus_best = get_pandas(data['bonus']['value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
@@ -212,6 +199,29 @@ def read_policies(config):
         l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
 
+        return l
+
+    def read_mpr_serenite(data):
+        """Create MPR Serenite PublicPolicy instance.
+
+        MaPrimeRénov' Sérénité (formerly Habiter Mieux Sérénité) for major energy renovation work in your home.
+        To do so, your work must result in an energy gain of at least 35%.
+        The amount of the bonus varies according to the amount of your resources.
+
+        Parameters
+        ----------
+        data
+
+        Returns
+        -------
+        list
+        """
+        l = list()
+        mpr_serenite = get_pandas(data['insulation'],
+                                  lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+        l.append(PublicPolicy('mpr_serenite', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
+                              gest='insulation', non_cumulative=['mpr', 'cite']))
         return l
 
     def read_cee(data):
@@ -237,6 +247,21 @@ def read_policies(config):
         return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax')]
 
     def read_cite(data):
+        """Creates the income tax credit PublicPolicy instance.
+
+        TODO: Cap set to 16,000€. (but seems to be 4,000€) ?
+        TODO: Windows should be exempted.
+
+        Oil fuel-Performant Boiler exempted.
+
+        Parameters
+        ----------
+        data
+
+        Returns
+        -------
+
+        """
         l = list()
         heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
@@ -294,7 +319,7 @@ def read_policies(config):
         return [PublicPolicy('oil_fuel_elimination', data['start'], data['end'], data['value'],
                              'heater_regulation', gest='heater')]
 
-    read = {'mpr': read_mpr, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
+    read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
             'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination}
 
@@ -635,6 +660,7 @@ def dict2data_inputs(inputs):
     -------
     DataFrame
     """
+
     data = DataFrame(columns=['variables', 'index', 'value'])
     metadata = DataFrame(columns=['variables', 'type', 'name', 'index', 'columns'])
     for key, item in inputs.items():

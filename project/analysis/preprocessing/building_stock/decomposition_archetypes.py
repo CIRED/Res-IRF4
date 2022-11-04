@@ -2,6 +2,9 @@ import pandas as pd
 import os
 
 # same than notebook
+KEY = 'medium'
+directory = 'ademe_dpe_buildingmodel_{}'.format(KEY)
+file = 'archetypes_{}'.format(KEY)
 
 for number in [1, 3, 5]:
     print(number)
@@ -9,7 +12,7 @@ for number in [1, 3, 5]:
     stock_buildings = stock_buildings.rename(columns={'Heating energy': 'Energy', 'Energy performance': 'Performance'}).set_index(['Housing type', 'Performance', 'Energy', 'Occupancy status', 'Income owner', 'Income tenant'])
     print(stock_buildings.sum())
 
-    archetypes = pd.read_csv(os.path.join('archetypes', 'ademe_dpe_buildingmodel', 'archetypes_{}.csv'.format(number)))
+    archetypes = pd.read_csv(os.path.join('archetypes', directory, '{}_{}.csv'.format(file, number)))
     archetypes = archetypes.rename(columns={'DPE': 'Performance'}).set_index(['Housing type', 'Performance', 'Energy'])
     archetypes = archetypes.drop(['Efficiency', 'clusters'], axis=1)
 
@@ -23,10 +26,15 @@ for number in [1, 3, 5]:
 
     missing = {}
     for i in idx_missing:
-        if i[1] == 'A':
-            missing.update({i: [archetypes['Wall'].min(), archetypes['Floor'].min(), archetypes['Roof'].min(), archetypes['Windows'].min(), '{}-Standard boiler'.format(i[2]), 1]})
-        if i[1] == 'G':
-            missing.update({i: [archetypes['Wall'].max(), archetypes['Floor'].max(), archetypes['Roof'].max(), archetypes['Windows'].max(), '{}-Standard boiler'.format(i[2]), 1]})
+        if i[1] == 'A' and i[2] != 'Electricity':
+            missing.update({i: [archetypes['Wall'].min(), archetypes['Floor'].min(), archetypes['Roof'].min(),
+                                archetypes['Windows'].min(), '{}-Performance boiler'.format(i[2]), 1]})
+        if i[1] == 'B' and i[2] != 'Electricity':
+            missing.update({i: [archetypes['Wall'].min(), archetypes['Floor'].min(), archetypes['Roof'].min(),
+                                archetypes['Windows'].min(), '{}-Performance boiler'.format(i[2]), 1]})
+        if i[1] == 'G' and i[2] != 'Electricity':
+            missing.update({i: [archetypes['Wall'].max(), archetypes['Floor'].max(), archetypes['Roof'].max(),
+                                archetypes['Windows'].max(), '{}-Standard boiler'.format(i[2]), 1]})
     missing = pd.DataFrame(missing).T.set_axis(['Wall', 'Floor', 'Roof', 'Windows', 'Heating system', 'Weight'], axis=1)
     missing = missing[archetypes.columns]
 
@@ -60,4 +68,4 @@ for number in [1, 3, 5]:
     print(count)
     # print(new_stock[new_stock.index.duplicated()])
 
-    new_stock.to_csv('output/buildingstock_sdes2018_{}.csv'.format(number))
+    new_stock.to_csv('output/buildingstock_sdes2018_{}_{}.csv'.format(KEY, number))

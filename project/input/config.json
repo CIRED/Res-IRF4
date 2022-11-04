@@ -39,8 +39,12 @@
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
-        "mpr_serenite": "project/input/policies/mpr_serenite.csv",
         "bonus": "project/input/policies/mpr_bonus.csv"
+      },
+      "mpr_serenite": {
+        "start": 2019,
+        "end": 2051,
+        "insulation": "project/input/policies/mpr_serenite.csv"
       },
       "cee": {
         "start": 2019,

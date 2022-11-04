@@ -72,6 +72,7 @@ def get_inputs(path):
     -------
     ThermalBuildings
     """
+
     config = get_config()
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(

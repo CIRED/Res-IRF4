@@ -319,7 +319,7 @@ def stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, rat
     u_windows: float or pd.Series
     hdd: float or pd.Series
     efficiency: float or pd.Series
-    ratio_surface: pd.Series
+    ratio_surface: pd.DataFrame
 
     Returns
     -------
