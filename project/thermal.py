@@ -61,8 +61,10 @@ TEMP_INT = 19 #°C
 
 # Solar heat load
 FACTOR_SHADING = 0.6
-FACTOR_FRACTION = 0.3
+FACTOR_FRAME = 0.3
 FACTOR_NON_PERPENDICULAR = 0.9
+ORIENTATION_FACTOR = {'South': 1.2, 'West': 0.75, 'Est': 0.75, 'North': 0.32}
+ORIENTATION_FACTOR['Mean'] = (ORIENTATION_FACTOR['South'] + ORIENTATION_FACTOR['West'] + ORIENTATION_FACTOR['Est'] + ORIENTATION_FACTOR['North']) / 4
 
 # Internal heat sources
 INTERNAL_HEAT_SOURCES = 4.17 # W/m2
@@ -75,11 +77,13 @@ TAU_0 = 30
 FACTOR_TABULA_3CL = 0.9
 
 # Climatic data
-TEMP_EXT = 7.1 #°C
-DAYS_HEATING_SEASON = 209
-HDD_EQ = (TEMP_INT - TEMP_EXT) * 24 * DAYS_HEATING_SEASON
-SOLAR_ENERGY_TRANSMITTANCE = 0.62
-SOLAR_RADIATION = 306.4 # kWh/m2.an
+TEMP_BASE = 12 # °C
+# HDD_EQ = (TEMP_INT - TEMP_EXT_3CL) * 24 * DAYS_HEATING_SEASON
+SOLAR_ENERGY_TRANSMITTANCE = 0.62 # data to check
+
+TEMP_EXT_3CL = 7.1 # °C
+DAYS_HEATING_SEASON_3CL = 209
+SOLAR_RADIATION_3CL = 306.4 # kWh/m2.an
 
 DHW_NEED = pd.Series([15.3, 19.8], index=pd.Index(['Single-family',	'Multi-family'], name='Housing type')) # kWh/m2.a
 DHW_EFFICIENCY = {'Electricity-Performance boiler': 0.7,
@@ -101,7 +105,7 @@ HOURS_LIGHT = 2123 # h
 
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None):
+                              air_rate=None, unobserved=None, climate=None):
     """Monthly stead-state space heating need.
 
     Parameters
@@ -122,6 +126,16 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     -------
     Conventional heating need (kWh/m2.a)
     """
+
+    if climate is not None:
+        temp_ext = climate['TEMP_EXT']
+        days_heating_season = climate['DAYS_HEATING_SEASON']
+        solar_radiation = climate['SOLAR_RADIATION']
+
+    else:
+        temp_ext = TEMP_EXT_3CL
+        days_heating_season = DAYS_HEATING_SEASON_3CL
+        solar_radiation = SOLAR_RADIATION_3CL
 
     if unobserved == 'Minimal':
         th_bridging = 'Minimal'
@@ -144,13 +158,13 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
     coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
 
-    coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - TEMP_EXT) * DAYS_HEATING_SEASON
+    coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - temp_ext) * days_heating_season
 
     heat_transfer = (coefficient_ventilation_transfer + coefficient_transmission_transfer) * coefficient_climatic
 
-    solar_load = FACTOR_SHADING * (1 - FACTOR_FRACTION) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * SOLAR_RADIATION * surface_components.loc[:, 'Windows']
+    solar_load = FACTOR_SHADING * (1 - FACTOR_FRAME) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * solar_radiation * surface_components.loc[:, 'Windows']
 
-    internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * DAYS_HEATING_SEASON
+    internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * days_heating_season
 
     time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
     a_h = A_0 + time_constant / TAU_0
@@ -165,7 +179,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
 def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                               air_rate=None, unobserved=None
+                               air_rate=None, unobserved=None, climate=None,
                                ):
     """Monthly stead-state space heating final energy delivered.
 
@@ -182,6 +196,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     infiltration: {'Minimal', 'Low', 'Medium', 'High'}
     air_rate: default None
     unobserved: {'Minimal', 'High'}, default None
+    climate: default None
 
     Returns
     -------
@@ -190,6 +205,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                                           th_bridging=th_bridging, vent_types=vent_types,
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
+                                          climate=climate
                                           )
     return heat_need / efficiency
 
