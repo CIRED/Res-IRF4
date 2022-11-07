@@ -1,14 +1,14 @@
 ﻿Income owner,Heating system,CEE
-D1,Electricity-Heat pump,4364
-D2,Electricity-Heat pump,4364
-D3,Electricity-Heat pump,4364
-D4,Electricity-Heat pump,4364
-D5,Electricity-Heat pump,2727
-D6,Electricity-Heat pump,2727
-D7,Electricity-Heat pump,2727
-D8,Electricity-Heat pump,2727
-D9,Electricity-Heat pump,2727
-D10,Electricity-Heat pump,2727
+D1,Electricity-Heat pump water,4364
+D2,Electricity-Heat pump water,4364
+D3,Electricity-Heat pump water,4364
+D4,Electricity-Heat pump water,4364
+D5,Electricity-Heat pump water,2727
+D6,Electricity-Heat pump water,2727
+D7,Electricity-Heat pump water,2727
+D8,Electricity-Heat pump water,2727
+D9,Electricity-Heat pump water,2727
+D10,Electricity-Heat pump water,2727
 D1,Wood fuel-Performance boiler,873
 D2,Wood fuel-Performance boiler,873
 D3,Wood fuel-Performance boiler,873
@@ -19,3 +19,13 @@ D7,Wood fuel-Performance boiler,545
 D8,Wood fuel-Performance boiler,545
 D9,Wood fuel-Performance boiler,545
 D10,Wood fuel-Performance boiler,545
+D1,Electricity-Heat pump air,900
+D2,Electricity-Heat pump air,900
+D3,Electricity-Heat pump air,450
+D4,Electricity-Heat pump air,450
+D5,Electricity-Heat pump air,450
+D6,Electricity-Heat pump air,450
+D7,Electricity-Heat pump air,450
+D8,Electricity-Heat pump air,450
+D9,Electricity-Heat pump air,450
+D10,Electricity-Heat pump air,450

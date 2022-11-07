@@ -500,6 +500,7 @@ class AgentBuildings(ThermalBuildings):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=year,
                          debug_mode=debug_mode)
 
+        self.subsidies_count, self.subsidies_average = dict(), dict()
         self.prepared_cost_insulation = None
         self.certificate_jump_heater = None
         self.retrofit_with_heater = None
@@ -1467,13 +1468,15 @@ class AgentBuildings(ThermalBuildings):
 
         self.retrofit_with_heater = replaced_by.xs(True, level='Heater replacement').sum().sum()
 
-        key = 'zero_interest_loan'
-        if key in self.subsidies_details_insulation.keys():
-            mask = self.subsidies_details_insulation[key].copy()
+        for key, sub in self.subsidies_details_insulation.items():
+            mask = sub.copy()
             mask[mask > 0] = 1
-            self.zil_count = (replaced_by.fillna(0) * mask).sum().sum()
-            total_loaned = (replaced_by.fillna(0) * self.zil_loaned).sum().sum()
-            self.zil_loaned_avg = total_loaned / self.zil_count
+            self.subsidies_count.update({key: (replaced_by.fillna(0) * mask).sum().sum()})
+            self.subsidies_average.update({key: sub.sum().sum() / replaced_by.fillna(0).sum().sum()})
+
+            if key == 'zero_interest_loan':
+                total_loaned = (replaced_by.fillna(0) * self.zil_loaned).sum().sum()
+                self.zil_loaned_avg = total_loaned / self.zil_count
 
     def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
@@ -2633,9 +2636,6 @@ class AgentBuildings(ThermalBuildings):
                 output['Surface (Million m2)'] * 10 ** 6)
 
         output['Heating intensity (%)'] = self.heating_intensity_avg
-        """temp = DataFrame(self.heating_intensity_tenant)
-        temp.index = temp.index.map(lambda x: 'Heating intensity {} (%)'.format(x))
-        output.update(temp.T)"""
 
         output['Energy poverty (Million)'] = self.energy_poverty / 10 ** 6
 

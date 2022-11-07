@@ -1,14 +1,14 @@
 ﻿Income owner,Heating system,MPR
-D1,Electricity-Heat pump,4000
-D2,Electricity-Heat pump,4000
-D3,Electricity-Heat pump,3000
-D4,Electricity-Heat pump,3000
-D5,Electricity-Heat pump,2000
-D6,Electricity-Heat pump,2000
-D7,Electricity-Heat pump,2000
-D8,Electricity-Heat pump,0
-D9,Electricity-Heat pump,0
-D10,Electricity-Heat pump,0
+D1,Electricity-Heat pump water,4000
+D2,Electricity-Heat pump water,4000
+D3,Electricity-Heat pump water,3000
+D4,Electricity-Heat pump water,3000
+D5,Electricity-Heat pump water,2000
+D6,Electricity-Heat pump water,2000
+D7,Electricity-Heat pump water,2000
+D8,Electricity-Heat pump water,0
+D9,Electricity-Heat pump water,0
+D10,Electricity-Heat pump water,0
 D1,Wood fuel-Performance boiler,3000
 D2,Wood fuel-Performance boiler,3000
 D3,Wood fuel-Performance boiler,2000

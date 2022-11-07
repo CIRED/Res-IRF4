@@ -146,7 +146,9 @@ def read_stock(config):
 
     stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8]).squeeze())
 
-    # stock = pd.read_csv(config['building_stock'], index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()
+    stock = stock.reset_index('Heating system')
+    stock['Heating system'] = stock['Heating system'].str.replace('Electricity-Heat pump', 'Electricity-Heat pump water')
+    stock = stock.set_index('Heating system', append=True).squeeze()
     year = config['start']
 
     stock = pd.concat([stock], keys=[True], names=['Existing'])
