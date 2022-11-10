@@ -1,10 +1,10 @@
 ,0
-Electricity-Heat pump water,3
+Electricity-Heat pump water,2.5
 Electricity-Performance boiler,0.95
-Natural gas-Performance boiler,0.85
-Natural gas-Standard boiler,0.75
-Oil fuel-Performance boiler,0.85
-Oil fuel-Standard boiler,0.75
-Wood fuel-Performance boiler,0.85
-Wood fuel-Standard boiler,0.75
-Electricity-Heat pump air,0.3
+Natural gas-Performance boiler,0.76
+Natural gas-Standard boiler,0.6
+Oil fuel-Performance boiler,0.76
+Oil fuel-Standard boiler,0.6
+Wood fuel-Performance boiler,0.76
+Wood fuel-Standard boiler,0.6
+Electricity-Heat pump air,2.5

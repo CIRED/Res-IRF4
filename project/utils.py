@@ -808,7 +808,7 @@ def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_
         plt.show()
 
 
-def cumulated_plot(x, y, plot=True):
+def cumulated_plot(x, y, plot=True, format_y=lambda y, _: y):
     """Y by cumulated x.
 
     Use for marginal abatement cost curve.
@@ -827,7 +827,7 @@ def cumulated_plot(x, y, plot=True):
     df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
     df = df.set_index('{} cumulated'.format(x.name))[y.name]
     if plot:
-        make_plot(df, y_label=y.name, legend=False)
+        make_plot(df, y_label=y.name, legend=False, format_y=format_y)
     else:
         return df
 

@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2021,
     "debug_mode": false,
     "prices_constant": false,
     "taxes_constant": false,
@@ -13,10 +13,10 @@
     "exogenous_detailed": {
       "number": 0
     },
+    "target_freeriders": 0.7,
     "preferences_zeros": false,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_5.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
     "population": "project/input/population.csv",
-    "target_freeriders": 0.8,
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
     "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
@@ -44,7 +44,8 @@
       "mpr_serenite": {
         "start": 2019,
         "end": 2051,
-        "insulation": "project/input/policies/mpr_serenite.csv"
+        "insulation": "project/input/policies/mpr_serenite.csv",
+        "cap": "project/input/policies/mpr_serenite_cap.csv"
       },
       "cee": {
         "start": 2019,
@@ -55,7 +56,7 @@
         "tax": "project/input/policies/cee_tax.csv"
       },
       "cap": {
-        "start": 2021,
+        "start": 2019,
         "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
@@ -69,8 +70,8 @@
         "start": 2019,
         "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
-        "insulation": 0.17,
-        "cap": 16000
+        "insulation": "project/input/policies/cite_insulation.csv",
+        "cap": 4800
       },
       "reduced_tax": {
         "start": 2019,
@@ -80,7 +81,7 @@
       "zero_interest_loan": {
         "new": true,
         "start": 2019,
-        "end": 2051,
+        "end": 2019,
         "value": 0.0917729,
         "ad_volarem": true,
         "min": 5000,
@@ -93,8 +94,14 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
+    "quintiles": true,
     "pop_housing": null,
     "share_multi_family": null,
-    "surface_built": null
+    "surface_built": null,
+    "remove_market_failures": {
+      "landlord": false,
+      "multi-family": false,
+      "credit constraint": false
+    }
   }
 }

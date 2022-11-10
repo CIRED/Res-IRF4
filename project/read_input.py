@@ -118,7 +118,6 @@ class PublicPolicy:
 
                 cost = cost_global + cost_no_global
                 #count_cap_effect = pd.DataFrame([cost_global > 50000 - cost_included][0], index=cost_global.index, columns=cost_global.columns).sum().sum()
-
         if self.cost_max is not None:
             cost_max = reindex_mi(self.cost_max, cost.index)
             cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
@@ -223,7 +222,7 @@ def read_policies(config):
                                   lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
         l.append(PublicPolicy('mpr_serenite', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
-                              gest='insulation', non_cumulative=['mpr', 'cite']))
+                              gest='insulation', non_cumulative=['mpr', 'cite'], cap=data['cap']))
         return l
 
     def read_cee(data):
@@ -268,8 +267,9 @@ def read_policies(config):
         heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
                               cap=data['cap'], by='columns'))
+        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(
-            PublicPolicy('cite', data['start'], data['end'], data['insulation'], 'subsidy_ad_volarem', gest='insulation',
+            PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_volarem', gest='insulation',
                          cap=data['cap']))
         return l
 

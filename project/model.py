@@ -148,13 +148,13 @@ def get_inputs(path):
 
     Returns
     -------
-    ThermalBuildings
+    dict
     """
 
     config = get_config()
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(
-        inputs, stock, year, policies_heater, policies_insulation, taxes, config, path)
+    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
+        inputs, stock, year, taxes, path, config=config)
     output = {'buildings': buildings, 'energy_prices': energy_prices, 'cost_insulation': cost_insulation,
               'carbon_emission': post_inputs['carbon_emission'], 'carbon_value_kwh': post_inputs['carbon_value_kwh']}
 
@@ -327,4 +327,11 @@ def res_irf(config, path):
 
 
 if __name__ == '__main__':
-    config2inputs()
+    output = get_inputs('output')
+    buildings = output['buildings']
+    energy_prices = output['energy_prices']
+    cost_insulation = output['cost_insulation']
+    carbon_emission = output['carbon_emission']
+    carbon_value_kwh = output['carbon_value_kwh']
+    output = buildings.mitigation_potential(energy_prices, cost_insulation, carbon_emission, carbon_value_kwh)
+
