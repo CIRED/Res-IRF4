@@ -815,10 +815,13 @@ class AgentBuildings(ThermalBuildings):
         stock_replacement = replacement.stack('Heating system final')
         to_replace = replacement.sum(axis=1)
         stock = self.stock_mobile.groupby(to_replace.index.names).sum() - to_replace
+
+        # adding heating system final equal to heating system because no switch
         stock = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
                                             name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
         stock = concat((stock.reorder_levels(stock_replacement.index.names), stock_replacement),
                        axis=0, keys=[False, True], names=['Heater replacement'])
+        assert round(stock.sum() - self.stock_mobile.sum(), 0) == 0, 'Sum problem'
 
         replaced_by = stock.droplevel('Heating system').rename_axis(index={'Heating system final': 'Heating system'})
 
@@ -960,7 +963,9 @@ class AgentBuildings(ThermalBuildings):
         constant[constant > 0] = 0
         market_share_ini, market_share_agg = None, None
         for i in range(50):
-            constant.loc[:, 'Electricity-Heat pump'] = 0
+            constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
+            constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
+
             utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
             utility = utility_ref + utility_constant
             market_share = (exp(utility).T / exp(utility).sum(axis=1)).T
@@ -976,7 +981,8 @@ class AgentBuildings(ThermalBuildings):
                 self.logger.debug('Constant heater optim worked')
                 break
 
-        constant.loc[:, 'Electricity-Heat pump'] = 0
+        constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
+        constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
 
         details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
@@ -1360,7 +1366,7 @@ class AgentBuildings(ThermalBuildings):
                 cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.name),
                                             cost_included=self.cost_heater.copy())
 
-                if isinstance(policy.value, Series):
+                if isinstance(policy.value, (Series, float)):
                     temp = reindex_mi(policy.value, cost.index)
                     subsidies_details[policy.name] = (temp * cost.T).T
                     subsidies_total += subsidies_details[policy.name]
@@ -2515,6 +2521,10 @@ class AgentBuildings(ThermalBuildings):
                                                                   index=stock_existing.index, stock=stock_existing,
                                                                   supply_constraint=supply_constraint)
 
+        flow_only_heater = (1 - retrofit_rate.reindex(stock.index).fillna(0)) * stock
+        flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack('Heating system final')
+        flow_only_heater_sum = flow_only_heater.sum().sum()
+
         flow = (retrofit_rate * stock).dropna()
         replacement_sum = flow.sum().sum()
 
@@ -2535,14 +2545,35 @@ class AgentBuildings(ThermalBuildings):
         # removing heater replacement level
         replaced_by = replaced_by.groupby(
             [c for c in replaced_by.index.names if c != 'Heater replacement']).sum()
-
+        flow_only_heater = flow_only_heater.groupby(
+            [c for c in flow_only_heater.index.names if c != 'Heater replacement']).sum()
         # TODO perhaps can be optimized
+
         share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
         temp = concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
         share = reindex_mi(share, temp.columns, axis=1)
         share = reindex_mi(share, temp.index)
         replaced_by = (share * temp).stack('Income tenant').dropna()
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
+
+        share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
+        temp = concat([flow_only_heater] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
+        share = reindex_mi(share, temp.columns, axis=1)
+        share = reindex_mi(share, temp.index)
+        flow_only_heater = (share * temp).stack('Income tenant').dropna()
+        assert round(flow_only_heater.sum().sum(), 0) == round(flow_only_heater_sum, 0), 'Sum problem'
+
+        flow_only_heater = flow_only_heater.stack('Heating system final')
+        to_replace_only_heater = - flow_only_heater.droplevel('Heating system final')
+
+        flow_replaced_by = flow_only_heater.droplevel('Heating system')
+        flow_replaced_by.index = flow_replaced_by.index.rename('Heating system', level='Heating system final')
+        flow_replaced_by = flow_replaced_by.reorder_levels(to_replace_only_heater.index.names)
+
+        flow_only_heater = pd.concat((to_replace_only_heater, flow_replaced_by), axis=0)
+        flow_only_heater = flow_only_heater.groupby(flow_only_heater.index.names).sum()
+
+        assert round(flow_only_heater.sum(), 0) == 0, 'Sum problem'
 
         to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
         to_replace = to_replace.groupby(to_replace.index.names).sum()
@@ -2575,7 +2606,8 @@ class AgentBuildings(ThermalBuildings):
         replaced_by = replaced_by.groupby(replaced_by.index.names).sum()
 
         to_replace = to_replace.reorder_levels(replaced_by.index.names)
-        flow_retrofit = concat((-to_replace, replaced_by), axis=0)
+        flow_only_heater = flow_only_heater.reorder_levels(replaced_by.index.names)
+        flow_retrofit = concat((-to_replace, replaced_by, flow_only_heater), axis=0)
         flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
 
         assert round(flow_retrofit.sum(), 0) == 0, 'Sum problem'
@@ -3043,7 +3075,8 @@ class AgentBuildings(ThermalBuildings):
 
         return concat(dict_ds, axis=1)
 
-    def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission, carbon_value, index=None):
+    def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission, carbon_value, health_cost=None,
+                             index=None):
         """Function returns bill saved and cost for buildings stock retrofit.
 
         Not implemented yet but should be able to calculate private and social indicator.
@@ -3054,6 +3087,9 @@ class AgentBuildings(ThermalBuildings):
         index
         prices
         cost_insulation_raw
+        carbon_emission
+        carbon_value
+        health_cost
 
         Returns
         -------
@@ -3101,7 +3137,6 @@ class AgentBuildings(ThermalBuildings):
                        })
 
         consumption_saved_agg = (self.stock * consumption_saved.T).T
-        consumption_before_agg = (self.stock * consumption_before.T).T
         consumption_actual_saved_agg = (self.stock * consumption_actual_saved.T).T
 
         c = self.add_energy(consumption_actual_before)
@@ -3158,6 +3193,7 @@ class AgentBuildings(ThermalBuildings):
         discount_rate, lifetime = 0.05, 30
         discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
         npv = bill_saved * discount_factor - potential_cost_insulation
+        # social_npv = bill_saved * discount_factor +
 
         out = AgentBuildings.find_best_option(npv, {'bill_saved': bill_saved,
                                                     'cost': potential_cost_insulation,
@@ -3174,7 +3210,6 @@ class AgentBuildings(ThermalBuildings):
                                                                       'consumption_actual_saved_agg': consumption_actual_saved_agg})
 
         output.update({'Max consumption saved': out})
-
         return output
 
     def calibration_exogenous(self, energy_prices, taxes, path_heater=None, path_insulation_int=None,

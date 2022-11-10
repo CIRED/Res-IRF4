@@ -137,13 +137,11 @@ def select_post_inputs(parsed_inputs):
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
 
-def get_inputs(path):
+def get_inputs(path, config=None):
     """Initialize thermal buildings object based on inpuut dictionnary.
 
     Parameters
     ----------
-    inputs: dict
-    stock: pd.Series
     path: str
 
     Returns
@@ -151,12 +149,13 @@ def get_inputs(path):
     dict
     """
 
-    config = get_config()
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
         inputs, stock, year, taxes, path, config=config)
     output = {'buildings': buildings, 'energy_prices': energy_prices, 'cost_insulation': cost_insulation,
-              'carbon_emission': post_inputs['carbon_emission'], 'carbon_value_kwh': post_inputs['carbon_value_kwh']}
+              'carbon_emission': post_inputs['carbon_emission'], 'carbon_value_kwh': post_inputs['carbon_value_kwh'],
+              'health_cost': post_inputs['health_expenditure'] + post_inputs['mortality_cost'] + post_inputs['loss_well_being']
+              }
 
     return output
 
@@ -333,5 +332,7 @@ if __name__ == '__main__':
     cost_insulation = output['cost_insulation']
     carbon_emission = output['carbon_emission']
     carbon_value_kwh = output['carbon_value_kwh']
-    output = buildings.mitigation_potential(energy_prices, cost_insulation, carbon_emission, carbon_value_kwh)
+    health_cost = output['health_cost']
+    output = buildings.mitigation_potential(energy_prices, cost_insulation, carbon_emission, carbon_value_kwh,
+                                            health_cost=health_cost)
 

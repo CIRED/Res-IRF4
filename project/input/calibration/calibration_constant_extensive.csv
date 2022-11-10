@@ -1,64 +1,64 @@
 Housing type,Occupancy status,Heater replacement,Performance,
-Single-family,Owner-occupied,FALSE,C,-3.085
-Single-family,Owner-occupied,FALSE,D,-3.018
-Single-family,Owner-occupied,FALSE,E,-3.737
-Single-family,Owner-occupied,FALSE,F,-3.815
-Single-family,Owner-occupied,FALSE,G,-5.334
-Single-family,Owner-occupied,TRUE,C,-1.259
-Single-family,Owner-occupied,TRUE,D,-1.126
-Single-family,Owner-occupied,TRUE,E,-1.445
-Single-family,Owner-occupied,TRUE,F,-0.473
-Single-family,Owner-occupied,TRUE,G,-0.464
-Single-family,Privately rented,FALSE,C,-3.795
-Single-family,Privately rented,FALSE,D,-3.69
-Single-family,Privately rented,FALSE,E,-4.102
-Single-family,Privately rented,FALSE,F,-4.11
-Single-family,Privately rented,FALSE,G,-5.239
-Single-family,Privately rented,TRUE,C,-1.702
-Single-family,Privately rented,TRUE,D,-1.544
-Single-family,Privately rented,TRUE,E,-1.768
-Single-family,Privately rented,TRUE,F,-0.954
-Single-family,Privately rented,TRUE,G,-1.059
-Single-family,Social-housing,FALSE,C,-3.576
-Single-family,Social-housing,FALSE,D,-3.525
-Single-family,Social-housing,FALSE,E,-3.807
-Single-family,Social-housing,FALSE,F,-3.43
-Single-family,Social-housing,FALSE,G,-4.926
-Single-family,Social-housing,TRUE,C,-1.338
-Single-family,Social-housing,TRUE,D,-1.207
-Single-family,Social-housing,TRUE,E,-1.341
-Single-family,Social-housing,TRUE,F,-0.331
-Single-family,Social-housing,TRUE,G,-0.504
-Multi-family,Owner-occupied,FALSE,C,-3.966
-Multi-family,Owner-occupied,FALSE,D,-3.956
-Multi-family,Owner-occupied,FALSE,E,-4.235
-Multi-family,Owner-occupied,FALSE,F,-3.65
-Multi-family,Owner-occupied,FALSE,G,-4.086
-Multi-family,Owner-occupied,TRUE,C,-2.216
-Multi-family,Owner-occupied,TRUE,D,-2.137
-Multi-family,Owner-occupied,TRUE,E,-2.243
-Multi-family,Owner-occupied,TRUE,F,-1.469
-Multi-family,Owner-occupied,TRUE,G,-1.665
-Multi-family,Privately rented,FALSE,C,-4.631
-Multi-family,Privately rented,FALSE,D,-4.536
-Multi-family,Privately rented,FALSE,E,-4.71
-Multi-family,Privately rented,FALSE,F,-4.056
-Multi-family,Privately rented,FALSE,G,-4.381
-Multi-family,Privately rented,TRUE,C,-2.59
-Multi-family,Privately rented,TRUE,D,-2.457
-Multi-family,Privately rented,TRUE,E,-2.547
-Multi-family,Privately rented,TRUE,F,-1.801
-Multi-family,Privately rented,TRUE,G,-2.009
-Multi-family,Social-housing,FALSE,C,-4.407
-Multi-family,Social-housing,FALSE,D,-4.45
-Multi-family,Social-housing,FALSE,E,-4.661
-Multi-family,Social-housing,FALSE,F,-4.03
-Multi-family,Social-housing,FALSE,G,-4.502
-Multi-family,Social-housing,TRUE,C,-2.275
-Multi-family,Social-housing,TRUE,D,-2.197
-Multi-family,Social-housing,TRUE,E,-2.294
-Multi-family,Social-housing,TRUE,F,-1.511
-Multi-family,Social-housing,TRUE,G,-1.754
+Single-family,Owner-occupied,FALSE,C,-2.683
+Single-family,Owner-occupied,FALSE,D,-2.834
+Single-family,Owner-occupied,FALSE,E,-2.749
+Single-family,Owner-occupied,FALSE,F,-4.663
+Single-family,Owner-occupied,FALSE,G,-7.302
+Single-family,Owner-occupied,TRUE,C,-0.836
+Single-family,Owner-occupied,TRUE,D,-0.872
+Single-family,Owner-occupied,TRUE,E,-0.808
+Single-family,Owner-occupied,TRUE,F,-0.907
+Single-family,Owner-occupied,TRUE,G,-1.741
+Single-family,Privately rented,FALSE,C,-3.512
+Single-family,Privately rented,FALSE,D,-3.535
+Single-family,Privately rented,FALSE,E,-3.44
+Single-family,Privately rented,FALSE,F,-4.408
+Single-family,Privately rented,FALSE,G,-6.398
+Single-family,Privately rented,TRUE,C,-1.386
+Single-family,Privately rented,TRUE,D,-1.355
+Single-family,Privately rented,TRUE,E,-1.283
+Single-family,Privately rented,TRUE,F,-1.24
+Single-family,Privately rented,TRUE,G,-1.853
+Single-family,Social-housing,FALSE,C,-3.255
+Single-family,Social-housing,FALSE,D,-3.172
+Single-family,Social-housing,FALSE,E,-3.157
+Single-family,Social-housing,FALSE,F,-3.273
+Single-family,Social-housing,FALSE,G,-5.175
+Single-family,Social-housing,TRUE,C,-1.002
+Single-family,Social-housing,TRUE,D,-0.887
+Single-family,Social-housing,TRUE,E,-0.822
+Single-family,Social-housing,TRUE,F,-0.426
+Single-family,Social-housing,TRUE,G,-0.793
+Multi-family,Owner-occupied,FALSE,C,-3.851
+Multi-family,Owner-occupied,FALSE,D,-3.739
+Multi-family,Owner-occupied,FALSE,E,-4.844
+Multi-family,Owner-occupied,FALSE,F,-3.666
+Multi-family,Owner-occupied,FALSE,G,-4.534
+Multi-family,Owner-occupied,TRUE,C,-2.113
+Multi-family,Owner-occupied,TRUE,D,-2.024
+Multi-family,Owner-occupied,TRUE,E,-2.484
+Multi-family,Owner-occupied,TRUE,F,-1.514
+Multi-family,Owner-occupied,TRUE,G,-2.083
+Multi-family,Privately rented,FALSE,C,-4.569
+Multi-family,Privately rented,FALSE,D,-4.401
+Multi-family,Privately rented,FALSE,E,-5.123
+Multi-family,Privately rented,FALSE,F,-4.022
+Multi-family,Privately rented,FALSE,G,-4.666
+Multi-family,Privately rented,TRUE,C,-2.533
+Multi-family,Privately rented,TRUE,D,-2.379
+Multi-family,Privately rented,TRUE,E,-2.774
+Multi-family,Privately rented,TRUE,F,-1.774
+Multi-family,Privately rented,TRUE,G,-2.252
+Multi-family,Social-housing,FALSE,C,-4.318
+Multi-family,Social-housing,FALSE,D,-4.225
+Multi-family,Social-housing,FALSE,E,-5.136
+Multi-family,Social-housing,FALSE,F,-3.913
+Multi-family,Social-housing,FALSE,G,-4.782
+Multi-family,Social-housing,TRUE,C,-2.182
+Multi-family,Social-housing,TRUE,D,-2.077
+Multi-family,Social-housing,TRUE,E,-2.462
+Multi-family,Social-housing,TRUE,F,-1.41
+Multi-family,Social-housing,TRUE,G,-1.97
 Multi-family,Owner-occupied,FALSE,A,
 Multi-family,Owner-occupied,FALSE,B,
 Multi-family,Owner-occupied,TRUE,A,
