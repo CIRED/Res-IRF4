@@ -73,7 +73,7 @@ class ThermalBuildings:
     taxes_expenditure_details: dict
 
     """
-    def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=2018,
+    def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path=None, year=2018,
                  debug_mode=False):
 
         self.energy_poverty = None
@@ -91,16 +91,16 @@ class ThermalBuildings:
         self._efficiency = efficiency
         self._ratio_surface = ratio_surface
         self.path = path
-        self.path_calibration = os.path.join(path, 'calibration')
-        if not os.path.isdir(self.path_calibration):
-            os.mkdir(self.path_calibration)
-        self.path_calibration_renovation = os.path.join(self.path_calibration, 'renovation')
-        if not os.path.isdir(self.path_calibration_renovation):
-            os.mkdir(self.path_calibration_renovation)
-
-        self.path_static = os.path.join(path, 'static')
-        if not os.path.isdir(self.path_static):
-            os.mkdir(self.path_static)
+        if path is not None:
+            self.path_calibration = os.path.join(path, 'calibration')
+            if not os.path.isdir(self.path_calibration):
+                os.mkdir(self.path_calibration)
+            self.path_calibration_renovation = os.path.join(self.path_calibration, 'renovation')
+            if not os.path.isdir(self.path_calibration_renovation):
+                os.mkdir(self.path_calibration_renovation)
+            self.path_static = os.path.join(path, 'static')
+            if not os.path.isdir(self.path_static):
+                os.mkdir(self.path_static)
 
         self._consumption_ini = consumption_ini
         self.coefficient_consumption = None
@@ -223,6 +223,18 @@ class ThermalBuildings:
         energy = reindex_mi(energy, df.index)
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
+
+    def hourly_heating_need(self):
+        idx = self.stock.index
+        wall = Series(idx.get_level_values('Wall'), index=idx)
+        floor = Series(idx.get_level_values('Floor'), index=idx)
+        roof = Series(idx.get_level_values('Roof'), index=idx)
+        windows = Series(idx.get_level_values('Windows'), index=idx)
+
+        thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
+                                          th_bridging='Medium', vent_types='Ventilation naturelle',
+                                          infiltration='Medium',
+                                          air_rate=None, unobserved=None, hourly=True)
 
     def consumption_standard(self, indexes, level_heater='Heating system'):
         """Pre-calculate space energy consumption based only on relevant levels.
@@ -407,7 +419,8 @@ class ThermalBuildings:
                 validation = concat((validation, resources_data['data_calibration']), keys=['Calcul', 'Data'], axis=1)
                 validation['Error'] = (validation['Calcul'] - validation['Data']) / validation['Data']
 
-            validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
+            if self.path is not None:
+                validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
         coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.stock.index, axis=0)
         self.heat_consumption_calib = (coefficient * self.heat_consumption).copy()
@@ -491,13 +504,13 @@ class AgentBuildings(ThermalBuildings):
 
     """
 
-    def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path, preferences,
-                 performance_insulation, demolition_rate=0.0, year=2018,
+    def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, preferences,
+                 performance_insulation, path=None, demolition_rate=0.0, year=2018,
                  endogenous=True, number_exogenous=300000, utility_extensive='market_share',
-                 logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True, detailed_mode=True,
+                 logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True, detailed_mode=None,
                  remove_market_failures=None, quintiles=None
                  ):
-        super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path, year=year,
+        super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path=path, year=year,
                          debug_mode=debug_mode)
 
         self.subsidies_count_insulation, self.subsidies_average_insulation = dict(), dict()
@@ -513,6 +526,8 @@ class AgentBuildings(ThermalBuildings):
         self._epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
 
         self.quintiles = quintiles
+        if detailed_mode is None:
+            detailed_mode = True
         self.detailed_mode = detailed_mode
 
         if logger is None:
@@ -594,7 +609,7 @@ class AgentBuildings(ThermalBuildings):
         choice_insulation = MultiIndex.from_tuples(choice_insulation, names=names)
 
         self._choice_insulation = choice_insulation
-        self._performance_insulation = {i: min(val, self.stock.index.get_level_values('Floor').min()) for i, val in
+        self._performance_insulation = {i: min(val, self.stock.index.get_level_values(i).min()) for i, val in
                                         performance_insulation.items()}
         # min of self.stock
         self.surface_insulation = self._ratio_surface.copy()
@@ -986,7 +1001,8 @@ class AgentBuildings(ThermalBuildings):
 
         details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-        details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
+        if self.path is not None:
+            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
         return constant
 
@@ -1773,7 +1789,8 @@ class AgentBuildings(ThermalBuildings):
             market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
             details = concat((constant, market_share_agg, ms_insulation), axis=1,
                                 keys=['constant', 'calcul', 'observed']).round(decimals=3)
-            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
+            if self.path is not None:
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
             return constant
 
         def calibration_intensive_iteration(utility, stock, ms_insulation, retrofit_rate_ini, iteration=100,
@@ -1819,7 +1836,8 @@ class AgentBuildings(ThermalBuildings):
                 constant.iloc[0] = 0
                 details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
                                  keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
+                if self.path is not None:
+                    details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
 
                 return constant
 
@@ -1850,7 +1868,8 @@ class AgentBuildings(ThermalBuildings):
                 constant.iloc[0] = 0
                 details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
                                     keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_single.csv'))
+                if self.path is not None:
+                    details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_single.csv'))
                 constant_insulation = constant.rename('Single-family')
 
                 # multi-family
@@ -1882,7 +1901,8 @@ class AgentBuildings(ThermalBuildings):
                 constant.iloc[0] = 0
                 details = concat((constant, market_share_ini, market_share_agg, ms_insulation), axis=1,
                                     keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_multi.csv'))
+                if self.path is not None:
+                    details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation_multi.csv'))
                 constant = constant.rename('Multi-family')
 
                 constant = concat((constant_insulation, constant), axis=1).T
@@ -1985,7 +2005,8 @@ class AgentBuildings(ThermalBuildings):
 
             details = concat((constant, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3), axis=1,
                                 keys=['constant', 'calcul', 'observed', 'thousand']).round(decimals=3)
-            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
+            if self.path is not None:
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
             return constant, scale
 
@@ -2420,7 +2441,8 @@ class AgentBuildings(ThermalBuildings):
             result = concat((scale, constant_ext, retrofit_rate_mean, retrofit_calibrated, flow_insulation_sum,
                                 flow_insulation_agg, name, constant_int, flow_insulation, ms_calibrated,
                                 percentage_intensive_margin), axis=0)
-            result.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
+            if self.path is not None:
+                result.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
 
         return retrofit_rate, market_share
 
@@ -3123,7 +3145,8 @@ class AgentBuildings(ThermalBuildings):
         consumption_actual_after = (reindex_mi(self._surface, index) * consumption_actual_after.T).T
         consumption_actual_saved = (reindex_mi(self._surface, index) * consumption_actual_saved.T).T
 
-        output.update({'Stock (dwellings)': self.stock,
+        output.update({'Stock (dwellings/segment)': self.stock,
+                       'Surface (m2/segment)': self.stock * reindex_mi(self._surface, index),
                        'Consumption before (kWh/dwelling)': consumption_before,
                        'Consumption before (kWh/segment)': consumption_before * self.stock,
                        'Consumption actual before (kWh/dwelling)': consumption_actual_before,

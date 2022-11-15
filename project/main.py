@@ -27,6 +27,7 @@ import argparse
 
 from project.write_output import grouped_output
 from project.model import res_irf
+from project.read_input import generate_price_scenarios, read_prices
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -191,6 +192,17 @@ def run(path=None):
 
         del configuration['sensitivity']
 
+    if 'elasticity' in configuration.keys():
+        if configuration['elasticity']['activated']:
+            configuration['Reference']['detailed_mode'] = False
+            energy_prices = read_prices(configuration['Reference'])
+            scenarios = generate_price_scenarios(energy_prices, path=configuration['elasticity']['path'])
+            for key, path in scenarios.items():
+                configuration[key] = copy.deepcopy(configuration['Reference'])
+                configuration[key]['energy_prices'] = path
+
+        del configuration['elasticity']
+
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
     folder = os.path.join('project/output', '{}{}'.format(name_policy, t))
     os.mkdir(folder)
@@ -217,8 +229,9 @@ def run(path=None):
         stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
-        grouped_output(result, folder, config_policies, config_sensitivity,
-                       quintiles=configuration.get('Reference').get('quintiles'))
+        if configuration.get('Reference').get('detailed_mode'):
+            grouped_output(result, folder, config_policies, config_sensitivity,
+                           quintiles=configuration.get('Reference').get('quintiles'))
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

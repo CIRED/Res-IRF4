@@ -17,6 +17,8 @@
 
 import pandas as pd
 from pandas import Series, DataFrame, concat, MultiIndex, Index
+from numpy.random import normal
+
 import copy
 import os
 
@@ -337,6 +339,13 @@ def read_policies(config):
     taxes = [p for p in list_policies if p.policy == 'tax']
 
     return policies_heater, policies_insulation, taxes
+
+
+def read_prices(config):
+    energy_prices = get_pandas(config['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+    energy_prices = energy_prices.loc[:config['end']]
+
+    return energy_prices
 
 
 def read_inputs(config, other_inputs=generic_input):
@@ -743,3 +752,67 @@ def data2dict_inputs(data, metadata):
             parsed_input.update({variables: Series(df['value'].values, index=df['index'].values).to_dict()})
 
     return parsed_input
+
+
+def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=2018, nb_draws=3, path=None):
+    """Generate energy prices scenarios.
+
+    Les prix suivent un processus auto regressif
+    $$P_t= λ_1 . P{t-1} + λ_2 . P_{t-2} + α + ϵ_t$$
+
+    On calibre en fixant :
+        - P{t-1}= prix de 2019
+        - P_{t-2}= prix de 2018
+        - Plusieurs combinaisons sont fixés pour λ_1 et λ_2 en croisant λ_1∈[0.6,0.65,0.7,0.75],
+         et λ_1+λ_2∈[0.85,0.9,0.95,0.97] soit 16 combinaisons.
+        - α est fixé de sorte que $P_{2020} - λ_1 . P{2019} + λ_2 . P_{2018} =α$
+        - Enfin ϵ_t∼N(0,P_2012⁄10). Pour chaque combinaisons 10 tirages sont faites soit 160 simulations au total.
+
+    Le premier prix que l’on cherchera à simuler sera le prix de 2013.
+    On fait cette opération pour l’électricité, le gaz, le fioul et le bois.
+
+    Parameters
+    ----------
+    energy_prices: DataFrame
+        Energy prices. Year as index, and energy as columns.
+    year_2: int
+    year_1: int
+    year_0: int
+        First year of iteration.
+    nb_draws: int, default 10
+
+    Returns
+    -------
+
+    """
+
+    # lambda_1_values = [0.6, 0.65, 0.7, 0.75]
+    # lambda_sum_values = [0.85, 0.9, 0.95, 0.97]
+    lambda_1_values = [0.7]
+    lambda_sum_values = [0.97]
+
+    result = dict()
+    prices = dict()
+    prices.update({year_0: concat([energy_prices.loc[year_0, :]] * nb_draws, axis=1).set_axis(range(0, nb_draws), axis=1),
+                   year_1: concat([energy_prices.loc[year_1, :]] * nb_draws, axis=1).set_axis(range(0, nb_draws), axis=1)
+                   })
+    for lambda_1 in lambda_1_values:
+        lambda_2_values = [i - lambda_1 for i in lambda_sum_values]
+        for lambda_2 in lambda_2_values:
+            alpha = energy_prices.loc[year_2, :] - lambda_1 * energy_prices.loc[year_1, :] - lambda_2 * energy_prices.loc[year_0, :]
+            epsilon = concat([Series(normal(loc=0, scale=energy_prices.loc[year_2, :] / 10), index=energy_prices.columns) for _ in range(nb_draws)], axis=1)
+            for year in range(year_2, energy_prices.index.max() + 1):
+                prices[year] = ((epsilon+ lambda_1 * prices[year - 1] + lambda_2 * prices[year - 2]).T + alpha).T
+            for i in range(0, nb_draws):
+                n = '{}_{}_{}'.format(round(lambda_1, 1), round(lambda_2, 1), i)
+                df = concat([prices[year].loc[:, i].rename(year) for year in prices.keys()], axis=1).T
+                result.update({n: df})
+
+    result = {k: df for k, df in result.items() if (df > 0).all().all()}
+    if path is not None:
+        for name, df in result.items():
+            df.to_csv(os.path.join(path, 'energy_prices_{}.csv'.format(name)))
+        return {name: 'energy_prices_{}.csv'.format(name) for name in result.keys()}
+    else:
+        return result
+

@@ -834,7 +834,7 @@ def cumulated_plot(x, y, plot=True, format_y=lambda y, _: y):
 
 def cumulated_plots(dict_df, y_label, legend=True, format_y=lambda y, _: y, save=None, ylim=None, ymin=0):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-    for k, df  in dict_df.items():
+    for k, df in dict_df.items():
         df.rename(k).plot(ax=ax)
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=False)

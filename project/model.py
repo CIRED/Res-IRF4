@@ -12,6 +12,37 @@ from project.write_output import plot_scenario
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 
+def create_logger(path=None):
+    """Create logger for one run.
+
+    Parameters
+    ----------
+    path: str
+
+    Returns
+    -------
+    Logger
+    """
+    if path is None:
+        name = ''
+    else:
+        name = path.split('/')[-1].lower()
+
+    logger = logging.getLogger('log_{}'.format(name))
+    logger.setLevel('DEBUG')
+    logger.propagate = False
+    # consoler handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
+    logger.addHandler(console_handler)
+    # file handler
+    if path is not None:
+        file_handler = logging.FileHandler(os.path.join(path, 'log.log'))
+        file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
+        logger.addHandler(file_handler)
+    return logger
+
+
 def get_config() -> dict:
     with resources.path('project.input', 'config.json') as f:
         with open(f) as file:
@@ -137,30 +168,41 @@ def select_post_inputs(parsed_inputs):
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
 
-def get_inputs(path, config=None):
+def get_inputs(path=None, config=None, variables=None):
     """Initialize thermal buildings object based on inpuut dictionnary.
 
     Parameters
     ----------
-    path: str
+    path: str, optional
+        If None do not write output.
+    config: dict, optional
+        If config is None use configuration file of Reference scenario
+    variables: list, optional
+        'buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost'
 
     Returns
     -------
     dict
     """
+    if variables is None:
+        variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
-        inputs, stock, year, taxes, path, config=config)
-    output = {'buildings': buildings, 'energy_prices': energy_prices, 'cost_insulation': cost_insulation,
-              'carbon_emission': post_inputs['carbon_emission'], 'carbon_value_kwh': post_inputs['carbon_value_kwh'],
+        inputs, stock, year, taxes, path=path, config=config)
+    output = {'buildings': buildings,
+              'energy_prices': energy_prices,
+              'cost_insulation': cost_insulation,
+              'carbon_emission': post_inputs['carbon_emission'],
+              'carbon_value_kwh': post_inputs['carbon_value_kwh'],
               'health_cost': post_inputs['health_expenditure'] + post_inputs['mortality_cost'] + post_inputs['loss_well_being']
               }
+    output = {k: item for k, item in output.items() if k in variables}
 
     return output
 
 
-def initialize(inputs, stock, year, taxes, path, config=None, logger=None):
+def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
     """Create main Python objects read by model.
 
     Parameters
@@ -182,22 +224,24 @@ def initialize(inputs, stock, year, taxes, path, config=None, logger=None):
         config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
-    dump_inputs(parsed_inputs, path)
+    if path is not None:
+        dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
     if logger is None:
         logger = create_logger(path)
     logger.info('Creating AgentBuildings object')
 
-    with open(os.path.join(path, 'config.json'), 'w') as fp:
-        json.dump(config, fp)
+    if path is not None:
+        with open(os.path.join(path, 'config.json'), 'w') as fp:
+            json.dump(config, fp)
 
     buildings = AgentBuildings(stock, parsed_inputs['surface'], parsed_inputs['ratio_surface'], parsed_inputs['efficiency'],
-                               parsed_inputs['income'], parsed_inputs['consumption_ini'], path, parsed_inputs['preferences'],
-                               parsed_inputs['performance_insulation'],
+                               parsed_inputs['income'], parsed_inputs['consumption_ini'], parsed_inputs['preferences'],
+                               parsed_inputs['performance_insulation'], path=path,
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['endogenous'], logger=logger,
                                remove_market_failures=config.get('remove_market_failures'),
-                               quintiles=config.get('quintiles'))
+                               quintiles=config.get('quintiles'), detailed_mode=config.get('detailed_mode'))
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[
@@ -222,41 +266,13 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.detailed_mode:
-        s, o = buildings.parse_output_run(post_inputs)
+        stock, output = buildings.parse_output_run(post_inputs)
     else:
-        s = buildings.simplified_stock()
-        o = dict()
-        o['Electricity'] = buildings.heat_consumption_energy['Electricity'] / 10 ** 9
-        o['Natural gas'] = buildings.heat_consumption_energy['Natural gas'] / 10 ** 9
-        o['Wood fuel'] = buildings.heat_consumption_energy['Wood fuel'] / 10 ** 9
-        o['Oil fuel'] = buildings.heat_consumption_energy['Oil fuel'] / 10 ** 9
+        stock = buildings.simplified_stock().rename(year)
+        output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
+        output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
 
-    return buildings, s, o
-
-
-def create_logger(path):
-    """Create logger for one run.
-
-    Parameters
-    ----------
-    path: str
-
-    Returns
-    -------
-    Logger
-    """
-    logger = logging.getLogger('log_{}'.format(path.split('/')[-1].lower()))
-    logger.setLevel('DEBUG')
-    logger.propagate = False
-    # consoler handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
-    logger.addHandler(console_handler)
-    # file handler
-    file_handler = logging.FileHandler(os.path.join(path, 'log.log'))
-    file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
-    logger.addHandler(file_handler)
-    return logger
+    return buildings, stock, output
 
 
 def res_irf(config, path):
@@ -284,7 +300,7 @@ def res_irf(config, path):
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
         buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
-            inputs, stock, year, taxes, path, config, logger)
+            inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
@@ -312,9 +328,10 @@ def res_irf(config, path):
             output = pd.concat((output, o), axis=1)
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
 
-        buildings.logger.info('Dumping output in {}'.format(path))
-        output.round(3).to_csv(os.path.join(path, 'output.csv'))
-        stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+        if path is not None:
+            buildings.logger.info('Dumping output in {}'.format(path))
+            output.round(3).to_csv(os.path.join(path, 'output.csv'))
+            stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
         if buildings.detailed_mode:
             plot_scenario(output, stock, buildings)
 
