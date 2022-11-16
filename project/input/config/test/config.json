@@ -2,6 +2,7 @@
   "Reference": {
     "end": 2021,
     "debug_mode": false,
+    "detailed_mode": true,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -94,7 +95,7 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": true,
+    "quintiles": false,
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null,
@@ -102,6 +103,7 @@
       "landlord": false,
       "multi-family": false,
       "credit constraint": false
-    }
+    },
+    "financing_cost": true
   }
 }

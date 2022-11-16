@@ -87,7 +87,7 @@ def plot_scenario(output, stock, buildings):
     # subset.dropna(inplace=True, how='all')
     if not subset.empty:
         scatter = resources_data['public_policies_2019']
-        if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan']:
+        if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan', 'Mpr serenite']:
             fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
             subset.index = subset.index.astype(int)
             subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'])

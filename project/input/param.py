@@ -27,14 +27,17 @@ generic_input['price_index'] = 1
 generic_input['income'] = pd.Series([10030, 15910, 19730, 23680, 28150, 33320, 39260, 46450, 57230, 102880],
                                     index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                                                    name='Income'))
-generic_input['share_debt'] = (0.139, 1.15 * 10**-5)
+input_financing = dict()
+input_financing['share_debt'] = (0.139, 1.15 * 10**-5)
 
-generic_input['factor_saving_rate'] = pd.Series([2, 2, 2, 2, 1.6, 1.6, 1.3, 1.3, 1, 1],
-                                                index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
-                                                name='Income owner'))
-
-generic_input['interest_rate'] = 0.04
-generic_input['saving_rate'] = 0.025
+input_financing['factor_saving_rate'] = pd.Series([2, 2, 2, 2, 1.6, 1.6, 1.3, 1.3, 1, 1],
+                                                  index=pd.Index(
+                                                      ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
+                                                      name='Income owner'))
+input_financing['interest_rate'] = 0.04
+input_financing['saving_rate'] = 0.025
+generic_input['input_financing'] = input_financing
+input_financing['duration'] = 10
 
 
 generic_input['stock_ini'] = 29037000
@@ -67,10 +70,6 @@ generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
 generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
 
-"""generic_input['ratio_surface'] = pd.DataFrame(
-    [[0.97, 0.75, 0.8, 0.11], [0.90, 0, 0, 0.15]],
-    index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-    columns=['Wall', 'Floor', 'Roof', 'Windows'])"""
 
 generic_input['ratio_surface'] = pd.DataFrame(
     [[1.42, 0.75, 0.77, 0.17], [0.78, 0.28, 0.29, 0.19]],

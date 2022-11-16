@@ -174,7 +174,7 @@ def select_post_inputs(parsed_inputs):
 
 
 def get_inputs(path=None, config=None, variables=None, building_stock=None):
-    """Initialize thermal buildings object based on inpuut dictionnary.
+    """Initialize thermal buildings object based on input dictionnary.
 
     Parameters
     ----------
@@ -193,7 +193,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
         variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
+    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, cost_financing = initialize(
         inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': buildings,
               'energy_prices': energy_prices,
@@ -248,16 +248,19 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['endogenous'], logger=logger,
                                remove_market_failures=config.get('remove_market_failures'),
-                               quintiles=config.get('quintiles'), detailed_mode=config.get('detailed_mode'))
+                               quintiles=config.get('quintiles'),
+                               detailed_mode=config.get('detailed_mode'),
+                               financing_cost=config.get('financing_cost'),
+                               debug_mode=config.get('debug_mode'))
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[
-               'renovation_rate_ini'], parsed_inputs['flow_built']
+               'renovation_rate_ini'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing')
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  ms_insulation=None, renovation_rate_ini=None,
-                   target_freeriders=None):
+                   target_freeriders=None, financing_cost=None):
 
     buildings.logger.info('Run {}'.format(year))
     buildings.year = year
@@ -268,7 +271,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             ms_insulation=ms_insulation,
                                             renovation_rate_ini=renovation_rate_ini,
                                             target_freeriders=target_freeriders,
-                                            ms_heater=ms_heater)
+                                            ms_heater=ms_heater,
+                                            financing_cost=financing_cost)
     buildings.add_flows([flow_retrofit, flow_built])
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
@@ -306,7 +310,7 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, financing_cost = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
@@ -328,7 +332,8 @@ def res_irf(config, path):
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                              p_insulation, f_built, year, post_inputs,
                                              ms_insulation=ms_intensive, renovation_rate_ini=renovation_rate_ini,
-                                             target_freeriders=target_freeriders, ms_heater=ms_heater)
+                                             target_freeriders=target_freeriders, ms_heater=ms_heater,
+                                             financing_cost=financing_cost)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
