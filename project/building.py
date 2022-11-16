@@ -225,16 +225,26 @@ class ThermalBuildings:
         return df
 
     def hourly_heating_need(self):
+        """Calculate hourly heating need of the current building stock.
+
+        Returns
+        -------
+        pd.DataFrame
+        """
         idx = self.stock.index
         wall = Series(idx.get_level_values('Wall'), index=idx)
         floor = Series(idx.get_level_values('Floor'), index=idx)
         roof = Series(idx.get_level_values('Roof'), index=idx)
         windows = Series(idx.get_level_values('Windows'), index=idx)
 
-        thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
-                                          th_bridging='Medium', vent_types='Ventilation naturelle',
-                                          infiltration='Medium',
-                                          air_rate=None, unobserved=None, hourly=True)
+        heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
+                                                         th_bridging='Medium', vent_types='Ventilation naturelle',
+                                                         infiltration='Medium',
+                                                         air_rate=None, unobserved=None, hourly=True)
+
+        heating_need = (heating_need.T * self.stock)
+        heating_need = concat([heating_need], keys=[self.year], names=['year'])
+        return heating_need
 
     def consumption_standard(self, indexes, level_heater='Heating system'):
         """Pre-calculate space energy consumption based only on relevant levels.

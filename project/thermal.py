@@ -490,15 +490,15 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
     u_floor
     u_roof
     u_windows
-    dh
+    hdd
     efficiency
     energy
-    param
+    ratio_surface
 
     Returns
     -------
     pd.Series
-        Primary heating consumption for all buildings in the stock.
+        Primary heating consump_tion for all buildings in the stock.
     pd.Series
         Certificates for all buildings in the stock.
 
@@ -508,10 +508,11 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
     return primary_heat_consumption, certificate(primary_heat_consumption)
 
 
-
 if __name__ == '__main__':
     from project.model import get_inputs
     output = get_inputs(variables=['buildings'])
     buildings = output['buildings']
-    buildings.hourly_heating_need()
+    heating_need = buildings.hourly_heating_need()
+    heating_need.sum(axis=1)
+    print('break')
 

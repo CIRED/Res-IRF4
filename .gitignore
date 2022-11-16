@@ -3,3 +3,5 @@
 /project/input/.DS_Store
 /project/input/revealed_data/.DS_Store
 .DS_Store
+/ResIRF.egg-info/
+/sphinx_source/
