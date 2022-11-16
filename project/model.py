@@ -49,12 +49,14 @@ def get_config() -> dict:
             return json.load(file)['Reference']
 
 
-def config2inputs(config=None):
+def config2inputs(config=None, building_stock=None):
     """Create main Python object from configuration file.
 
     Parameters
     ----------
-    config
+    config: dict
+    building_stock: str
+        Path to other building stock than reference.
 
     Returns
     -------
@@ -63,6 +65,9 @@ def config2inputs(config=None):
 
     if config is None:
         config = get_config()
+
+    if building_stock is not None:
+        config['building_stock'] = building_stock
 
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
@@ -168,7 +173,7 @@ def select_post_inputs(parsed_inputs):
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
 
-def get_inputs(path=None, config=None, variables=None):
+def get_inputs(path=None, config=None, variables=None, building_stock=None):
     """Initialize thermal buildings object based on inpuut dictionnary.
 
     Parameters
@@ -187,7 +192,7 @@ def get_inputs(path=None, config=None, variables=None):
     if variables is None:
         variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost']
 
-    inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+    inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built = initialize(
         inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': buildings,
@@ -195,7 +200,9 @@ def get_inputs(path=None, config=None, variables=None):
               'cost_insulation': cost_insulation,
               'carbon_emission': post_inputs['carbon_emission'],
               'carbon_value_kwh': post_inputs['carbon_value_kwh'],
-              'health_cost': post_inputs['health_expenditure'] + post_inputs['mortality_cost'] + post_inputs['loss_well_being']
+              'health_cost': post_inputs['health_expenditure'] + post_inputs['mortality_cost'] + post_inputs['loss_well_being'],
+              'efficiency': buildings._efficiency,
+              'performance_insulation': buildings._performance_insulation
               }
     output = {k: item for k, item in output.items() if k in variables}
 

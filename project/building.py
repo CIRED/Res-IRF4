@@ -242,7 +242,7 @@ class ThermalBuildings:
                                                          infiltration='Medium',
                                                          air_rate=None, unobserved=None, hourly=True)
 
-        heating_need = (heating_need.T * self.stock)
+        heating_need = (heating_need.T * self.stock * self.surface)
         heating_need = concat([heating_need], keys=[self.year], names=['year'])
         return heating_need
 
@@ -252,6 +252,7 @@ class ThermalBuildings:
         Parameters
         ----------
         indexes: MultiIndex, Index
+            Index used to estimate consumption standard.
         level_heater: {'Heating system', 'Heating system final'}, default 'Heating system'
 
         Returns
@@ -518,7 +519,7 @@ class AgentBuildings(ThermalBuildings):
                  performance_insulation, path=None, demolition_rate=0.0, year=2018,
                  endogenous=True, number_exogenous=300000, utility_extensive='market_share',
                  logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True, detailed_mode=None,
-                 remove_market_failures=None, quintiles=None
+                 remove_market_failures=None, quintiles=None, financing_cost=True,
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path=path, year=year,
                          debug_mode=debug_mode)
@@ -1624,6 +1625,9 @@ class AgentBuildings(ThermalBuildings):
         Utility variables are investment cost, energy bill saving, and subsidies.
         Preferences are object attributes defined initially.
 
+        # bill saved calculated based on the new heating system
+        # certificate before work and so subsidies before the new heating system
+
         Parameters
         ----------
         index: MultiIndex
@@ -2147,10 +2151,12 @@ class AgentBuildings(ThermalBuildings):
                 self.factor_yrs.update({self.year: factor_equilibrium})
             return retrofit_rate
 
-        # bill saved calculated based on the new heating system
-        # certificate before work and so subsidies before the new heating system
-
         cost_insulation = reindex_mi(cost_insulation, index)
+
+        """share_debt = generic_input['share_debt'][0] + cost_insulation * generic_input['share_debt'][1]
+        cost_debt = generic_input['interest_rate'] * share_debt * cost_insulation
+        cost_saving = (generic_input['saving_rate'] * reindex_mi(generic_input['factor_saving_rate'], cost_insulation.index) * ((1 - share_debt) * cost_insulation).T).T
+        """
 
         consumption_before = self.consumption_standard(index, level_heater='Heating system final')[0]
         consumption_before = reindex_mi(consumption_before, index) * reindex_mi(self._surface, index)

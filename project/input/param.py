@@ -27,6 +27,16 @@ generic_input['price_index'] = 1
 generic_input['income'] = pd.Series([10030, 15910, 19730, 23680, 28150, 33320, 39260, 46450, 57230, 102880],
                                     index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                                                    name='Income'))
+generic_input['share_debt'] = (0.139, 1.15 * 10**-5)
+
+generic_input['factor_saving_rate'] = pd.Series([2, 2, 2, 2, 1.6, 1.6, 1.3, 1.3, 1, 1],
+                                                index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
+                                                name='Income owner'))
+
+generic_input['interest_rate'] = 0.04
+generic_input['saving_rate'] = 0.025
+
+
 generic_input['stock_ini'] = 29037000
 
 surface_elasticity = pd.Series({('Single-family', 'Owner-occupied'): 0.2,

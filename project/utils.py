@@ -248,6 +248,42 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     save_fig(fig, save=save)
 
 
+def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=False):
+    """Make plot.
+
+    Parameters
+    ----------
+    dict_df: dict
+    y_label: str
+    colors: dict
+    format_y: function
+    save: str, optional
+    scatter: pd.Series, default None
+    """
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+
+    for key, df in dict_df.items():
+
+        df = df.rename(key)
+
+        if integer:
+            df.index = df.index.astype(int)
+
+        if colors is None:
+            df.plot(ax=ax, style=STYLES)
+        else:
+            df.plot(ax=ax, color=colors, style=STYLES)
+
+        if scatter is not None:
+            scatter.plot(ax=ax, style='.', ms=15, c='red')
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=0, xinteger=True)
+    if legend:
+        format_legend(ax)
+    save_fig(fig, save=save)
+
+
 def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None):
     """ Plot a line for each index in a subplot.
 
