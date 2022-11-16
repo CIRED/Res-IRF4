@@ -203,7 +203,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
         heat_gains = solar_load + internal_heat_sources
 
-        heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL
+        heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
         heat_need = heat_need.to_frame().dot(HOURLY_PROFILE.to_frame().T)
         heat_need = heat_need.unstack(['month', 'day'])
