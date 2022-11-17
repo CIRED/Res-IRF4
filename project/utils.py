@@ -25,7 +25,7 @@ from collections import defaultdict
 from functools import wraps
 from time import time
 from importlib import resources
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 
 COLOR = 'dimgrey'
 SMALL_SIZE = 10
@@ -47,9 +47,12 @@ STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
 
 def get_pandas(path, func=lambda x: pd.read_csv(x)):
     path = Path(path)
-    with resources.path(str(path.parent).replace('/', '.'), path.name) as df:
-        return func(df)
-
+    if isinstance(path, WindowsPath):
+        with resources.path(str(path.parent).replace('\\', '.'), path.name) as df:
+            return func(df)
+    else:
+        with resources.path(str(path.parent).replace('/', '.'), path.name) as df:
+            return func(df)
 
 def convert_index_types(df, levels):
     df.index.astype({'Existing': 'category', 'Occupancy status': 'category', 'Income owner': 'category',

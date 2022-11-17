@@ -36,15 +36,16 @@ def run(path=None):
     start = time()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', default='project/input/config.json', help='path config file')
+    parser.add_argument('-c', '--config', default=os.path.join('project', 'input', 'config.json'), help='path config file')
+
     parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
     parser.add_argument('-y', '--year', default=None, help='end year')
     parser.add_argument('-s', '--sensitivity', default=True, help='sensitivity')
 
     args = parser.parse_args()
 
-    if not os.path.isdir('project/output'):
-        os.mkdir('project/output')
+    if not os.path.isdir(os.path.join('project', 'output')):
+        os.mkdir(os.path.join('project', 'output'))
 
     if path is None:
         path = args.config
@@ -204,7 +205,7 @@ def run(path=None):
         del configuration['elasticity']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
-    folder = os.path.join('project/output', '{}{}'.format(name_policy, t))
+    folder = os.path.join(os.path.join('project', 'output'), '{}{}'.format(name_policy, t))
     os.mkdir(folder)
 
     logger = logging.getLogger('log_{}'.format(t))

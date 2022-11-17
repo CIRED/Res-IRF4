@@ -265,6 +265,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     buildings.logger.info('Run {}'.format(year))
     buildings.year = year
     buildings.add_flows([- buildings.flow_demolition()])
+
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,

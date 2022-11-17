@@ -323,6 +323,9 @@ def read_policies(config):
         return [PublicPolicy('oil_fuel_elimination', data['start'], data['end'], data['value'],
                              'heater_regulation', gest='heater')]
 
+    def read_retrofitting_obligation(data):
+        pass
+
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
             'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination}
