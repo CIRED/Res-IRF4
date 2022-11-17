@@ -1,0 +1,40 @@
+Class,Housing type,Heating system,Wall,Floor,Roof,Windows,Ventilation,Stock buildings,Efficiency
+MI-1,Single-family,Wood fuel-Standard boiler,2.5,2.0,2.5,2.4,0.4,688400,0.75
+MI-2,Single-family,Wood fuel-Standard boiler,2.5,2.0,2.5,2.4,0.4,648300,0.75
+MI-3,Single-family,Wood fuel-Standard boiler,2.5,2.0,2.5,2.4,0.4,622300,0.75
+MI-4,Single-family,Wood fuel-Standard boiler,2.5,2.0,2.5,2.4,0.4,3186600,0.75
+MI-5,Single-family,Natural gas-Standard boiler,2.5,2.0,2.5,2.4,0.4,612000,0.6
+MI-6,Single-family,Natural gas-Standard boiler,2.5,2.0,2.5,2.4,0.4,86300,0.6
+MI-7,Single-family,Natural gas-Standard boiler,2.5,2.0,2.5,2.4,0.4,741300,0.6
+MI-8,Single-family,Natural gas-Standard boiler,2.5,2.0,2.5,2.4,0.4,1364000,0.6
+MI-9,Single-family,Natural gas-Standard boiler,2.5,2.0,2.5,2.4,0.4,923400,0.6
+MI-10,Single-family,Natural gas-Standard boiler,1.0,2.0,2.5,2.4,0.4,976100,0.6
+MI-11,Single-family,Natural gas-Standard boiler,2.5,2.0,2.5,2.4,0.4,436600,0.6
+MI-12,Single-family,Electricity-Performance boiler,0.77,1.0,0.77,2.4,0.4,1470000,0.95
+MI-13,Single-family,Natural gas-Standard boiler,1.0,1.0,0.77,2.4,0.4,603600,0.6
+MI-14,Single-family,Electricity-Performance boiler,0.34,1.0,0.34,2.4,0.3,1902400,0.95
+MI-15,Single-family,Electricity-Performance boiler,0.43,0.38,0.25,2.4,0.3,1836000,0.95
+MI-16,Single-family,Natural gas-Standard boiler,0.34,0.4,0.24,2.4,0.2,1053300,0.6
+MI-17,Single-family,Natural gas-Performance boiler,0.25,0.22,0.16,2.4,0.2,2119200,0.76
+LC1,Multi-family,Electricity-Performance boiler,2.5,2.0,2.5,4.3,0.4,280900,0.95
+LC2,Multi-family,Electricity-Performance boiler,2.5,2.0,2.5,4.3,0.4,2003900,0.95
+LC3,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,923400,0.6
+LC4,Multi-family,Electricity-Performance boiler,2.5,2.0,2.5,4.3,0.4,632800,0.95
+LC5,Multi-family,Electricity-Performance boiler,2.5,2.0,2.5,4.3,0.4,141900,0.95
+LC6,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,364900,0.6
+LC7,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,215000,0.6
+LC8,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,352200,0.6
+LC9,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,676500,0.6
+LC10,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,1578800,0.6
+LC11,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,670200,0.6
+LC12,Multi-family,Electricity-Performance boiler,2.5,2.0,2.5,4.3,0.4,214300,0.95
+LC13,Multi-family,Natural gas-Standard boiler,2.5,2.0,2.5,4.3,0.4,883700,0.6
+LC15,Multi-family,Electricity-Performance boiler,1.0,1.0,1.0,3.1,0.4,184200,0.95
+LC16,Multi-family,Natural gas-Standard boiler,1.0,1.0,1.0,3.1,0.4,676800,0.6
+LC18,Multi-family,Electricity-Performance boiler,1.0,0.67,0.77,2.7,0.3,213100,0.95
+LC19,Multi-family,Electricity-Performance boiler,0.67,0.67,0.77,2.7,0.3,484500,0.95
+LC20,Multi-family,Natural gas-Standard boiler,0.67,0.67,0.77,2.7,0.3,159500,0.6
+LC21,Multi-family,Electricity-Performance boiler,0.4,0.4,0.5,2.6,0.3,457600,0.95
+LC22,Multi-family,Electricity-Performance boiler,0.4,0.4,0.5,2.6,0.3,1379600,0.95
+LC23,Multi-family,Electricity-Performance boiler,0.4,0.34,0.3,1.6,0.2,768000,0.95
+LC24,Multi-family,Electricity-Performance boiler,0.34,0.25,0.2,1.6,0.2,2641000,0.95
