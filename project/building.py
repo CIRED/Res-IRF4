@@ -241,7 +241,7 @@ class ThermalBuildings:
                                                          infiltration='Medium', climate=climate, hourly=hourly,
                                                          smooth=smooth)
 
-        heating_need = (heating_need.T * self.stock * self.surface)
+        heating_need = (heating_need.T * self.stock * self.surface).T
         return heating_need
 
     def heating_consumption(self, hourly=True, climate=None, smooth=False):
@@ -3179,7 +3179,7 @@ class AgentBuildings(ThermalBuildings):
 
         return concat(dict_ds, axis=1)
 
-    def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission, carbon_value, health_cost=None,
+    def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission=None, carbon_value=None, health_cost=None,
                              index=None):
         """Function returns bill saved and cost for buildings stock retrofit.
 
@@ -3244,35 +3244,37 @@ class AgentBuildings(ThermalBuildings):
         consumption_saved_agg = (self.stock * consumption_saved.T).T
         consumption_actual_saved_agg = (self.stock * consumption_actual_saved.T).T
 
-        c = self.add_energy(consumption_actual_before)
-        emission_before = reindex_mi(carbon_emission.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                          self.year] * c
+        if carbon_emission is not None:
+            c = self.add_energy(consumption_actual_before)
+            emission_before = reindex_mi(carbon_emission.T.rename_axis('Energy', axis=0), c.index).loc[:,
+                              self.year] * c
 
-        c = self.add_energy(consumption_actual_after)
-        emission_after = (reindex_mi(carbon_emission.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                          self.year] * c.T).T
+            c = self.add_energy(consumption_actual_after)
+            emission_after = (reindex_mi(carbon_emission.T.rename_axis('Energy', axis=0), c.index).loc[:,
+                              self.year] * c.T).T
 
-        emission_saved = - emission_after.sub(emission_before, axis=0).dropna()
+            emission_saved = - emission_after.sub(emission_before, axis=0).dropna()
 
-        output.update({'Emission before (gCO2/dwelling)': emission_before,
-                       'Emission after (gCO2/dwelling)': emission_after,
-                       'Emission saved (gCO2/dwelling)': emission_saved,
-                       })
+            output.update({'Emission before (gCO2/dwelling)': emission_before,
+                           'Emission after (gCO2/dwelling)': emission_after,
+                           'Emission saved (gCO2/dwelling)': emission_saved,
+                           })
 
-        c = self.add_energy(consumption_actual_before)
-        emission_value_before = reindex_mi(carbon_value.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                                self.year] * c
+            if carbon_value is not None:
+                c = self.add_energy(consumption_actual_before)
+                emission_value_before = reindex_mi(carbon_value.T.rename_axis('Energy', axis=0), c.index).loc[:,
+                                        self.year] * c
 
-        c = self.add_energy(consumption_actual_after)
-        emission_value_after = (reindex_mi(carbon_value.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                                self.year] * c.T).T
+                c = self.add_energy(consumption_actual_after)
+                emission_value_after = (reindex_mi(carbon_value.T.rename_axis('Energy', axis=0), c.index).loc[:,
+                                        self.year] * c.T).T
 
-        emission_value_saved = - emission_value_after.sub(emission_value_before, axis=0).dropna()
+                emission_value_saved = - emission_value_after.sub(emission_value_before, axis=0).dropna()
 
-        output.update({'Emission value before (euro/dwelling)': emission_value_before,
-                       'Emission value after (euro/dwelling)': emission_value_after,
-                       'Emission value saved (euro/dwelling)': emission_value_saved
-                       })
+                output.update({'Emission value before (euro/dwelling)': emission_value_before,
+                               'Emission value after (euro/dwelling)': emission_value_after,
+                               'Emission value saved (euro/dwelling)': emission_value_saved
+                               })
 
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = reindex_mi(cost_insulation, index)
@@ -3298,7 +3300,6 @@ class AgentBuildings(ThermalBuildings):
         discount_rate, lifetime = 0.05, 30
         discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
         npv = bill_saved * discount_factor - potential_cost_insulation
-        # social_npv = bill_saved * discount_factor +
 
         out = AgentBuildings.find_best_option(npv, {'bill_saved': bill_saved,
                                                     'cost': potential_cost_insulation,
@@ -3316,6 +3317,7 @@ class AgentBuildings(ThermalBuildings):
 
         output.update({'Max consumption saved': out})
         return output
+
 
     def calibration_exogenous(self, energy_prices, taxes, path_heater=None, path_insulation_int=None,
                               path_insulation_ext=None, scale=1.19651508552344):

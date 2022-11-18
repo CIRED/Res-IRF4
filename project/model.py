@@ -355,14 +355,68 @@ def res_irf(config, path):
         raise e
 
 
+def cost_curve(consumption_before, consumption_saved, cost_insulation):
+
+    insulation = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
+                  'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
+    insulation = pd.MultiIndex.from_frame(pd.DataFrame(insulation))
+
+    consumption_saved = consumption_saved.loc[:, insulation]
+    cost_insulation = cost_insulation.loc[:, insulation]
+
+    cost_efficiency = cost_insulation / consumption_saved
+
+    x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved (%/initial)')
+    y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
+    c = (x * y).rename('Cost (Billion euro)') / 10**9
+    df = pd.concat((x, y, c), axis=1)
+
+    # sort by marginal cost
+    df.sort_values(y.name, inplace=True)
+
+    df[x.name] = x / consumption_before.sum()
+    df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
+
+    df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
+
+    df.dropna(inplace=True)
+    df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
+    # make_plot(df, y_label=c.name, legend=False, integer=False)
+
+    return df
+
+
+def social_planner(aggregation_archetype=None, climate=2006, smooth=False):
+
+    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'])
+    buildings = resirf_inputs['buildings']
+    energy_prices = resirf_inputs['energy_prices']
+    cost_insulation = resirf_inputs['cost_insulation']
+
+    heating_need = buildings.heating_need(hourly=True, climate=climate, smooth=smooth)
+
+    output = buildings.mitigation_potential(energy_prices, cost_insulation)
+
+    consumption_saved = output['Consumption saved (kWh/segment)']
+    cost_insulation = output['Cost insulation (euro/segment)']
+    cost_insulation[consumption_saved == 0] = 0
+    consumption_before = output['Consumption before (kWh/segment)']
+
+    dict_cost, dict_heat = dict(), dict()
+    if aggregation_archetype is not None:
+        dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :]) for n, g in consumption_saved.groupby(aggregation_archetype)}
+        heating_need_grouped = heating_need.groupby(aggregation_archetype).sum()
+        dict_heat = {i: heating_need_grouped.loc[i, :] for i in heating_need_grouped.index}
+    else:
+        dict_cost['global'] = cost_curve(consumption_before, consumption_saved, cost_insulation)
+        dict_heat['global'] = heating_need.sum()
+
+    return dict_cost, dict_heat
+
+
 if __name__ == '__main__':
-    output = get_inputs('output')
-    buildings = output['buildings']
-    energy_prices = output['energy_prices']
-    cost_insulation = output['cost_insulation']
-    carbon_emission = output['carbon_emission']
-    carbon_value_kwh = output['carbon_value_kwh']
-    health_cost = output['health_cost']
-    output = buildings.mitigation_potential(energy_prices, cost_insulation, carbon_emission, carbon_value_kwh,
-                                            health_cost=health_cost)
+    from utils import make_plots
+    dict_cost, dict_heat = social_planner(aggregation_archetype=['Housing type', 'Heating system'])
+    make_plots(dict_cost, 'Cost (euro)')
+
 
