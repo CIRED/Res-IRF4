@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 
 from project.utils import reindex_mi, get_pandas
+import os
+from datetime import timedelta
 
 """LOGISTIC_COEFFICIENT = pd.read_csv('project/input/logistic_regression_coefficient_epc.csv', index_col=[0])
 LOGISTIC_COEFFICIENT.columns = ['Intercept', 'Proxy_conso_square']
@@ -104,12 +106,17 @@ HOURS_LIGHT = 2123 # h
 
 HOURLY_PROFILE = pd.Series(
     [0.035, 0.039, 0.041, 0.042, 0.046, 0.05, 0.055, 0.058, 0.053, 0.049, 0.045, 0.041, 0.037, 0.034,
-     0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042], index=pd.Index(range(0, 24), name='hour'))
+     0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042], index=pd.TimedeltaIndex(range(0, 24), unit='h'))
+
+CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_data.csv'),
+                'day': os.path.join('project', 'input', 'climatic', 'climatic_data_daily.csv'),
+                'smooth_day': os.path.join('project', 'input', 'climatic', 'climatic_data_smooth_daily.csv')
+                }
 
 
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, climate=None, hourly=False):
+                              air_rate=None, unobserved=None, climate=None, hourly=False, smooth=False):
     """Monthly stead-state space heating need.
 
     Parameters
@@ -120,33 +127,44 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     u_roof: pd.Series
     u_windows: pd.Series
     ratio_surface: pd.Series
-    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
-    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
-    infiltration: {'Minimal', 'Low', 'Medium', 'High'}
-    air_rate: optional
-    unobserved: optional, {'Minimal', 'High'}
+    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}, default None
+    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}, default None
+    infiltration: {'Minimal', 'Low', 'Medium', 'High'}, default None
+    air_rate: pd.Series, default None
+    unobserved: {'Minimal', 'High'}, default None
+    climate: int, default None
+        Climatic year to use to calculate heating need.
+    hourly: bool, default False
+        If yes hourly result, otherwise return yearly result.
+    smooth: bool, default False
+        Use smooth daily data to calculate heating need.
 
     Returns
     -------
     Conventional heating need (kWh/m2.a)
     """
 
+    temp_ext = TEMP_EXT_3CL
+    days_heating_season = DAYS_HEATING_SEASON_3CL
+    solar_radiation = SOLAR_RADIATION_3CL
     if climate is not None:
-        temp_ext = climate['TEMP_EXT']
-        days_heating_season = climate['DAYS_HEATING_SEASON']
-        solar_radiation = climate['SOLAR_RADIATION']
+        if not hourly:
+            data = get_pandas(CLIMATE_DATA['year'],
+                                 func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
 
-    else:
-        temp_ext = TEMP_EXT_3CL
-        days_heating_season = DAYS_HEATING_SEASON_3CL
-        solar_radiation = SOLAR_RADIATION_3CL
+            temp_ext = float(data.loc[data.index.year == climate, 'TEMP_EXT'])
+            days_heating_season = float(data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'])
+            solar_radiation = float(data.loc[data.index.year == climate, 'SOLAR_RADIATION'])
 
-    if hourly:
-        climate = get_pandas('project/input/climatic/climatic_data_daily.csv',
-                              func=lambda x: pd.read_csv(x, index_col=[0, 1]))
-        temp_ext = climate['TEMP_EXT'].rename(None)
-        days_heating_season = climate['DAYS_HEATING_SEASON'].rename(None)
-        solar_radiation = climate['SOLAR_RADIATION'].rename(None)
+        if hourly:
+            path = CLIMATE_DATA['day']
+            if smooth:
+                path = CLIMATE_DATA['smooth_day']
+
+            data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+            temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
+            days_heating_season = data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'].rename(None)
+            solar_radiation = data.loc[data.index.year == climate, 'SOLAR_RADIATION'].rename(None)
 
     if unobserved == 'Minimal':
         th_bridging = 'Minimal'
@@ -205,8 +223,12 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
         heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
+
+        # temp = heat_need.rename('data').reset_index([l for l in heat_need.index.names if l != 'time'])
         heat_need = heat_need.to_frame().dot(HOURLY_PROFILE.to_frame().T)
-        heat_need = heat_need.unstack(['month', 'day'])
+        heat_need = heat_need.unstack(['time'])
+        heat_need.columns = heat_need.columns.get_level_values(None) + heat_need.columns.get_level_values('time')
+
         return heat_need
 
 
@@ -512,7 +534,7 @@ if __name__ == '__main__':
     from project.model import get_inputs
     output = get_inputs(variables=['buildings'])
     buildings = output['buildings']
-    heating_need = buildings.hourly_heating_need()
+    heating_need = buildings.heating_need(climate=2006)
     heating_need.sum(axis=1)
     print('break')
 

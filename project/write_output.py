@@ -174,7 +174,7 @@ def plot_scenario(output, stock, buildings):
     df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
     df.columns = resources_data['index']['Energy']
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
-                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
+                   format_y=lambda y, _: '{:.0f}'.format(y),
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
                    total=False, loc='left', left=1.2)
 

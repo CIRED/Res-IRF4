@@ -54,11 +54,6 @@ def get_pandas(path, func=lambda x: pd.read_csv(x)):
         with resources.path(str(path.parent).replace('/', '.'), path.name) as df:
             return func(df)
 
-def convert_index_types(df, levels):
-    df.index.astype({'Existing': 'category', 'Occupancy status': 'category', 'Income owner': 'category',
-                        'Income tenant': 'category', 'Housing type': 'category', 'Heating system': 'category'})
-    df.reset_index()
-
 
 def timing(f):
     @wraps(f)
@@ -221,7 +216,8 @@ def save_fig(fig, save=None, bbox_inches='tight'):
         plt.show()
 
 
-def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True):
+def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
+              ymin=0):
     """Make plot.
 
     Parameters
@@ -232,6 +228,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     format_y: function
     save: str, optional
     scatter: pd.Series, default None
+    ymin: float, optional
     """
     if integer:
         df.index = df.index.astype(int)
@@ -245,7 +242,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=0, xinteger=True)
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer)
     if legend:
         format_legend(ax)
     save_fig(fig, save=save)
