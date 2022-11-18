@@ -1,0 +1,40 @@
+Class,Housing type,Wall,Floor,Roof,Windows,Ventilation,Heating system,Ratio_surface_Wall,Ratio_surface_Floor,Ratio_surface_Roof,Ratio_surface_Window
+MI-1,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Wood fuel-Standard boiler,1.76,0.50,0.50,0.15
+MI-2,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Wood fuel-Standard boiler,1.33,0.50,0.85,0.13
+MI-3,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Wood fuel-Standard boiler,0.87,0.89,1.61,0.09
+MI-4,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Wood fuel-Standard boiler,1.25,0.67,0.67,0.13
+MI-5,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,1.45,0.51,0.80,0.18
+MI-6,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,1.06,0.35,0.55,0.24
+MI-7,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,1.02,0.50,0.50,0.15
+MI-8,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,1.55,0.55,0.55,0.21
+MI-9,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,1.22,0.50,0.50,0.20
+MI-10,Single-family,1.00,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,1.11,1.01,1.74,0.22
+MI-11,Single-family,2.50,2.00,2.50,2.40,Natural ventilation,Natural gas-Standard boiler,0.77,0.50,0.50,0.17
+MI-12,Single-family,0.77,1.00,0.77,2.40,Natural ventilation,Electricity-Performance boiler,0.82,1.00,1.48,0.18
+MI-13,Single-family,1.00,1.00,0.77,2.40,Natural ventilation,Natural gas-Standard boiler,0.91,0.50,0.50,0.21
+MI-14,Single-family,0.34,1.00,0.34,2.40,CMV,Electricity-Performance boiler,1.02,1.00,1.98,0.20
+MI-15,Single-family,0.43,0.38,0.25,2.40,CMV,Electricity-Performance boiler,0.97,0.95,1.89,0.19
+MI-16,Single-family,0.34,0.40,0.24,2.40,CMV hygro,Natural gas-Standard boiler,1.27,0.50,0.82,0.24
+MI-17,Single-family,0.25,0.22,0.16,2.40,CMV hygro,Natural gas-Performance boiler,1.27,0.50,0.82,0.24
+LC1,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Electricity-Performance boiler,0.57,0.08,0.09,0.14
+LC2,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Electricity-Performance boiler,0.43,0.11,0.12,0.14
+LC3,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.41,0.15,0.25,0.17
+LC4,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Electricity-Performance boiler,0.91,0.13,0.15,0.23
+LC5,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Electricity-Performance boiler,0.64,0.12,0.08,0.28
+LC6,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.36,0.13,0.09,0.15
+LC7,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.51,0.14,0.14,0.22
+LC8,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.40,0.08,0.11,0.17
+LC9,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.43,0.30,0.33,0.18
+LC10,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.63,0.17,0.17,0.52
+LC11,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.56,0.03,0.09,0.46
+LC12,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Electricity-Performance boiler,0.39,0.16,0.02,0.17
+LC13,Multi-family,2.50,2.00,2.50,4.30,Natural ventilation,Natural gas-Standard boiler,0.57,0.15,0.10,0.38
+LC15,Multi-family,1.00,1.00,1.00,3.10,Natural ventilation,Electricity-Performance boiler,0.44,0.35,0.35,0.29
+LC16,Multi-family,1.00,1.00,1.00,3.10,Natural ventilation,Natural gas-Standard boiler,0.36,0.18,0.15,0.30
+LC18,Multi-family,1.00,0.67,0.77,2.70,CMV,Electricity-Performance boiler,0.86,0.03,0.12,0.58
+LC19,Multi-family,0.67,0.67,0.77,2.70,CMV,Electricity-Performance boiler,0.46,0.10,0.10,0.31
+LC20,Multi-family,0.67,0.67,0.77,2.70,CMV,Natural gas-Standard boiler,0.51,0.10,0.05,0.34
+LC21,Multi-family,0.40,0.40,0.50,2.60,CMV,Electricity-Performance boiler,1.41,0.33,0.41,0.94
+LC22,Multi-family,0.40,0.40,0.50,2.60,CMV,Electricity-Performance boiler,0.59,0.06,0.15,0.48
+LC23,Multi-family,0.40,0.34,0.30,1.60,CMV hygro,Electricity-Performance boiler,0.27,0.12,0.18,0.22
+LC24,Multi-family,0.34,0.25,0.20,1.60,CMV hygro,Electricity-Performance boiler,0.27,0.12,0.18,0.22
