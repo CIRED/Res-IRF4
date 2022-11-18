@@ -224,7 +224,7 @@ class ThermalBuildings:
         return df
 
     def heating_need(self, hourly=True, climate=None, smooth=False):
-        """Calculate hourly heating need of the current building stock.
+        """Calculate heating need of the current building stock.
 
         Returns
         -------
@@ -243,6 +243,33 @@ class ThermalBuildings:
 
         heating_need = (heating_need.T * self.stock * self.surface)
         return heating_need
+
+    def heating_consumption(self, hourly=True, climate=None, smooth=False):
+        """Calculation consumption standard of the current building stock.
+
+        Parameters
+        ----------
+        hourly
+        climate
+        smooth
+
+        Returns
+        -------
+
+        """
+
+        idx = self.stock.index
+        wall = Series(idx.get_level_values('Wall'), index=idx)
+        floor = Series(idx.get_level_values('Floor'), index=idx)
+        roof = Series(idx.get_level_values('Roof'), index=idx)
+        windows = Series(idx.get_level_values('Windows'), index=idx)
+        heating_system = Series(idx.get_level_values('Heating system'), index=idx).astype('object')
+        efficiency = to_numeric(heating_system.replace(self._efficiency))
+        consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
+                                                         efficiency, climate=climate, hourly=hourly,
+                                                         smooth=smooth)
+        return consumption
+
 
     def consumption_standard(self, indexes, level_heater='Heating system'):
         """Pre-calculate space energy consumption based only on relevant levels.
@@ -276,21 +303,13 @@ class ThermalBuildings:
             windows = Series(idx.get_level_values('Windows'), index=idx)
             heating_system = Series(idx.get_level_values('Heating system'), index=idx).astype('object')
             efficiency = to_numeric(heating_system.replace(self._efficiency))
-            # housing_type = Series(idx.get_level_values('Housing type'), index=idx)
 
-            # consumption = thermal.heating_consumption(wall, floor, roof, windows, efficiency, self._ratio_surface)
             consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                              efficiency)
 
-            # energy = heating_system.str.split('-').str[0].rename('Energy')
-            # model_3uses_consumption
-            # consumption_primary = thermal.final2primary(consumption, energy)
-            # consumption_3uses = thermal.model_3uses_consumption(consumption_primary)
             certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
                                                                                self._ratio_surface.copy(),
                                                                                efficiency, idx)
-
-            # mistake: certificate = thermal.certificate(consumption_primary)
 
             self.consumption_sd_building = concat((self.consumption_sd_building, consumption))
             self.consumption_sd_building.index = MultiIndex.from_tuples(

@@ -116,7 +116,8 @@ CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_d
 
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, climate=None, hourly=False, smooth=False):
+                              air_rate=None, unobserved=None, climate=None, hourly=False, smooth=False
+                              ):
     """Monthly stead-state space heating need.
 
     Parameters
@@ -224,7 +225,6 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
 
-        # temp = heat_need.rename('data').reset_index([l for l in heat_need.index.names if l != 'time'])
         heat_need = heat_need.to_frame().dot(HOURLY_PROFILE.to_frame().T)
         heat_need = heat_need.unstack(['time'])
         heat_need.columns = heat_need.columns.get_level_values(None) + heat_need.columns.get_level_values('time')
@@ -234,7 +234,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
 def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                               air_rate=None, unobserved=None, climate=None,
+                               air_rate=None, unobserved=None, climate=None, hourly=False, smooth=False,
                                ):
     """Monthly stead-state space heating final energy delivered.
 
@@ -251,7 +251,12 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     infiltration: {'Minimal', 'Low', 'Medium', 'High'}
     air_rate: default None
     unobserved: {'Minimal', 'High'}, default None
-    climate: default None
+    climate: int, default None
+        Climatic year to use to calculate heating need.
+    hourly: bool, default False
+        If yes hourly result, otherwise return yearly result.
+    smooth: bool, default False
+        Use smooth daily data to calculate heating need.
 
     Returns
     -------
@@ -260,7 +265,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                                           th_bridging=th_bridging, vent_types=vent_types,
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
-                                          climate=climate
+                                          climate=climate, hourly=hourly, smooth=smooth
                                           )
     return heat_need / efficiency
 
