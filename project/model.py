@@ -417,6 +417,6 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False):
 if __name__ == '__main__':
     from utils import make_plots
     dict_cost, dict_heat = social_planner(aggregation_archetype=['Housing type', 'Heating system'])
-    make_plots(dict_cost, 'Cost (euro)')
+    make_plots(dict_cost, 'Cost (Billion euro)')
 
 
