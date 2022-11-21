@@ -184,6 +184,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
         If config is None use configuration file of Reference scenario
     variables: list, optional
         'buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost'
+    building_stock
 
     Returns
     -------
@@ -398,7 +399,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation):
     return df
 
 
-def social_planner(aggregation_archetype=None, climate=2006, smooth=False):
+def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3'):
     """Function used when coupling with power system model.
 
     Parameters
@@ -406,13 +407,15 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False):
     aggregation_archetype
     climate
     smooth
+    building_stock: optional, {'medium_1', 'medium_3', 'medium_5', 'simple_1', 'simple_3', 'simple_5'}
 
     Returns
     -------
 
     """
 
-    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'])
+    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'],
+                               building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_sdes2018_{}.csv'.format(building_stock)))
     buildings = resirf_inputs['buildings']
     energy_prices = resirf_inputs['energy_prices']
     cost_insulation = resirf_inputs['cost_insulation']
