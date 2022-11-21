@@ -248,7 +248,8 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     save_fig(fig, save=save)
 
 
-def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=False):
+def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
+               integer=False, loc='upper', left=1.04):
     """Make plot.
 
     Parameters
@@ -260,8 +261,10 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     save: str, optional
     scatter: pd.Series, default None
     """
+    sns.set_palette(sns.color_palette('husl', len(dict_df.keys())))
 
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+
 
     for key, df in dict_df.items():
 
@@ -280,7 +283,7 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=0, xinteger=True)
     if legend:
-        format_legend(ax)
+        format_legend(ax, loc=loc, left=left)
     save_fig(fig, save=save)
 
 

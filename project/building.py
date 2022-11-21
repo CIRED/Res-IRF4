@@ -16,6 +16,7 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 import os
+from typing import Union, Any
 
 import pandas as pd
 from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique, read_csv
@@ -72,10 +73,11 @@ class ThermalBuildings:
     taxes_expenditure_details: dict
 
     """
+
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path=None, year=2018,
                  debug_mode=False):
 
-        self.energy_poverty = None
+        self.energy_poverty, self.heating_intensity = None, None
         self.consumption_3uses_building, self.consumption_sd_building, self.certificate_building = Series(
             dtype='float'), Series(dtype='float'), Series(dtype='float')
 
@@ -270,7 +272,6 @@ class ThermalBuildings:
                                                          smooth=smooth)
         return consumption
 
-
     def consumption_standard(self, indexes, level_heater='Heating system'):
         """Pre-calculate space energy consumption based only on relevant levels.
 
@@ -360,6 +361,7 @@ class ThermalBuildings:
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
             heating_intensity = -0.191 * budget_share.apply(log) + 0.1105
+            self.heating_intensity = heating_intensity
             consumption *= heating_intensity
             self.heating_intensity_avg = (self.stock * heating_intensity).sum() / self.stock.sum()
             self.energy_poverty = (self.stock[self.stock.index.get_level_values(
@@ -723,9 +725,6 @@ class AgentBuildings(ThermalBuildings):
         if not isinstance(choice_insulation, MultiIndex):
             choice_insulation = self._choice_insulation
 
-        # no_insulation used for specific reason
-        # no_insulation = MultiIndex.from_tuples([(False, False, False, False)], names=choice_insulation.names)
-        # choice_insulation = choice_insulation.append(no_insulation)
         if not isinstance(performance_insulation, MultiIndex):
             performance_insulation = self._performance_insulation
 
@@ -3199,29 +3198,38 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
-        # carbon_emission = inputs['carbon_emission']
-        # carbon_value = inputs['carbon_value_kwh']
 
         output = dict()
 
         if index is None:
             index = self.stock.index
 
+
         consumption_before = self.consumption_standard(index)[0]
         consumption_after, _, certificate_after = self.prepare_consumption(self._choice_insulation, index=index)
         consumption_saved = (consumption_before - consumption_after.T).T
 
+        self._efficiency.index.names = ['Heating system']
+        efficiency = reindex_mi(self._efficiency, consumption_before.index)
+        need_before = consumption_before * efficiency
+
         consumption_before = reindex_mi(consumption_before, index)
+        need_before = reindex_mi(need_before, index)
         consumption_after = reindex_mi(consumption_after, index)
         consumption_saved = reindex_mi(consumption_saved, index)
+        efficiency = reindex_mi(self._efficiency, consumption_saved.index)
+        need_saved = (consumption_saved.T * efficiency).T
 
         consumption_actual_before = self.consumption_actual(prices.loc[self.year, :], consumption_before)
         consumption_actual_after = self.consumption_actual(prices.loc[self.year, :], consumption_after)
         consumption_actual_saved = (consumption_actual_before - consumption_actual_after.T).T
 
-        consumption_before = (reindex_mi(self._surface, index) * consumption_before.T).T
+        consumption_before = reindex_mi(self._surface, index) * consumption_before
         consumption_after = (reindex_mi(self._surface, index) * consumption_after.T).T
         consumption_saved = (reindex_mi(self._surface, index) * consumption_saved.T).T
+
+        need_before = reindex_mi(self._surface, index) * need_before
+        need_saved = (reindex_mi(self._surface, index) * need_saved.T).T
 
         consumption_actual_before = (reindex_mi(self._surface, index) * consumption_actual_before.T).T
         consumption_actual_after = (reindex_mi(self._surface, index) * consumption_actual_after.T).T
@@ -3231,12 +3239,14 @@ class AgentBuildings(ThermalBuildings):
                        'Surface (m2/segment)': self.stock * reindex_mi(self._surface, index),
                        'Consumption before (kWh/dwelling)': consumption_before,
                        'Consumption before (kWh/segment)': consumption_before * self.stock,
+                       'Need before (kWh/segment)': need_before * self.stock,
                        'Consumption actual before (kWh/dwelling)': consumption_actual_before,
                        'Consumption actual before (kWh/segment)': consumption_actual_before * self.stock,
                        'Consumption actual after (kWh/dwelling)': consumption_actual_after,
                        'Consumption actual after (kWh/segment)': (consumption_actual_after.T * self.stock).T,
                        'Consumption saved (kWh/dwelling)': consumption_saved,
                        'Consumption saved (kWh/segment)': (consumption_saved.T * self.stock).T,
+                       'Need saved (kWh/segment)': (need_saved.T * self.stock).T,
                        'Consumption actual saved (kWh/dwelling)': consumption_actual_saved,
                        'Consumption actual saved (kWh/segment)': (consumption_actual_saved.T * self.stock).T
                        })
@@ -3317,6 +3327,7 @@ class AgentBuildings(ThermalBuildings):
 
         output.update({'Max consumption saved': out})
         return output
+
 
 
     def calibration_exogenous(self, energy_prices, taxes, path_heater=None, path_insulation_int=None,

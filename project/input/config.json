@@ -20,7 +20,7 @@
     },
     "target_freeriders": 0.7,
     "preferences_zeros": false,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_5.csv",
     "population": "project/input/population.csv",
     "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
     "insulation_extensive": "project/input/revealed_data/extensive_margin_insulation.csv",
@@ -99,7 +99,7 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": true,
+    "quintiles": false,
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null,

@@ -151,7 +151,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     if climate is not None:
         if not hourly:
             data = get_pandas(CLIMATE_DATA['year'],
-                                 func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+                              func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
 
             temp_ext = float(data.loc[data.index.year == climate, 'TEMP_EXT'])
             days_heating_season = float(data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'])
