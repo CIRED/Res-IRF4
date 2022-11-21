@@ -399,7 +399,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation):
     return df
 
 
-def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3'):
+def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3', freq='hour'):
     """Function used when coupling with power system model.
 
     Parameters
@@ -408,6 +408,8 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     climate
     smooth
     building_stock: optional, {'medium_1', 'medium_3', 'medium_5', 'simple_1', 'simple_3', 'simple_5'}
+        Numbers of clusters + heterogeneity of u values.
+    freq: optional, {'hour', 'day', 'month', 'year'}
 
     Returns
     -------
@@ -420,7 +422,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     energy_prices = resirf_inputs['energy_prices']
     cost_insulation = resirf_inputs['cost_insulation']
 
-    heating_need = buildings.heating_need(hourly=True, climate=climate, smooth=smooth)
+    heating_need = buildings.heating_need(freq=freq, climate=climate, smooth=smooth)
     buildings.consumption_actual(energy_prices.loc[buildings.first_year, :])
     heating_intensity = buildings.heating_intensity
 
@@ -471,7 +473,15 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 if __name__ == '__main__':
     from utils import make_plots
-    dict_cost, dict_heat = social_planner(aggregation_archetype=['Housing type', 'Performance'])
-    make_plots(dict_cost, 'Cost (Billion euro)')
+
+    output = get_inputs(variables=['buildings'])
+    buildings = output['buildings']
+    h = buildings.heating_need(freq='year')
+    h1 = buildings.heating_need(freq='month')
+    h2 = buildings.heating_need(freq='day')
+    h3 = buildings.heating_need(freq='hour')
+
+    """dict_cost, dict_heat = social_planner(aggregation_archetype=['Housing type', 'Performance'])
+    make_plots(dict_cost, 'Cost (Billion euro)')"""
 
 

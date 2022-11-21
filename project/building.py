@@ -225,7 +225,7 @@ class ThermalBuildings:
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
-    def heating_need(self, hourly=True, climate=None, smooth=False):
+    def heating_need(self, climate=2006, smooth=False, freq='year'):
         """Calculate heating need of the current building stock.
 
         Returns
@@ -240,18 +240,18 @@ class ThermalBuildings:
 
         heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          th_bridging='Medium', vent_types='Ventilation naturelle',
-                                                         infiltration='Medium', climate=climate, hourly=hourly,
-                                                         smooth=smooth)
+                                                         infiltration='Medium', climate=climate,
+                                                         smooth=smooth, freq=freq)
 
         heating_need = (heating_need.T * self.stock * self.surface).T
         return heating_need
 
-    def heating_consumption(self, hourly=True, climate=None, smooth=False):
+    def heating_consumption(self, freq='year', climate=None, smooth=False):
         """Calculation consumption standard of the current building stock.
 
         Parameters
         ----------
-        hourly
+        freq
         climate
         smooth
 
@@ -268,7 +268,7 @@ class ThermalBuildings:
         heating_system = Series(idx.get_level_values('Heating system'), index=idx).astype('object')
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
-                                                         efficiency, climate=climate, hourly=hourly,
+                                                         efficiency, climate=climate, freq=freq,
                                                          smooth=smooth)
         return consumption
 
