@@ -62,8 +62,8 @@ class PublicPolicy:
         Gives the amount of the cost of a gesture for a segment over which the subvention applies.
 
         If self.new, cost global is the amount loaned for gestures which are considered as 'global renovations',
-        and thus caped by the proper maximum zil amount tacking the heater replacement into account.
-        Also, cost_no_global are the amount loaned for individual or bunch renovations actions.
+        and thus caped by the proper maximum zil amount taking the heater replacement into account.
+        Also, cost_no_global are the amount loaned for unique or bunch renovations actions.
 
 
         Parameters
@@ -279,7 +279,19 @@ def read_policies(config):
         """Creates a zero_interest_loan PublicPolicy instance.
 
         "new" is a specific attribute of zero_interest_loan,
-            if it is true the zil will be implemented with gesture and not epc jumps requirements.
+            if it is true the zil will be implemented by gestures and not by epc jumps requirements.
+            Some of the gestures available to a segment are qualified by the zil program as 'global renovation'
+            and have a higher loan cap (50 000). For a gesture to be a 'global renovation' it must reduce of 35%
+            the conventional primary energy need and the resulting building must not be of G or F epc level.
+            This is define in define_policy_target (in building.py).
+            Other gesture are 'unique or bunch of actions' and have detailed caps:
+            - 1 action on window: 7 000
+            - 1 other action: 15  000
+            - 2 actions: 25 000
+            - 3 actions or more: 30 000
+            For each of the gestures of a segment we will apply to its cost the proper cap to have the amount loaned,
+             and carefully take into account the cost of heating replacement if need.
+
         "ad_valorem" means the policy will be considered as a subvention in the DCM,
             if it's False, the DCM will have another coefficient of preference associated to a dummy variable zil.
 
