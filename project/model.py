@@ -431,6 +431,20 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
     heating_need = buildings.heating_need(freq=freq, climate=climate, smooth=smooth)
     heating_need_class = heating_need.sum(axis=1) / (buildings.stock * reindex_mi(buildings._surface, buildings.stock.index))
+
+    insulation_class = heating_need_class.copy()
+    insulation_class[insulation_class <= 100] = 1
+    insulation_class[(insulation_class > 100) & (insulation_class <= 200)] = 2
+    insulation_class[(insulation_class > 200) & (insulation_class <= 300)] = 3
+    insulation_class[insulation_class > 300] = 4
+    insulation_class = insulation_class.astype(str).rename('Insulation')
+
+    wall_class = heating_need_class.copy()
+    wall_class[wall_class.index.get_level_values('Wall') < 1] = 1
+    wall_class[(wall_class.index.get_level_values('Wall') >= 1) & (wall_class.index.get_level_values('Wall') < 2)] = 2
+    wall_class[wall_class.index.get_level_values('Wall') >= 2] = 3
+    wall_class = wall_class.astype(str).rename('Wall class')
+
     buildings.consumption_actual(energy_prices.loc[buildings.first_year, :])
     heating_intensity = buildings.heating_intensity
 
@@ -468,6 +482,31 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
             consumption_before = buildings.add_energy(consumption_before)
 
+        if 'Insulation' in aggregation_archetype:
+            heating_need = pd.concat((heating_need, insulation_class), axis=1).set_index('Insulation', append=True)
+
+            consumption_saved = pd.concat((consumption_saved, insulation_class), axis=1).set_index('Insulation', append=True)
+            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
+
+            cost_insulation = pd.concat((cost_insulation, insulation_class), axis=1).set_index('Insulation', append=True)
+            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
+
+            consumption_before = pd.concat((consumption_before, insulation_class), axis=1).set_index('Insulation', append=True).squeeze()
+
+        if 'Wall class' in aggregation_archetype:
+            heating_need = pd.concat((heating_need, wall_class), axis=1).set_index('Wall class', append=True)
+
+            consumption_saved = pd.concat((consumption_saved, wall_class), axis=1).set_index('Wall class',
+                                                                                                   append=True)
+            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
+
+            cost_insulation = pd.concat((cost_insulation, wall_class), axis=1).set_index('Wall class',
+                                                                                               append=True)
+            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
+
+            consumption_before = pd.concat((consumption_before, wall_class), axis=1).set_index('Wall class',
+                                                                                                     append=True).squeeze()
+
     dict_cost, dict_heat = dict(), dict()
     if aggregation_archetype is not None:
         dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :], percent=percent) for n, g in consumption_saved.groupby(aggregation_archetype)}
@@ -481,23 +520,23 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 
 if __name__ == '__main__':
-    dict_cost, dict_heat_bis = social_planner(aggregation_archetype=['Performance'], building_stock='medium_5',
-                                              freq='hour', percent=False)
+    from utils import make_plots
+    dict_cost, _ = social_planner(aggregation_archetype=['Wall class'], building_stock='medium_5',
+                                  freq='hour', percent=False)
+    make_plots(dict_cost, 'Cost (Billion euro)')
 
 
-    buildings = get_inputs(variables=['buildings'])['buildings']
+
+    """buildings = get_inputs(variables=['buildings'])['buildings']
 
     h_month = buildings.heating_need(climate=2006, smooth=False, freq='month')
     h_year = buildings.heating_need(climate=2006, smooth=False, freq='year')
 
     h_month = buildings.heating_need(climate=2006, smooth=False, freq='month')
     h_day = buildings.heating_need(climate=2006, smooth=False, freq='day')
-    h_hour = buildings.heating_need(climate=2006, smooth=False, freq='hour')
+    h_hour = buildings.heating_need(climate=2006, smooth=False, freq='hour')"""
 
 
-    from utils import make_plots
 
-    dict_cost, dict_heat = social_planner(aggregation_archetype=None)
-    make_plots(dict_cost, 'Cost (Billion euro)')
 
 

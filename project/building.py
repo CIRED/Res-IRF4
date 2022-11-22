@@ -3204,7 +3204,6 @@ class AgentBuildings(ThermalBuildings):
         if index is None:
             index = self.stock.index
 
-
         consumption_before = self.consumption_standard(index)[0]
         consumption_after, _, certificate_after = self.prepare_consumption(self._choice_insulation, index=index)
         consumption_saved = (consumption_before - consumption_after.T).T
@@ -3327,8 +3326,6 @@ class AgentBuildings(ThermalBuildings):
 
         output.update({'Max consumption saved': out})
         return output
-
-
 
     def calibration_exogenous(self, energy_prices, taxes, path_heater=None, path_insulation_int=None,
                               path_insulation_ext=None, scale=1.19651508552344):
