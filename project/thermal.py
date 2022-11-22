@@ -188,23 +188,26 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         air_rate = VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]
 
     coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
-
     coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - temp_ext) * days_heating_season
 
     if freq == 'year':
+
         heat_transfer = (coefficient_ventilation_transfer + coefficient_transmission_transfer) * coefficient_climatic
+
         solar_load = FACTOR_SHADING * (1 - FACTOR_FRAME) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * solar_radiation * surface_components.loc[:, 'Windows']
 
         internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * days_heating_season
 
+        heat_gains = solar_load + internal_heat_sources
+
         time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
         a_h = A_0 + time_constant / TAU_0
+
         heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
         gain_utilization_factor = (1 - heat_balance_ratio ** a_h) / (1 - heat_balance_ratio ** (a_h + 1))
 
-        heat_gains = solar_load + internal_heat_sources
-
         heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL
+
         return heat_need
 
     else:
@@ -216,12 +219,12 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
         internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * days_heating_season
 
+        heat_gains = solar_load + internal_heat_sources
+
         time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
         a_h = A_0 + time_constant / TAU_0
         heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
         gain_utilization_factor = (1 - (heat_balance_ratio.T ** a_h).T) / (1 - (heat_balance_ratio.T ** (a_h + 1)).T)
-
-        heat_gains = solar_load + internal_heat_sources
 
         heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)

@@ -356,7 +356,7 @@ def res_irf(config, path):
         raise e
 
 
-def cost_curve(consumption_before, consumption_saved, cost_insulation):
+def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=True):
     """Create cost curve.
 
     Parameters
@@ -364,6 +364,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation):
     consumption_before
     consumption_saved
     cost_insulation
+    percent: bool, default True
 
     Returns
     -------
@@ -379,7 +380,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation):
 
     cost_efficiency = cost_insulation / consumption_saved
 
-    x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved (%/initial)')
+    x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved')
     y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
     c = (x * y).rename('Cost (Billion euro)') / 10**9
     df = pd.concat((x, y, c), axis=1)
@@ -387,19 +388,25 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation):
     # sort by marginal cost
     df.sort_values(y.name, inplace=True)
 
-    df[x.name] = x / consumption_before.sum()
+    if percent is True:
+        df[x.name] = x / consumption_before.sum()
+        # x.name = '{} (%/initial)'.format(x.name)
+    else:
+        df[x.name] /= 10**9
+        # x.name = '{} (TWh/an)'.format(x.name)
+
     df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
 
     df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
 
     df.dropna(inplace=True)
     df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
-    # make_plot(df, y_label=c.name, legend=False, integer=False)
 
     return df
 
 
-def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3', freq='hour'):
+def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3', freq='hour',
+                   percent=True):
     """Function used when coupling with power system model.
 
     Parameters
@@ -415,7 +422,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     -------
 
     """
-
+    from project.utils import reindex_mi
     resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'],
                                building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_sdes2018_{}.csv'.format(building_stock)))
     buildings = resirf_inputs['buildings']
@@ -423,6 +430,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     cost_insulation = resirf_inputs['cost_insulation']
 
     heating_need = buildings.heating_need(freq=freq, climate=climate, smooth=smooth)
+    heating_need_class = heating_need.sum(axis=1) / (buildings.stock * reindex_mi(buildings._surface, buildings.stock.index))
     buildings.consumption_actual(energy_prices.loc[buildings.first_year, :])
     heating_intensity = buildings.heating_intensity
 
@@ -437,31 +445,32 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
     consumption_before = output['Need before (kWh/segment)']
 
-    if 'Performance' in aggregation_archetype:
-        heating_need = buildings.add_certificate(heating_need)
+    if aggregation_archetype is not None:
+        if 'Performance' in aggregation_archetype:
+            heating_need = buildings.add_certificate(heating_need)
 
-        consumption_saved = buildings.add_certificate(consumption_saved)
-        consumption_saved.columns = output['Need saved (kWh/segment)'].columns
+            consumption_saved = buildings.add_certificate(consumption_saved)
+            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
 
-        cost_insulation = buildings.add_certificate(cost_insulation)
-        cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
+            cost_insulation = buildings.add_certificate(cost_insulation)
+            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
 
-        consumption_before = buildings.add_certificate(consumption_before)
+            consumption_before = buildings.add_certificate(consumption_before)
 
-    if 'Energy' in aggregation_archetype:
-        heating_need = buildings.add_energy(heating_need)
+        if 'Energy' in aggregation_archetype:
+            heating_need = buildings.add_energy(heating_need)
 
-        consumption_saved = buildings.add_energy(consumption_saved)
-        consumption_saved.columns = output['Need saved (kWh/segment)'].columns
+            consumption_saved = buildings.add_energy(consumption_saved)
+            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
 
-        cost_insulation = buildings.add_energy(cost_insulation)
-        cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
+            cost_insulation = buildings.add_energy(cost_insulation)
+            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
 
-        consumption_before = buildings.add_energy(consumption_before)
+            consumption_before = buildings.add_energy(consumption_before)
 
     dict_cost, dict_heat = dict(), dict()
     if aggregation_archetype is not None:
-        dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :]) for n, g in consumption_saved.groupby(aggregation_archetype)}
+        dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :], percent=percent) for n, g in consumption_saved.groupby(aggregation_archetype)}
         heating_need_grouped = heating_need.groupby(aggregation_archetype).sum()
         dict_heat = {i: heating_need_grouped.loc[i, :] for i in heating_need_grouped.index}
     else:
@@ -472,16 +481,23 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 
 if __name__ == '__main__':
+    dict_cost, dict_heat_bis = social_planner(aggregation_archetype=['Performance'], building_stock='medium_5',
+                                              freq='hour', percent=False)
+
+
+    buildings = get_inputs(variables=['buildings'])['buildings']
+
+    h_month = buildings.heating_need(climate=2006, smooth=False, freq='month')
+    h_year = buildings.heating_need(climate=2006, smooth=False, freq='year')
+
+    h_month = buildings.heating_need(climate=2006, smooth=False, freq='month')
+    h_day = buildings.heating_need(climate=2006, smooth=False, freq='day')
+    h_hour = buildings.heating_need(climate=2006, smooth=False, freq='hour')
+
+
     from utils import make_plots
 
-    output = get_inputs(variables=['buildings'])
-    buildings = output['buildings']
-    h = buildings.heating_need(freq='year')
-    h1 = buildings.heating_need(freq='month')
-    h2 = buildings.heating_need(freq='day')
-    h3 = buildings.heating_need(freq='hour')
-
-    """dict_cost, dict_heat = social_planner(aggregation_archetype=['Housing type', 'Performance'])
-    make_plots(dict_cost, 'Cost (Billion euro)')"""
+    dict_cost, dict_heat = social_planner(aggregation_archetype=None)
+    make_plots(dict_cost, 'Cost (Billion euro)')
 
 
