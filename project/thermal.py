@@ -109,14 +109,16 @@ HOURLY_PROFILE = pd.Series(
      0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042], index=pd.TimedeltaIndex(range(0, 24), unit='h'))
 
 CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_data.csv'),
+                'month': os.path.join('project', 'input', 'climatic', 'climatic_data_month.csv'),
                 'day': os.path.join('project', 'input', 'climatic', 'climatic_data_daily.csv'),
+                'hour': os.path.join('project', 'input', 'climatic', 'climatic_data_daily.csv'),
                 'smooth_day': os.path.join('project', 'input', 'climatic', 'climatic_data_smooth_daily.csv')
                 }
 
 
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, climate=None, hourly=False, smooth=False
+                              air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
                               ):
     """Monthly stead-state space heating need.
 
@@ -135,10 +137,9 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     unobserved: {'Minimal', 'High'}, default None
     climate: int, default None
         Climatic year to use to calculate heating need.
-    hourly: bool, default False
-        If yes hourly result, otherwise return yearly result.
     smooth: bool, default False
         Use smooth daily data to calculate heating need.
+    freq
 
     Returns
     -------
@@ -149,16 +150,16 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     days_heating_season = DAYS_HEATING_SEASON_3CL
     solar_radiation = SOLAR_RADIATION_3CL
     if climate is not None:
-        if not hourly:
+        if freq == 'year':
             data = get_pandas(CLIMATE_DATA['year'],
-                                 func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+                              func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
 
             temp_ext = float(data.loc[data.index.year == climate, 'TEMP_EXT'])
             days_heating_season = float(data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'])
             solar_radiation = float(data.loc[data.index.year == climate, 'SOLAR_RADIATION'])
 
-        if hourly:
-            path = CLIMATE_DATA['day']
+        else:
+            path = CLIMATE_DATA[freq]
             if smooth:
                 path = CLIMATE_DATA['smooth_day']
 
@@ -187,23 +188,26 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         air_rate = VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]
 
     coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
-
     coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - temp_ext) * days_heating_season
 
-    if not hourly:
+    if freq == 'year':
+
         heat_transfer = (coefficient_ventilation_transfer + coefficient_transmission_transfer) * coefficient_climatic
+
         solar_load = FACTOR_SHADING * (1 - FACTOR_FRAME) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * solar_radiation * surface_components.loc[:, 'Windows']
 
         internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * days_heating_season
 
+        heat_gains = solar_load + internal_heat_sources
+
         time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
         a_h = A_0 + time_constant / TAU_0
+
         heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
         gain_utilization_factor = (1 - heat_balance_ratio ** a_h) / (1 - heat_balance_ratio ** (a_h + 1))
 
-        heat_gains = solar_load + internal_heat_sources
-
         heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL
+
         return heat_need
 
     else:
@@ -215,26 +219,29 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
         internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * days_heating_season
 
+        heat_gains = solar_load + internal_heat_sources
+
         time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
         a_h = A_0 + time_constant / TAU_0
         heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
         gain_utilization_factor = (1 - (heat_balance_ratio.T ** a_h).T) / (1 - (heat_balance_ratio.T ** (a_h + 1)).T)
 
-        heat_gains = solar_load + internal_heat_sources
-
         heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
 
-        heat_need = heat_need.to_frame().dot(HOURLY_PROFILE.to_frame().T)
-        heat_need = heat_need.unstack(['time'])
-        heat_need.columns = heat_need.columns.get_level_values(None) + heat_need.columns.get_level_values('time')
+        if freq == 'hour':
+            heat_need = heat_need.to_frame().dot(HOURLY_PROFILE.to_frame().T)
+            heat_need = heat_need.unstack(['time'])
+            heat_need.columns = heat_need.columns.get_level_values(None) + heat_need.columns.get_level_values('time')
+        else:
+            heat_need = heat_need.unstack(['time'])
 
-        return heat_need
+        return heat_need.sort_index(axis=1)
 
 
 def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                               air_rate=None, unobserved=None, climate=None, hourly=False, smooth=False,
+                               air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
                                ):
     """Monthly stead-state space heating final energy delivered.
 
@@ -253,8 +260,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     unobserved: {'Minimal', 'High'}, default None
     climate: int, default None
         Climatic year to use to calculate heating need.
-    hourly: bool, default False
-        If yes hourly result, otherwise return yearly result.
+    freq
     smooth: bool, default False
         Use smooth daily data to calculate heating need.
 
@@ -265,7 +271,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                                           th_bridging=th_bridging, vent_types=vent_types,
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
-                                          climate=climate, hourly=hourly, smooth=smooth
+                                          climate=climate, freq=freq, smooth=smooth
                                           )
     return heat_need / efficiency
 
