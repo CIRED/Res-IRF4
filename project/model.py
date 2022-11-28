@@ -8,6 +8,7 @@ from importlib import resources
 from project.building import AgentBuildings, ThermalBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, PublicPolicy
 from project.write_output import plot_scenario
+from project.utils import reindex_mi
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -356,7 +357,7 @@ def res_irf(config, path):
         raise e
 
 
-def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=True):
+def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=True, marginal=False):
     """Create cost curve.
 
     Parameters
@@ -365,6 +366,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=T
     consumption_saved
     cost_insulation
     percent: bool, default True
+    marginal: bool, default False
 
     Returns
     -------
@@ -395,18 +397,21 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=T
         df[x.name] /= 10**9
         # x.name = '{} (TWh/an)'.format(x.name)
 
-    df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
-
-    df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
-
-    df.dropna(inplace=True)
-    df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
-
+    if marginal is False:
+        df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
+        df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
+        df.dropna(inplace=True)
+        df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
+    else:
+        df.dropna(inplace=True)
+        df[y.name] = df[y.name].round(1)
+        df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
+        df = df.set_index(x.name)[y.name]
     return df
 
 
 def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3', freq='hour',
-                   percent=True):
+                   percent=True, marginal=False):
     """Function used when coupling with power system model.
 
     Parameters
@@ -417,12 +422,13 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     building_stock: optional, {'medium_1', 'medium_3', 'medium_5', 'simple_1', 'simple_3', 'simple_5'}
         Numbers of clusters + heterogeneity of u values.
     freq: optional, {'hour', 'day', 'month', 'year'}
+    percent: bool, default True
+    marginal: bool, default
 
     Returns
     -------
 
     """
-    from project.utils import reindex_mi
     resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'],
                                building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_sdes2018_{}.csv'.format(building_stock)))
     buildings = resirf_inputs['buildings']
@@ -509,11 +515,13 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
     dict_cost, dict_heat = dict(), dict()
     if aggregation_archetype is not None:
-        dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :], percent=percent) for n, g in consumption_saved.groupby(aggregation_archetype)}
+        dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :], percent=percent,
+                                   marginal=marginal) for n, g in consumption_saved.groupby(aggregation_archetype)}
         heating_need_grouped = heating_need.groupby(aggregation_archetype).sum()
         dict_heat = {i: heating_need_grouped.loc[i, :] for i in heating_need_grouped.index}
     else:
-        dict_cost['global'] = cost_curve(consumption_before, consumption_saved, cost_insulation)
+        dict_cost['global'] = cost_curve(consumption_before, consumption_saved, cost_insulation, marginal=marginal,
+                                         percent=percent)
         dict_heat['global'] = heating_need.sum()
 
     return dict_cost, dict_heat
@@ -521,8 +529,8 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 if __name__ == '__main__':
     from utils import make_plots
-    dict_cost, _ = social_planner(aggregation_archetype=['Wall class'], building_stock='medium_5',
-                                  freq='hour', percent=False)
+    dict_cost, _ = social_planner(aggregation_archetype=None, building_stock='medium_5',
+                                  freq='hour', percent=False, marginal=True)
     make_plots(dict_cost, 'Cost (Billion euro)')
 
 
