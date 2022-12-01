@@ -108,6 +108,7 @@ HOURLY_PROFILE = pd.Series(
     [0.035, 0.039, 0.041, 0.042, 0.046, 0.05, 0.055, 0.058, 0.053, 0.049, 0.045, 0.041, 0.037, 0.034,
      0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042], index=pd.TimedeltaIndex(range(0, 24), unit='h'))
 
+
 CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_data.csv'),
                 'month': os.path.join('project', 'input', 'climatic', 'climatic_data_month.csv'),
                 'day': os.path.join('project', 'input', 'climatic', 'climatic_data_daily.csv'),
@@ -119,6 +120,7 @@ CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_d
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                               air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
+                              hourly_profile=None
                               ):
     """Monthly stead-state space heating need.
 
@@ -140,6 +142,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     smooth: bool, default False
         Use smooth daily data to calculate heating need.
     freq
+    hourly_profile: optional, pd.Series
 
     Returns
     -------
@@ -230,7 +233,10 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         heat_need = heat_need.stack(heat_need.columns.names)
 
         if freq == 'hour':
-            heat_need = heat_need.to_frame().dot(HOURLY_PROFILE.to_frame().T)
+            if hourly_profile is None:
+                hourly_profile = HOURLY_PROFILE
+
+            heat_need = heat_need.to_frame().dot(hourly_profile.to_frame().T)
             heat_need = heat_need.unstack(['time'])
             heat_need.columns = heat_need.columns.get_level_values(None) + heat_need.columns.get_level_values('time')
         else:

@@ -411,7 +411,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=T
 
 
 def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3', freq='hour',
-                   percent=True, marginal=False):
+                   percent=True, marginal=False, hourly_profile=None):
     """Function used when coupling with power system model.
 
     Parameters
@@ -435,7 +435,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     energy_prices = resirf_inputs['energy_prices']
     cost_insulation = resirf_inputs['cost_insulation']
 
-    heating_need = buildings.heating_need(freq=freq, climate=climate, smooth=smooth)
+    heating_need = buildings.heating_need(freq=freq, climate=climate, smooth=smooth, hourly_profile=hourly_profile)
     heating_need_class = heating_need.sum(axis=1) / (buildings.stock * reindex_mi(buildings._surface, buildings.stock.index))
 
     insulation_class = heating_need_class.copy()
@@ -529,11 +529,14 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 if __name__ == '__main__':
     from utils import make_plots
-    dict_cost, _ = social_planner(aggregation_archetype=None, building_stock='medium_5',
-                                  freq='hour', percent=False, marginal=True)
+
+    hourly_profile = [0.035, 0.039, 0.041, 0.042, 0.046, 0.05, 0.055, 0.058, 0.053, 0.049, 0.045, 0.041, 0.037, 0.034,
+     0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042]
+    hourly_profile = pd.Series(hourly_profile, index=pd.TimedeltaIndex(range(0, 24), unit='h'))
+
+    dict_cost, dict_heat = social_planner(aggregation_archetype=None, building_stock='medium_5', freq='hour',
+                                          percent=False, marginal=True, hourly_profile=hourly_profile)
     make_plots(dict_cost, 'Cost (Billion euro)')
-
-
 
     """buildings = get_inputs(variables=['buildings'])['buildings']
 

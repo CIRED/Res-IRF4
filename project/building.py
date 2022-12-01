@@ -225,7 +225,7 @@ class ThermalBuildings:
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
-    def heating_need(self, climate=2006, smooth=False, freq='year'):
+    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None):
         """Calculate heating need of the current building stock.
 
         Returns
@@ -241,7 +241,7 @@ class ThermalBuildings:
         heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          th_bridging='Medium', vent_types='Ventilation naturelle',
                                                          infiltration='Medium', climate=climate,
-                                                         smooth=smooth, freq=freq)
+                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile)
 
         heating_need = (heating_need.T * self.stock * self.surface).T
         return heating_need
