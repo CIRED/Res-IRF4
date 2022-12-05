@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2023,
     "debug_mode": false,
     "detailed_mode": true,
     "prices_constant": false,
@@ -87,7 +87,12 @@
         "ad_volarem": true,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
+      },
+      "obligation": {
+        "start": 2021,
+        "end": 2051
       }
+
     },
     "footprint": {
       "Traditional material": 1.0,
@@ -95,15 +100,10 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": false,
+    "quintiles": true,
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null,
-    "remove_market_failures": {
-      "landlord": false,
-      "multi-family": false,
-      "credit constraint": false
-    },
     "financing_cost": true
   }
 }

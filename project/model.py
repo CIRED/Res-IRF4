@@ -249,7 +249,6 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                parsed_inputs['performance_insulation'], path=path,
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['endogenous'], logger=logger,
-                               remove_market_failures=config.get('remove_market_failures'),
                                quintiles=config.get('quintiles'),
                                detailed_mode=config.get('detailed_mode'),
                                financing_cost=config.get('financing_cost'),
@@ -277,6 +276,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             ms_heater=ms_heater,
                                             financing_cost=financing_cost)
     buildings.add_flows([flow_retrofit, flow_built])
+
+    flow_obligation = buildings.flow_obligation(p_insulation)
+    if flow_obligation is not None:
+        buildings.add_flows([flow_obligation])
+
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.detailed_mode:
@@ -308,7 +312,6 @@ def res_irf(config, path):
     """
     os.mkdir(path)
     logger = create_logger(path)
-
     try:
         logger.info('Reading input')
 
@@ -353,7 +356,7 @@ def res_irf(config, path):
         return os.path.basename(os.path.normpath(path)), output, stock
 
     except Exception as e:
-        buildings.logger.exception(e)
+        logger.exception(e)
         raise e
 
 

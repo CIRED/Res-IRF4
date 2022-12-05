@@ -5,3 +5,4 @@
 .DS_Store
 /ResIRF.egg-info/
 /sphinx_source/
+/project/test.py

@@ -77,7 +77,8 @@ def plot_scenario(output, stock, buildings):
                    colors=resources_data['colors'], loc='left', left=1.25)
 
     # graph subsidies
-    subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i!= 'subsidies_cap'], :]
+    non_subsidies = ['subsidies_cap', 'obligation']
+    subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies], :]
     taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
 
     subset = pd.concat((subsidies, -taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax']],:]), axis=0)
