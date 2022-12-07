@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2023,
+    "end": 2031,
     "debug_mode": false,
     "detailed_mode": true,
     "prices_constant": false,
@@ -89,7 +89,7 @@
         "max": "project/input/policies/zil_max.csv"
       },
       "obligation": {
-        "start": 2021,
+        "start": 2051,
         "end": 2051
       }
 

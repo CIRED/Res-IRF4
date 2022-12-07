@@ -5,8 +5,8 @@ from time import time
 import json
 from importlib import resources
 
-from project.building import AgentBuildings, ThermalBuildings
-from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, PublicPolicy
+from project.building import AgentBuildings
+from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs
 from project.write_output import plot_scenario
 from project.utils import reindex_mi
 
@@ -50,14 +50,15 @@ def get_config() -> dict:
             return json.load(file)['Reference']
 
 
-def config2inputs(config=None, building_stock=None):
+def config2inputs(config=None, building_stock=None, end=None):
     """Create main Python object from configuration file.
 
     Parameters
     ----------
     config: dict
-    building_stock: str
+    building_stock: str, optional
         Path to other building stock than reference.
+    end: int, optional
 
     Returns
     -------
@@ -69,6 +70,9 @@ def config2inputs(config=None, building_stock=None):
 
     if building_stock is not None:
         config['building_stock'] = building_stock
+
+    if end is not None:
+        config['end'] = end
 
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
@@ -192,12 +196,14 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
     dict
     """
     if variables is None:
-        variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost']
+        variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh',
+                     'health_cost', 'income']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, cost_financing = initialize(
         inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': buildings,
+              'income': inputs['income'],
               'energy_prices': energy_prices,
               'cost_insulation': cost_insulation,
               'carbon_emission': post_inputs['carbon_emission'],
@@ -417,6 +423,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
                    percent=True, marginal=False, hourly_profile=None):
     """Function used when coupling with power system model.
 
+
     Parameters
     ----------
     aggregation_archetype
@@ -427,6 +434,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     freq: optional, {'hour', 'day', 'month', 'year'}
     percent: bool, default True
     marginal: bool, default
+    hourly_profile
 
     Returns
     -------
@@ -531,15 +539,23 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 
 if __name__ == '__main__':
-    from utils import make_plots
+    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'income'],
+                               building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_example.csv'))
+    buildings = resirf_inputs['buildings']
+    prices = resirf_inputs['energy_prices']
+    income = resirf_inputs['income']
 
+    buildings.optimal_temperature(prices.iloc[0, :])
+
+
+    """from utils import make_plots
     hourly_profile = [0.035, 0.039, 0.041, 0.042, 0.046, 0.05, 0.055, 0.058, 0.053, 0.049, 0.045, 0.041, 0.037, 0.034,
      0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042]
     hourly_profile = pd.Series(hourly_profile, index=pd.TimedeltaIndex(range(0, 24), unit='h'))
 
     dict_cost, dict_heat = social_planner(aggregation_archetype=None, building_stock='medium_5', freq='hour',
                                           percent=False, marginal=True, hourly_profile=hourly_profile)
-    make_plots(dict_cost, 'Cost (Billion euro)')
+    make_plots(dict_cost, 'Cost (Billion euro)')"""
 
     """buildings = get_inputs(variables=['buildings'])['buildings']
 

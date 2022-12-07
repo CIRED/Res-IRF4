@@ -120,9 +120,16 @@ CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_d
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                               air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
-                              hourly_profile=None
+                              hourly_profile=None, marginal=False, temp_int=None,
                               ):
-    """Monthly stead-state space heating need.
+    """Seasonal method for space heating need.
+
+
+    We apply a seasonal method according to EN ISO 13790 to estimate annual space heating demand by building type.
+    The detailed calculation can be found in the TABULA project documentation (Loga, 2013).
+    In a nutshell, the energy need for heating is the difference between the heat losses and the heat gain.
+    The total heat losses result from heat transfer by transmission and ventilation during the heating season
+    respectively proportional to the heat transfer coefficient $H_tr$ and $H_ve$.
 
     Parameters
     ----------
@@ -143,6 +150,8 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         Use smooth daily data to calculate heating need.
     freq
     hourly_profile: optional, pd.Series
+    marginal: bool, default False
+    temp_int: optional, default TEMP_INT
 
     Returns
     -------
@@ -152,6 +161,9 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     temp_ext = TEMP_EXT_3CL
     days_heating_season = DAYS_HEATING_SEASON_3CL
     solar_radiation = SOLAR_RADIATION_3CL
+    if temp_int is None:
+        temp_int = TEMP_INT
+
     if climate is not None:
         if freq == 'year':
             data = get_pandas(CLIMATE_DATA['year'],
@@ -191,11 +203,13 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         air_rate = VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]
 
     coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
-    coefficient_climatic = 24 / 1000 * FACTOR_NON_UNIFORM * (TEMP_INT - temp_ext) * days_heating_season
+    coefficient = 24 / 1000 * FACTOR_NON_UNIFORM * days_heating_season
+    coefficient_climatic = coefficient * (temp_int - temp_ext)
 
     if freq == 'year':
 
-        heat_transfer = (coefficient_ventilation_transfer + coefficient_transmission_transfer) * coefficient_climatic
+        heat_transfer_coefficient = coefficient_ventilation_transfer + coefficient_transmission_transfer
+        heat_transfer = heat_transfer_coefficient * coefficient_climatic
 
         solar_load = FACTOR_SHADING * (1 - FACTOR_FRAME) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * solar_radiation * surface_components.loc[:, 'Windows']
 
@@ -210,6 +224,10 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         gain_utilization_factor = (1 - heat_balance_ratio ** a_h) / (1 - heat_balance_ratio ** (a_h + 1))
 
         heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL
+
+        if marginal:
+            marginal_heat_need = coefficient * heat_transfer_coefficient * FACTOR_TABULA_3CL
+            return marginal_heat_need
 
         return heat_need
 
@@ -247,9 +265,10 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
 def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                               air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
-                               ):
+                               air_rate=None, unobserved=None, climate=None, freq='year', smooth=False, marginal=False,
+                               temp_int=None):
     """Monthly stead-state space heating final energy delivered.
+
 
     Parameters
     ----------
@@ -269,6 +288,8 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     freq
     smooth: bool, default False
         Use smooth daily data to calculate heating need.
+    marginal
+    temp_int
 
     Returns
     -------
@@ -277,8 +298,8 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                                           th_bridging=th_bridging, vent_types=vent_types,
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
-                                          climate=climate, freq=freq, smooth=smooth
-                                          )
+                                          climate=climate, freq=freq, smooth=smooth, marginal=marginal,
+                                          temp_int=temp_int)
     return heat_need / efficiency
 
 

@@ -1,0 +1,9 @@
+Housing type,Occupancy status,Income owner,Income tenant,Wall,Floor,Roof,Windows,Heating system,Stock buildings
+Multi-family,Owner-occupied,D1,D1,0.1,0.2,0.1,1.6,Natural gas-Performance boiler,1
+Multi-family,Owner-occupied,D1,D1,2.5,2.5,2.5,4.5,Natural gas-Standard boiler,1
+Single-family,Owner-occupied,D1,D1,2.5,2.5,2.5,4.5,Natural gas-Standard boiler,1
+Single-family,Owner-occupied,D1,D1,0.1,0.2,0.1,1.6,Natural gas-Performance boiler,1
+Multi-family,Owner-occupied,D10,D10,0.1,0.2,0.1,1.6,Natural gas-Performance boiler,1
+Multi-family,Owner-occupied,D10,D10,2.5,2.5,2.5,4.5,Natural gas-Standard boiler,1
+Single-family,Owner-occupied,D10,D10,2.5,2.5,2.5,4.5,Natural gas-Standard boiler,1
+Single-family,Owner-occupied,D10,D10,0.1,0.2,0.1,1.6,Natural gas-Performance boiler,1

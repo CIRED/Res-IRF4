@@ -225,7 +225,7 @@ class ThermalBuildings:
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
-    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None):
+    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None, marginal=False):
         """Calculate heating need of the current building stock.
 
         Returns
@@ -241,12 +241,16 @@ class ThermalBuildings:
         heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          th_bridging='Medium', vent_types='Ventilation naturelle',
                                                          infiltration='Medium', climate=climate,
-                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile)
+                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile,
+                                                         marginal=marginal)
+
+        if marginal:
+            heating_need = (heating_need.T * self.surface).T
 
         heating_need = (heating_need.T * self.stock * self.surface).T
         return heating_need
 
-    def heating_consumption(self, freq='year', climate=None, smooth=False):
+    def heating_consumption(self, freq='year', climate=None, smooth=False, marginal=False, temp_int=None):
         """Calculation consumption standard of the current building stock.
 
         Parameters
@@ -268,8 +272,8 @@ class ThermalBuildings:
         heating_system = Series(idx.get_level_values('Heating system'), index=idx).astype('object')
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
-                                                         efficiency, climate=climate, freq=freq,
-                                                         smooth=smooth)
+                                                         efficiency, climate=climate, freq=freq, smooth=smooth,
+                                                         marginal=marginal, temp_int=temp_int)
         return consumption
 
     def consumption_standard(self, indexes, level_heater='Heating system'):
@@ -506,6 +510,25 @@ class ThermalBuildings:
             # * reindex_mi(self._surface, index)
             return (reindex_mi(consumption, index).T * prices).T
 
+    def optimal_temperature(self, prices):
+
+        def func(temp, consumption, index):
+            consumption_temp = self.heating_consumption(temp_int=temp).loc[index] * self.surface.loc[index]
+            return consumption - consumption_temp
+
+        consumption_actual = self.consumption_actual(prices)
+        consumption_sd = self.heating_consumption(temp_int=None) * self.surface
+
+        temp_optimal = {}
+        for i, v in consumption_actual.iteritems():
+            temp_optimal.update({i: fsolve(func, 19, args=(consumption_actual.loc[i], i))[0]})
+        temp_optimal = pd.Series(temp_optimal)
+
+        temp = concat((consumption_actual, consumption_sd, temp_optimal), axis=1,
+                      keys=['actual', 'conventional', 'temp optimal'])
+
+        return temp_optimal
+
 
 class AgentBuildings(ThermalBuildings):
 
@@ -536,7 +559,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, preferences,
                  performance_insulation, path=None, demolition_rate=0.0, year=2018,
-                 endogenous=True, number_exogenous=300000, utility_extensive='market_share',
+                 endogenous=True, number_exogenous=300000, utility_extensive='max',
                  logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True, detailed_mode=None,
                  quintiles=None, financing_cost=True,
                  ):
@@ -557,7 +580,6 @@ class AgentBuildings(ThermalBuildings):
         self.retrofit_with_heater = None
         self._calib_scale = calib_scale
         self.vta = 0.1
-        self.factor_etp = 7.44 / 10**6 # ETP/€
         self.lifetime_insulation = 30
         self._epc2int = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
 
@@ -572,7 +594,7 @@ class AgentBuildings(ThermalBuildings):
         self.policies = []
 
         # {'max', 'market_share'} define how to calculate utility_extensive
-        self._utility_extensive = utility_extensive
+        self._utility_representative = utility_extensive
 
         if preferences_zeros:
             preferences['heater'] = {k: 0 for k in preferences['heater'].keys()}
@@ -677,7 +699,6 @@ class AgentBuildings(ThermalBuildings):
             ['Occupancy status', 'Housing type', 'Income owner', 'Income tenant']).sum().unstack(
             ['Occupancy status', 'Income owner', 'Income tenant'])
         self._share_decision_maker = (self._share_decision_maker.T / self._share_decision_maker.sum(axis=1)).T
-
 
     @property
     def year(self):
@@ -868,13 +889,11 @@ class AgentBuildings(ThermalBuildings):
         else:
             market_share, probability_replacement = self.exogenous_market_share_heater(index, choice_heater_idx)
 
-        """replacement = ((market_share * probability_replacement).T * self.stock_mobile.groupby(
-            market_share.index.names).sum()).T"""
         replacement = ((market_share * probability_replacement).T * stock).T
 
         stock_replacement = replacement.stack('Heating system final')
         to_replace = replacement.sum(axis=1)
-        # stock = self.stock_mobile.groupby(to_replace.index.names).sum() - to_replace
+
         stock = stock - to_replace
 
         # adding heating system final equal to heating system because no switch
@@ -1046,7 +1065,7 @@ class AgentBuildings(ThermalBuildings):
         constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
 
         details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
-                            axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
+                         axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
         if self.path is not None:
             details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
@@ -1791,7 +1810,6 @@ class AgentBuildings(ThermalBuildings):
                 util_intensive += util_zil
 
             if self.constant_insulation_intensive is not None:
-                # constant = reindex_mi(self.constant_insulation_intensive, utility_intensive.index)
                 util_intensive += self.constant_insulation_intensive
 
             ms_intensive = (exp(util_intensive).T / exp(util_intensive).sum(axis=1)).T
@@ -2131,13 +2149,13 @@ class AgentBuildings(ThermalBuildings):
             bool_zil[bool_zil > 0] = 1
 
         bill_saved_insulation, subsidies_insulation, investment_insulation = None, None, None
-        if self._utility_extensive == 'market_share':
+        if self._utility_representative == 'market_share':
             bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
             subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
             investment_insulation = (cost_total.reindex(market_share.index) * market_share).sum(axis=1)
             if utility_zil is not None:
                 bool_zil_ext = (bool_zil.reindex(market_share.index) * market_share).sum(axis=1)
-        elif self._utility_extensive == 'max':
+        elif self._utility_representative == 'max':
             def rename_tuple(tuple, names):
                 idx = tuple.index
                 tuple = DataFrame([[a, b, c, d] for a, b, c, d in tuple.values])
@@ -2154,7 +2172,6 @@ class AgentBuildings(ThermalBuildings):
                 dtype=float), Series(dtype=float)
             if utility_zil is not None:
                 bool_zil_ext = Series(dtype=float)
-
             for c in columns.unique():
                 idx = columns.index[columns == c]
                 bill_saved_insulation = concat((bill_saved_insulation, bill_saved.loc[idx, c]), axis=0)
@@ -2186,7 +2203,7 @@ class AgentBuildings(ThermalBuildings):
 
         if self.constant_insulation_extensive is None:
             self.logger.debug('Calibration renovation rate')
-            if self._utility_extensive == 'market_share':
+            if self._utility_representative == 'market_share':
                 delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
             else:
                 raise NotImplemented
@@ -2378,7 +2395,10 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        policies_insulation
+        option: {'global', 'market_share'}, default 'global'
+            'market_share' Not implemented yet.
+        policies_insulation: list
+            Check if obligation.
 
         Returns
         -------
@@ -2422,14 +2442,6 @@ class AgentBuildings(ThermalBuildings):
                 self.store_information_retrofit(replaced_by)
 
             replaced_by = self.frame_to_flow(replaced_by)
-
-            """temp = idx.to_frame()
-            for i in self._performance_insulation.keys():
-                temp[i] = self._performance_insulation[i]
-
-            replaced_by = stock.loc[idx].copy()
-            idx_replace_by = pd.MultiIndex.from_frame(temp)
-            replaced_by.index = idx_replace_by"""
 
             assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
             flow_obligation = concat((- to_replace, replaced_by), axis=0)
@@ -3252,9 +3264,4 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = calibration_constant_extensive.dropna()
 
         self.scale_ext = scale
-
-
-
-
-
 
