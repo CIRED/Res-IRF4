@@ -1,4 +1,4 @@
-# Contributing
+# Policies evaluation
 ## Updating Documentation
 ### Overview
 
@@ -18,7 +18,7 @@ Documentation is organized in 2 different folders:
 ### Quickstart
 ### Update content (modification of .md file or docstring in .py file)
 * Clean build folder: `make clean`
-* Run sphinx make file: `make html` - `sphinx-build -b html sphinx_source/source docs`
+* Run sphinx make file: `make html` or `sphinx-build -b html sphinx_source/source docs`
 * Visit the documentation website to confirm update has been considered correctly.
 
 ### Add content (adding .md file)

@@ -82,7 +82,7 @@ def run(path=None):
                     configuration['ZP']['policies'][name] = policy
 
                     if name == 'mpr':
-                        for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
+                        for options in ['global_retrofit', 'bonus']:
                             if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
                                 configuration['ZP']['policies']['mpr'][options]['end'] = configuration['Reference'][
                                                                                                'start'] + 2

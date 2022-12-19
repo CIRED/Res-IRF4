@@ -1641,9 +1641,9 @@ class AgentBuildings(ThermalBuildings):
                 self.subsidies_count_insulation[key] = (replaced_by.fillna(0) * mask).sum().sum()
                 self.subsidies_average_insulation[key] = sub.sum().sum() / replaced_by.fillna(0).sum().sum()
 
-                if key == 'zero_interest_loan':
+                """if key == 'zero_interest_loan':
                     total_loaned = (replaced_by.fillna(0) * self.zil_loaned).sum().sum()
-                    self.zil_loaned_avg = total_loaned / self.zil_count
+                    self.zil_loaned_avg = total_loaned / self.zil_count"""
 
         else:
             self.replacement_insulation += replaced_by.groupby(levels).sum()

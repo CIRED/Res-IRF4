@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2021,
     "debug_mode": false,
     "detailed_mode": true,
     "prices_constant": false,
@@ -89,8 +89,8 @@
         "max": "project/input/policies/zil_max.csv"
       },
       "obligation": {
-        "start": 2051,
-        "end": 2051
+        "start": 2020,
+        "end": 2020
       }
 
     },
@@ -100,7 +100,7 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": true,
+    "quintiles": false,
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null,
