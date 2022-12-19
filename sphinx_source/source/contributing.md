@@ -1,4 +1,4 @@
-# Policies evaluation
+# Contributing
 ## Updating Documentation
 ### Overview
 
@@ -43,7 +43,7 @@ Tutorial comes from [this website](https://github.com/Kunena/Kunena-Forum/wiki/C
  ### Updating the branch
 
 **Pushing your local commits to remote**
-`git push origin name_of_new_branch`
+`git push`
 
 **Updating your branch from changes on master**
 (from [this tutorial](https://kalkus.dev/2020/05/07/how-to-update-feature-branch-from-master-in-git/))
