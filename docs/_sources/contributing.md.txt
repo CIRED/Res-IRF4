@@ -22,7 +22,7 @@ Documentation is organized in 2 different folders:
 * Visit the documentation website to confirm update has been considered correctly.
 
 ### Add content (adding .md file)
-* Need to add file name in _documentation/source/index.rst_ file 
+* Need to add file name in _sphinx_source/source/index.rst_ file 
 
 
 
