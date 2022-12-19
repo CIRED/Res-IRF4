@@ -2,7 +2,7 @@
 ## Updating Documentation
 ### Overview
 
-Documentation is available: https://lucas-vivier.github.io/Res-IRF/
+Documentation is available: https://lucas-vivier.github.io/Res-IRF4-mirror/index.html
 
 1. Documentation is run with Sphinx.   
 Sphinx concatenate Markdown (.md) files and pick up docstring information (modules and functions information) in .py files and returns .html files.  
@@ -25,7 +25,48 @@ Documentation is organized in 2 different folders:
 * Need to add file name in _sphinx_source/source/index.rst_ file 
 
 
+## Create and manage git branches
+### Creating a branch
+Tutorial comes from [this website](https://github.com/Kunena/Kunena-Forum/wiki/Create-a-new-branch-with-git-and-manage-branches)
 
+ **step 1**: update your local copy of the master branch:
+ `git pull`
+
+**step 2**: Create the branch on your local machine and switch in this branch:
+
+`git checkout -b name_of_new_branch`
+(checkout into a branch means you load the version of this branch and will modify it)
+
+**step 3**: Push the branch on github:
+`git push origin name_of_new_branch`
+
+ ### Updating the branch
+
+**Pushing your local commits to remote**
+`git push origin name_of_new_branch`
+
+**Updating your branch from changes on master**
+(from [this tutorial](https://kalkus.dev/2020/05/07/how-to-update-feature-branch-from-master-in-git/))
+
+There are two methods, *merge* the master into your branch which will create a merge commit or *rebase*:
+
+* merge
+```angular2html
+git checkout master
+git pull
+git checkout name_of_the_branch
+git merge master
+```
+* rebase
+```angular2html
+git pull --rebase origin name_of_the_branch 
+fix conflict and then → git add . 
+git rebase --continue 
+git push -f
+```
+As it is easier and few people work on Res-IRF, the first method is used for now.
+
+(In PyCharm these commands can be done by right-clicking on branches in the git tool window)
 
 
 
