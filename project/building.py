@@ -24,6 +24,7 @@ from numpy import exp, log, zeros, ones, append, arange, array
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import logging
+from copy import deepcopy
 
 from project.utils import make_plot, format_ax, save_fig, format_legend, reindex_mi, timing, get_pandas
 from project.input.resources import resources_data
@@ -41,48 +42,24 @@ class ThermalBuildings:
         Building stock.
     surface: Series
         Surface by dwelling type.
-    param: dict
-        Generic input.
+    ratio_surface: dict
+        Losses area of each envelop component
     efficiency: Series
         Heating system efficiency.
     income: Series
+        Average income value by income class.
     consumption_ini: Series
-    path: str
-    year: int, default 2018
+    path: str, optional
+    year: int, default: 2018
+    debug_mode: bool, default: False
 
     Attributes:
     ----------
-
-    heat_consumption_sd : Series
-        kWh by segement
-    heat_consumption : Series
-        kWh by segement
-
-    heat_consumption_calib : Series
-    heat_consumption_energy : Series
-
-    heating_intensity_tenant: dict
-        Weighted average heating intensity (%) by decile.
-    heating_intensity_avg: dict
-        Weighted average heating intensity (%).
-    energy_poverty: dict
-        Number of energy poverty dwelling.
-
-    taxes_expenditure: dict
-    energy_expenditure: dict
-    taxes_expenditure_details: dict
 
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, path=None, year=2018,
                  debug_mode=False):
-
-        self.energy_poverty, self.heating_intensity = None, None
-        self.consumption_3uses_building, self.consumption_sd_building, self.certificate_building = Series(
-            dtype='float'), Series(dtype='float'), Series(dtype='float')
-
-        self.consumption_sd_building_choice, self.consumption_3uses_building_choice, self.certificate_building_choice = Series(
-            dtype='float'), Series(dtype='float'), Series(dtype='float')
 
         self._debug_mode = debug_mode
 
@@ -121,11 +98,15 @@ class ThermalBuildings:
 
         self.first_year = year
         self._year = year
-        # self.certificate_nb = None
 
         # TODO only heating_intensity and calculate average in parse_output
+        self.energy_poverty, self.heating_intensity = None, None
+        self.consumption_3uses_building, self.consumption_sd_building, self.certificate_building = Series(
+            dtype='float'), Series(dtype='float'), Series(dtype='float')
+        self.consumption_sd_building_choice, self.consumption_3uses_building_choice, self.certificate_building_choice = Series(
+            dtype='float'), Series(dtype='float'), Series(dtype='float')
+
         self.heating_intensity_avg = None
-        # self.energy_poverty = None
         self.heat_consumption_sd = None
         self.heat_consumption = None
         self.heat_consumption_calib = None
@@ -350,6 +331,7 @@ class ThermalBuildings:
         Parameters
         ----------
         prices: Series
+        consumption: Series or None, default None
 
         Returns
         -------
@@ -364,7 +346,7 @@ class ThermalBuildings:
         energy_bill = AgentBuildings.energy_bill(prices, consumption)
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
-            heating_intensity = -0.191 * budget_share.apply(log) + 0.1105
+            heating_intensity = thermal.heat_intensity(budget_share)
             self.heating_intensity = heating_intensity
             consumption *= heating_intensity
             self.heating_intensity_avg = (self.stock * heating_intensity).sum() / self.stock.sum()
@@ -372,7 +354,7 @@ class ThermalBuildings:
                 'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()
         elif isinstance(energy_bill, DataFrame):
             budget_share = (energy_bill.T / reindex_mi(self._income_tenant, self.stock.index)).T
-            heating_intensity = -0.191 * budget_share.apply(log) + 0.1105
+            heating_intensity = thermal.heat_intensity(budget_share)
             consumption = heating_intensity * consumption
 
         return consumption
@@ -534,33 +516,44 @@ class AgentBuildings(ThermalBuildings):
 
     """Class AgentBuildings represents thermal dynamic building stock.
 
+    Parameters:
+    ----------
+    stock: Series
+        Building stock.
+    surface: Series
+        Surface by dwelling type.
+    ratio_surface: dict
+        Losses area of each envelop component
+    efficiency: Series
+        Heating system efficiency.
+    income: Series
+        Average income value by income class.
+    consumption_ini: Series
+    preferences: dict
+    performance_insulation: dict
+    path: str, optional
+    year: int, default: 2018
+    debug_mode: bool, default: False
+    demolition_rate: float, default 0.0
+    endogenous: bool, default True
+    number_exogenous: float or int, default 300000
+    utility_extensive: {'market_share'}
+    logger: default
+    debug_mode: bool, default False
+        Detailed output.
+    calib_scale: bool, default True
+    detailed_mode: None
+    quintiles: bool or None, default None
+    financing_cost: bool, default True
 
     Attributes
     ----------
-    pref_inertia:  float or Series
-
-    pref_investment_insulation: float or Series
-    pref_bill_insulation: float or Series
-    pref_subsidy_insulation: float or Series
-
-
-    cost_insulation: DataFrame
-        Cost by segment and by insulation choice (€).
-    investment_insulation: DataFrame
-        Investment realized by segment and by insulation choice (€).
-    tax_insulation: DataFrame
-        Tax by segment and by insulation choice (€).
-    certificate_jump: DataFrame
-        Number of jump of energy performance certificate.
-    retrofit_rate: dict
-
-
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, preferences,
-                 performance_insulation, path=None, demolition_rate=0.0, year=2018,
+                 performance_insulation, path=None, year=2018, demolition_rate=0.0,
                  endogenous=True, number_exogenous=300000, utility_extensive='market_share',
-                 logger=None, debug_mode=False, preferences_zeros=False, calib_scale=True, detailed_mode=None,
+                 logger=None, debug_mode=False, calib_scale=True, detailed_mode=None,
                  quintiles=None, financing_cost=True,
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path=path, year=year,
@@ -596,9 +589,7 @@ class AgentBuildings(ThermalBuildings):
         # {'max', 'market_share'} define how to calculate utility_extensive
         self._utility_representative = utility_extensive
 
-        if preferences_zeros:
-            preferences['heater'] = {k: 0 for k in preferences['heater'].keys()}
-            preferences['insulation'] = {k: 0 for k in preferences['insulation'].keys()}
+        self.preferences = deepcopy(preferences)
 
         if isinstance(preferences['heater']['investment'], Series):
             self.pref_investment_heater = preferences['heater']['investment'].copy()
@@ -665,7 +656,6 @@ class AgentBuildings(ThermalBuildings):
         choice_insulation = list(product(*[i for i in choice_insulation.values()]))
         choice_insulation.remove((False, False, False, False))
         choice_insulation = MultiIndex.from_tuples(choice_insulation, names=names)
-
         self._choice_insulation = choice_insulation
         self._performance_insulation = {i: min(val, self.stock.index.get_level_values(i).min()) for i, val in
                                         performance_insulation.items()}

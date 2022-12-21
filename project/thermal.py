@@ -17,6 +17,7 @@
 import numpy as np
 import pandas as pd
 
+from numpy import log
 from project.utils import reindex_mi, get_pandas
 import os
 from datetime import timedelta
@@ -566,6 +567,10 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
     primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, hdd, efficiency,
                                                            energy, ratio_surface, conversion=CONVERSION)
     return primary_heat_consumption, certificate(primary_heat_consumption)
+
+
+def heat_intensity(budget):
+    return -0.191 * budget.apply(log) + 0.1105
 
 
 if __name__ == '__main__':
