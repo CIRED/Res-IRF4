@@ -336,7 +336,9 @@ def read_policies(config):
                              'heater_regulation', gest='heater')]
 
     def read_obligation(data):
-        return [PublicPolicy('obligation', data['start'], data['end'], 'G', 'obligation', gest='insulation')]
+        l = list()
+        l.append(PublicPolicy('obligation', data['start'], data['end'],data['value'], 'obligation', gest='insulation'))
+        return l
 
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
