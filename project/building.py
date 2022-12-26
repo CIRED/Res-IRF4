@@ -624,8 +624,6 @@ class AgentBuildings(ThermalBuildings):
             self.pref_bill_insulation_ext = preferences['insulation']['bill_saved']
 
         self.pref_inertia = preferences['heater']['inertia']
-        self.pref_zil_int = preferences['insulation']['zero_interest_loan']
-        self.pref_zil_ext = preferences['insulation']['zero_interest_loan']
 
         # self.discount_rate = - self.pref_investment_insulation_ext / self.pref_bill_insulation_ext
         # self.discount_factor = (1 - (1 + self.discount_rate) ** -self.lifetime_insulation) / self.discount_rate
@@ -1233,27 +1231,17 @@ class AgentBuildings(ThermalBuildings):
             self.subsidies_details_insulation = subsidies_details
 
         if self._endogenous:
-            utility_subsidies = subsidies_total.copy()
-            zil = [p for p in policies_insulation if (p.name == 'zero_interest_loan')]
-            l = ['reduced_tax'] + [z.name for z in zil if z.policy != 'subsidy_ad_volarem']
-            for sub in l:
-                if sub in subsidies_details.keys():
-                    utility_subsidies -= subsidies_details[sub]
-
-            utility_zil = None
-            if 'zero_interest_loan' in subsidies_details:
-                if zil[0].policy != 'subsidy_ad_volarem':
-                    utility_zil = subsidies_details['zero_interest_loan'].copy()
+            if 'reduced_tax' in subsidies_details.keys():
+                subsidies_total -= subsidies_details['reduced_tax']
 
             delta_subsidies = None
             if (self.year in [self.first_year + 1]) and (self.scale_ext is None):
                 delta_subsidies = subsidies_details['cite'].copy()
 
-            retrofit_rate, market_share = self.endogenous_retrofit(stock, prices, utility_subsidies,
+            retrofit_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total,
                                                                    cost_insulation,
                                                                    ms_insulation=ms_insulation,
                                                                    renovation_rate_ini=renovation_rate_ini,
-                                                                   utility_zil=utility_zil,
                                                                    delta_subsidies=delta_subsidies,
                                                                    target_freeriders=target_freeriders,
                                                                    financing_cost=financing_cost)
@@ -1736,7 +1724,7 @@ class AgentBuildings(ThermalBuildings):
         return subsidies
 
     def endogenous_retrofit(self, stock, prices, subsidies_total, cost_insulation, ms_insulation=None,
-                            renovation_rate_ini=None, utility_zil=None,
+                            renovation_rate_ini=None,
                             delta_subsidies=None, target_freeriders=0.85, financing_cost=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
@@ -1749,13 +1737,11 @@ class AgentBuildings(ThermalBuildings):
         Parameters
         ----------
         financing_cost
-        index: MultiIndex
         prices: Series
         subsidies_total: DataFrame
         cost_insulation: DataFrame
         ms_insulation: Series, default None
         renovation_rate_ini: Series, default None
-        utility_zil: DataFrame, default None
         stock: Series, default None
         delta_subsidies: DataFrame, default None
         target_freeriders: float, default 0.85
@@ -1768,7 +1754,7 @@ class AgentBuildings(ThermalBuildings):
             Market-share insulation
         """
 
-        def to_market_share(bill_save, subsidies, investment, util_zil=utility_zil):
+        def to_market_share(bill_save, subsidies, investment):
             """Calculate market-share between insulation options.
 
 
@@ -1777,7 +1763,6 @@ class AgentBuildings(ThermalBuildings):
             bill_save: DataFrame
             subsidies: DataFrame
             investment: DataFrame
-            util_zil: optional : DataFrame
 
             Returns
             -------
@@ -1795,10 +1780,6 @@ class AgentBuildings(ThermalBuildings):
 
             util_intensive = utility_bill_saving + utility_investment + utility_subsidies
 
-            if util_zil is not None:
-                util_zil[util_zil > 0] = self.pref_zil_int
-                util_intensive += util_zil
-
             if self.constant_insulation_intensive is not None:
                 util_intensive += self.constant_insulation_intensive
 
@@ -1808,7 +1789,7 @@ class AgentBuildings(ThermalBuildings):
         def retrofit_func(u):
             return 1 / (1 + exp(- u))
 
-        def to_retrofit_rate(bill_save, subsidies, investment, zil=None):
+        def to_retrofit_rate(bill_save, subsidies, investment):
             """Calculate retrofit rate based on binomial logit model.
 
             Parameters
@@ -1816,8 +1797,6 @@ class AgentBuildings(ThermalBuildings):
             bill_save
             subsidies
             investment
-            zil
-            debug_mode
 
             Returns
             -------
@@ -1837,9 +1816,6 @@ class AgentBuildings(ThermalBuildings):
 
             utility_renovate = utility_investment + utility_bill_saving + utility_subsidies
 
-            if zil is not None:
-                util_zil = zil * self.pref_zil_ext
-                utility_renovate += util_zil
 
             if self.constant_insulation_extensive is not None:
                 _utility = self.add_certificate(utility_renovate.copy())
@@ -2024,7 +2000,7 @@ class AgentBuildings(ThermalBuildings):
             return constant, scale
 
         def calculation_intensive_margin(stock_segment, retrofit_rate_ini, bill_save, sub_total, cost_insul,
-                                         delta_sub, target_invest=0.2, util_zil=utility_zil):
+                                         delta_sub, target_invest=0.2):
             """ This function can be adapted to calibrate intensive margin on Risch 2020 result.
 
 
@@ -2039,7 +2015,6 @@ class AgentBuildings(ThermalBuildings):
             cost_insul: DataFrame
             delta_sub: DataFrame, policies used to calibrate the scale.
             target_invest: float
-            util_zil
 
             Returns
             -------
@@ -2051,12 +2026,12 @@ class AgentBuildings(ThermalBuildings):
             f_retrofit = stock_segment * reindex_mi(retrofit_rate_ini, stock_segment.index)
             f_retrofit = f_retrofit.droplevel('Performance').dropna()
 
-            def solve(scal, retrofit, b_save, sub_tot, c_insul, d_sub, target, utility_zil):
-                ms_before, _ = to_market_share(b_save, sub_tot, c_insul, util_zil=utility_zil)
+            def solve(scal, retrofit, b_save, sub_tot, c_insul, d_sub, target):
+                ms_before, _ = to_market_share(b_save, sub_tot, c_insul)
                 investment_insulation_before = (c_insul.reindex(ms_before.index) * ms_before).sum(axis=1)
                 investment_insulation_before = (investment_insulation_before * retrofit).sum() / retrofit.sum()
                 new_sub = sub_tot + d_sub
-                ms_after, _ = to_market_share(b_save, new_sub, c_insul, util_zil=utility_zil)
+                ms_after, _ = to_market_share(b_save, new_sub, c_insul)
                 investment_insulation_after = (c_insul.reindex(ms_after.index) * ms_after).sum(axis=1)
                 investment_insulation_after = (investment_insulation_after * retrofit).sum() / retrofit.sum()
 
@@ -2064,7 +2039,7 @@ class AgentBuildings(ThermalBuildings):
                 return delta_invest - target
 
             return solve(1, f_retrofit, bill_save, sub_total, cost_insul, -0.5 * delta_sub,
-                         target_invest, util_zil) + target_invest
+                         target_invest) + target_invest
 
         index = stock.index
 
@@ -2091,21 +2066,18 @@ class AgentBuildings(ThermalBuildings):
         energy_bill_sd = (consumption_sd.T * energy_prices * reindex_mi(self._surface, index)).T
         bill_saved = - energy_bill_sd.sub(energy_bill_before, axis=0).dropna()
 
-        market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total,
-                                                          util_zil=utility_zil)
+        market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
 
         if self.constant_insulation_intensive is None:
             self.logger.info('Calibration intensive')
             self.constant_insulation_intensive = calibration_intensive(utility_intensive, stock, ms_insulation,
                                                                        renovation_rate_ini)
 
-            market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total,
-                                                              util_zil=utility_zil)
+            market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
 
             percentage_intensive_margin = calculation_intensive_margin(stock, renovation_rate_ini, bill_saved,
                                                                        subsidies_total,
-                                                                       cost_insulation, delta_subsidies,
-                                                                       util_zil=utility_zil)
+                                                                       cost_insulation, delta_subsidies)
 
             if self._debug_mode:
                 fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -2133,18 +2105,12 @@ class AgentBuildings(ThermalBuildings):
             self.market_share = market_share_agg
 
         # extensive margin
-        bool_zil_ext, bool_zil = None, None
-        if utility_zil is not None:
-            bool_zil = utility_zil.copy()
-            bool_zil[bool_zil > 0] = 1
-
         bill_saved_insulation, subsidies_insulation, investment_insulation = None, None, None
         if self._utility_representative == 'market_share':
             bill_saved_insulation = (bill_saved.reindex(market_share.index) * market_share).sum(axis=1)
             subsidies_insulation = (subsidies_total.reindex(market_share.index) * market_share).sum(axis=1)
             investment_insulation = (cost_total.reindex(market_share.index) * market_share).sum(axis=1)
-            if utility_zil is not None:
-                bool_zil_ext = (bool_zil.reindex(market_share.index) * market_share).sum(axis=1)
+
         elif self._utility_representative == 'max':
             def rename_tuple(tuple, names):
                 idx = tuple.index
@@ -2160,15 +2126,12 @@ class AgentBuildings(ThermalBuildings):
             utility_intensive_max = utility_intensive.max(axis=1)"""
             bill_saved_insulation, investment_insulation, subsidies_insulation = Series(dtype=float), Series(
                 dtype=float), Series(dtype=float)
-            if utility_zil is not None:
-                bool_zil_ext = Series(dtype=float)
+
             for c in columns.unique():
                 idx = columns.index[columns == c]
                 bill_saved_insulation = concat((bill_saved_insulation, bill_saved.loc[idx, c]), axis=0)
                 investment_insulation = concat((investment_insulation, cost_insulation.loc[idx, c]), axis=0)
                 subsidies_insulation = concat((subsidies_insulation, subsidies_total.loc[idx, c]), axis=0)
-                if utility_zil is not None:
-                    bool_zil_ext = concat((bool_zil_ext, bool_zil.loc[idx, c]), axis=0)
 
             bill_saved_insulation.index = MultiIndex.from_tuples(bill_saved_insulation.index).set_names(
                 bill_saved.index.names)
@@ -2176,20 +2139,15 @@ class AgentBuildings(ThermalBuildings):
                 cost_insulation.index.names)
             subsidies_insulation.index = MultiIndex.from_tuples(subsidies_insulation.index).set_names(
                 subsidies_total.index.names)
-            if utility_zil is not None:
-                bool_zil_ext.index = MultiIndex.from_tuples(bool_zil_ext.index).set_names(
-                    bool_zil.index.names)
+
 
         idx = bill_saved_insulation[bill_saved_insulation <= 0].index
         bill_saved_insulation.drop(idx, inplace=True)
         subsidies_insulation.drop(idx, inplace=True)
         # More index in investment_insulation
         investment_insulation.drop(idx, inplace=True)
-        if bool_zil_ext:
-            bool_zil_ext.drop(idx, inplace=True)
 
-        retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation,
-                                                  zil=bool_zil_ext)
+        retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation)
 
         if self.constant_insulation_extensive is None:
             self.logger.debug('Calibration renovation rate')
@@ -2236,7 +2194,6 @@ class AgentBuildings(ThermalBuildings):
             self.pref_subsidy_insulation_ext *= self.scale_ext
             self.pref_investment_insulation_ext *= self.scale_ext
             self.pref_bill_insulation_ext *= self.scale_ext
-            self.pref_zil_ext *= self.scale_ext
 
             # graphic showing the impact of the scale
             if self._debug_mode:
@@ -2268,7 +2225,7 @@ class AgentBuildings(ThermalBuildings):
                 save_fig(fig, save=os.path.join(self.path_calibration, 'scale_effect.png'))
 
             retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
-                                                      investment_insulation, zil=bool_zil_ext)
+                                                      investment_insulation)
 
             # graphics showing the distribution of retrofit rate after calibration
             if self._debug_mode:
