@@ -305,15 +305,8 @@ def read_policies(config):
         PublicPolicy instance with zero_interest_loan attributes
         """
         data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-        if data['ad_volarem']:
-            return [
-                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
+        return [PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
                              target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
-        else:
-            return [
-                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                             gest='insulation', target=True, cost_max=data_max, cost_min=data['min'], new=data['new'])]
 
     def read_reduced_tax(data):
         l = list()

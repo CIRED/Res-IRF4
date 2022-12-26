@@ -84,7 +84,6 @@
         "start": 2019,
         "end": 2019,
         "value": 0.0917729,
-        "ad_volarem": true,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
       },
