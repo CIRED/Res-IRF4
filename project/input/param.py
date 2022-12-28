@@ -78,8 +78,8 @@ generic_input['ratio_surface'] = pd.DataFrame(
 
 subsidy_preferences_heater = 0.167
 bill_saving_preferences = get_pandas('project/input/bill_saving_preferences.csv', lambda x: pd.read_csv(x, index_col=[0, 1]))
-subsidy_loan_preferences_heater = 0.473
-subsidy_loan_preferences_insulation = 0.343
+# subsidy_loan_preferences_heater, subsidy_loan_preferences_insulation = 0.473, 0.343
+
 inertia = 0.8299
 
 preferences_by_housing_type = False
@@ -118,7 +118,6 @@ generic_input['preferences']['insulation'] = {'investment': investment_preferenc
 generic_input['preferences']['insulation'] = {'investment': investment_preferences_heater,
                                               'subsidy': subsidy_preferences_heater,
                                               'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
-                                              'zero_interest_loan': subsidy_loan_preferences_heater
                                               }
 
 generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 1),

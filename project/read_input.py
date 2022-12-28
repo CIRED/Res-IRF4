@@ -332,10 +332,16 @@ def read_policies(config):
     def read_obligation(data):
         return [PublicPolicy('obligation', data['start'], data['end'], 'G', 'obligation', gest='insulation')]
 
+    def read_landlord(data):
+        return [PublicPolicy('landlord', data['start'], data['end'], None, 'regulation', gest='insulation')]
+
+    def read_multi_family(data):
+        return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
+
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
             'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination,
-            'obligation': read_obligation}
+            'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
 
     list_policies = list()
     for key, item in config['policies'].items():
@@ -492,10 +498,18 @@ def parse_inputs(inputs, taxes, config, stock):
 
     parsed_inputs = copy.deepcopy(inputs)
 
-    parsed_inputs['cost_heater'] *= config['cost_factor']
-    parsed_inputs['cost_insulation'] *= config['cost_factor']
-    parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
-    parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
+    cost_factor = 1
+    if 'cost_factor' in config.keys():
+        cost_factor = config['cost_factor']
+
+    prices_factor = 1
+    if 'prices_factor' in config.keys():
+        prices_factor = config['prices_factor']
+
+    parsed_inputs['cost_heater'] *= cost_factor
+    parsed_inputs['cost_insulation'] *= cost_factor
+    parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
+    parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
 
     parsed_inputs['population_total'] = inputs['population']
     parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
