@@ -549,7 +549,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, preferences,
                  performance_insulation, path=None, year=2018, demolition_rate=0.0,
-                 endogenous=True, number_exogenous=300000, insulation_representative='max',
+                 endogenous=True, number_exogenous=300000, insulation_representative='market_share',
                  logger=None, debug_mode=False, calib_scale=True, detailed_mode=None,
                  quintiles=None, financing_cost=True,
                  ):

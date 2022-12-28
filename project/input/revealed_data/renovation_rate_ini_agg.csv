@@ -1,0 +1,13 @@
+﻿Housing type,Occupancy status,Heater replacement,
+Single-family,Owner-occupied,FALSE,0.04
+Single-family,Owner-occupied,TRUE,0.23
+Single-family,Privately rented,FALSE,0.02
+Single-family,Privately rented,TRUE,0.16
+Single-family,Social-housing,FALSE,0.03
+Single-family,Social-housing,TRUE,0.21
+Multi-family,Owner-occupied,FALSE,0.03
+Multi-family,Owner-occupied,TRUE,0.13
+Multi-family,Privately rented,FALSE,0.01
+Multi-family,Privately rented,TRUE,0.09
+Multi-family,Social-housing,FALSE,0.01
+Multi-family,Social-housing,TRUE,0.12
