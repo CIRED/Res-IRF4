@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2022,
     "debug_mode": false,
     "detailed_mode": true,
     "prices_constant": false,
@@ -88,8 +88,9 @@
         "max": "project/input/policies/zil_max.csv"
       },
       "obligation": {
-        "start": 2020,
-        "end": 2020
+        "start": 2019,
+        "end": 2019,
+        "value": "project/input/policies/c_obligation.csv"
       }
 
     },

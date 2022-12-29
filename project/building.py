@@ -2356,9 +2356,9 @@ class AgentBuildings(ThermalBuildings):
 
         obligation = [p for p in policies_insulation if p.name == 'obligation']
         if obligation:
-
+            Banned_performance = pd.read_csv(obligation[0].value,header=0,index_col=[0]).squeeze().loc[self.year]
             stock_certificate = self.add_certificate(stock)
-            idx = stock.index[stock_certificate.index.get_level_values('Performance').isin(['F', 'G'])]
+            idx = stock.index[stock_certificate.index.get_level_values('Performance').isin([Banned_performance])]
             to_replace = stock.loc[idx]
 
             # formatting replace_by
@@ -3211,4 +3211,5 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = calibration_constant_extensive.dropna()
 
         self.scale_ext = scale
+
 
