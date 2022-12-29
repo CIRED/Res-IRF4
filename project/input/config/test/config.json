@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2022,
+    "end": 2025,
     "debug_mode": false,
     "detailed_mode": true,
     "prices_constant": false,
@@ -89,10 +89,11 @@
       },
       "obligation": {
         "start": 2019,
-        "end": 2019,
-        "value": "project/input/policies/c_obligation.csv"
+        "end": 2051,
+        "value": "project/input/policies/agenda_obligation.csv",
+        "frequency": "rotation",
+        "intensive": "global"
       }
-
     },
     "footprint": {
       "Traditional material": 1.0,
@@ -106,4 +107,5 @@
     "surface_built": null,
     "financing_cost": true
   }
+
 }

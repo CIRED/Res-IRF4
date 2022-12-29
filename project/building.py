@@ -2337,7 +2337,7 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
-    def flow_obligation(self, policies_insulation, option='global'):
+    def flow_obligation(self, policies_insulation, rotation=None):
         """Account for flow obligation if defined in policies_insulation.
 
         Parameters
@@ -2351,49 +2351,65 @@ class AgentBuildings(ThermalBuildings):
         -------
         flow_obligation: Series
         """
-
+        from math import isnan
         stock = self.stock.copy()
 
         obligation = [p for p in policies_insulation if p.name == 'obligation']
-        if obligation:
-            Banned_performance = pd.read_csv(obligation[0].value,header=0,index_col=[0]).squeeze().loc[self.year]
-            stock_certificate = self.add_certificate(stock)
-            idx = stock.index[stock_certificate.index.get_level_values('Performance').isin([Banned_performance])]
-            to_replace = stock.loc[idx]
+        if obligation == []:
+            return None
+        # only work if there is one obligation
+        obligation = obligation[0]
+        banned_performance = obligation.value.loc[self.year]
+        if not isinstance(banned_performance, str):
+            return None
 
-            # formatting replace_by
-            replaced_by = to_replace.copy()
-            replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Income tenant']).sum()
+        performance_target = [i for i in resources_data['index']['Performance'] if i >= banned_performance]
 
-            if 'Heater replacement' not in replaced_by:
-                replaced_by = concat([replaced_by], keys=[False], names=['Heater replacement'])
-            if 'Heating system final' not in replaced_by.index.names:
-                temp = replaced_by.reset_index('Heating system')
-                temp['Heating system final'] = temp['Heating system']
-                replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
-            replaced_by.index = replaced_by.index.reorder_levels(self.market_share.index.names)
+        stock_certificate = self.add_certificate(stock)
+        idx = stock.index[stock_certificate.index.get_level_values('Performance').isin(performance_target)]
+        if idx.empty:
+            return None
 
-            market_share = None
-            if option == 'market_share':
-                # index that have been created in year do not have market-share already calculated in self.market_share
-                market_share = self.market_share
-                idx_full = market_share.index.intersection(replaced_by.index)
-                market_share = market_share.loc[idx_full, :]
-            elif option == 'global':
-                market_share = DataFrame(0, index=replaced_by.index, columns=self._choice_insulation)
-                market_share.loc[:, (True, True, True, True)] = 1
+        proba = 1
+        if obligation.frequency == 'rotation':
+            proba = rotation
+            proba = reindex_mi(proba, stock.index)
 
-            replaced_by = (replaced_by.rename(None) * market_share.T).T
+        to_replace = stock.loc[idx] * proba
 
-            if self.detailed_mode:
-                self.store_information_retrofit(replaced_by)
+        # formatting replace_by
+        replaced_by = to_replace.copy()
+        replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Income tenant']).sum()
 
-            replaced_by = self.frame_to_flow(replaced_by)
+        if 'Heater replacement' not in replaced_by:
+            replaced_by = concat([replaced_by], keys=[False], names=['Heater replacement'])
+        if 'Heating system final' not in replaced_by.index.names:
+            temp = replaced_by.reset_index('Heating system')
+            temp['Heating system final'] = temp['Heating system']
+            replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
+        replaced_by.index = replaced_by.index.reorder_levels(self.market_share.index.names)
 
-            assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
-            flow_obligation = concat((- to_replace, replaced_by), axis=0)
-            flow_obligation = flow_obligation.groupby(flow_obligation.index.names).sum()
-            return flow_obligation
+        market_share = None
+        if obligation.intensive == 'market_share':
+            # index that have been created in year do not have market-share already calculated in self.market_share
+            market_share = self.market_share
+            idx_full = market_share.index.intersection(replaced_by.index)
+            market_share = market_share.loc[idx_full, :]
+        elif obligation.intensive == 'global':
+            market_share = DataFrame(0, index=replaced_by.index, columns=self._choice_insulation)
+            market_share.loc[:, (True, True, True, True)] = 1
+
+        replaced_by = (replaced_by.rename(None) * market_share.T).T
+
+        if self.detailed_mode:
+            self.store_information_retrofit(replaced_by)
+
+        replaced_by = self.frame_to_flow(replaced_by)
+
+        assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
+        flow_obligation = concat((- to_replace, replaced_by), axis=0)
+        flow_obligation = flow_obligation.groupby(flow_obligation.index.names).sum()
+        return flow_obligation
 
     def frame_to_flow(self, replaced_by):
         """Transform insulation transition Dataframe to flow.

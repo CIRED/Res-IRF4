@@ -267,7 +267,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  ms_insulation=None, renovation_rate_ini=None,
-                   target_freeriders=None, financing_cost=None):
+                   target_freeriders=None, financing_cost=None, rotation=None):
 
     buildings.logger.info('Run {}'.format(year))
     buildings.year = year
@@ -283,7 +283,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             financing_cost=financing_cost)
     buildings.add_flows([flow_retrofit, flow_built])
 
-    flow_obligation = buildings.flow_obligation(p_insulation)
+    flow_obligation = buildings.flow_obligation(p_insulation, rotation=rotation)
     if flow_obligation is not None:
         buildings.add_flows([flow_obligation])
 
@@ -345,7 +345,7 @@ def res_irf(config, path):
                                              p_insulation, f_built, year, post_inputs,
                                              ms_insulation=ms_intensive, renovation_rate_ini=renovation_rate_ini,
                                              target_freeriders=target_freeriders, ms_heater=ms_heater,
-                                             financing_cost=financing_cost)
+                                             financing_cost=financing_cost, rotation=inputs['rotation_rate'])
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

@@ -42,7 +42,7 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None, by='index', non_cumulative=None):
+                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None):
         self.name = name
         self.start = start
         self.end = end
@@ -56,6 +56,8 @@ class PublicPolicy:
         self.new = new
         self.by = by
         self.non_cumulative = non_cumulative
+        self.frequency = frequency
+        self.intensive = intensive
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
@@ -330,7 +332,9 @@ def read_policies(config):
 
     def read_obligation(data):
         l = list()
-        l.append(PublicPolicy('obligation', data['start'], data['end'],data['value'], 'obligation', gest='insulation'))
+        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        l.append(PublicPolicy('obligation', data['start'], data['end'], banned_performance, 'obligation',
+                              gest='insulation', frequency=data['frequency'], intensive=data['intensive']))
         return l
 
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
@@ -410,6 +414,8 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'stock_ini': other_inputs['stock_ini']})
 
+    inputs.update({'rotation_rate': other_inputs['rotation_rate']})
+
     if config['pop_housing'] is None:
         inputs.update({'pop_housing_min': other_inputs['pop_housing_min']})
         inputs.update({'factor_pop_housing': other_inputs['factor_pop_housing']})
@@ -461,12 +467,6 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'traditional_material': config['footprint']['Traditional material']})
     inputs.update({'bio_material': config['footprint']['Bio material']})
 
-    """levels_category = ['Housing type', 'Occupancy status', 'Income tenant', 'Income owner', 'Heating system']
-    for key, item in inputs.items():
-        if isinstance(item, (Series, DataFrame)):
-            level = [i for i in item.index.names if i in levels_category]
-            inputs[key] = item.reset_index(level).astype({i: 'category' for i in level}).set_index(
-                level, append=True).squeeze()"""
     return inputs
 
 
