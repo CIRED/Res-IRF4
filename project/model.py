@@ -256,7 +256,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['endogenous'], logger=logger,
                                quintiles=config.get('quintiles'),
-                               detailed_mode=config.get('detailed_mode'),
+                               full_output=config.get('full_output'),
                                financing_cost=config.get('financing_cost'),
                                debug_mode=config.get('debug_mode'))
 
@@ -268,6 +268,34 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  ms_insulation=None, renovation_rate_ini=None,
                    target_freeriders=None, financing_cost=None, rotation=None):
+    """Update stock vintage due to renovation, demolition and construction.
+    
+    
+    Parameters
+    ----------
+    buildings
+    prices
+    taxes
+    cost_heater
+    cost_insulation
+    p_heater
+    p_insulation
+    flow_built
+    year
+    post_inputs
+    ms_heater
+    ms_insulation
+    renovation_rate_ini
+    target_freeriders
+    financing_cost
+    rotation
+
+    Returns
+    -------
+    buildings : AgentBuildings
+        Updated AgentBuildings object.
+    stock: 
+    """
 
     buildings.logger.info('Run {}'.format(year))
     buildings.year = year
@@ -283,13 +311,15 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             financing_cost=financing_cost)
     buildings.add_flows([flow_retrofit, flow_built])
 
-    flow_obligation = buildings.flow_obligation(p_insulation, rotation=rotation)
+    flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation, rotation=rotation,
+                                                financing_cost=financing_cost)
+
     if flow_obligation is not None:
         buildings.add_flows([flow_obligation])
 
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
-    if buildings.detailed_mode:
+    if buildings.full_output:
         stock, output = buildings.parse_output_run(post_inputs)
     else:
         stock = buildings.simplified_stock().rename(year)
@@ -316,6 +346,7 @@ def res_irf(config, path):
     pd.DataFrame
         Detailed results
     """
+
     os.mkdir(path)
     logger = create_logger(path)
     try:
@@ -356,7 +387,7 @@ def res_irf(config, path):
             buildings.logger.info('Dumping output in {}'.format(path))
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
-        if buildings.detailed_mode:
+        if buildings.full_output:
             plot_scenario(output, stock, buildings)
 
         return os.path.basename(os.path.normpath(path)), output, stock

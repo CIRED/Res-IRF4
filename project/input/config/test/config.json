@@ -1,8 +1,8 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2022,
     "debug_mode": false,
-    "detailed_mode": true,
+    "full_output": true,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -86,8 +86,11 @@
         "max": "project/input/policies/zil_max.csv"
       },
       "obligation": {
-        "start": 2020,
-        "end": 2020
+        "start": 2019,
+        "end": 2051,
+        "value": "project/input/policies/agenda_obligation.csv",
+        "frequency": null,
+        "intensive": "global"
       },
       "landlord": {
         "start": 2020,

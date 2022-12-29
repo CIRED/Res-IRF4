@@ -2,7 +2,7 @@
   "Reference": {
     "end": 2025,
     "debug_mode": false,
-    "detailed_mode": true,
+    "full_output": true,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -89,9 +89,9 @@
       },
       "obligation": {
         "start": 2019,
-        "end": 2019,
+        "end": 2020,
         "value": "project/input/policies/agenda_obligation.csv",
-        "frequency": "rotation",
+        "frequency": null,
         "intensive": "global"
       }
     },
@@ -110,7 +110,7 @@
   "ObligationRaw": {
     "end": 2025,
     "debug_mode": false,
-    "detailed_mode": true,
+    "full_output": true,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,
@@ -218,7 +218,7 @@
   "ObligationRotation": {
     "end": 2025,
     "debug_mode": false,
-    "detailed_mode": true,
+    "full_output": true,
     "prices_constant": false,
     "taxes_constant": false,
     "demolition_rate": 0.0035,

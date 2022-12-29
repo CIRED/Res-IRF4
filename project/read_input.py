@@ -42,7 +42,7 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None, by='index', non_cumulative=None):
+                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None):
         self.name = name
         self.start = start
         self.end = end
@@ -56,6 +56,8 @@ class PublicPolicy:
         self.new = new
         self.by = by
         self.non_cumulative = non_cumulative
+        self.frequency = frequency
+        self.intensive = intensive
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
@@ -330,7 +332,11 @@ def read_policies(config):
                              'heater_regulation', gest='heater')]
 
     def read_obligation(data):
-        return [PublicPolicy('obligation', data['start'], data['end'], 'G', 'obligation', gest='insulation')]
+        l = list()
+        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        l.append(PublicPolicy('obligation', data['start'], data['end'], banned_performance, 'obligation',
+                              gest='insulation', frequency=data['frequency'], intensive=data['intensive']))
+        return l
 
     def read_landlord(data):
         return [PublicPolicy('landlord', data['start'], data['end'], None, 'regulation', gest='insulation')]
