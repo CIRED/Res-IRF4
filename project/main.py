@@ -195,7 +195,7 @@ def run(path=None):
 
     if 'elasticity' in configuration.keys():
         if configuration['elasticity']['activated']:
-            configuration['Reference']['detailed_mode'] = False
+            configuration['Reference']['full_output'] = False
             energy_prices = read_prices(configuration['Reference'])
             scenarios = generate_price_scenarios(energy_prices, path=configuration['elasticity']['path'])
             for key, path in scenarios.items():
@@ -230,7 +230,7 @@ def run(path=None):
         stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
-        if configuration.get('Reference').get('detailed_mode'):
+        if configuration.get('Reference').get('full_output'):
             grouped_output(result, folder, config_policies, config_sensitivity,
                            quintiles=configuration.get('Reference').get('quintiles'))
 

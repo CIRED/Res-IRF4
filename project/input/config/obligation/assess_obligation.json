@@ -1,4 +1,25 @@
 {
+  "assessment": {
+    "activated": true,
+    "Policy name": "obligation",
+    "AP": "Reference",
+    "AP-1": true,
+    "ZP": true,
+    "ZP+1": true,
+    "AP-2020": false,
+    "AP-2021": false,
+    "AP-2022": false,
+    "AP-2025": false,
+    "AP-2030": false,
+    "AP-2035": false,
+    "AP-2040": false,
+    "Discount rate": 0.045,
+    "Lifetime": 30,
+    "energy_prices": "project/input/energy_prices_ht.csv",
+    "carbon_value": "project/input/policies/carbon_value.csv",
+    "carbon_emission": "project/input/policies/carbon_emission.csv"
+  },
+
   "Reference": {
     "end": 2025,
     "debug_mode": false,
@@ -23,13 +44,12 @@
       },
       "exogenous": {
         "number": 0
-
       }
     },
     "ms_insulation": {
-        "endogenous": true,
-        "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
-        "minimum_performance": null
+      "endogenous": true,
+      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
+      "minimum_performance": null
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
     "population": "project/input/population.csv",
@@ -104,7 +124,7 @@
         "value": "project/input/policies/agenda_obligation.csv",
         "frequency": null,
         "intensive": "market_share",
-        "minimum_performance": null
+        "minimum_performance": "D"
       },
       "landlord": {
         "start": 2020,
@@ -113,6 +133,11 @@
       "multi_family": {
         "start": 2020,
         "end": 2020
+      },
+      "sub_ad_volarem": {
+        "start": 2021,
+        "end": 2021,
+        "value": 0.5
       }
     },
     "footprint": {
@@ -126,5 +151,4 @@
     "share_multi_family": null,
     "surface_built": null
   }
-
 }

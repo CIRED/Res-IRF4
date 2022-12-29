@@ -42,7 +42,7 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None):
+                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None):
         self.name = name
         self.start = start
         self.end = end
@@ -58,6 +58,7 @@ class PublicPolicy:
         self.non_cumulative = non_cumulative
         self.frequency = frequency
         self.intensive = intensive
+        self.min_performance = min_performance
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
@@ -335,7 +336,8 @@ def read_policies(config):
         l = list()
         banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         l.append(PublicPolicy('obligation', data['start'], data['end'], banned_performance, 'obligation',
-                              gest='insulation', frequency=data['frequency'], intensive=data['intensive']))
+                              gest='insulation', frequency=data['frequency'], intensive=data['intensive'],
+                              min_performance=data['minimum_performance']))
         return l
 
     def read_landlord(data):
@@ -409,12 +411,20 @@ def read_inputs(config, other_inputs=generic_input):
     ms_heater.columns.set_names('Heating system final', inplace=True)
     inputs.update({'ms_heater': ms_heater})
 
-    df = get_pandas(config['renovation_rate_ini'])
-    renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
-    inputs.update({'renovation_rate_ini': renovation_rate_ini})
+    calibration_renovation = None
+    if config['renovation']['endogenous']:
+        df = get_pandas(config['renovation']['renovation_rate_ini'])
+        renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
+        scale_calibration = config['renovation']['scale']
+        calibration_renovation = {'renovation_rate_ini': renovation_rate_ini, 'scale': scale_calibration}
+    inputs.update({'calibration_renovation': calibration_renovation})
 
-    ms_intensive = get_pandas(config['ms_insulation'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
-    inputs.update({'ms_intensive': ms_intensive})
+    calibration_intensive = None
+    if config['ms_insulation']['endogenous']:
+        ms_insulation_ini = get_pandas(config['ms_insulation']['ms_insulation_ini'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
+        minimum_performance = config['ms_insulation']['minimum_performance']
+        calibration_intensive = {'ms_insulation_ini': ms_insulation_ini, 'minimum_performance': minimum_performance}
+    inputs.update({'calibration_intensive': calibration_intensive})
 
     population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'population': population.loc[:config['end']]})

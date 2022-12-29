@@ -1149,8 +1149,8 @@ class AgentBuildings(ThermalBuildings):
         probability_replacement = probability_replacement.reindex(market_share.index)
         return market_share, probability_replacement
 
-    def insulation_replacement(self, stock, prices, cost_insulation_raw, ms_insulation=None, renovation_rate_ini=None,
-                               policies_insulation=None, target_freeriders=None, financing_cost=None):
+    def insulation_replacement(self, stock, prices, cost_insulation_raw, policies_insulation=None, financing_cost=None,
+                               calib_renovation=None, calib_intensive=None, min_performance=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -1219,17 +1219,19 @@ class AgentBuildings(ThermalBuildings):
             if 'reduced_tax' in subsidies_details.keys():
                 subsidies_total -= subsidies_details['reduced_tax']
 
-            delta_subsidies = None
-            if (self.year in [self.first_year + 1]) and (self.scale_ext is None):
-                delta_subsidies = subsidies_details['cite'].copy()
+            if calib_renovation is not None:
+                if calib_renovation['scale']['name'] == 'freeriders':
+                    delta_subsidies = None
+                    if (self.year in [self.first_year + 1]) and (self.scale_ext is None):
+                        delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
+                    calib_renovation['scale']['delta_subsidies'] = delta_subsidies
 
             retrofit_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total,
                                                                    cost_insulation,
-                                                                   ms_insulation=ms_insulation,
-                                                                   renovation_rate_ini=renovation_rate_ini,
-                                                                   delta_subsidies=delta_subsidies,
-                                                                   target_freeriders=target_freeriders,
-                                                                   financing_cost=financing_cost)
+                                                                   calib_intensive=calib_intensive,
+                                                                   calib_renovation=calib_renovation,
+                                                                   financing_cost=financing_cost,
+                                                                   min_performance=min_performance)
             if self.retrofit_rate is None:
                 self.retrofit_rate, self.market_share = retrofit_rate, market_share
 
@@ -1748,9 +1750,8 @@ class AgentBuildings(ThermalBuildings):
 
         return subsidies
 
-    def endogenous_retrofit(self, stock, prices, subsidies_total, cost_insulation, ms_insulation=None,
-                            renovation_rate_ini=None, delta_subsidies=None, target_freeriders=0.85,
-                            financing_cost=None):
+    def endogenous_retrofit(self, stock, prices, subsidies_total, cost_insulation, financing_cost=None,
+                            calib_renovation=None, calib_intensive=None, min_performance=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
         Utility variables are investment cost, energy bill saving, and subsidies.
@@ -1765,11 +1766,10 @@ class AgentBuildings(ThermalBuildings):
         prices: Series
         subsidies_total: DataFrame
         cost_insulation: DataFrame
-        ms_insulation: Series, default None
-        renovation_rate_ini: Series, default None
+
         stock: Series, default None
-        delta_subsidies: DataFrame, default None
-        target_freeriders: float, default 0.85
+        calib_intensive: dict, optional
+        calib_renovation: dict, optional
 
         Returns
         -------
@@ -1778,16 +1778,6 @@ class AgentBuildings(ThermalBuildings):
         DataFrame
             Market-share insulation
         """
-
-        def logit_model(bill_save, subsidies, investment, discount, coeff_landlord, collective):
-
-            util = - investment + subsidies + bill_save * discount * coeff_landlord + collective
-
-            if self.constant_test is not None:
-                util += self.constant_test
-
-            ms = (exp(util).T / exp(util).sum(axis=1)).T
-            return ms, util
 
         def to_market_share(bill_save, subsidies, investment):
             """Calculate market-share between insulation options.
@@ -1804,6 +1794,10 @@ class AgentBuildings(ThermalBuildings):
             ms_intensive: DataFrame
             util_intensive: DataFrame
             """
+
+            bill_save[bill_save == 0] = float('nan')
+            subsidies[bill_save == 0] = float('nan')
+            investment[bill_save == 0] = float('nan')
 
             pref_sub = reindex_mi(self.preferences_insulation_int['subsidy'], subsidies.index).rename(None)
             utility_subsidies = (subsidies.T * pref_sub).T / 1000
@@ -1915,6 +1909,8 @@ class AgentBuildings(ThermalBuildings):
 
             const = market_share_ini.reindex(utility_ref.columns, axis=0).copy()
             const[const > 0] = 0
+
+            # insulation of the roof is the most frequent insulation work
             insulation_ref = (False, False, True, False)
             ms_segment, ms_agg, ms_ini = None, None, None
             for i in range(iteration):
@@ -1945,8 +1941,7 @@ class AgentBuildings(ThermalBuildings):
 
             return const
 
-        def calibration_constant_scale_ext(util, stock_segment, retrofit_rate_ini, freeriders, delta_sub,
-                                           pref_sub):
+        def calibration_constant_scale_ext(util, stock_segment, calib_renovation):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
 
             Parameters
@@ -1963,7 +1958,7 @@ class AgentBuildings(ThermalBuildings):
 
             """
 
-            def solve_old(x, utility_ini, stock_ini, retrofit_rate_target, freeride, delta_sub, pref_sub):
+            def solve_feeriders(x, utility_ini, stock_ini, retrofit_rate_target, freeride, delta_sub, pref_sub):
                 scale = x[-1]
                 cst = x[:-1]
 
@@ -1984,7 +1979,7 @@ class AgentBuildings(ThermalBuildings):
 
                 return rslt
 
-            def solve(x, utility_ini, stock_ini, retrofit_rate_target, std_deviation=0.048):
+            def solve_deviation(x, utility_ini, stock_ini, retrofit_rate_target, std_deviation):
                 scale = x[-1]
                 cst = x[:-1]
 
@@ -2021,6 +2016,9 @@ class AgentBuildings(ThermalBuildings):
 
                 return rslt
 
+            retrofit_rate_ini = calib_renovation['renovation_rate_ini']
+            calibration_scale = calib_renovation['scale']
+
             if 'Performance' in retrofit_rate_ini.index.names:
                 stock_segment = self.add_certificate(stock_segment)
                 stock_retrofit = stock_segment[stock_segment.index.get_level_values('Performance') > 'B']
@@ -2030,27 +2028,33 @@ class AgentBuildings(ThermalBuildings):
 
             constant = retrofit_rate_ini.copy()
             constant[retrofit_rate_ini > 0] = 0
-            """a = stock_segment.groupby(retrofit_rate_ini.index.names).mean()
-            b = util.groupby(retrofit_rate_ini.index.names).mean()
-            pd.concat((retrofit_rate_ini, a, b), axis=1)"""
-            if self._calib_scale:
+
+            if calibration_scale is not None:
                 x = append(constant.to_numpy(), 1)
-                """root, infodict, ier, mess = fsolve(solve, x, args=(
-                    util, stock_retrofit, retrofit_rate_ini, freeriders, - delta_sub / 1000, pref_sub),
-                                                   full_output=True)"""
-                root, infodict, ier, mess = fsolve(solve, x, args=(
-                    util, stock_retrofit, retrofit_rate_ini), full_output=True)
+
+                if calibration_scale['name'] == 'freeriders':
+                    root, infodict, ier, mess = fsolve(solve_feeriders, x, args=(
+                        util, stock_retrofit, retrofit_rate_ini, calibration_scale['target_freeriders'], - calibration_scale['delta_subsidies_sum'] / 1000, calibration_scale['pref_subsidies']),
+                                                       full_output=True)
+                    scale = root[-1]
+                    constant = Series(root[:-1], index=retrofit_rate_ini.index) * scale
+
+                elif calibration_scale['name'] == 'standard_deviation':
+
+                    root, infodict, ier, mess = fsolve(solve_deviation, x, args=(
+                        util, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
+                    scale = root[-1]
+                    constant = Series(root[:-1], index=retrofit_rate_ini.index) * scale
+
+                else:
+                    x = constant.to_numpy()
+                    root, infodict, ier, mess = fsolve(solve_noscale, x, args=(util, stock_retrofit, retrofit_rate_ini),
+                                                  full_output=True)
+                    scale = 1.0
+                    constant = Series(root, index=retrofit_rate_ini.index) * scale
 
                 self.logger.info(mess)
-                scale = root[-1]
                 self.logger.info('Scale: {}'.format(scale))
-                constant = Series(root[:-1], index=retrofit_rate_ini.index) * scale
-            else:
-                x = constant.to_numpy()
-                root, infodict, _, _ = fsolve(solve_noscale, x, args=(util, stock_retrofit, retrofit_rate_ini),
-                                              full_output=True)
-                scale = 1.0
-                constant = Series(root, index=retrofit_rate_ini.index) * scale
 
             utility_constant = reindex_mi(constant, util.index)
             util = util * scale + utility_constant
@@ -2064,7 +2068,6 @@ class AgentBuildings(ThermalBuildings):
             landlord_loss = wtp[wtp.index.get_level_values('Occupancy status') == 'Privately rented'].droplevel('Occupancy status') - wtp[wtp.index.get_level_values('Occupancy status') == 'Owner-occupied'].droplevel('Occupancy status')
             multi_family_loss = wtp[wtp.index.get_level_values('Occupancy status') != 'Social-housing']
             multi_family_loss = multi_family_loss[multi_family_loss.index.get_level_values('Housing type') == 'Multi-family'].droplevel('Housing type') - multi_family_loss[multi_family_loss.index.get_level_values('Housing type') == 'Single-family'].droplevel('Housing type')
-
 
             details = concat((constant, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3), axis=1,
                              keys=['constant', 'calcul', 'observed', 'thousand']).round(decimals=3)
@@ -2145,12 +2148,24 @@ class AgentBuildings(ThermalBuildings):
 
         market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
 
+        # min_performance = calib_intensive.get('minimum_performance')
+        if min_performance is not None:
+            certificate = reindex_mi(self.certificate_building_choice, market_share.index)
+            market_share = market_share[certificate <= min_performance]
+            market_share = (market_share.T / market_share.sum(axis=1)).T
+
         if self.constant_insulation_intensive is None:
             self.logger.info('Calibration intensive')
-            self.constant_insulation_intensive = calibration_intensive(utility_intensive, stock, ms_insulation,
-                                                                       renovation_rate_ini)
+            self.constant_insulation_intensive = calibration_intensive(utility_intensive, stock,
+                                                                       calib_intensive['ms_insulation_ini'],
+                                                                       calib_renovation['renovation_rate_ini'])
 
             market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
+
+            if min_performance is not None:
+                certificate = reindex_mi(self.certificate_building_choice, market_share.index)
+                market_share = market_share[certificate <= min_performance]
+                market_share = (market_share.T / market_share.sum(axis=1)).T
 
             percentage_intensive_margin = None
             if False:
@@ -2217,13 +2232,18 @@ class AgentBuildings(ThermalBuildings):
 
         if self.constant_insulation_extensive is None:
             self.logger.debug('Calibration renovation rate')
-            if self._insulation_representative == 'market_share':
-                delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
-            else:
-                delta_subsidies_sum = self.find_best_option(utility_intensive, {'delta_subsidies': delta_subsidies}, func='max')['delta_subsidies']
-                delta_subsidies_sum = delta_subsidies_sum.loc[bill_saved_insulation.index].rename(None)
 
-            pref_subsidies = reindex_mi(self.preferences_insulation_ext['subsidy'], subsidies_insulation.index).rename(None)
+            if calib_renovation['scale']['name'] == 'freeriders':
+                delta_subsidies = calib_renovation['scale']['delta_subsidies']
+                if self._insulation_representative == 'market_share':
+                    delta_subsidies_sum = (delta_subsidies.reindex(market_share.index) * market_share).sum(axis=1)
+                else:
+                    delta_subsidies_sum = self.find_best_option(utility_intensive, {'delta_subsidies': delta_subsidies}, func='max')['delta_subsidies']
+                    delta_subsidies_sum = delta_subsidies_sum.loc[bill_saved_insulation.index].rename(None)
+                calib_renovation['scale']['delta_subsidies_sum'] = delta_subsidies_sum
+
+                pref_subsidies = reindex_mi(self.preferences_insulation_ext['subsidy'], subsidies_insulation.index).rename(None)
+                calib_renovation['scale']['pref_subsidies'] = pref_subsidies
 
             # graphic showing the impact of the scale in a general case
             if self._debug_mode:
@@ -2241,8 +2261,7 @@ class AgentBuildings(ThermalBuildings):
                     format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), y_label=name)
                     save_fig(fig, save=os.path.join(self.path_calibration, 'scale_calibration_{}.png'.format(name.lower())))
 
-            constant, scale = calibration_constant_scale_ext(utility, stock, renovation_rate_ini, target_freeriders,
-                                                             delta_subsidies_sum, pref_subsidies)
+            constant, scale = calibration_constant_scale_ext(utility, stock, calib_renovation)
             self.constant_insulation_extensive = constant
 
             # graphic showing the impact of the scale
@@ -2342,6 +2361,7 @@ class AgentBuildings(ThermalBuildings):
                         save_fig(fig, save=os.path.join(self.path_calibration_renovation, 'retrofit_rate_{}_calib.png'.format(name)))
 
             # file concatenating all calibration results
+            renovation_rate_ini = calib_renovation['renovation_rate_ini']
             scale = Series(self.scale_ext, index=['Scale'])
             constant_ext = self.constant_insulation_extensive.copy()
             constant_ext.index = constant_ext.index.to_flat_index()
@@ -2469,16 +2489,20 @@ class AgentBuildings(ThermalBuildings):
         # necessary to automatically calculate output
         _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
                                                       policies_insulation=policies_insulation,
-                                                      financing_cost=financing_cost)
+                                                      financing_cost=financing_cost,
+                                                      min_performance=obligation.min_performance)
 
         if obligation.intensive == 'market_share':
+            # market_share endogenously calculated by insulation_replacement
             pass
-
         elif obligation.intensive == 'global':
             market_share = DataFrame(0, index=replaced_by.index, columns=self._choice_insulation)
             market_share.loc[:, (True, True, True, True)] = 1
+        else:
+            raise NotImplemented
 
         replaced_by = (replaced_by.rename(None) * market_share.T).T
+        replaced_by = replaced_by.fillna(0)
 
         if self.full_output:
             self.store_information_retrofit(replaced_by)
@@ -2545,8 +2569,7 @@ class AgentBuildings(ThermalBuildings):
         return replaced_by
 
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
-                      ms_heater=None, ms_insulation=None, renovation_rate_ini=None, target_freeriders=None,
-                      financing_cost=None):
+                      ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -2585,10 +2608,9 @@ class AgentBuildings(ThermalBuildings):
         self.logger.debug('Agents: {:,.0f}'.format(stock.shape[0]))
         stock_existing = stock.xs(True, level='Existing', drop_level=False)
         retrofit_rate, market_share = self.insulation_replacement(stock_existing, prices, cost_insulation,
-                                                                  ms_insulation=ms_insulation,
-                                                                  renovation_rate_ini=renovation_rate_ini,
+                                                                  calib_renovation=calib_renovation,
+                                                                  calib_intensive=calib_intensive,
                                                                   policies_insulation=policies_insulation,
-                                                                  target_freeriders=target_freeriders,
                                                                   financing_cost=financing_cost)
 
         # heater replacement without insulation upgrade
@@ -3007,9 +3029,9 @@ class AgentBuildings(ThermalBuildings):
             for gest, subsidies_details in {'heater': self.subsidies_details_heater,
                                             'insulation': self.subsidies_details_insulation}.items():
                 if gest == 'heater':
-                    sub_count = Series(self.subsidies_count_heater)
+                    sub_count = Series(self.subsidies_count_heater, dtype=float)
                 elif gest == 'insulation':
-                    sub_count = Series(self.subsidies_count_insulation)
+                    sub_count = Series(self.subsidies_count_insulation, dtype=float)
 
                 subsidies_details = Series({k: i.sum().sum() for k, i in subsidies_details.items()}, dtype='float64')
 

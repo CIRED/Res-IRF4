@@ -254,20 +254,19 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                parsed_inputs['income'], parsed_inputs['consumption_ini'], parsed_inputs['preferences'],
                                parsed_inputs['performance_insulation'], path=path,
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
-                               endogenous=config['endogenous'], logger=logger,
+                               endogenous=config['renovation']['endogenous'], logger=logger,
                                quintiles=config.get('quintiles'),
                                full_output=config.get('full_output'),
                                financing_cost=config.get('financing_cost'),
                                debug_mode=config.get('debug_mode'))
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
-           parsed_inputs['cost_insulation'], parsed_inputs['ms_intensive'], parsed_inputs[
-               'renovation_rate_ini'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing')
+           parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
+               'calibration_renovation'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing')
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
-                   post_inputs,  ms_heater=None,  ms_insulation=None, renovation_rate_ini=None,
-                   target_freeriders=None, financing_cost=None, rotation=None):
+                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None, rotation=None):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -294,7 +293,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     -------
     buildings : AgentBuildings
         Updated AgentBuildings object.
-    stock: 
+    stock: : Series
+    output : Series
     """
 
     buildings.logger.info('Run {}'.format(year))
@@ -304,9 +304,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,
-                                            ms_insulation=ms_insulation,
-                                            renovation_rate_ini=renovation_rate_ini,
-                                            target_freeriders=target_freeriders,
+                                            calib_renovation=calib_renovation,
+                                            calib_intensive=calib_intensive,
                                             ms_heater=ms_heater,
                                             financing_cost=financing_cost)
     buildings.add_flows([flow_retrofit, flow_built])
@@ -353,7 +352,7 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, financing_cost = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
@@ -370,13 +369,13 @@ def res_irf(config, path):
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
             f_built = flow_built.loc[:, year]
-            target_freeriders = config['target_freeriders']
 
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                              p_insulation, f_built, year, post_inputs,
-                                             ms_insulation=ms_intensive, renovation_rate_ini=renovation_rate_ini,
-                                             target_freeriders=target_freeriders, ms_heater=ms_heater,
-                                             financing_cost=financing_cost, rotation=inputs['rotation_rate'])
+                                             calib_intensive=inputs['calibration_intensive'],
+                                             calib_renovation=inputs['calibration_renovation'],
+                                             ms_heater=ms_heater, financing_cost=financing_cost,
+                                             rotation=inputs['rotation_rate'])
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

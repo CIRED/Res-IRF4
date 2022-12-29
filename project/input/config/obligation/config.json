@@ -23,13 +23,12 @@
       },
       "exogenous": {
         "number": 0
-
       }
     },
     "ms_insulation": {
-        "endogenous": true,
-        "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
-        "minimum_performance": null
+      "endogenous": true,
+      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
+      "minimum_performance": null
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
     "population": "project/input/population.csv",
@@ -104,7 +103,7 @@
         "value": "project/input/policies/agenda_obligation.csv",
         "frequency": null,
         "intensive": "market_share",
-        "minimum_performance": null
+        "minimum_performance": "D"
       },
       "landlord": {
         "start": 2020,
@@ -113,6 +112,11 @@
       "multi_family": {
         "start": 2020,
         "end": 2020
+      },
+      "sub_ad_volarem": {
+        "start": 2021,
+        "end": 2021,
+        "value": 0.5
       }
     },
     "footprint": {
@@ -126,5 +130,4 @@
     "share_multi_family": null,
     "surface_built": null
   }
-
 }
