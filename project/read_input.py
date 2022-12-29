@@ -42,7 +42,7 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None):
+                 new=None, by='index', non_cumulative=None):
         self.name = name
         self.start = start
         self.end = end
@@ -56,8 +56,6 @@ class PublicPolicy:
         self.new = new
         self.by = by
         self.non_cumulative = non_cumulative
-        self.frequency = frequency
-        self.intensive = intensive
 
     def cost_targeted(self, cost_insulation, cost_included=None, target_subsidies=None):
         """
@@ -307,7 +305,8 @@ def read_policies(config):
         PublicPolicy instance with zero_interest_loan attributes
         """
         data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        return [PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
+        return [
+                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
                              target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
 
     def read_reduced_tax(data):
@@ -331,16 +330,18 @@ def read_policies(config):
                              'heater_regulation', gest='heater')]
 
     def read_obligation(data):
-        l = list()
-        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        l.append(PublicPolicy('obligation', data['start'], data['end'], banned_performance, 'obligation',
-                              gest='insulation', frequency=data['frequency'], intensive=data['intensive']))
-        return l
+        return [PublicPolicy('obligation', data['start'], data['end'], 'G', 'obligation', gest='insulation')]
+
+    def read_landlord(data):
+        return [PublicPolicy('landlord', data['start'], data['end'], None, 'regulation', gest='insulation')]
+
+    def read_multi_family(data):
+        return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
 
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
             'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination,
-            'obligation': read_obligation}
+            'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
 
     list_policies = list()
     for key, item in config['policies'].items():
@@ -414,8 +415,6 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'stock_ini': other_inputs['stock_ini']})
 
-    inputs.update({'rotation_rate': other_inputs['rotation_rate']})
-
     if config['pop_housing'] is None:
         inputs.update({'pop_housing_min': other_inputs['pop_housing_min']})
         inputs.update({'factor_pop_housing': other_inputs['factor_pop_housing']})
@@ -467,6 +466,12 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'traditional_material': config['footprint']['Traditional material']})
     inputs.update({'bio_material': config['footprint']['Bio material']})
 
+    """levels_category = ['Housing type', 'Occupancy status', 'Income tenant', 'Income owner', 'Heating system']
+    for key, item in inputs.items():
+        if isinstance(item, (Series, DataFrame)):
+            level = [i for i in item.index.names if i in levels_category]
+            inputs[key] = item.reset_index(level).astype({i: 'category' for i in level}).set_index(
+                level, append=True).squeeze()"""
     return inputs
 
 
@@ -493,10 +498,18 @@ def parse_inputs(inputs, taxes, config, stock):
 
     parsed_inputs = copy.deepcopy(inputs)
 
-    parsed_inputs['cost_heater'] *= config['cost_factor']
-    parsed_inputs['cost_insulation'] *= config['cost_factor']
-    parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
-    parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= config['prices_factor']
+    cost_factor = 1
+    if 'cost_factor' in config.keys():
+        cost_factor = config['cost_factor']
+
+    prices_factor = 1
+    if 'prices_factor' in config.keys():
+        prices_factor = config['prices_factor']
+
+    parsed_inputs['cost_heater'] *= cost_factor
+    parsed_inputs['cost_insulation'] *= cost_factor
+    parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
+    parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
 
     parsed_inputs['population_total'] = inputs['population']
     parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
