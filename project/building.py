@@ -2434,10 +2434,12 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        option: {'global', 'market_share'}, default 'global'
-            'market_share' Not implemented yet.
         policies_insulation: list
             Check if obligation.
+        prices: Series
+        cost_insulation: Series
+        rotation: Series, optional
+        financing_cost: bool, optional
 
         Returns
         -------

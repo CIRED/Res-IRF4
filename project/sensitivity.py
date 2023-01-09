@@ -32,7 +32,7 @@ def run_resirf(sub_heater, sub_insulation, start, end, path='output', logger=Non
         inputs, stock, year, taxes, path, config=config, logger=logger)
 
     # reduce the number of outputs
-    buildings.detailed_mode = True
+    buildings.full_output = True
 
     # calibration
     buildings.calibration_exogenous(energy_prices, taxes)

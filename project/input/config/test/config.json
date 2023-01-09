@@ -100,7 +100,7 @@
       },
       "obligation": {
         "start": 2019,
-        "end": 2051,
+        "end": 2019,
         "value": "project/input/policies/agenda_obligation.csv",
         "frequency": null,
         "intensive": "market_share",
