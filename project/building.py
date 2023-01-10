@@ -18,6 +18,7 @@
 import os
 from typing import Union, Any
 
+import numpy as np
 import pandas as pd
 from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique, read_csv
 from numpy import exp, log, zeros, ones, append, arange, array
@@ -1239,6 +1240,13 @@ class AgentBuildings(ThermalBuildings):
         # TODO: possible future bugs coming from this line
         temp = reindex_mi(certificate_before, index)
         index = temp[temp > 'B'].index
+        stock = stock[index]
+
+        condition = np.array([1] * stock.shape[0], dtype=bool)
+        for k, v in self._performance_insulation.items():
+            condition *= stock.index.get_level_values(k) == v
+        stock = stock[~condition]
+        index = stock.index
 
         surface = reindex_mi(self._surface, index)
 
@@ -1278,7 +1286,7 @@ class AgentBuildings(ThermalBuildings):
                                                                    min_performance=min_performance)
 
         else:
-            retrofit_rate, market_share = self.exogenous_retrofit(stock, self._choice_insulation)
+            retrofit_rate, market_share = self.exogenous_retrofit(stock)
 
         if self.retrofit_rate is None:
             self.retrofit_rate, self.market_share = retrofit_rate, market_share
@@ -2456,7 +2464,7 @@ class AgentBuildings(ThermalBuildings):
 
         return retrofit_rate, market_share
 
-    def exogenous_retrofit(self, stock, choice_insulation):
+    def exogenous_retrofit(self, stock):
         """Format retrofit rate and market share for each segment.
 
         Global retrofit and retrofit rate to match exogenous numbers.
@@ -2697,6 +2705,9 @@ class AgentBuildings(ThermalBuildings):
         replacement_sum = flow.sum().sum()
 
         replaced_by = (flow * market_share.T).T
+
+        if self.year == 2045:
+            print('break')
 
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 

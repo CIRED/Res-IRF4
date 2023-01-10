@@ -20,7 +20,7 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 700000,
+        "number": 200000,
         "target": "worst"
       }
     },
@@ -133,7 +133,7 @@
     "share_multi_family": null,
     "surface_built": null
   },
-  "Exo1": {
+  "Exo0": {
     "end": 2051,
     "debug_mode": false,
     "full_output": true,
@@ -154,7 +154,7 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 1,
+        "number": 10,
         "target": "worst"
       }
     },
