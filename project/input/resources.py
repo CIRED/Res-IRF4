@@ -26,6 +26,9 @@ resources_data['consumption_hist'] = {k: Series(item, name='Historic') for k, it
 consumption_total_hist = get_pandas('project/input/resources_dir/hist_consumption_total.csv', lambda x: read_csv(x, index_col=[0], header=None).squeeze().rename('Historic'))
 resources_data['consumption_total_hist'] = consumption_total_hist
 
+consumption_total_hist = get_pandas('project/input/resources_dir/hist_consumption_total_climate.csv', lambda x: read_csv(x, index_col=[0], header=None).squeeze().rename('Historic'))
+resources_data['consumption_total_hist_climate'] = consumption_total_hist
+
 resources_data['consumption_total_objectives'] = Series([207, 176, 146], index=[2028, 2030, 2050], name='Objectives')
 
 resources_data['emissions_total_objectives'] = Series([23, 0], index=[2030, 2050], name='Objectives')

@@ -623,7 +623,7 @@ def parse_inputs(inputs, taxes, config, stock):
     energy_prices = parsed_inputs['energy_prices'].copy()
     energy_taxes = parsed_inputs['energy_taxes'].copy()
 
-    if config['prices_constant']:
+    if config['simple']['prices_constant']:
         energy_prices = pd.concat([energy_prices.loc[config['start'], :]] * energy_prices.shape[0], keys=energy_prices.index,
                                   axis=1).T
 
@@ -635,7 +635,7 @@ def parse_inputs(inputs, taxes, config, stock):
         total_taxes = total_taxes.add(energy_taxes, fill_value=0)
         taxes += [PublicPolicy('energy_taxes', energy_taxes.index[0], energy_taxes.index[-1], energy_taxes, 'tax')]
 
-    if config['taxes_constant']:
+    if config['simple']['taxes_constant']:
         total_taxes = pd.concat([total_taxes.loc[config['start'], :]] * total_taxes.shape[0], keys=total_taxes.index,
                                 axis=1).T
 
@@ -856,3 +856,7 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
     else:
         return result
 
+
+def create_simple_policy(start, end, value=0.3, gest='insulation'):
+    return PublicPolicy('sub_ad_volarem', start, end, value, 'subsidy_ad_volarem',
+                        gest=gest)

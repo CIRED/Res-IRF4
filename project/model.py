@@ -6,7 +6,7 @@ import json
 from importlib import resources
 
 from project.building import AgentBuildings
-from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs
+from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario
 from project.utils import reindex_mi
 
@@ -77,9 +77,26 @@ def config2inputs(config=None, building_stock=None, end=None):
     stock, year = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
     inputs = read_inputs(config)
-    if config['quintiles']:
+
+    if config['simple']['quintiles']:
         stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
                                                                                 policies_insulation, inputs)
+    if config['simple']['surface']:
+        surface = (reindex_mi(inputs['surface'], stock.index) * stock).sum() / stock.sum()
+        inputs['surface'] = pd.Series(round(surface, 0), index=inputs['surface'].index)
+
+    if config['simple']['ratio_surface']:
+        ratio_surface = (reindex_mi(inputs['ratio_surface'], stock.index).T * stock).T.sum() / stock.sum()
+        for idx in inputs['ratio_surface'].index:
+            inputs['ratio_surface'].loc[idx, :] = ratio_surface.round(1)
+
+    if config['simple']['policies']:
+        p = create_simple_policy(config['start'], config['end'], gest='insulation', value=0.3)
+        policies_insulation = [p]
+
+        p = create_simple_policy(config['start'], config['end'], gest='heater',
+                                 value=pd.Series([0.3, 0.3], index=pd.Index(['Electricity-Heat pump air', 'Electricity-Heat pump water'], name='Heating system')))
+        policies_heater = [p]
 
     return inputs, stock, year, policies_heater, policies_insulation, taxes
 
@@ -254,8 +271,10 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                parsed_inputs['income'], parsed_inputs['consumption_ini'], parsed_inputs['preferences'],
                                parsed_inputs['performance_insulation'], path=path,
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
-                               endogenous=config['renovation']['endogenous'], logger=logger,
-                               quintiles=config.get('quintiles'),
+                               endogenous=config['renovation']['endogenous'],
+                               exogenous=config['renovation']['exogenous'],
+                               logger=logger,
+                               quintiles=config['simple']['quintiles'],
                                full_output=config.get('full_output'),
                                financing_cost=config.get('financing_cost'),
                                debug_mode=config.get('debug_mode'))
