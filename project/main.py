@@ -36,7 +36,7 @@ def run(path=None):
     start = time()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', default=os.path.join('project', 'input', 'config.json'), help='path config file')
+    parser.add_argument('-c', '--config', default=os.path.join('project', 'input', 'config_test.json'), help='path config file')
 
     parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
     parser.add_argument('-y', '--year', default=None, help='end year')
