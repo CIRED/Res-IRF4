@@ -7,7 +7,7 @@ from importlib import resources
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
-from project.write_output import plot_scenario
+from project.write_output import plot_scenario, compare_results
 from project.utils import reindex_mi
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
@@ -395,6 +395,9 @@ def res_irf(config, path):
                                              calib_renovation=inputs['calibration_renovation'],
                                              ms_heater=ms_heater, financing_cost=financing_cost,
                                              rotation=inputs['rotation_rate'])
+
+            if year == 2019:
+                compare_results(o, buildings.path)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

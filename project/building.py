@@ -582,7 +582,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, consumption_ini, preferences,
                  performance_insulation, path=None, year=2018, demolition_rate=0.0,
-                 endogenous=True, exogenous=None, insulation_representative='market_share',
+                 endogenous=True, exogenous=None, insulation_representative='max',
                  logger=None, debug_mode=False, calib_scale=True, full_output=None,
                  quintiles=None, financing_cost=True,
                  ):
@@ -1014,7 +1014,8 @@ class AgentBuildings(ThermalBuildings):
         for key, sub in self.subsidies_details_heater.items():
             mask = sub.copy()
             mask[mask > 0] = 1
-            self.subsidies_count_heater.update({key: (replacement.fillna(0) * mask).sum().sum()})
+            # self.subsidies_count_heater.update({key: (replacement.fillna(0) * mask).sum().sum()})
+            self.subsidies_count_heater.update({key: (replacement.fillna(0) * mask).sum(axis=1).groupby('Housing type').sum()})
             self.subsidies_average_heater.update({key: sub.sum().sum() / replacement.fillna(0).sum().sum()})
 
     def calibration_constant_heater(self, utility, ms_heater):
@@ -1170,25 +1171,6 @@ class AgentBuildings(ThermalBuildings):
         self.certificate_jump_heater = - certificate.replace(self._epc2int).sub(
             certificate_before.replace(self._epc2int), axis=0)
 
-        """to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
-
-        if to_replace.sum() < self._number_exogenous:
-            self._target_exogenous = ['E', 'F', 'G']
-            to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
-            if to_replace.sum() < self._number_exogenous:
-                self._target_exogenous = ['D', 'E', 'F', 'G']
-                to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
-                if to_replace.sum() < self._number_exogenous:
-                    self._target_exogenous = ['C', 'D', 'E', 'F', 'G']
-                    to_replace = self.stock_mobile[self.certificate.isin(self._target_exogenous)]
-                    if to_replace.sum() < self._number_exogenous:
-                        self._number_exogenous = 0
-
-        to_replace = to_replace / to_replace.sum() * self._number_exogenous
-
-        to_replace = to_replace.groupby(index.names).sum()
-        probability_replacement = (to_replace / self.stock_mobile.groupby(index.names).sum()).fillna(0)
-        probability_replacement = probability_replacement.reindex(market_share.index)"""
         return market_share
 
     def insulation_replacement(self, stock, prices, cost_insulation_raw, policies_insulation=None, financing_cost=None,
@@ -1212,10 +1194,11 @@ class AgentBuildings(ThermalBuildings):
         prices: Series
         cost_insulation_raw: Series
             €/m2 of losses area by component.
-        ms_insulation: Series
-        renovation_rate_ini: Series
         policies_insulation: list
-        target_freeriders: float
+        calib_renovation: dict
+        calib_intensive: dict
+        min_performance
+
 
         Returns
         -------
@@ -1701,7 +1684,8 @@ class AgentBuildings(ThermalBuildings):
             for key, sub in self.subsidies_details_insulation_indiv.items():
                 mask = sub.copy()
                 mask[mask > 0] = 1
-                self.subsidies_count_insulation[key] = (replaced_by.fillna(0) * mask).sum().sum()
+                # self.subsidies_count_insulation[key] = (replaced_by.fillna(0) * mask).sum().sum()
+                self.subsidies_count_insulation[key] = (replaced_by.fillna(0) * mask).sum(axis=1).groupby('Housing type').sum()
                 self.subsidies_average_insulation[key] = sub.sum().sum() / replaced_by.fillna(0).sum().sum()
 
                 """if key == 'zero_interest_loan':
@@ -1740,6 +1724,7 @@ class AgentBuildings(ThermalBuildings):
             rslt = {i: 0 for i in range(1, 6)}
             for n, g in gest.items():
                 rslt[n] += replaced_by.loc[:, g].xs(False, level='Heater replacement').sum().sum()
+                # explain why - no heater replacement in flow obligation
                 # rslt[n + 1] += replaced_by.loc[:, g].xs(True, level='Heater replacement').sum().sum()
             self.gest_nb += Series(rslt).reindex(self.gest_nb.index).fillna(0)
 
@@ -1748,7 +1733,9 @@ class AgentBuildings(ThermalBuildings):
             for key, sub in self.subsidies_details_insulation.items():
                 mask = sub.copy()
                 mask[mask > 0] = 1
-                self.subsidies_count_insulation[key] += (replaced_by.fillna(0) * mask).sum().sum()
+                self.subsidies_count_insulation[key] += (replaced_by.fillna(0) * mask).sum(axis=1).groupby('Housing type').sum()
+
+                # self.subsidies_count_insulation[key] += (replaced_by.fillna(0) * mask).sum().sum()
                 # self.subsidies_average_insulation[key] += sub.sum().sum() / replaced_by.fillna(0).sum().sum()
 
     def prepare_cost_insulation(self, cost_insulation):
@@ -2706,9 +2693,6 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by = (flow * market_share.T).T
 
-        if self.year == 2045:
-            print('break')
-
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
         # energy performance certificate jump due to heater replacement without insulation upgrade
@@ -2927,13 +2911,14 @@ class AgentBuildings(ThermalBuildings):
                 t_grouped.index = t_grouped.index.map(lambda x: 'Renovation rate heater {} - {} (%)'.format(x[0], x[1]))
                 output.update(t_grouped.T)
 
+            # self.gest_nb: number of renovation types (number of insulated components by renovation)
             temp = self.gest_nb.copy()
             temp.index = temp.index.map(lambda x: 'Renovation types {} (Thousand households)'.format(x))
             output['Renovation (Thousand households)'] = temp.sum() / 10 ** 3
             output['Renovation with heater replacement (Thousand households)'] = self.retrofit_with_heater / 10 ** 3
-            output['Replacement renovation (Thousand)'] = (self.gest_nb * self.gest_nb.index).sum() / 10 ** 3
+            output['Replacement (Thousand renovating)'] = (self.gest_nb * self.gest_nb.index).sum() / 10 ** 3
             output.update(temp.T / 10 ** 3)
-            output['Replacement total (Thousand)'] = output['Replacement renovation (Thousand)'] - output[
+            output['Replacement total (Thousand)'] = output['Replacement (Thousand renovating)'] - output[
                 'Renovation with heater replacement (Thousand households)'] + self.replacement_heater.sum().sum() / 10 ** 3
 
             output['Retrofit (Thousand households)'] = output['Renovation (Thousand households)'] - output[
@@ -3116,18 +3101,22 @@ class AgentBuildings(ThermalBuildings):
             temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
             output.update(temp.T / 10 ** 6)
 
+            # policies amount and number of beneficiaries
             subsidies, subsidies_count, sub_count = None, None, None
             for gest, subsidies_details in {'heater': self.subsidies_details_heater,
                                             'insulation': self.subsidies_details_insulation}.items():
                 if gest == 'heater':
-                    sub_count = Series(self.subsidies_count_heater, dtype=float)
+                    sub_count = DataFrame(self.subsidies_count_heater, dtype=float)
                 elif gest == 'insulation':
-                    sub_count = Series(self.subsidies_count_insulation, dtype=float)
+                    sub_count = DataFrame(self.subsidies_count_insulation, dtype=float)
 
                 subsidies_details = Series({k: i.sum().sum() for k, i in subsidies_details.items()}, dtype='float64')
 
                 for i in subsidies_details.index:
-                    output['{} {} (Thousand)'.format(i.capitalize().replace('_', ' '), gest)] = sub_count[i] / 10**3
+                    temp = sub_count[i]
+                    temp.index = temp.index.map(lambda x: '{} {} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), gest, x))
+                    output.update(temp.T / 10 ** 3)
+                    # output['{} {} (Thousand)'.format(i.capitalize().replace('_', ' '), gest)] =
                     output['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = \
                     subsidies_details.loc[i] / 10 ** 9
                 if subsidies is None:
@@ -3140,7 +3129,10 @@ class AgentBuildings(ThermalBuildings):
                 subsidies = subsidies.groupby(subsidies.index).sum()
                 subsidies_count = subsidies_count.groupby(subsidies_count.index).sum()
                 for i in subsidies.index:
-                    output['{} (Thousand)'.format(i.capitalize().replace('_', ' '))] = subsidies_count.loc[i] / 10 ** 3
+                    temp = subsidies_count[i]
+                    temp.index = temp.index.map(lambda x: '{} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), x))
+                    output.update(temp.T / 10 ** 3)
+                    # output['{} (Thousand)'.format(i.capitalize().replace('_', ' '))] = subsidies_count.loc[i] / 10 ** 3
                     output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9
             # output['Zero interest loan headcount'] = self.zil_count
             # output['Zero interest loan average amount'] = self.zil_loaned_avg
