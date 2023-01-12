@@ -3,8 +3,8 @@
     "activated": true,
     "ZP": true,
     "prices_constant": true,
-    "prices_factor": [0.8, 1.5, 2],
-    "cost_factor": [0.5, 0.8, 1.5, 2],
+    "prices_factor": [1.2, 1.5, 2],
+    "cost_factor": [0.5, 0.8, 1.2, 1.5],
     "exogenous": [100000, 500000, 700000]
   },
   "Reference": {

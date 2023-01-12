@@ -1644,7 +1644,6 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by.index = replaced_by.index.reorder_levels(self.in_global_renovation_high_income.index.names)
 
-
         self.global_renovation_high_income += (replaced_by * self.in_global_renovation_high_income).sum().sum()
         self.global_renovation_low_income += (replaced_by * self.in_global_renovation_low_income).sum().sum()
         self.bonus_best += (replaced_by * self.in_best).sum().sum()

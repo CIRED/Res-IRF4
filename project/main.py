@@ -134,7 +134,9 @@ def run(path=None):
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:
                     configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
-                    configuration['PriceConstant']['prices_constant'] = True
+                    configuration['PriceConstant']['simple']['prices_constant'] = True
+                    configuration['PriceConstant']['simple']['taxes_constant'] = True
+
             if 'prices_factor' in config_sensitivity.keys():
                 values = config_sensitivity['prices_factor']
                 if values:
