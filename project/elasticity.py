@@ -80,7 +80,7 @@ def run_elasticity(path=None):
     energy_prices = read_prices(configuration['Reference'])
     folder_prices = os.path.join('project', 'input', 'prices')
     scenarios = generate_price_scenarios(energy_prices, path=folder_prices, year_2=2020, year_1=2019, year_0=2018,
-                                         nb_draws=3)
+                                         nb_draws=10)
     for key, path in scenarios.items():
         configuration[key] = copy.deepcopy(configuration['Reference'])
         configuration[key]['energy_prices'] = os.path.join(folder_prices, path)

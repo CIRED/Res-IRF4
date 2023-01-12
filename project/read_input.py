@@ -854,7 +854,7 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
             for year in range(year_2, energy_prices.index.max() + 1):
                 prices[year] = ((epsilon+ lambda_1 * prices[year - 1] + lambda_2 * prices[year - 2]).T + alpha).T
             for i in range(0, nb_draws):
-                n = '{}_{}_{}'.format(round(lambda_1, 1), round(lambda_2, 1), i)
+                n = '{}_{}_{}'.format(round(lambda_1, 3), round(lambda_2, 3), i)
                 df = concat([prices[year].loc[:, i].rename(year) for year in prices.keys()], axis=1).T
                 result.update({n: df})
 
