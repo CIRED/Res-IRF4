@@ -838,10 +838,8 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
 
     """
 
-    # lambda_1_values = [0.6, 0.65, 0.7, 0.75]
-    # lambda_sum_values = [0.85, 0.9, 0.95, 0.97]
-    lambda_1_values = [0.7]
-    lambda_sum_values = [0.97]
+    lambda_1_values = [0.6, 0.65, 0.7, 0.75]
+    lambda_sum_values = [0.85, 0.9, 0.95, 0.97]
 
     result = dict()
     prices = dict()
@@ -863,8 +861,8 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
     result = {k: df for k, df in result.items() if (df > 0).all().all()}
     if path is not None:
         for name, df in result.items():
-            df.to_csv(os.path.join(path, 'energy_prices_{}.csv'.format(name)))
-        return {name: 'energy_prices_{}.csv'.format(name) for name in result.keys()}
+            df.to_csv(os.path.join(path, 'energy_prices_{}.csv'.format(name.replace('.', ''))))
+        return {name.replace('.', ''): 'energy_prices_{}.csv'.format(name.replace('.', '')) for name in result.keys()}
     else:
         return result
 

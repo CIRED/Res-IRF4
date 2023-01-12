@@ -3383,8 +3383,10 @@ class AgentBuildings(ThermalBuildings):
         output.update({'Max consumption saved': out})
         return output
 
-    def calibration_exogenous(self, energy_prices, taxes, path_heater=None, path_insulation_int=None,
-                              path_insulation_ext=None, scale=1.19651508552344):
+    def calibration_exogenous(self, coefficient_consumption=None,
+                              constant_heater=None,
+                              constant_insulation_intensive=None,
+                              constant_insulation_extensive=None, scale_ext=None, energy_prices=None, taxes=None):
         """Function calibrating buildings object with exogenous data.
 
         Parameters
@@ -3395,34 +3397,40 @@ class AgentBuildings(ThermalBuildings):
             Energy taxes for year y.
         """
         # calibration energy consumption first year
-        self.calculate_consumption(energy_prices.loc[self.first_year, :], taxes)
-
-        # calibration flow retrofit second year
-        self.year = 2019
-
-        if path_heater is not None:
-            calibration_constant_heater = read_csv(path_heater, index_col=[0, 1, 2]).squeeze()
+        if (coefficient_consumption is None) and (energy_prices is not None) and (taxes is not None):
+            self.calculate_consumption(energy_prices.loc[self.first_year, :], taxes)
         else:
-            calibration_constant_heater = get_pandas('project/input/calibration/calibration_constant_heater.csv',
+            self.coefficient_consumption = coefficient_consumption
+
+        if constant_heater is None:
+            constant_heater = get_pandas('project/input/calibration/calibration_constant_heater.csv',
                                                      lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze())
-        self.constant_heater = calibration_constant_heater.unstack('Heating system final')
+            constant_heater = constant_heater.unstack('Heating system final')
+
+        elif isinstance(constant_heater, str):
+            constant_heater = read_csv(constant_heater, index_col=[0, 1, 2]).squeeze()
+            constant_heater = constant_heater.unstack('Heating system final')
+
+        self.constant_heater = constant_heater
         self._choice_heater = list(self.constant_heater.columns)
 
-        if path_insulation_int is not None:
-            calibration_constant_insulation = read_csv(path_insulation_int, index_col=[0, 1, 2, 3]).squeeze()
-        else:
-            calibration_constant_insulation = get_pandas('project/input/calibration/calibration_constant_insulation.csv',
-                                                         lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze())
-        self.constant_insulation_intensive = calibration_constant_insulation
+        if constant_insulation_intensive is None:
+            constant_insulation_intensive = get_pandas('project/input/calibration/calibration_constant_insulation.csv',
+                                                       lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze())
+        elif isinstance(constant_insulation_intensive, str):
+            constant_insulation_intensive = read_csv(constant_insulation_intensive, index_col=[0, 1, 2, 3]).squeeze()
 
-        if path_insulation_ext is not None:
-            calibration_constant_extensive = read_csv(path_insulation_ext, index_col=[0, 1, 2, 3]).squeeze()
-        else:
-            calibration_constant_extensive = get_pandas('project/input/calibration/calibration_constant_extensive.csv',
-                                                         lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze())
-        self.constant_insulation_extensive = calibration_constant_extensive.dropna()
+        self.constant_insulation_intensive = constant_insulation_intensive.dropna()
 
-        self.scale_ext = scale
+        if constant_insulation_extensive is None:
+            constant_insulation_extensive = get_pandas('project/input/calibration/calibration_constant_extensive.csv',
+                                                         lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze())
+        elif isinstance(constant_insulation_extensive, str):
+            constant_insulation_extensive = read_csv(constant_insulation_extensive, index_col=[0, 1, 2, 3]).squeeze()
+
+        self.constant_insulation_extensive = constant_insulation_extensive.dropna()
+
+        self.scale_ext = scale_ext
 
     def replace_insulation(self, stock, performance_component, condition):
         """Replace element from stock with another insulation performance.

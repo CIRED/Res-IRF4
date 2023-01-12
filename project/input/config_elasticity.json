@@ -1,11 +1,11 @@
 {
   "Reference": {
-    "end": 2022,
+    "end": 2050,
     "debug_mode": false,
     "full_output": false,
     "demolition_rate": 0.0035,
     "construction": true,
-    "income_rate": 0.012,
+    "income_rate": 0.0,
     "start": 2018,
     "renovation": {
       "endogenous": true,

@@ -193,17 +193,6 @@ def run(path=None):
 
         del configuration['sensitivity']
 
-    if 'elasticity' in configuration.keys():
-        if configuration['elasticity']['activated']:
-            configuration['Reference']['full_output'] = False
-            energy_prices = read_prices(configuration['Reference'])
-            scenarios = generate_price_scenarios(energy_prices, path=configuration['elasticity']['path'])
-            for key, path in scenarios.items():
-                configuration[key] = copy.deepcopy(configuration['Reference'])
-                configuration[key]['energy_prices'] = path
-
-        del configuration['elasticity']
-
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
     folder = os.path.join(os.path.join('project', 'output'), '{}{}'.format(name_policy, t))
     os.mkdir(folder)
