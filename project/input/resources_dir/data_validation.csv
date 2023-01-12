@@ -1,0 +1,46 @@
+﻿Field,Source,Measured
+Renovation,,
+Renovation (Thousand households),ONRE 2021,1330.182
+Replacement insulation Single-family (Thousand households),ONRE 2021,931.807
+Replacement insulation Multi-family (Thousand households),ONRE 2021,398.375
+Replacement insulation (Thousand),CEE 2019,1341.506
+Replacement Heater efficient (Thousand households),,410
+Replacement Heat pump (Thousand households),CEE 2019,77
+Replacement Windows (Thousand households),CEE 2019,118
+Replacement Wall (Thousand households),CEE 2019,114
+Replacement Roof (Thousand households),CEE 2019,491
+Replacement Floor (Thousand households),CEE 2019,294
+Global renovation (Thousand households),,
+Global renovation high income (Thousand households),,
+Global renovation low income (Thousand households),,
+,,
+Investment,,
+Investment total / households (Thousand euro),TREMI 2020,9.1
+Investment total / households >= 1 EPC (Thousand euro),TREMI 2017,16
+Investment total / households >= 2 EPC (Thousand euro),TREMI 2017,26
+Investment total (Billion euro),I4CE 2021,21
+Investment insulation (Billion euro),ADEME,19
+Investment heater (Billion euro),ADEME,9.6
+Investment opaque (Billion euro),,
+Investment windows (Billion euro),,
+,,
+Policies,,
+Cee (Thousand households),ONRE 2021,1386.266
+Cee Single-family (Thousand households),ONRE 2021,831.232
+Cee Multi-family (Thousand households),ONRE 2021,555.034
+Cite (Thousand households),ONRE 2021,875.624
+Cite Single-family (Thousand households),ONRE 2021,745.846
+Cite Multi-family (Thousand households),ONRE 2021,129.778
+Mpr serenite (Thousand households),ONRE 2021,44.407
+Mpr serenite Single-family (Thousand households),ONRE 2021,36.988
+Mpr serenite Multi-family (Thousand households),ONRE 2021,7.419
+Cee (Billion euro),I4CE 2021,1.9
+Cite (Billion euro),I4CE 2021,1.1
+Reduced tax (Billion euro),I4CE 2021,1.3
+Mpr serenite (Billion euro),I4CE 2021,0.7
+Mpr (Billion euro),ANAH 2021,2
+,,
+Others,,
+Energy poverty (Million),,
+Retrofit >= 1 EPC (Thousand households),,
+Freeriders Cite (%),,

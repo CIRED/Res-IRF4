@@ -1829,6 +1829,9 @@ class AgentBuildings(ThermalBuildings):
             Market-share insulation
         """
 
+        def market_share_func(u):
+            return (exp(u).T / exp(u).sum(axis=1)).T
+
         def to_market_share(bill_save, subsidies, investment):
             """Calculate market-share between insulation options.
 
@@ -1862,7 +1865,7 @@ class AgentBuildings(ThermalBuildings):
             if self.constant_insulation_intensive is not None:
                 util_intensive += self.constant_insulation_intensive
 
-            ms_intensive = (exp(util_intensive).T / exp(util_intensive).sum(axis=1)).T
+            ms_intensive = market_share_func(util_intensive)
             return ms_intensive, util_intensive
 
         def retrofit_func(u):
@@ -1931,7 +1934,7 @@ class AgentBuildings(ThermalBuildings):
 
             return min(flow, flow_plus) / max(flow, flow_plus)
 
-        def calibration_intensive(util, stock_segment, market_share_ini, retrofit_rate_ini, iteration=200):
+        def calibration_intensive(util, stock_segment, market_share_ini, retrofit_rate_ini, iteration=1000):
             """Calibrate alternative-specific constant to match observed market-share.
 
 
@@ -1955,7 +1958,7 @@ class AgentBuildings(ThermalBuildings):
                 stock_segment = self.add_certificate(stock_segment)
 
             f_retrofit = stock_segment * reindex_mi(retrofit_rate_ini, stock_segment.index)
-            utility_ref = reindex_mi(util, f_retrofit.index).dropna()
+            utility_ref = reindex_mi(util, f_retrofit.index).dropna(how='all')
 
             const = market_share_ini.reindex(utility_ref.columns, axis=0).copy()
             const[const > 0] = 0
@@ -1966,7 +1969,7 @@ class AgentBuildings(ThermalBuildings):
             for i in range(iteration):
                 const.loc[insulation_ref] = 0
                 _utility = (utility_ref + const).copy()
-                ms_segment = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+                ms_segment = market_share_func(_utility)
                 f_replace = (ms_segment.T * f_retrofit).T
                 ms_agg = (f_replace.sum() / f_replace.sum().sum()).reindex(market_share_ini.index)
                 if i == 0:
@@ -1978,7 +1981,7 @@ class AgentBuildings(ThermalBuildings):
                     break
             const.loc[insulation_ref] = 0
             _utility = (utility_ref + const).copy()
-            ms_segment = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+            ms_segment = market_share_func(_utility)
             f_replace = (ms_segment.T * f_retrofit).T
             ms_agg = (f_replace.sum() / f_replace.sum().sum()).reindex(market_share_ini.index)
 
@@ -1989,7 +1992,7 @@ class AgentBuildings(ThermalBuildings):
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
 
-            return const
+            return const, ms_segment, f_replace
 
         def calibration_constant_scale_ext(util, stock_segment, calib_renovation):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
@@ -2114,13 +2117,11 @@ class AgentBuildings(ThermalBuildings):
 
             coefficient_cost = abs(self.preferences_insulation_ext['investment'] * scale)
             wtp = constant / coefficient_cost
-            transaction_gain = wtp[wtp.index.get_level_values('Heater replacement') == False].droplevel('Heater replacement') - wtp[wtp.index.get_level_values('Heater replacement') == True].droplevel('Heater replacement')
-            landlord_loss = wtp[wtp.index.get_level_values('Occupancy status') == 'Privately rented'].droplevel('Occupancy status') - wtp[wtp.index.get_level_values('Occupancy status') == 'Owner-occupied'].droplevel('Occupancy status')
-            multi_family_loss = wtp[wtp.index.get_level_values('Occupancy status') != 'Social-housing']
-            multi_family_loss = multi_family_loss[multi_family_loss.index.get_level_values('Housing type') == 'Multi-family'].droplevel('Housing type') - multi_family_loss[multi_family_loss.index.get_level_values('Housing type') == 'Single-family'].droplevel('Housing type')
+            ref = ('Single-family', 'Owner-occupied', False)
+            diff = wtp - wtp[ref]
 
-            details = concat((constant, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3), axis=1,
-                             keys=['constant', 'calcul', 'observed', 'thousand']).round(decimals=3)
+            details = concat((constant, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3, wtp, diff), axis=1,
+                             keys=['constant', 'calcul', 'observed', 'thousand', 'wtp', 'market_barriers']).round(decimals=3)
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
@@ -2208,7 +2209,7 @@ class AgentBuildings(ThermalBuildings):
             self.logger.info('Calibration intensive')
             self.constant_insulation_intensive = calibration_intensive(utility_intensive, stock,
                                                                        calib_intensive['ms_insulation_ini'],
-                                                                       calib_renovation['renovation_rate_ini'])
+                                                                       calib_renovation['renovation_rate_ini'])[0]
 
             market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
 
@@ -2363,6 +2364,22 @@ class AgentBuildings(ThermalBuildings):
 
             retrofit_rate, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
                                                       investment_insulation)
+
+            self.preferences_insulation_int['subsidy'] *= scale
+            self.preferences_insulation_int['investment'] *= scale
+            self.preferences_insulation_int['bill_saved'] *= scale
+            self.constant_insulation_intensive = None
+
+            _, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
+
+            self.logger.info('Calibration intensive')
+            # calibration do not converge withe renovation rate ini
+            self.constant_insulation_intensive, ms_segment, f_replace = calibration_intensive(utility_intensive, stock,
+                                                                                              calib_intensive[
+                                                                                                  'ms_insulation_ini'],
+                                                                                              calib_renovation[
+                                                                                                  'renovation_rate_ini'])
+            market_share, utility_intensive = to_market_share(bill_saved, subsidies_total, cost_total)
 
             # graphics showing the distribution of retrofit rate after calibration
             if self._debug_mode:
@@ -2896,9 +2913,6 @@ class AgentBuildings(ThermalBuildings):
                 t_grouped.index = t_grouped.index.map(lambda x: 'Renovation rate {} - {} (%)'.format(x[0], x[1]))
                 output.update(t_grouped.T)
 
-            if self.year == 2022:
-                print('break')
-
             if True in temp.index.get_level_values('Heater replacement'):
                 t = temp.xs(True, level='Heater replacement')
                 s_temp = self.stock
@@ -2972,6 +2986,11 @@ class AgentBuildings(ThermalBuildings):
             # for replacement output need to be presented by technologies (what is used) and by agent (who change)
             temp = self.replacement_heater.sum()
             output['Replacement heater (Thousand households)'] = temp.sum() / 10 ** 3
+            heat_pump = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
+            output['Replacement Heat pump (Thousand households)'] = temp[heat_pump].sum() / 10 ** 3
+
+            heater_efficient = heat_pump + ['Wood fuel-Performance boiler', 'Natural gas-Performance boiler']
+            output['Replacement Heater efficient (Thousand households)'] = temp[heater_efficient].sum().sum() / 10 ** 3
             t = temp.copy()
             t.index = t.index.map(lambda x: 'Replacement heater {} (Thousand households)'.format(x))
             output.update((t / 10 ** 3).T)
@@ -2994,6 +3013,10 @@ class AgentBuildings(ThermalBuildings):
 
             temp = self.replacement_insulation.sum(axis=1)
             output['Replacement insulation (Thousand households)'] = temp.sum() / 10 ** 3
+            t = temp.groupby(['Housing type']).sum()
+            t.index = t.index.map(lambda x: 'Replacement insulation {} (Thousand households)'.format(x))
+            output.update((t / 10 ** 3).T)
+
             t = temp.groupby(['Housing type', 'Occupancy status']).sum()
             t.index = t.index.map(lambda x: 'Replacement insulation {} - {} (Thousand households)'.format(x[0], x[1]))
             output.update((t / 10 ** 3).T)
@@ -3054,21 +3077,6 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T / 10 ** 9)
             investment_heater = self.investment_heater.sum(axis=1)
 
-            # representative insulation investment: weighted average with number of insulation actions as weights
-            if False:
-                investment_insulation_repr = DataFrame(self.investment_insulation_repr_yrs)
-                gest = DataFrame({year: item.sum(axis=1) for year, item in replacement_insulation.items()})
-                gest = reindex_mi(gest, investment_insulation_repr.index)
-                temp = gest * investment_insulation_repr
-
-                t = temp.groupby('Income owner').sum() / gest.groupby('Income owner').sum()
-                t.index = t.index.map(lambda x: 'Investment per insulation action {} (euro)'.format(x))
-                output.update(t.T)
-
-                t = temp.groupby(['Housing type', 'Occupancy status']).sum() / gest.groupby(['Housing type',
-                                                                                             'Occupancy status']).sum()
-                t.index = t.index.map(lambda x: 'Investment per insulation action {} - {} (euro)'.format(x[0], x[1]))
-                output.update(t.T)
 
             investment_insulation = self.investment_insulation.sum(axis=1)
             output['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10 ** 9
@@ -3130,10 +3138,11 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_count = subsidies_count.groupby(subsidies_count.index).sum()
                 for i in subsidies.index:
                     temp = subsidies_count[i]
+                    output['{} (Thousand households)'.format(i.capitalize().replace('_', ' '))] = temp.sum() / 10**3
                     temp.index = temp.index.map(lambda x: '{} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), x))
                     output.update(temp.T / 10 ** 3)
-                    # output['{} (Thousand)'.format(i.capitalize().replace('_', ' '))] = subsidies_count.loc[i] / 10 ** 3
                     output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9
+
             # output['Zero interest loan headcount'] = self.zil_count
             # output['Zero interest loan average amount'] = self.zil_loaned_avg
             taxes_expenditures = self.taxes_expenditure_details
