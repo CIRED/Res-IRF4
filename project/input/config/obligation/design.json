@@ -1,10 +1,8 @@
 {
   "Reference": {
-    "end": 2035,
+    "end": 2030,
     "debug_mode": false,
     "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
     "demolition_rate": 0.0035,
     "construction": true,
     "income_rate": 0.012,
@@ -22,7 +20,8 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 0
+        "number": 700000,
+        "target": "worst"
       }
     },
     "ms_insulation": {
@@ -46,7 +45,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -79,7 +78,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -99,142 +98,11 @@
       },
       "obligation": {
         "start": 2019,
-        "end": 2051,
+        "end": 2019,
         "value": "project/input/policies/agenda_obligation.csv",
         "frequency": null,
         "intensive": "market_share",
-        "minimum_performance": null
-      },
-      "landlord": {
-        "start": 2020,
-        "end": 2020
-      },
-      "multi_family": {
-        "start": 2020,
-        "end": 2020
-      },
-      "sub_ad_volarem": {
-        "start": 2021,
-        "end": 2021,
-        "value": 0.5
-      }
-    },
-    "footprint": {
-      "Traditional material": 1.0,
-      "Bio material": 0.0,
-      "construction": "project/input/footprint_construction.csv",
-      "renovation": "project/input/footprint_renovation.csv"
-    },
-    "quintiles": false,
-    "pop_housing": null,
-    "share_multi_family": null,
-    "surface_built": null
-  },
-  "ObligationE": {
-    "end": 2035,
-    "debug_mode": false,
-    "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
-    "demolition_rate": 0.0035,
-    "construction": true,
-    "income_rate": 0.012,
-    "start": 2018,
-    "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
-      "scale_old": {
-        "name": "freeriders",
-        "target_policies": "cite",
-        "target_freeriders": 0.7
-      },
-      "scale": {
-        "name": "standard_deviation",
-        "deviation": 0.048
-      },
-      "exogenous": {
-        "number": 0
-      }
-    },
-    "ms_insulation": {
-      "endogenous": true,
-      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
-      "minimum_performance": null
-    },
-    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
-    "population": "project/input/population.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
-    "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-    "cost_heater": "project/input/cost_heater.csv",
-    "cost_insulation": "project/input/cost_insulation.csv",
-    "financing_cost": true,
-    "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices_ht.csv",
-    "energy_taxes": "project/input/energy_taxes.csv",
-    "carbon_emission": "project/input/policies/carbon_emission.csv",
-    "health_cost": "project/input/policies/health_cost.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2051,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
-      "mpr_serenite": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/mpr_serenite.csv",
-        "cap": "project/input/policies/mpr_serenite_cap.csv"
-      },
-      "cee": {
-        "start": 2019,
-        "end": 2051,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/subsidies_cap.csv"
-      },
-      "carbon_tax": {
-        "start": 2019,
-        "end": 2051,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2021,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": "project/input/policies/cite_insulation.csv",
-        "cap": 4800
-      },
-      "reduced_tax": {
-        "start": 2019,
-        "end": 2051,
-        "value": 0.055
-      },
-      "zero_interest_loan": {
-        "new": true,
-        "start": 2019,
-        "end": 2019,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      },
-      "obligation": {
-        "start": 2019,
-        "end": 2051,
-        "value": "project/input/policies/agenda_obligation.csv",
-        "frequency": "rotation",
-        "intensive": "market_share",
-        "minimum_performance": "E"
+        "minimum_performance": "C"
       },
       "landlord": {
         "start": 2020,
@@ -251,133 +119,16 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": false,
-    "pop_housing": null,
-    "share_multi_family": null,
-    "surface_built": null
-  },
-  "ObligationD": {
-    "end": 2035,
-    "debug_mode": false,
-    "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
-    "demolition_rate": 0.0035,
-    "construction": true,
-    "income_rate": 0.012,
-    "start": 2018,
-    "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
-      "scale_old": {
-        "name": "freeriders",
-        "target_policies": "cite",
-        "target_freeriders": 0.7
-      },
-      "scale": {
-        "name": "standard_deviation",
-        "deviation": 0.048
-      },
-      "exogenous": {
-        "number": 0
-      }
+    "simple": {
+      "quintiles": false,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "policies": false,
+      "income": false,
+      "prices_constant": false,
+      "taxes_constant": false
     },
-    "ms_insulation": {
-      "endogenous": true,
-      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
-      "minimum_performance": null
-    },
-    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
-    "population": "project/input/population.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
-    "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-    "cost_heater": "project/input/cost_heater.csv",
-    "cost_insulation": "project/input/cost_insulation.csv",
-    "financing_cost": true,
-    "efficiency": "project/input/efficiency.csv",
-    "energy_prices": "project/input/energy_prices_ht.csv",
-    "energy_taxes": "project/input/energy_taxes.csv",
-    "carbon_emission": "project/input/policies/carbon_emission.csv",
-    "health_cost": "project/input/policies/health_cost.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2051,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
-      "mpr_serenite": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/mpr_serenite.csv",
-        "cap": "project/input/policies/mpr_serenite_cap.csv"
-      },
-      "cee": {
-        "start": 2019,
-        "end": 2051,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/subsidies_cap.csv"
-      },
-      "carbon_tax": {
-        "start": 2019,
-        "end": 2051,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2021,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": "project/input/policies/cite_insulation.csv",
-        "cap": 4800
-      },
-      "reduced_tax": {
-        "start": 2019,
-        "end": 2051,
-        "value": 0.055
-      },
-      "zero_interest_loan": {
-        "new": true,
-        "start": 2019,
-        "end": 2019,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      },
-      "obligation": {
-        "start": 2019,
-        "end": 2051,
-        "value": "project/input/policies/agenda_obligation.csv",
-        "frequency": "rotation",
-        "intensive": "market_share",
-        "minimum_performance": "D"
-      },
-      "landlord": {
-        "start": 2020,
-        "end": 2020
-      },
-      "multi_family": {
-        "start": 2020,
-        "end": 2020
-      }
-    },
-    "footprint": {
-      "Traditional material": 1.0,
-      "Bio material": 0.0,
-      "construction": "project/input/footprint_construction.csv",
-      "renovation": "project/input/footprint_renovation.csv"
-    },
-    "quintiles": false,
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null
@@ -386,8 +137,6 @@
     "end": 2035,
     "debug_mode": false,
     "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
     "demolition_rate": 0.0035,
     "construction": true,
     "income_rate": 0.012,
@@ -405,7 +154,8 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 0
+        "number": 700000,
+        "target": "worst"
       }
     },
     "ms_insulation": {
@@ -429,7 +179,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -462,7 +212,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -503,17 +253,24 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": false,
+    "simple": {
+      "quintiles": false,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "policies": false,
+      "income": false,
+      "prices_constant": false,
+      "taxes_constant": false
+    },
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null
   },
-  "ObligationB": {
+  "ObligationD": {
     "end": 2035,
     "debug_mode": false,
     "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
     "demolition_rate": 0.0035,
     "construction": true,
     "income_rate": 0.012,
@@ -531,7 +288,8 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 0
+        "number": 700000,
+        "target": "worst"
       }
     },
     "ms_insulation": {
@@ -555,7 +313,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -588,7 +346,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -612,7 +370,7 @@
         "value": "project/input/policies/agenda_obligation.csv",
         "frequency": "rotation",
         "intensive": "market_share",
-        "minimum_performance": "B"
+        "minimum_performance": "D"
       },
       "landlord": {
         "start": 2020,
@@ -629,17 +387,24 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": false,
+    "simple": {
+      "quintiles": false,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "policies": false,
+      "income": false,
+      "prices_constant": false,
+      "taxes_constant": false
+    },
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null
   },
-  "ObligationA": {
+  "ObligationE": {
     "end": 2035,
     "debug_mode": false,
     "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
     "demolition_rate": 0.0035,
     "construction": true,
     "income_rate": 0.012,
@@ -657,7 +422,8 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 0
+        "number": 700000,
+        "target": "worst"
       }
     },
     "ms_insulation": {
@@ -681,7 +447,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -714,7 +480,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -738,7 +504,7 @@
         "value": "project/input/policies/agenda_obligation.csv",
         "frequency": "rotation",
         "intensive": "market_share",
-        "minimum_performance": "A"
+        "minimum_performance": "E"
       },
       "landlord": {
         "start": 2020,
@@ -755,10 +521,18 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": false,
+    "simple": {
+      "quintiles": false,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "policies": false,
+      "income": false,
+      "prices_constant": false,
+      "taxes_constant": false
+    },
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null
   }
 }
-
