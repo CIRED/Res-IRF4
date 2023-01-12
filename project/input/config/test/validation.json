@@ -1,6 +1,14 @@
 {
+  "sensitivity": {
+    "activated": true,
+    "ZP": true,
+    "prices_constant": true,
+    "prices_factor": [0.8, 1.5, 2],
+    "cost_factor": [0.5, 0.8, 1.5, 2],
+    "exogenous": [100000, 500000, 700000]
+  },
   "Reference": {
-    "end": 2022,
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -45,7 +53,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -78,7 +86,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800

@@ -151,6 +151,17 @@ def run(path=None):
                     for v in values:
                         configuration['CostFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['CostFactor{:.0f}'.format(v * 100)]['cost_factor'] = v
+
+            if 'exogenous' in config_sensitivity.keys():
+                values = config_sensitivity['exogenous']
+                if values:
+                    if isinstance(values, float):
+                        values = [values]
+                    for v in values:
+                        configuration['Exogenous{}'.format(v)] = copy.deepcopy(configuration['Reference'])
+                        configuration['Exogenous{}'.format(v)]['renovation']['endogenous'] = False
+                        configuration['Exogenous{}'.format(v)]['renovation']['exogenous']['number'] = v
+
             if 'renovation_rate_ini' in config_sensitivity.keys():
                 if config_sensitivity['renovation_rate_ini']:
                     configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
