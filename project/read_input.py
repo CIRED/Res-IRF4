@@ -334,10 +334,22 @@ def read_policies(config):
 
     def read_obligation(data):
         l = list()
-        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        l.append(PublicPolicy('obligation', data['start'], data['end'], banned_performance, 'obligation',
-                              gest='insulation', frequency=data['frequency'], intensive=data['intensive'],
+        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze()).dropna()
+        start = min(banned_performance.index)
+        if data['start'] > start:
+            start = data['start']
+        frequency = data['frequency']
+        if frequency is not None:
+            frequency = pd.Series(frequency["value"], index=pd.Index(frequency["index"], name=frequency["name"]))
+
+        l.append(PublicPolicy('obligation', start, data['end'], banned_performance, 'obligation',
+                              gest='insulation', frequency=frequency, intensive=data['intensive'],
                               min_performance=data['minimum_performance']))
+
+        if data.get('sub_obligation') is not None:
+            value = get_pandas(data['sub_obligation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            l.append(PublicPolicy('sub_obligation', start, data['end'], value, 'subsidy_ad_volarem',
+                                  gest='insulation'))
         return l
 
     def read_landlord(data):

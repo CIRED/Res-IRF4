@@ -19,7 +19,6 @@
     "carbon_value": "project/input/policies/carbon_value.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
-
   "Reference": {
     "end": 2051,
     "debug_mode": false,

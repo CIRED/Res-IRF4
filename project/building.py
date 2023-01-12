@@ -2549,8 +2549,8 @@ class AgentBuildings(ThermalBuildings):
             return None
 
         proba = 1
-        if obligation.frequency == 'rotation':
-            proba = rotation
+        if obligation.frequency is not None:
+            proba = obligation.frequency
             proba = reindex_mi(proba, stock.index)
 
         to_replace = stock.loc[idx] * proba

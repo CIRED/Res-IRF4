@@ -145,6 +145,7 @@ colors = {
     "Mpr serenite": "violet",
     'Sub ad volarem': "darkorange",
     "Sub merit": "slategrey",
+    "Sub obligation": "darkorange",
     "Existing": "tomato",
     "New": "lightgrey",
     "Renovation": "brown",
