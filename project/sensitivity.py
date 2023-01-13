@@ -75,37 +75,38 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
         o = dict()
 
-        o['Electricity (TWh)'] = buildings.heat_consumption_energy['Electricity'] / 10**9
-        o['Natural gas (TWh)'] = buildings.heat_consumption_energy['Natural gas'] / 10**9
-        o['Wood fuel (TWh)'] = buildings.heat_consumption_energy['Wood fuel'] / 10**9
-        o['Oil fuel (TWh)'] = buildings.heat_consumption_energy['Oil fuel'] / 10**9
-
         o['Investment heater (Billion euro)'] = buildings.investment_heater.sum().sum() / 10**9
         o['Investment insulation (Billion euro)'] = buildings.investment_insulation.sum().sum() / 10**9
         o['Investment (Billion euro)'] = o['Investment heater (Billion euro)'] + o['Investment insulation (Billion euro)']
         o['Subsidies (Billion euro)'] = (buildings.subsidies_heater.sum().sum() + buildings.subsidies_insulation.sum().sum()) / 10**9
         o['Health cost (Billion euro)'], _ = buildings.health_cost(post_inputs)
 
-        temp = buildings.heating_consumption(freq='hour', climate=2006, smooth=False)
-        t = (temp.T * buildings.stock * buildings.surface).T
-        # adding heating intensity
-        t = (t.T * buildings.heating_intensity).T
-        energy = temp.index.get_level_values('Heating system').str.split('-').str[0]
-        t = t.groupby(energy).sum()
-        t = (t.T * buildings.coefficient_consumption).T
+        if y == end - 1:
+            o['Electricity (TWh)'] = buildings.heat_consumption_energy['Electricity'] / 10**9
+            o['Natural gas (TWh)'] = buildings.heat_consumption_energy['Natural gas'] / 10**9
+            o['Wood fuel (TWh)'] = buildings.heat_consumption_energy['Wood fuel'] / 10**9
+            o['Oil fuel (TWh)'] = buildings.heat_consumption_energy['Oil fuel'] / 10**9
 
-        o['Hourly consumption (kWh)'] = t
 
-        """o['Heat pump air'] = buildings.replacement_heater.sum().loc['Electricity-Heat pump air'] / 1e3
-        o['Heat pump water'] = buildings.replacement_heater.sum().loc['Electricity-Heat pump water'] / 1e3"""
+            temp = buildings.heating_consumption(freq='hour', climate=2006, smooth=False)
+            t = (temp.T * buildings.stock * buildings.surface).T
+            # adding heating intensity
+            t = (t.T * buildings.heating_intensity).T
+            energy = temp.index.get_level_values('Heating system').str.split('-').str[0]
+            t = t.groupby(energy).sum()
+            t = (t.T * buildings.coefficient_consumption).T
+            o['Hourly consumption (kWh)'] = t
 
-        temp = buildings.replacement_heater.sum() / 10**3
-        temp.index = temp.index.map(lambda x: 'Replacement {} (Thousand)'.format(x))
-        o.update(temp.to_dict())
+            """o['Heat pump air'] = buildings.replacement_heater.sum().loc['Electricity-Heat pump air'] / 1e3
+            o['Heat pump water'] = buildings.replacement_heater.sum().loc['Electricity-Heat pump water'] / 1e3"""
 
-        temp = buildings.stock.groupby('Heating system').sum() / 10**3
-        temp.index = temp.index.map(lambda x: 'Stock {} (Thousand)'.format(x))
-        o.update(temp.to_dict())
+            temp = buildings.replacement_heater.sum() / 10**3
+            temp.index = temp.index.map(lambda x: 'Replacement {} (Thousand)'.format(x))
+            o.update(temp.to_dict())
+
+            temp = buildings.stock.groupby('Heating system').sum() / 10**3
+            temp.index = temp.index.map(lambda x: 'Stock {} (Thousand)'.format(x))
+            o.update(temp.to_dict())
 
         output.update({y: o})
 
@@ -119,10 +120,10 @@ if __name__ == '__main__':
     # first time
     export_calibration = os.path.join('project', 'output', 'calibration')
     import_calibration = os.path.join(export_calibration, 'calibration.pkl')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
+    """buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
                                                                                                          logger=None,
                                                                                                          config=None,
-                                                                                                         export_calibration=export_calibration)
+                                                                                                         export_calibration=export_calibration)"""
 
     # then
     buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
