@@ -334,10 +334,22 @@ def read_policies(config):
 
     def read_obligation(data):
         l = list()
-        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        l.append(PublicPolicy('obligation', data['start'], data['end'], banned_performance, 'obligation',
-                              gest='insulation', frequency=data['frequency'], intensive=data['intensive'],
+        banned_performance = get_pandas(data['value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze()).dropna()
+        start = min(banned_performance.index)
+        if data['start'] > start:
+            start = data['start']
+        frequency = data['frequency']
+        if frequency is not None:
+            frequency = pd.Series(frequency["value"], index=pd.Index(frequency["index"], name=frequency["name"]))
+
+        l.append(PublicPolicy('obligation', start, data['end'], banned_performance, 'obligation',
+                              gest='insulation', frequency=frequency, intensive=data['intensive'],
                               min_performance=data['minimum_performance']))
+
+        if data.get('sub_obligation') is not None:
+            value = get_pandas(data['sub_obligation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            l.append(PublicPolicy('sub_obligation', start, data['end'], value, 'subsidy_ad_volarem',
+                                  gest='insulation'))
         return l
 
     def read_landlord(data):
@@ -826,10 +838,8 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
 
     """
 
-    # lambda_1_values = [0.6, 0.65, 0.7, 0.75]
-    # lambda_sum_values = [0.85, 0.9, 0.95, 0.97]
-    lambda_1_values = [0.7]
-    lambda_sum_values = [0.97]
+    lambda_1_values = [0.6, 0.65, 0.7, 0.75]
+    lambda_sum_values = [0.85, 0.9, 0.95, 0.97]
 
     result = dict()
     prices = dict()
@@ -844,15 +854,15 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
             for year in range(year_2, energy_prices.index.max() + 1):
                 prices[year] = ((epsilon+ lambda_1 * prices[year - 1] + lambda_2 * prices[year - 2]).T + alpha).T
             for i in range(0, nb_draws):
-                n = '{}_{}_{}'.format(round(lambda_1, 1), round(lambda_2, 1), i)
+                n = '{}_{}_{}'.format(round(lambda_1, 3), round(lambda_2, 3), i)
                 df = concat([prices[year].loc[:, i].rename(year) for year in prices.keys()], axis=1).T
                 result.update({n: df})
 
     result = {k: df for k, df in result.items() if (df > 0).all().all()}
     if path is not None:
         for name, df in result.items():
-            df.to_csv(os.path.join(path, 'energy_prices_{}.csv'.format(name)))
-        return {name: 'energy_prices_{}.csv'.format(name) for name in result.keys()}
+            df.to_csv(os.path.join(path, 'energy_prices_{}.csv'.format(name.replace('.', ''))))
+        return {name.replace('.', ''): 'energy_prices_{}.csv'.format(name.replace('.', '')) for name in result.keys()}
     else:
         return result
 

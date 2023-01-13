@@ -751,3 +751,18 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
         indicator.round(2).to_csv(os.path.join(folder_policies, 'indicator.csv'))
 
     return comparison, indicator
+
+
+def compare_results(output, path):
+    """Write comparison between measured and calculated output.
+
+    Parameters
+    ----------
+    output: Series
+    path: str
+    """
+
+    data_validation = resources_data['data_validation']
+    df = pd.concat((data_validation, output.reindex(data_validation.index).rename('Calculated')), axis=1)
+    df.round(1).to_csv(os.path.join(path, 'validation.csv'))
+

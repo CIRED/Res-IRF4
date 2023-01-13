@@ -50,6 +50,9 @@ resources_data['public_policies_2019'] = DataFrame([1.88, 1.05, 0, 1.32, 0.56, 0
 calibration_data = get_pandas('project/input/resources_dir/data_ceren.csv', lambda x: read_csv(x, index_col=[0]).squeeze())
 resources_data['data_calibration'] = calibration_data
 
+data_validation = get_pandas('project/input/resources_dir/data_validation.csv', lambda x: read_csv(x, index_col=[0], header=[0]).squeeze())
+resources_data['data_validation'] = data_validation
+
 resources_data['investment_per_renovating_houshold_decision_maker'] = {k: DataFrame([9100], index=['TREMI 2019'],
                                                                                       columns=[2019]).T for k in [
     'Single-family - {}'.format(i) for i in ['Owner-occupied', 'Privately rented', 'Social-housing']] + [
@@ -142,6 +145,7 @@ colors = {
     "Mpr serenite": "violet",
     'Sub ad volarem': "darkorange",
     "Sub merit": "slategrey",
+    "Sub obligation": "darkorange",
     "Existing": "tomato",
     "New": "lightgrey",
     "Renovation": "brown",

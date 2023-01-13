@@ -245,8 +245,16 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
         time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
         a_h = A_0 + time_constant / TAU_0
-        heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
+        # average over the month
+        heat_balance_ratio = heat_gains.groupby(heat_gains.columns.month, axis=1).sum() / heat_transfer.groupby(heat_transfer.columns.month, axis=1).sum()
         gain_utilization_factor = (1 - (heat_balance_ratio.T ** a_h).T) / (1 - (heat_balance_ratio.T ** (a_h + 1)).T)
+        temp = []
+        for i in gain_utilization_factor.columns.astype(str):
+            if len(i) == 1:
+                i = '0{}'.format(i)
+            temp.append(i)
+        gain_utilization_factor.columns = [np.datetime64('{}-{}'.format(climate, i), 'D') for i in temp]
+        gain_utilization_factor = gain_utilization_factor.reindex(heat_gains.columns, axis=1, method='pad')
 
         heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
@@ -301,7 +309,10 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                           climate=climate, freq=freq, smooth=smooth, marginal=marginal,
                                           temp_indoor=temp_indoor)
-    return heat_need / efficiency
+    if isinstance(heat_need, pd.Series):
+        return heat_need / efficiency
+    else:
+        return (heat_need.T / efficiency).T
 
 
 def conventional_dhw_final(index):
@@ -325,6 +336,7 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               air_rate=None, unobserved=None
                               ):
     """Space heating conventional, and energy performance certificate.
+
 
     Method before july 2021.
 

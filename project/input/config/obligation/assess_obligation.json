@@ -19,13 +19,10 @@
     "carbon_value": "project/input/policies/carbon_value.csv",
     "carbon_emission": "project/input/policies/carbon_emission.csv"
   },
-
   "Reference": {
-    "end": 2025,
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
-    "prices_constant": false,
-    "taxes_constant": false,
     "demolition_rate": 0.0035,
     "construction": true,
     "income_rate": 0.012,
@@ -43,7 +40,8 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 0
+        "number": 700000,
+        "target": "worst"
       }
     },
     "ms_insulation": {
@@ -67,7 +65,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -100,7 +98,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -122,9 +120,9 @@
         "start": 2019,
         "end": 2051,
         "value": "project/input/policies/agenda_obligation.csv",
-        "frequency": null,
+        "frequency": "rotation",
         "intensive": "market_share",
-        "minimum_performance": "D"
+        "minimum_performance": "C"
       },
       "landlord": {
         "start": 2020,
@@ -133,11 +131,6 @@
       "multi_family": {
         "start": 2020,
         "end": 2020
-      },
-      "sub_ad_volarem": {
-        "start": 2021,
-        "end": 2021,
-        "value": 0.5
       }
     },
     "footprint": {
@@ -146,7 +139,16 @@
       "construction": "project/input/footprint_construction.csv",
       "renovation": "project/input/footprint_renovation.csv"
     },
-    "quintiles": false,
+    "simple": {
+      "quintiles": false,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "policies": false,
+      "income": false,
+      "prices_constant": false,
+      "taxes_constant": false
+    },
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null

@@ -45,7 +45,7 @@ def create_logger(path=None):
 
 
 def get_config() -> dict:
-    with resources.path('project.input', 'config_test.json') as f:
+    with resources.path('project.input', 'config.json') as f:
         with open(f) as file:
             return json.load(file)['Reference']
 
@@ -264,7 +264,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
     logger.info('Creating AgentBuildings object')
 
     if path is not None:
-        with open(os.path.join(path, 'config_test.json'), 'w') as fp:
+        with open(os.path.join(path, 'config.json'), 'w') as fp:
             json.dump(config, fp)
 
     buildings = AgentBuildings(stock, parsed_inputs['surface'], parsed_inputs['ratio_surface'], parsed_inputs['efficiency'],

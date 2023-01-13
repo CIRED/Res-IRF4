@@ -134,7 +134,9 @@ def run(path=None):
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:
                     configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
-                    configuration['PriceConstant']['prices_constant'] = True
+                    configuration['PriceConstant']['simple']['prices_constant'] = True
+                    configuration['PriceConstant']['simple']['taxes_constant'] = True
+
             if 'prices_factor' in config_sensitivity.keys():
                 values = config_sensitivity['prices_factor']
                 if values:
@@ -151,6 +153,17 @@ def run(path=None):
                     for v in values:
                         configuration['CostFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['CostFactor{:.0f}'.format(v * 100)]['cost_factor'] = v
+
+            if 'exogenous' in config_sensitivity.keys():
+                values = config_sensitivity['exogenous']
+                if values:
+                    if isinstance(values, float):
+                        values = [values]
+                    for v in values:
+                        configuration['Exogenous{}'.format(v)] = copy.deepcopy(configuration['Reference'])
+                        configuration['Exogenous{}'.format(v)]['renovation']['endogenous'] = False
+                        configuration['Exogenous{}'.format(v)]['renovation']['exogenous']['number'] = v
+
             if 'renovation_rate_ini' in config_sensitivity.keys():
                 if config_sensitivity['renovation_rate_ini']:
                     configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
@@ -192,17 +205,6 @@ def run(path=None):
                     configuration['MprNoBonus']['policies']['mpr']['bonus'] = None
 
         del configuration['sensitivity']
-
-    if 'elasticity' in configuration.keys():
-        if configuration['elasticity']['activated']:
-            configuration['Reference']['full_output'] = False
-            energy_prices = read_prices(configuration['Reference'])
-            scenarios = generate_price_scenarios(energy_prices, path=configuration['elasticity']['path'])
-            for key, path in scenarios.items():
-                configuration[key] = copy.deepcopy(configuration['Reference'])
-                configuration[key]['energy_prices'] = path
-
-        del configuration['elasticity']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
     folder = os.path.join(os.path.join('project', 'output'), '{}{}'.format(name_policy, t))

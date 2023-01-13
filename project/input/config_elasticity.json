@@ -1,11 +1,11 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2051,
     "debug_mode": false,
-    "full_output": true,
+    "full_output": false,
     "demolition_rate": 0.0035,
     "construction": true,
-    "income_rate": 0.012,
+    "income_rate": 0.0,
     "start": 2018,
     "renovation": {
       "endogenous": true,
@@ -25,9 +25,9 @@
       }
     },
     "ms_insulation": {
-      "endogenous": true,
-      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
-      "minimum_performance": null
+        "endogenous": true,
+        "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
+        "minimum_performance": null
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
     "population": "project/input/population.csv",
@@ -53,13 +53,13 @@
       },
       "mpr_serenite": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "insulation": "project/input/policies/mpr_serenite.csv",
         "cap": "project/input/policies/mpr_serenite_cap.csv"
       },
       "cee": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -67,25 +67,25 @@
       },
       "cap": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "tax": "project/input/policies/carbon_tax.csv",
         "emission": "project/input/policies/carbon_tax_emission.csv"
       },
       "cite": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2020,
+        "end": 2051,
         "value": 0.055
       },
       "zero_interest_loan": {
@@ -98,14 +98,11 @@
       },
       "obligation": {
         "start": 2019,
-        "end": 2021,
+        "end": 2019,
         "value": "project/input/policies/agenda_obligation.csv",
-        "frequency": {"value": [0.121, 0.021, 0.052],
-                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
-                    "name": "Occupancy status"},
+        "frequency": null,
         "intensive": "market_share",
-        "minimum_performance": "C",
-        "sub_obligation": "project/input/policies/sub_obligation.csv"
+        "minimum_performance": null
       },
       "landlord": {
         "start": 2020,
