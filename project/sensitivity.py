@@ -55,7 +55,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
     output, o = dict(), None
     for y in range(start, end):
         s = time.time()
-        prices = energy_prices.loc[year, :]
+        prices = energy_prices.loc[y, :]
         f_built = flow_built.loc[:, y]
 
         buildings, _, _ = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
