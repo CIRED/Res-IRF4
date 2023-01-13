@@ -7,7 +7,7 @@ from importlib import resources
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
-from project.write_output import plot_scenario, compare_results
+from project.write_output import plot_scenario
 from project.utils import reindex_mi
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
@@ -256,14 +256,14 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
-    if path is not None and config.get('full_output') is True:
+    if path is not None:
         dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
     if logger is None:
         logger = create_logger(path)
     logger.info('Creating AgentBuildings object')
 
-    if path is not None and config.get('full_output') is True:
+    if path is not None:
         with open(os.path.join(path, 'config.json'), 'w') as fp:
             json.dump(config, fp)
 
@@ -347,7 +347,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     return buildings, stock, output
 
 
-def res_irf(config, path, calibration=None):
+def res_irf(config, path):
     """Res-IRF model.
 
     Parameters
@@ -375,20 +375,15 @@ def res_irf(config, path, calibration=None):
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
+        buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
+        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
+        s, o = buildings.parse_output_run(post_inputs)
+        stock = pd.concat((stock, s), axis=1)
+        output = pd.concat((output, o), axis=1)
 
-        start = config['start']
-        if calibration is None:
-            buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-            buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
-            s, o = buildings.parse_output_run(post_inputs)
-            stock = pd.concat((stock, s), axis=1)
-            output = pd.concat((output, o), axis=1)
-            start += 1
-        else:
-            buildings.calibration_exogenous(**calibration)
-
-        for year in range(start, config['end']):
+        for year in range(config['start'] + 1, config['end']):
             start = time()
+
             prices = energy_prices.loc[year, :]
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
@@ -401,90 +396,20 @@ def res_irf(config, path, calibration=None):
                                              ms_heater=ms_heater, financing_cost=financing_cost,
                                              rotation=inputs['rotation_rate'])
 
-            if year == 2019 and buildings.full_output:
-                compare_results(o, buildings.path)
-
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
-
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
 
         if path is not None:
             buildings.logger.info('Dumping output in {}'.format(path))
-            if not buildings.full_output:
-                # for price elasticity calculation
-                temp = energy_prices.T
-                temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
-                output = pd.concat((output, temp), axis=0)
-                output = output.sort_index(axis=1)
-
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
-        if buildings.full_output:
             stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+        if buildings.full_output:
             plot_scenario(output, stock, buildings)
 
         return os.path.basename(os.path.normpath(path)), output, stock
 
-    except Exception as e:
-        logger.exception(e)
-        raise e
-
-
-def calibration_res_irf(path, config=None):
-    """Calibrate Res-IRF and returns calibrated parameters.
-
-
-    Function is useful for running multiple scenarios with the same calibration.
-    Typical example is for sensitivity analysis or elasticity calculation.
-
-    Parameters
-    ----------
-    config
-    path
-
-    Returns
-    -------
-
-    """
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    logger = create_logger(path)
-    try:
-        logger.info('Reading input')
-        inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
-            inputs, stock, year, taxes, path=path, config=config, logger=logger)
-
-        buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
-
-        year = buildings.first_year + 1
-
-        prices = energy_prices.loc[year, :]
-        p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
-        p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-        f_built = flow_built.loc[:, year]
-
-        buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                         p_insulation, f_built, year, post_inputs,
-                                         calib_intensive=inputs['calibration_intensive'],
-                                         calib_renovation=inputs['calibration_renovation'],
-                                         ms_heater=ms_heater, financing_cost=financing_cost,
-                                         rotation=inputs['rotation_rate'])
-
-        if year == 2019 and buildings.full_output:
-            compare_results(o, buildings.path)
-
-        calibration = {
-            'coefficient_consumption': buildings.coefficient_consumption,
-            'constant_heater': buildings.constant_heater,
-            'constant_insulation_intensive': buildings.constant_insulation_intensive,
-            'constant_insulation_extensive': buildings.constant_insulation_extensive,
-            'scale_ext': buildings.scale_ext
-
-        }
-        return calibration
     except Exception as e:
         logger.exception(e)
         raise e
