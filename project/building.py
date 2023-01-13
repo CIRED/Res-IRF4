@@ -207,7 +207,8 @@ class ThermalBuildings:
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
-    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None):
+    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None,
+                     gain_utilization_factor=False):
         """Calculate heating need of the current building stock.
 
         Returns
@@ -223,9 +224,8 @@ class ThermalBuildings:
         heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          th_bridging='Medium', vent_types='Ventilation naturelle',
                                                          infiltration='Medium', climate=climate,
-                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile)
-
-        return heating_need
+                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile,
+                                                         gain_utilization_factor=gain_utilization_factor)
 
         if isinstance(heating_need, (pd.Series, float, int)):
             heating_need = heating_need * self.stock * self.surface
@@ -234,7 +234,7 @@ class ThermalBuildings:
             heating_need = (heating_need.T * self.stock * self.surface).T
             return heating_need
 
-    def heating_consumption(self, freq='year', climate=None, smooth=False, marginal=False, temp_indoor=None):
+    def heating_consumption(self, freq='year', climate=None, smooth=False, temp_indoor=None):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
 
         Parameters
@@ -248,7 +248,9 @@ class ThermalBuildings:
 
         """
 
-        idx = self.stock.index
+        levels = ['Housing type', 'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
+        idx = self.stock.groupby(levels).sum().index
+
         wall = Series(idx.get_level_values('Wall'), index=idx)
         floor = Series(idx.get_level_values('Floor'), index=idx)
         roof = Series(idx.get_level_values('Roof'), index=idx)
@@ -258,6 +260,7 @@ class ThermalBuildings:
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
                                                          temp_indoor=temp_indoor)
+        consumption = reindex_mi(consumption, self.stock.index)
         return consumption
 
     def consumption_standard(self, indexes, level_heater='Heating system'):
@@ -306,7 +309,6 @@ class ThermalBuildings:
             self.consumption_3uses_building = concat((self.consumption_3uses_building, consumption_3uses))
             self.consumption_3uses_building.index = MultiIndex.from_tuples(
                 self.consumption_3uses_building.index).set_names(consumption.index.names)
-
             self.certificate_building = concat((self.certificate_building, certificate))
             self.certificate_building.index = MultiIndex.from_tuples(
                 self.certificate_building.index).set_names(consumption.index.names)
@@ -363,7 +365,7 @@ class ThermalBuildings:
 
         return consumption
 
-    def consumption_total(self, prices, freq='year', climate=None, smooth=False, marginal=False, temp_indoor=None):
+    def consumption_total(self, prices, freq='year', climate=None, smooth=False, temp_indoor=None):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -375,7 +377,7 @@ class ThermalBuildings:
         -------
         float
         """
-        consumption = self.heating_consumption(freq=freq, climate=climate, smooth=smooth, marginal=marginal, temp_indoor=temp_indoor) * self.surface
+        consumption = self.heating_consumption(freq=freq, climate=climate, smooth=smooth, temp_indoor=temp_indoor) * self.surface
         return (self.consumption_actual(prices, consumption=consumption) * self.stock).sum() / 10**9
 
     def calculate_consumption(self, prices, taxes=None, climate=None, temp_indoor=None):

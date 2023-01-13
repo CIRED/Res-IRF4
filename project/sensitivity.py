@@ -32,17 +32,18 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
-    calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config)
+    if import_calibration is not None:
+        with open(import_calibration, "rb") as file:
+            calibration = load(file)
+    else:
+        calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config)
+
     if export_calibration is not None:
         if not os.path.isdir(export_calibration):
             os.mkdir(export_calibration)
 
         with open(os.path.join(export_calibration, 'calibration.pkl'), "wb") as file:
             dump(calibration, file)
-
-    if import_calibration is not None:
-        with open(import_calibration, "rb") as file:
-            calibration = load(file)
 
     buildings.calibration_exogenous(**calibration)
     return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs
@@ -87,7 +88,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             o['Wood fuel (TWh)'] = buildings.heat_consumption_energy['Wood fuel'] / 10**9
             o['Oil fuel (TWh)'] = buildings.heat_consumption_energy['Oil fuel'] / 10**9
 
-
             temp = buildings.heating_consumption(freq='hour', climate=2006, smooth=False)
             t = (temp.T * buildings.stock * buildings.surface).T
             # adding heating intensity
@@ -110,8 +110,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
         output.update({y: o})
 
-        # problem here with new code
-        print(time.time() - s)
     return output
 
 
