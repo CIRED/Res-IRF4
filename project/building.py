@@ -207,7 +207,7 @@ class ThermalBuildings:
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
-    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None, marginal=False):
+    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None):
         """Calculate heating need of the current building stock.
 
         Returns
@@ -223,14 +223,16 @@ class ThermalBuildings:
         heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          th_bridging='Medium', vent_types='Ventilation naturelle',
                                                          infiltration='Medium', climate=climate,
-                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile,
-                                                         marginal=marginal)
+                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile)
 
-        if marginal:
-            heating_need = (heating_need.T * self.surface).T
-
-        heating_need = (heating_need.T * self.stock * self.surface).T
         return heating_need
+
+        if isinstance(heating_need, (pd.Series, float, int)):
+            heating_need = heating_need * self.stock * self.surface
+            return heating_need
+        elif isinstance(heating_need, pd.DataFrame):
+            heating_need = (heating_need.T * self.stock * self.surface).T
+            return heating_need
 
     def heating_consumption(self, freq='year', climate=None, smooth=False, marginal=False, temp_indoor=None):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
@@ -255,7 +257,7 @@ class ThermalBuildings:
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
-                                                         marginal=marginal, temp_indoor=temp_indoor)
+                                                         temp_indoor=temp_indoor)
         return consumption
 
     def consumption_standard(self, indexes, level_heater='Heating system'):
