@@ -431,7 +431,7 @@ def res_irf(config, path, calibration=None):
         raise e
 
 
-def calibration_res_irf(config, path):
+def calibration_res_irf(path, config=None):
     """Calibrate Res-IRF and returns calibrated parameters.
 
 
@@ -447,7 +447,8 @@ def calibration_res_irf(config, path):
     -------
 
     """
-    os.mkdir(path)
+    if not os.path.isdir(path):
+        os.mkdir(path)
     logger = create_logger(path)
     try:
         logger.info('Reading input')
@@ -458,7 +459,7 @@ def calibration_res_irf(config, path):
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
         buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
 
-        year = config['start'] + 1
+        year = buildings.first_year + 1
 
         prices = energy_prices.loc[year, :]
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
@@ -484,9 +485,6 @@ def calibration_res_irf(config, path):
 
         }
         return calibration
-
-
-
     except Exception as e:
         logger.exception(e)
         raise e

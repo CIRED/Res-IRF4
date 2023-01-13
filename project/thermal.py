@@ -301,7 +301,10 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                           climate=climate, freq=freq, smooth=smooth, marginal=marginal,
                                           temp_indoor=temp_indoor)
-    return heat_need / efficiency
+    if isinstance(heat_need, pd.Series):
+        return heat_need / efficiency
+    else:
+        return (heat_need.T / efficiency).T
 
 
 def conventional_dhw_final(index):
@@ -325,6 +328,7 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               air_rate=None, unobserved=None
                               ):
     """Space heating conventional, and energy performance certificate.
+
 
     Method before july 2021.
 

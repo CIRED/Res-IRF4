@@ -2708,6 +2708,12 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by = (flow * market_share.T).T
 
+        # test
+        """index = None
+        _, _, certificate_before_heater = self.consumption_standard(replaced_by.index, level_heater='Heating system')
+        _, consumption_3uses, certificate = self.prepare_consumption(self._choice_insulation, index=index,
+                                                                     level_heater='Heating system final')"""
+
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
         # energy performance certificate jump due to heater replacement without insulation upgrade
