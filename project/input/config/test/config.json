@@ -1,16 +1,12 @@
 {
-
   "sensitivity": {
     "activated": false,
-    "ZP": true,
-    "prices_constant": true,
-    "prices_factor": [1.2, 1.5, 2],
-    "cost_factor": [0.5, 1.5],
-    "exogenous": [100000, 500000, 700000],
-    "building_stock": ["project/input/stock/buildingstock_sdes2018_simple_1.csv", "project/input/stock/buildingstock_sdes2018_simple_5.csv"]
+    "building_stock": [
+      "project/input/stock/buildingstock_sdes2018_simple_1.csv",
+      "project/input/stock/buildingstock_sdes2018_simple_5.csv"]
   },
   "Reference": {
-    "end": 2022,
+    "end": 2021,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -18,7 +14,7 @@
     "income_rate": 0.012,
     "start": 2018,
     "renovation": {
-      "endogenous": false,
+      "endogenous": true,
       "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
       "scale_old": {
         "name": "freeriders",
@@ -39,7 +35,7 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_5.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
     "population": "project/input/population.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",

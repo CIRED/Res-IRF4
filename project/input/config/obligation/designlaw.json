@@ -26,7 +26,7 @@
     },
     "ms_insulation": {
       "endogenous": true,
-      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
+      "ms_insulation_ini": "project/input/revealed_data/buildingstock_sdes2018_medium_3.csv",
       "minimum_performance": null
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
@@ -235,7 +235,7 @@
         "start": 2019,
         "end": 2051,
         "value": "project/input/policies/agenda_obligation_law.csv",
-        "frequency": {"value": [0, 0.021, 0.052],
+        "frequency": {"value": [0, 0.021, 0],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},
         "intensive": "market_share",
@@ -372,7 +372,7 @@
         "start": 2019,
         "end": 2051,
         "value": "project/input/policies/agenda_obligation_law.csv",
-        "frequency": {"value": [0, 0.46033579, 0.46033579],
+        "frequency": {"value": [0, 0.46033579, 0],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},
         "intensive": "market_share",

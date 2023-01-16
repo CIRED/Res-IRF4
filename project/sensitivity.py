@@ -89,14 +89,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             o['Wood fuel (TWh)'] = buildings.heat_consumption_energy['Wood fuel'] / 10**9
             o['Oil fuel (TWh)'] = buildings.heat_consumption_energy['Oil fuel'] / 10**9
 
-            temp = buildings.heating_consumption(freq='hour', climate=2006, smooth=False)
-            t = (temp.T * buildings.stock * buildings.surface).T
-            # adding heating intensity
-            t = (t.T * buildings.heating_intensity).T
-            energy = temp.index.get_level_values('Heating system').str.split('-').str[0]
-            t = t.groupby(energy).sum()
-            t = (t.T * buildings.coefficient_consumption).T
-            o['Hourly consumption (kWh)'] = t
+            o['Hourly consumption (kWh)'] = buildings.consumption_total(freq='hour', type='actual',
+                                                                        climate=None, smooth=False)
 
             """o['Heat pump air'] = buildings.replacement_heater.sum().loc['Electricity-Heat pump air'] / 1e3
             o['Heat pump water'] = buildings.replacement_heater.sum().loc['Electricity-Heat pump water'] / 1e3"""

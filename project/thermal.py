@@ -113,6 +113,7 @@ HOURLY_PROFILE_FOSSIL = pd.Series(
     [0.04, 0.038, 0.039, 0.04, 0.041, 0.042, 0.044, 0.046, 0.048, 0.045, 0.043, 0.04, 0.037, 0.033, 0.034, 0.036, 0.039,
      0.043, 0.045, 0.046, 0.047, 0.046, 0.045, 0.043], index=pd.TimedeltaIndex(range(0, 24), unit='h'))
 
+TEMP_SINK = 55
 
 CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_data.csv'),
                 'month': os.path.join('project', 'input', 'climatic', 'climatic_data_month.csv'),
@@ -321,6 +322,20 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                           climate=climate, freq=freq, smooth=smooth,
                                           temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor)
+
+    if freq == 'hour':
+        path = CLIMATE_DATA[freq]
+        if smooth:
+            path = CLIMATE_DATA['smooth_day']
+
+        data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+        temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
+        delta_temperature = TEMP_SINK - temp_ext
+
+        efficiency_hp = 6.81 - 0.121 * delta_temperature + 0.00063 * delta_temperature ** 2
+        efficiency_hp = efficiency_hp.reindex(heat_need.columns)
+        # TODO
+
     if isinstance(heat_need, pd.Series):
         return heat_need / efficiency
     else:
