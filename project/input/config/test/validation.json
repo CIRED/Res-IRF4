@@ -9,7 +9,7 @@
     "building_stock": ["project/input/stock/buildingstock_sdes2018_simple_1.csv", "project/input/stock/buildingstock_sdes2018_simple_5.csv"]
   },
   "Reference": {
-    "end": 2023,
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,

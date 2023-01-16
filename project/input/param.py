@@ -120,7 +120,7 @@ generic_input['preferences']['insulation'] = {'investment': investment_preferenc
                                               'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
                                               }
 
-generic_input['performance_insulation'] = {'Wall': round(1 / 4.7, 1),
+generic_input['performance_insulation'] = {'Wall': 0.1,
                                            'Floor': round(1 / 3.6, 1),
                                            'Roof': round(1 / 8.6, 1),
                                            'Windows': 1.3}

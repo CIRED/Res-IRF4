@@ -1212,6 +1212,7 @@ class AgentBuildings(ThermalBuildings):
 
         index = stock.index
 
+        # select index that can undertake insulation replacement
         _, _, certificate_before_heater = self.consumption_standard(index, level_heater='Heating system')
         # index only contains building with energy performance > B
         c_before = reindex_mi(certificate_before_heater, index)
@@ -1393,6 +1394,7 @@ class AgentBuildings(ThermalBuildings):
             best = best.dropna(how='all')
             best = concat((best, s_best)).astype(float)
             if s_best.isna().all(axis=1).any():
+                print('D best peformance')
                 idx = s_best[s_best.isna().all(axis=1)].index
                 best = best.dropna(how='all')
                 t_best = temp.loc[idx, :].isin(['D']).replace(False, float('nan')) * cost_saving.loc[idx, :]
