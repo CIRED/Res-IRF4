@@ -1022,7 +1022,7 @@ class AgentBuildings(ThermalBuildings):
 
     def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater=None):
 
-        def calibration_constant_heater(self, utility, ms_heater):
+        def calibration_constant_heater(utility, ms_heater):
             """Constant to match the observed market-share.
 
             Market-share is defined by initial and final heating system.
