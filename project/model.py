@@ -32,6 +32,8 @@ def create_logger(path=None):
     logger = logging.getLogger('log_{}'.format(name))
     logger.setLevel('DEBUG')
     logger.propagate = False
+    # remove existing handlers
+    logger.handlers.clear()
     # consoler handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter(LOG_FORMATTER))

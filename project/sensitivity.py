@@ -27,10 +27,6 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    # initialization
-    inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
-        inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
     if import_calibration is not None:
         with open(import_calibration, "rb") as file:
@@ -45,7 +41,12 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
         with open(os.path.join(export_calibration, 'calibration.pkl'), "wb") as file:
             dump(calibration, file)
 
+    # creating object to calibrate with calibration
+    inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
+        inputs, stock, year, taxes, path=path, config=config, logger=logger)
     buildings.calibration_exogenous(**calibration)
+
     return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs
 
 
@@ -118,10 +119,10 @@ if __name__ == '__main__':
     # first time
     export_calibration = os.path.join('project', 'output', 'calibration')
     import_calibration = os.path.join(export_calibration, 'calibration.pkl')
-    """buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
                                                                                                          logger=None,
                                                                                                          config=None,
-                                                                                                         export_calibration=export_calibration)"""
+                                                                                                         export_calibration=export_calibration)
 
     # then
     buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
@@ -150,6 +151,3 @@ if __name__ == '__main__':
     df = concat([Series(i[2]) for i in results], axis=1)
     df = concat((sub_heater, sub_insulation, df.T), axis=1).T
     df.to_csv('output/sensitivity.csv')"""
-
-    print('ok')
-    print('ok')
