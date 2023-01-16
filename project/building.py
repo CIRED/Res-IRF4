@@ -2673,8 +2673,7 @@ class AgentBuildings(ThermalBuildings):
             share = reindex_mi(share, temp.columns, axis=1)
             share = reindex_mi(share, temp.index)
             replaced_by = (share * temp).stack('Income tenant').dropna()
-            if self.year == 2021:
-                print('break')
+
             assert round(replaced_by.sum().sum(), 0) == round(replaced_by_sum, 0), 'Sum problem'
 
         replaced_by = replaced_by.droplevel('Heating system').rename_axis(

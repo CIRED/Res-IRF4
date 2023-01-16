@@ -1,9 +1,13 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "building_stock": [
       "project/input/stock/buildingstock_sdes2018_simple_1.csv",
-      "project/input/stock/buildingstock_sdes2018_simple_5.csv"]
+      "project/input/stock/buildingstock_sdes2018_simple_3.csv",
+      "project/input/stock/buildingstock_sdes2018_simple_5.csv",
+      "project/input/stock/buildingstock_sdes2018_medium_1.csv",
+      "project/input/stock/buildingstock_sdes2018_medium_5.csv"
+    ]
   },
   "Reference": {
     "end": 2021,
@@ -35,7 +39,7 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "population": "project/input/population.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",

@@ -16,8 +16,10 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 import os
 import argparse
-from main import run
 import logging
+
+from project.main import run
+
 
 if __name__ == '__main__':
 
@@ -26,7 +28,7 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.axes').disabled = True
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--directory', default='project/input/config/policies', help='path config directory')
+    parser.add_argument('-d', '--directory', default='project/input/config/obligation', help='path config directory')
     args = parser.parse_args()
 
     configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']

@@ -512,8 +512,7 @@ def calibration_res_irf(path, config=None):
                                          p_insulation, f_built, year, post_inputs,
                                          calib_intensive=inputs['calibration_intensive'],
                                          calib_renovation=inputs['calibration_renovation'],
-                                         ms_heater=ms_heater, financing_cost=financing_cost,
-                                         rotation=inputs['rotation_rate'])
+                                         ms_heater=ms_heater, financing_cost=financing_cost)
 
         if year == 2019 and buildings.full_output:
             compare_results(o, buildings.path)
