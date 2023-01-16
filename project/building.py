@@ -1270,6 +1270,7 @@ class AgentBuildings(ThermalBuildings):
                                                                    financing_cost=financing_cost,
                                                                    min_performance=min_performance)
 
+
         else:
             retrofit_rate, market_share = self.exogenous_retrofit(stock)
 
@@ -1428,15 +1429,15 @@ class AgentBuildings(ThermalBuildings):
             high_income_condition = index_segments.get_level_values('Income owner').isin(high_income_condition)
             high_income_condition = pd.Series(high_income_condition, index=index_segments)
 
-            global_renovation_low_income = (low_income_condition * condition_target['global_renovation'].T).T
+            global_renovation_low_income = (low_income_condition & condition_target['global_renovation'].T).T
             condition_target.update({'global_renovation_low_income': global_renovation_low_income})
 
-            global_renovation_high_income = (high_income_condition * condition_target['global_renovation'].T).T
+            global_renovation_high_income = (high_income_condition & condition_target['global_renovation'].T).T
             condition_target.update({'global_renovation_high_income': global_renovation_high_income})
 
             energy_condition = saved_3uses >= energy_condition
 
-            condition_mpr_serenite = (reindex_mi(energy_condition, index_segments).T * low_income_condition).T
+            condition_mpr_serenite = (reindex_mi(energy_condition, index_segments).T & low_income_condition).T
             condition_target.update({'mpr_serenite': condition_mpr_serenite})
 
             condition_zil = define_zil_target(certif, certif_before, saved_3uses)
@@ -2003,17 +2004,14 @@ class AgentBuildings(ThermalBuildings):
 
             return const, ms_segment, f_replace
 
-        def calibration_constant_scale_ext(util, stock_segment, calib_renovation):
+        def calibration_extensive(util, stock_segment, calib_renovation):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
 
             Parameters
             ----------
-            util
-            stock_segment
-            retrofit_rate_ini
-            freeriders
-            delta_sub
-            pref_sub
+            util: Series
+            stock_segment: Series
+            calib_renovation: dict
 
             Returns
             -------
@@ -2102,7 +2100,6 @@ class AgentBuildings(ThermalBuildings):
                     constant = Series(root[:-1], index=retrofit_rate_ini.index) * scale
 
                 elif calibration_scale['name'] == 'standard_deviation':
-
                     root, infodict, ier, mess = fsolve(solve_deviation, x, args=(
                         util, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
                     scale = root[-1]
@@ -2321,7 +2318,7 @@ class AgentBuildings(ThermalBuildings):
                     format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), y_label=name)
                     save_fig(fig, save=os.path.join(self.path_calibration, 'scale_calibration_{}.png'.format(name.lower())))
 
-            constant, scale = calibration_constant_scale_ext(utility, stock, calib_renovation)
+            constant, scale = calibration_extensive(utility, stock, calib_renovation)
             self.constant_insulation_extensive = constant
 
             # graphic showing the impact of the scale
@@ -2521,10 +2518,9 @@ class AgentBuildings(ThermalBuildings):
 
         assert market_share.loc[market_share.sum(axis=1) != 1].empty, 'Market share problem'
 
-
         return retrofit_rate, market_share
 
-    def flow_obligation(self, policies_insulation, prices, cost_insulation, rotation=None,
+    def flow_obligation(self, policies_insulation, prices, cost_insulation,
                         financing_cost=True):
         """Account for flow obligation if defined in policies_insulation.
 
@@ -2563,7 +2559,7 @@ class AgentBuildings(ThermalBuildings):
         proba = 1
         if obligation.frequency is not None:
             proba = obligation.frequency
-            proba = reindex_mi(proba, stock.index)
+            proba = reindex_mi(proba, idx)
 
         to_replace = stock.loc[idx] * proba
 
@@ -2579,9 +2575,6 @@ class AgentBuildings(ThermalBuildings):
             replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
         replaced_by.index = replaced_by.index.reorder_levels(self.market_share.index.names)
 
-        # self._choice_insulation
-
-        # necessary to automatically calculate output
         _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
                                                       policies_insulation=policies_insulation,
                                                       financing_cost=financing_cost,
@@ -2596,6 +2589,12 @@ class AgentBuildings(ThermalBuildings):
         else:
             raise NotImplemented
 
+        assert ~market_share.isna().all(axis=1).any(), "Market-share issue"
+        assert (market_share.sum(axis=1).round(5) == 1.0).all(), "Market-share sum issue"
+
+        # ms = market_share.loc[replaced_by.index
+        # idx = ms.loc[ms.sum(axis=1).round(5) != 1.0, :].index
+
         replaced_by = (replaced_by.rename(None) * market_share.T).T
         replaced_by = replaced_by.fillna(0)
 
@@ -2603,6 +2602,7 @@ class AgentBuildings(ThermalBuildings):
             self.store_information_retrofit(replaced_by)
 
         replaced_by = self.frame_to_flow(replaced_by)
+
 
         assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
         flow_obligation = concat((- to_replace, replaced_by), axis=0)
@@ -2709,7 +2709,6 @@ class AgentBuildings(ThermalBuildings):
                                                                   calib_intensive=calib_intensive,
                                                                   policies_insulation=policies_insulation,
                                                                   financing_cost=financing_cost)
-
         # heater replacement without insulation upgrade
         flow_only_heater = (1 - retrofit_rate.reindex(stock.index).fillna(0)) * stock
         flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack('Heating system final')

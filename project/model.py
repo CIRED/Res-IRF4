@@ -287,7 +287,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
-                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None, rotation=None):
+                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -331,7 +331,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             financing_cost=financing_cost)
     buildings.add_flows([flow_retrofit, flow_built])
 
-    flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation, rotation=rotation,
+    flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
                                                 financing_cost=financing_cost)
 
     if flow_obligation is not None:
@@ -395,8 +395,7 @@ def res_irf(config, path):
                                              p_insulation, f_built, year, post_inputs,
                                              calib_intensive=inputs['calibration_intensive'],
                                              calib_renovation=inputs['calibration_renovation'],
-                                             ms_heater=ms_heater, financing_cost=financing_cost,
-                                             rotation=inputs['rotation_rate'])
+                                             ms_heater=ms_heater, financing_cost=financing_cost)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
