@@ -122,10 +122,13 @@ CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_d
                 }
 
 
+GAIN_UTILIZATION_FACTOR = False
+
+
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                               air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
-                              hourly_profile=None, temp_indoor=None, gain_utilization_factor=False,
+                              hourly_profile=None, temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
                               ):
     """Seasonal method for space heating need.
 
@@ -158,6 +161,8 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     freq
     hourly_profile: optional, pd.Series
     temp_indoor: optional, default temp_indoor
+    gain_utilization_factor: bool, default False
+        If False, for simplification we use gain_utilization_factor = 1.
 
     Returns
     -------
@@ -279,8 +284,8 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
 def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                               air_rate=None, unobserved=None, climate=None, freq='year', smooth=False, marginal=False,
-                               temp_indoor=None):
+                               air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
+                               temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR):
     """Monthly stead-state space heating final energy delivered.
 
 
@@ -302,8 +307,10 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     freq
     smooth: bool, default False
         Use smooth daily data to calculate heating need.
-    marginal
     temp_indoor
+    gain_utilization_factor: bool, default False
+        If False, for simplification we use gain_utilization_factor = 1.
+
 
     Returns
     -------
@@ -313,7 +320,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           th_bridging=th_bridging, vent_types=vent_types,
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                           climate=climate, freq=freq, smooth=smooth,
-                                          temp_indoor=temp_indoor)
+                                          temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor)
     if isinstance(heat_need, pd.Series):
         return heat_need / efficiency
     else:
@@ -354,7 +361,7 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     ratio_surface: pd.Series
     efficiency: pd.Series
     index: pd.MultiIndex or pd.Index
-        Index should include Housing type and Energy.
+        Should include Housing type and Energy.
     th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
     vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
     infiltration: {'Minimal', 'Low', 'Medium', 'High'}
