@@ -119,18 +119,15 @@ if __name__ == '__main__':
     # first time
     export_calibration = os.path.join('project', 'output', 'calibration')
     import_calibration = os.path.join(export_calibration, 'calibration.pkl')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
-                                                                                                         logger=None,
-                                                                                                         config=None,
-                                                                                                         export_calibration=export_calibration)
 
     # then
     buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
                                                                                                          logger=None,
                                                                                                          config=None,
-                                                                                                         import_calibration=import_calibration)
+                                                                                                         import_calibration=import_calibration,
+                                                                                                         export_calibration=None)
 
-    timestep = 1
+    timestep = 5
     year = 2020
     start = year
     end = year + timestep

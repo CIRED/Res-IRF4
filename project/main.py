@@ -137,6 +137,16 @@ def run(path=None):
                     configuration['PriceConstant']['simple']['prices_constant'] = True
                     configuration['PriceConstant']['simple']['taxes_constant'] = True
 
+            if 'building_stock' in config_sensitivity.keys():
+                values = config_sensitivity['building_stock']
+                if values:
+                    if isinstance(values, str):
+                        values = [values]
+                    for v in values:
+                        name = v.split('/')[-1].split('.')[0].replace('_', '')
+                        configuration[name] = copy.deepcopy(configuration['Reference'])
+                        configuration[name]['building_stock'] = v
+
             if 'prices_factor' in config_sensitivity.keys():
                 values = config_sensitivity['prices_factor']
                 if values:
@@ -177,32 +187,7 @@ def run(path=None):
                         configuration['FreeridersIni{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['FreeridersIni{:.0f}'.format(v * 100)]['target_freeriders'] = v
 
-            if 'preferences_zeros' in config_sensitivity.keys():
-                if config_sensitivity['preferences_zeros']:
-                    configuration['PreferencesZeros'] = copy.deepcopy(configuration['Reference'])
-                    configuration['PreferencesZeros']['preferences_zeros'] = config_sensitivity['preferences_zeros']
 
-            if 'calib_scale' in config_sensitivity.keys():
-                if config_sensitivity['calib_scale']:
-                    configuration['CalibScale'] = copy.deepcopy(configuration['Reference'])
-                    configuration['CalibScale']['calib_scale'] = config_sensitivity['calib_scale']
-
-            if 'mpr_global_retrofit' in config_sensitivity.keys():
-                if config_sensitivity['mpr_global_retrofit']:
-                    configuration['MprGlobalRetrofit'] = copy.deepcopy(configuration['Reference'])
-                    configuration['MprGlobalRetrofit']['policies']['mpr'][
-                        'global_retrofit'] = "project/input/policies/mpr_global_retrofit.csv"
-
-            if 'mpr_no_serenite' in config_sensitivity.keys():
-                if config_sensitivity['mpr_no_serenite']:
-                    configuration['MprNoSerenite'] = copy.deepcopy(configuration['Reference'])
-                    configuration['MprNoSerenite']['policies']['mpr'][
-                        'mpr_serenite'] = None
-
-            if 'mpr_no_bonus' in config_sensitivity.keys():
-                if config_sensitivity['mpr_no_bonus']:
-                    configuration['MprNoBonus'] = copy.deepcopy(configuration['Reference'])
-                    configuration['MprNoBonus']['policies']['mpr']['bonus'] = None
 
         del configuration['sensitivity']
 

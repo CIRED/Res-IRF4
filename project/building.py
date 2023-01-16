@@ -1020,64 +1020,64 @@ class AgentBuildings(ThermalBuildings):
             self.subsidies_count_heater.update({key: (replacement.fillna(0) * mask).sum(axis=1).groupby('Housing type').sum()})
             self.subsidies_average_heater.update({key: sub.sum().sum() / replacement.fillna(0).sum().sum()})
 
-    def calibration_constant_heater(self, utility, ms_heater):
-        """Constant to match the observed market-share.
+    def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater=None):
 
-        Market-share is defined by initial and final heating system.
+        def calibration_constant_heater(self, utility, ms_heater):
+            """Constant to match the observed market-share.
 
-        Parameters
-        ----------
-        utility: DataFrame
-        ms_heater: DataFrame
+            Market-share is defined by initial and final heating system.
 
-        Returns
-        -------
-        DataFrame
-        """
+            Parameters
+            ----------
+            utility: DataFrame
+            ms_heater: DataFrame
 
-        # removing unnecessary level
-        utility_ref = utility.droplevel(['Occupancy status']).copy()
-        utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
+            Returns
+            -------
+            DataFrame
+            """
 
-        possible = reindex_mi(ms_heater, utility_ref.index)
-        utility_ref[~(possible > 0)] = float('nan')
+            # removing unnecessary level
+            utility_ref = utility.droplevel(['Occupancy status']).copy()
+            utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
 
-        stock = self.stock.groupby(utility_ref.index.names).sum()
+            possible = reindex_mi(ms_heater, utility_ref.index)
+            utility_ref[~(possible > 0)] = float('nan')
 
-        # initializing constant to 0
-        constant = ms_heater.copy()
-        constant[constant > 0] = 0
-        market_share_ini, market_share_agg = None, None
-        for i in range(50):
+            stock = self.stock.groupby(utility_ref.index.names).sum()
+
+            # initializing constant to 0
+            constant = ms_heater.copy()
+            constant[constant > 0] = 0
+            market_share_ini, market_share_agg = None, None
+            for i in range(50):
+                constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
+                constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
+
+                utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
+                utility = utility_ref + utility_constant
+                market_share = (exp(utility).T / exp(utility).sum(axis=1)).T
+                agg = (market_share.T * stock).T.groupby(['Housing type', 'Heating system']).sum()
+                market_share_agg = (agg.T / agg.sum(axis=1)).T
+                if i == 0:
+                    market_share_ini = market_share_agg.copy()
+                constant = constant + log(ms_heater / market_share_agg)
+
+                ms_heater = ms_heater.reindex(market_share_agg.index)
+
+                if (market_share_agg.round(decimals=3) == ms_heater.round(decimals=3).fillna(0)).all().all():
+                    self.logger.debug('Constant heater optim worked')
+                    break
+
             constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
             constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
 
-            utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
-            utility = utility_ref + utility_constant
-            market_share = (exp(utility).T / exp(utility).sum(axis=1)).T
-            agg = (market_share.T * stock).T.groupby(['Housing type', 'Heating system']).sum()
-            market_share_agg = (agg.T / agg.sum(axis=1)).T
-            if i == 0:
-                market_share_ini = market_share_agg.copy()
-            constant = constant + log(ms_heater / market_share_agg)
+            details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
+                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
+            if self.path is not None:
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
-            ms_heater = ms_heater.reindex(market_share_agg.index)
-
-            if (market_share_agg.round(decimals=3) == ms_heater.round(decimals=3).fillna(0)).all().all():
-                self.logger.debug('Constant heater optim worked')
-                break
-
-        constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
-        constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
-
-        details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
-                         axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
-        if self.path is not None:
-            details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
-
-        return constant
-
-    def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater=None):
+            return constant
 
         choice_heater = self._choice_heater
         choice_heater_idx = Index(choice_heater, name='Heating system final')
@@ -1120,7 +1120,7 @@ class AgentBuildings(ThermalBuildings):
 
         if (self.constant_heater is None) and (ms_heater is not None):
             ms_heater.dropna(how='all', inplace=True)
-            self.constant_heater = self.calibration_constant_heater(utility, ms_heater)
+            self.constant_heater = calibration_constant_heater(utility, ms_heater)
         utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
 
         utility += utility_constant
@@ -1381,14 +1381,22 @@ class AgentBuildings(ThermalBuildings):
             condition_target.update({'bonus_worst': self.out_worst})
             condition_target.update({'bonus_best': self.in_best})
 
+            # selecting best cost efficiency opportunities to reach A or B
             cost_saving = cost / saved_3uses.replace(0, float('nan'))
             cost_saving = reindex_mi(cost_saving, index_segments)
             temp = reindex_mi(certif, index_segments)
             best = temp.isin(['A', 'B']).replace(False, float('nan')) * cost_saving
+            # if B is not possible then C or D
             idx = best[best.isna().all(axis=1)].index
             s_best = temp.loc[idx, :].isin(['C']).replace(False, float('nan')) * cost_saving.loc[idx, :]
             best = best.dropna(how='all')
             best = concat((best, s_best)).astype(float)
+            if s_best.isna().all(axis=1).any():
+                idx = s_best[s_best.isna().all(axis=1)].index
+                best = best.dropna(how='all')
+                t_best = temp.loc[idx, :].isin(['D']).replace(False, float('nan')) * cost_saving.loc[idx, :]
+                best = concat((best, t_best)).astype(float)
+
             self.best_option = (best.T == best.min(axis=1)).T
 
             minimum_gest_condition, global_condition = 1, 2
@@ -2241,12 +2249,12 @@ class AgentBuildings(ThermalBuildings):
         if self._debug_mode:
             s = self.add_certificate(stock)
             stock_single = s.xs('Single-family', level='Housing type', drop_level=False)
-            flow_retrofit = stock_single * reindex_mi(renovation_rate_ini, stock_single.index)
+            flow_retrofit = stock_single * reindex_mi(calib_renovation['renovation_rate_ini'], stock_single.index)
             ms = market_share.groupby([i for i in market_share.index.names if i != 'Heating system final']).first()
             ms = reindex_mi(ms, flow_retrofit.index).dropna()
             flow_retrofit = flow_retrofit.reindex(ms.index)
             agg = (ms.T * flow_retrofit).T
-            market_share_agg = (agg.sum() / agg.sum().sum()).reindex(ms_insulation.index)
+            market_share_agg = (agg.sum() / agg.sum().sum()).reindex(calib_intensive['ms_insulation_ini'].index)
             self.market_share = market_share_agg
 
         # extensive margin
@@ -2509,7 +2517,10 @@ class AgentBuildings(ThermalBuildings):
         """market_share = DataFrame(0, index=stock.index, columns=choice_insulation)
         market_share.loc[:, (True, True, True, True)] = 1"""
         market_share = self.best_option.astype(int)
-        market_share = reindex_mi(market_share, stock.index).dropna()
+        market_share = reindex_mi(market_share, retrofit_rate.index).dropna()
+
+        assert market_share.loc[market_share.sum(axis=1) != 1].empty, 'Market share problem'
+
 
         return retrofit_rate, market_share
 
@@ -2710,6 +2721,7 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by = (flow * market_share.T).T
 
+        # ms.loc[ms.sum(axis=1) != 1, :]
         # test
         """index = None
         _, _, certificate_before_heater = self.consumption_standard(replaced_by.index, level_heater='Heating system')
