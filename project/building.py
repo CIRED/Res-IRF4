@@ -380,7 +380,7 @@ class ThermalBuildings:
         return consumption
 
     def consumption_total(self, prices=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
-                          type='actual', efficiency_hour=False):
+                          standard=False, efficiency_hour=False, existing=None, energy=False):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -398,12 +398,32 @@ class ThermalBuildings:
         float
         """
 
-        if type == 'actual':
+        if standard is True:
+            if freq == 'year':
+                consumption = self.consumption_heating(freq=freq, climate=None)
+                consumption = reindex_mi(consumption, self.stock.index) * self.surface * self.stock
+                if existing is True:
+                    consumption = consumption[consumption.index.get_level_values('Existing')]
+                if energy is False:
+                    return consumption.sum() / 10 ** 9
+                else:
+                    energy = self.energy.reindex(consumption.index)
+                    return consumption.groupby(energy).sum() / 10**9
+
+        if standard is False:
             if freq == 'year':
                 consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth,
                                                        temp_indoor=temp_indoor)
                 consumption = reindex_mi(consumption, self.stock.index) * self.surface
-                return (self.consumption_actual(prices, consumption=consumption) * self.stock).sum() / 10 ** 9
+                if existing is True:
+                    consumption = consumption[consumption.index.get_level_values('Existing')]
+                consumption = self.consumption_actual(prices, consumption=consumption) * self.stock
+                if energy is False:
+                    return consumption.sum() / 10 ** 9
+                else:
+                    energy = self.energy.reindex(consumption.index)
+                    return consumption.groupby(energy).sum() / 10**9
+
             if freq == 'hour':
                 temp = self.consumption_heating(freq=freq, climate=climate, smooth=smooth, efficiency_hour=efficiency_hour)
                 temp = reindex_mi(temp, self.stock.index)
@@ -633,6 +653,7 @@ class AgentBuildings(ThermalBuildings):
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path=path, year=year,
                          debug_mode=debug_mode)
+        self.consumption_saving = None
         self.best_option = None
         self.constant_test = None
         self.certif_jump_all = None
@@ -2716,6 +2737,27 @@ class AgentBuildings(ThermalBuildings):
 
         return replaced_by
 
+    def store_consumption(self, prices):
+        """Store energy consumption.
+
+
+        Useful to calculate energy saving and rebound effect.
+
+        Parameters
+        ----------
+        prices
+        """
+        output = dict()
+        temp = self.consumption_total(freq='year', standard=True, existing=True, energy=True)
+        temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
+        output.update(temp)
+
+        temp = self.consumption_total(prices=prices, freq='year', standard=False, climate=None, smooth=False,
+                                      existing=True, energy=True)
+        temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+        output.update(temp)
+        self.consumption_saving = output
+
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
                       ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None):
         """Compute heater replacement and insulation retrofit.
@@ -2748,15 +2790,7 @@ class AgentBuildings(ThermalBuildings):
         """
 
         # store consumption before retrofit
-
-
-        # removing unused attributes to determine flow retrofit
-        """idx = self.stock[self.stock.index.get_level_values('Existing') == False].index
-        consumption_sd = self.consumption_standard(idx)
-        self.consumption_before_retrofit =
-
-        consumption_ac = self.heat_consumption_calib
-        consumption_ac ="""
+        self.store_consumption(prices)
 
         stock = self.stock_mobile.groupby([i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
 

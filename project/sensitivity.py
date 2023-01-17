@@ -108,7 +108,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             o.update(temp.to_dict())
 
             if y == end - 1:
-                o['Consumption (kWh/h)'] = buildings.consumption_total(prices=prices, freq='hour', type='actual',
+                o['Consumption (kWh/h)'] = buildings.consumption_total(prices=prices, freq='hour', standard=False,
                                                                        climate=climate, smooth=smooth,
                                                                        efficiency_hour=efficiency_hour)
             output.update({y: o})
