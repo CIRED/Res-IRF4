@@ -35,5 +35,4 @@ if __name__ == '__main__':
 
     for config in configs:
         # add try/except to continue if one config fail
-
         run(path=config)

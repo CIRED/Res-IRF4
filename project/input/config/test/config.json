@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "building_stock": [
       "project/input/stock/buildingstock_sdes2018_simple_1.csv",
       "project/input/stock/buildingstock_sdes2018_simple_3.csv",

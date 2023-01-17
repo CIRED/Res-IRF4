@@ -379,8 +379,8 @@ class ThermalBuildings:
 
         return consumption
 
-    def consumption_total(self, prices, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
-                          type='conventional'):
+    def consumption_total(self, prices=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
+                          type='actual'):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -397,13 +397,16 @@ class ThermalBuildings:
         -------
         float
         """
-        if type == 'conventional':
-            consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth, temp_indoor=temp_indoor)
-            consumption = reindex_mi(consumption, self.stock.index) * self.surface
-            return (self.consumption_actual(prices, consumption=consumption) * self.stock).sum() / 10**9
-        elif type == 'actual':
+
+        if type == 'actual':
+            if freq == 'year':
+                consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth,
+                                                       temp_indoor=temp_indoor)
+                consumption = reindex_mi(consumption, self.stock.index) * self.surface
+                return (self.consumption_actual(prices, consumption=consumption) * self.stock).sum() / 10 ** 9
             if freq == 'hour':
-                temp = self.consumption_heating(freq='hour', climate=2006, smooth=False)
+                temp = self.consumption_heating(freq=freq, climate=climate, smooth=smooth)
+                temp = reindex_mi(temp, self.stock.index)
                 t = (temp.T * self.stock * self.surface).T
                 # adding heating intensity
                 t = (t.T * self.heating_intensity).T
@@ -2157,6 +2160,11 @@ class AgentBuildings(ThermalBuildings):
                 self.logger.info(mess)
                 self.logger.info('Scale: {}'.format(scale))
 
+            # without calibration
+            retrofit_ini = retrofit_func(util)
+            agg_ini = (retrofit_ini * stock_segment).groupby(retrofit_rate_ini.index.names).sum()
+            retrofit_rate_agg_ini = agg_ini / stock_segment.groupby(retrofit_rate_ini.index.names).sum()
+
             utility_constant = reindex_mi(constant, util.index)
             util = util * scale + utility_constant
             retrofit_rate = retrofit_func(util)
@@ -2168,8 +2176,8 @@ class AgentBuildings(ThermalBuildings):
             ref = ('Single-family', 'Owner-occupied', False)
             diff = wtp - wtp[ref]
 
-            details = concat((constant, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3, wtp, diff), axis=1,
-                             keys=['constant', 'calcul', 'observed', 'thousand', 'wtp', 'market_barriers']).round(decimals=3)
+            details = concat((constant, retrofit_rate_agg_ini, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3, wtp, diff), axis=1,
+                             keys=['constant', 'ini', 'calcul', 'observed', 'thousand', 'wtp', 'market_barriers']).round(decimals=3)
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
