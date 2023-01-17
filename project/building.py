@@ -2555,9 +2555,11 @@ class AgentBuildings(ThermalBuildings):
             retrofit_rate = pd.Series(1, index=idx)
             # segment to complete
             to_complete = self.param_exogenous['number'] - stock[idx].sum()
-            idx = temp[temp['Stock'] >= self.param_exogenous['number']].index[0]
-            to_complete = pd.Series(to_complete / stock[idx], index=pd.MultiIndex.from_tuples([idx], names=temp.index.names))
-            retrofit_rate = concat((retrofit_rate, to_complete))
+            idx = temp[temp['Stock'] >= self.param_exogenous['number']].index
+            if not idx.empty:
+                idx = idx[0]
+                to_complete = pd.Series(to_complete / stock[idx], index=pd.MultiIndex.from_tuples([idx], names=temp.index.names))
+                retrofit_rate = concat((retrofit_rate, to_complete))
         else:
             raise NotImplemented
 
