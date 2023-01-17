@@ -248,7 +248,7 @@ class ThermalBuildings:
             return heating_need
 
     def consumption_heating(self, idx=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='kWh/m2.y',
-                            full_output=False):
+                            full_output=False, efficiency_hour=False):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
 
         Parameters
@@ -277,7 +277,7 @@ class ThermalBuildings:
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
-                                                         temp_indoor=temp_indoor)
+                                                         temp_indoor=temp_indoor, efficiency_hour=efficiency_hour)
 
         if full_output is True:
             certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
@@ -380,7 +380,7 @@ class ThermalBuildings:
         return consumption
 
     def consumption_total(self, prices=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
-                          type='actual'):
+                          type='actual', efficiency_hour=False):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -405,7 +405,7 @@ class ThermalBuildings:
                 consumption = reindex_mi(consumption, self.stock.index) * self.surface
                 return (self.consumption_actual(prices, consumption=consumption) * self.stock).sum() / 10 ** 9
             if freq == 'hour':
-                temp = self.consumption_heating(freq=freq, climate=climate, smooth=smooth)
+                temp = self.consumption_heating(freq=freq, climate=climate, smooth=smooth, efficiency_hour=efficiency_hour)
                 temp = reindex_mi(temp, self.stock.index)
                 t = (temp.T * self.stock * self.surface).T
                 # adding heating intensity

@@ -50,7 +50,7 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
 
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 flow_built, post_inputs, output_resirf=True, climate=2006, smooth=False):
+                 flow_built, post_inputs, output_resirf=True, climate=2006, smooth=False, efficiency_hour=False):
 
     # setting output format
     buildings.full_output = True
@@ -109,7 +109,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
             if y == end - 1:
                 o['Consumption (kWh/h)'] = buildings.consumption_total(prices=prices, freq='hour', type='actual',
-                                                                       climate=climate, smooth=smooth)
+                                                                       climate=climate, smooth=smooth,
+                                                                       efficiency_hour=efficiency_hour)
             output.update({y: o})
 
     if output_resirf is True:
@@ -140,7 +141,10 @@ if __name__ == '__main__':
     sub_insulation = 0.5
 
     output = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater,
-                          cost_insulation, flow_built, post_inputs, output_resirf=True, climate=2006, smooth=False)
+                          cost_insulation, flow_built, post_inputs, output_resirf=False, climate=2006, smooth=False,
+                          efficiency_hour=False)
+    print(output[2020]['Consumption (kWh/h)'].sum(axis=1))
+
 
     print('break')
     print('break')

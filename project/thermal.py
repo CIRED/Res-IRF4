@@ -286,7 +286,8 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                                air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
-                               temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR):
+                               temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
+                               efficiency_hour=False):
     """Monthly stead-state space heating final energy delivered.
 
 
@@ -311,7 +312,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     temp_indoor
     gain_utilization_factor: bool, default False
         If False, for simplification we use gain_utilization_factor = 1.
-
+    efficiency_hour
 
     Returns
     -------
@@ -323,7 +324,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           climate=climate, freq=freq, smooth=smooth,
                                           temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor)
 
-    if freq == 'hour':
+    if (freq == 'hour') and (efficiency_hour is True):
         path = CLIMATE_DATA[freq]
         if smooth:
             path = CLIMATE_DATA['smooth_day']
@@ -333,13 +334,21 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
         delta_temperature = TEMP_SINK - temp_ext
 
         efficiency_hp = 6.81 - 0.121 * delta_temperature + 0.00063 * delta_temperature ** 2
-        efficiency_hp = efficiency_hp.reindex(heat_need.columns)
-        # TODO
+
+        heat_pumps = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
+        efficiency = pd.concat([efficiency] * efficiency_hp.shape[0], axis=1, keys=efficiency_hp.index, names=efficiency_hp.index.names)
+        idx = efficiency[efficiency.index.get_level_values('Heating system').isin(heat_pumps)].index
+        for i in idx:
+            efficiency.loc[i, :] = efficiency_hp
+        efficiency = efficiency.reindex(heat_need.columns, method='pad', axis=1)
 
     if isinstance(heat_need, pd.Series):
         return heat_need / efficiency
-    else:
-        return (heat_need.T / efficiency).T
+    if isinstance(heat_need, pd.DataFrame):
+        if isinstance(efficiency, pd.Series):
+            return (heat_need.T / efficiency).T
+        elif isinstance(efficiency, pd.DataFrame):
+            return heat_need / efficiency
 
 
 def conventional_dhw_final(index):
