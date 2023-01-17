@@ -111,7 +111,7 @@
       "zero_interest_loan": {
         "new": true,
         "start": 2019,
-        "end": 2051,
+        "end": 2019,
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"

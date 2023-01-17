@@ -140,7 +140,7 @@ if __name__ == '__main__':
     sub_insulation = 0.5
 
     output = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater,
-                          cost_insulation, flow_built, post_inputs, output_resirf=True)
+                          cost_insulation, flow_built, post_inputs, output_resirf=True, climate=2006, smooth=False)
 
     print('break')
     print('break')

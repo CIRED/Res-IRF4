@@ -133,7 +133,6 @@
     "share_multi_family": null,
     "surface_built": null
   },
-
   "RawCCC": {
     "end": 2051,
     "debug_mode": false,
@@ -361,7 +360,7 @@
       "zero_interest_loan": {
         "new": true,
         "start": 2019,
-        "end": 2020,
+        "end": 2019,
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
@@ -498,7 +497,7 @@
       "zero_interest_loan": {
         "new": true,
         "start": 2019,
-        "end": 2020,
+        "end": 2019,
         "value": 0.0917729,
         "min": 5000,
         "max": "project/input/policies/zil_max.csv"
