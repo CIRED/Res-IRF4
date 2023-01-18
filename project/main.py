@@ -147,10 +147,19 @@ def run(path=None):
                         configuration[name] = copy.deepcopy(configuration['Reference'])
                         configuration[name]['building_stock'] = v
 
+            if 'deviation' in config_sensitivity.keys():
+                values = config_sensitivity['deviation']
+                if values:
+                    if isinstance(values, (float, int)):
+                        values = [values]
+                    for v in values:
+                        configuration['Deviation{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
+                        configuration['Deviation{:.0f}'.format(v * 100)]['renovation']['scale']['deviation'] = v
+
             if 'prices_factor' in config_sensitivity.keys():
                 values = config_sensitivity['prices_factor']
                 if values:
-                    if isinstance(values, float):
+                    if isinstance(values, (float, int)):
                         values = [values]
                     for v in values:
                         configuration['PriceFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])

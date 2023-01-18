@@ -1,13 +1,7 @@
 {
   "sensitivity": {
     "activated": true,
-    "ZP": true,
-    "prices_constant": true,
-    "prices_factor": [1.2, 1.5, 2],
-    "cost_factor": [0.5, 1.5],
-    "exogenous": [100000, 500000, 700000],
-    "building_stock": ["project/input/stock/buildingstock_sdes2018_simple_1.csv",
-                        "project/input/stock/buildingstock_sdes2018_simple_5.csv"]
+    "exogenous": [100000, 500000, 700000]
   },
   "Reference": {
     "end": 2051,

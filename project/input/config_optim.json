@@ -1,14 +1,4 @@
 {
-  "sensitivity": {
-    "activated": true,
-    "ZP": true,
-    "prices_constant": true,
-    "prices_factor": [1.2, 1.5, 2],
-    "cost_factor": [0.5, 1.5],
-    "exogenous": [100000, 500000, 700000],
-    "building_stock": ["project/input/stock/buildingstock_sdes2018_simple_1.csv",
-                        "project/input/stock/buildingstock_sdes2018_simple_5.csv"]
-  },
   "Reference": {
     "end": 2051,
     "debug_mode": false,
@@ -53,14 +43,6 @@
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2051,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
       "mpr_serenite": {
         "start": 2019,
         "end": 2051,
@@ -69,7 +51,7 @@
       },
       "cee": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -88,7 +70,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -97,14 +79,6 @@
         "start": 2019,
         "end": 2051,
         "value": 0.055
-      },
-      "zero_interest_loan": {
-        "new": true,
-        "start": 2019,
-        "end": 2019,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
       },
       "obligation": {
         "start": 2019,
