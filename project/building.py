@@ -3500,7 +3500,7 @@ class AgentBuildings(ThermalBuildings):
         self.scale = None
 
     def apply_scale(self, scale):
-        
+
         self.scale *= scale
         self.preferences_insulation_ext['subsidy'] *= scale
         self.preferences_insulation_ext['investment'] *= scale
@@ -3513,7 +3513,7 @@ class AgentBuildings(ThermalBuildings):
     def calibration_exogenous(self, coefficient_consumption=None,
                               constant_heater=None,
                               constant_insulation_intensive=None,
-                              constant_insulation_extensive=None, scale_ext=None, energy_prices=None, taxes=None):
+                              constant_insulation_extensive=None, scale=None, energy_prices=None, taxes=None):
         """Function calibrating buildings object with exogenous data.
 
         Parameters
@@ -3557,7 +3557,7 @@ class AgentBuildings(ThermalBuildings):
 
         self.constant_insulation_extensive = constant_insulation_extensive.dropna()
 
-        self.scale = scale_ext
+        self.scale = scale
 
     def replace_insulation(self, stock, performance_component, condition):
         """Replace element from stock with another insulation performance.

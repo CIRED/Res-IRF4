@@ -385,18 +385,6 @@ def res_irf(config, path):
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
-        if False:
-            year = config['start'] + 1
-            prices = energy_prices.loc[year, :]
-            p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
-            p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-            buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                             p_insulation, None, year, post_inputs,
-                                             calib_intensive=inputs['calibration_intensive'],
-                                             calib_renovation=inputs['calibration_renovation'],
-                                             ms_heater=ms_heater, financing_cost=financing_cost)
-            buildings.remove_calibration()
-
         for year in range(config['start'] + 1, config['end']):
             start = time()
             prices = energy_prices.loc[year, :]
@@ -535,7 +523,7 @@ def calibration_res_irf(path, config=None):
             'constant_heater': buildings.constant_heater,
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_insulation_extensive': buildings.constant_insulation_extensive,
-            'scale_ext': buildings.scale_ext
+            'scale': buildings.scale
 
         }
         return calibration

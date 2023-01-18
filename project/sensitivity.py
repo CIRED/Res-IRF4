@@ -6,6 +6,7 @@ from project.read_input import PublicPolicy
 from multiprocessing import Pool
 import os
 from pickle import dump, load
+import json
 
 
 def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None):
@@ -16,18 +17,25 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     path
     logger
     config
+    export_calibration
+    import_calibration
 
     Returns
     -------
     AgentBuildings
         Building stock object initialize.
     """
+    # creating object to calibrate with calibration
+    if config is not None:
+        with open(config) as file:
+            config = json.load(file).get('Reference')
+
     if path is None:
         path = os.path.join('output', 'ResIRF')
     if not os.path.isdir(path):
         os.mkdir(path)
-    # TODO check if calibration
-    if import_calibration is not None:
+
+    if import_calibration is not None and os.path.isfile(import_calibration):
         with open(import_calibration, "rb") as file:
             calibration = load(file)
     else:
@@ -40,7 +48,6 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
         with open(os.path.join(export_calibration, 'calibration.pkl'), "wb") as file:
             dump(calibration, file)
 
-    # creating object to calibrate with calibration
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
@@ -93,26 +100,27 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 if __name__ == '__main__':
 
     # first time
-    export_calibration = os.path.join('project', 'output', 'calibration')
-    import_calibration = os.path.join(export_calibration, 'calibration.pkl')
+    _export_calibration = os.path.join('project', 'output', 'calibration')
+    _import_calibration = os.path.join(_export_calibration, 'calibration.pkl')
 
     # then
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs = ini_res_irf(path=os.path.join('project', 'output', 'ResIRF'),
-                                                                                                         logger=None,
-                                                                                                         config=None,
-                                                                                                         import_calibration=import_calibration,
-                                                                                                         export_calibration=None)
+    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs = ini_res_irf(
+        path=os.path.join('project', 'output', 'ResIRF'),
+        logger=None,
+        config=os.path.join('project', 'input', 'config.json'),
+        import_calibration=_import_calibration,
+        export_calibration=_export_calibration)
 
     timestep = 1
-    year = 2020
-    start = year
-    end = year + timestep
+    _year = 2020
+    _start = _year
+    _end = _year + timestep
 
-    sub_heater = 0.2
-    sub_insulation = 0.5
+    _sub_heater = 0.2
+    _sub_insulation = 0.5
 
-    simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
-                 cost_heater, cost_insulation, flow_built, post_inputs, climate=2006,
+    simu_res_irf(_buildings, _sub_heater, _sub_insulation, _end, _end, _energy_prices, _taxes,
+                 _cost_heater, _cost_insulation, _flow_built, _post_inputs, climate=2006,
                  smooth=False, efficiency_hour=False, output_consumption=False,
                  full_output=True)
 
