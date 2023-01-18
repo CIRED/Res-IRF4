@@ -382,6 +382,7 @@ class ThermalBuildings:
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
             heating_intensity = thermal.heat_intensity(budget_share)
+            # TODO: better store heating_intensity
             self.heating_intensity = heating_intensity
             consumption *= heating_intensity
             self.energy_poverty = (self.stock[self.stock.index.get_level_values(
