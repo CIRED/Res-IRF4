@@ -344,6 +344,17 @@ class ThermalBuildings:
 
         return consumption_sd, consumption_3uses, certificate
 
+    def heat_intensity(self, prices, consumption=None):
+        if consumption is None:
+            consumption = self.consumption_heat_sd.copy() * self.surface
+        else:
+            consumption = consumption.copy()
+        energy_bill = AgentBuildings.energy_bill(prices, consumption)
+        if isinstance(energy_bill, Series):
+            budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
+            heating_intensity = thermal.heat_intensity(budget_share)
+            return heating_intensity
+
     def consumption_actual(self, prices, consumption=None):
         """Space heating consumption based on standard space heating consumption and heating intensity (kWh/building.a).
 
