@@ -56,6 +56,47 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs
 
 
+def select_output(output):
+    """Select output
+
+    Parameters
+    ----------
+    output: DataFrame
+        Res-IRF  output.
+
+    Returns
+    -------
+    DataFrame
+        Selected rows
+    """
+
+    energy = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
+    heater = ['Electricity-Heat pump water',
+              'Electricity-Heat pump air',
+              'Electricity-Performance boiler',
+              'Natural gas-Performance boiler',
+              'Wood fuel-Performance boiler'
+              ]
+
+    variables = list()
+    variables += ['Consumption {} (TWh)'.format(i) for i in energy]
+    variables += [
+        'Investment heater (Billion euro)',
+        'Investment insulation (Billion euro)',
+        'Investment total (Billion euro)',
+        'Subsidies heater (Billion euro)',
+        'Subsidies insulation (Billion euro)',
+        'Subsidies total (Billion euro)',
+        'Health cost (Billion euro)',
+        'Energy poverty (Million)',
+        'Heating intensity (%)',
+        'Emission (MtCO2)'
+    ]
+    variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater]
+
+    return output.loc[variables]
+
+
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, climate=2006, smooth=False, efficiency_hour=False,
                  output_consumption=True, full_output=True):
@@ -85,7 +126,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, y, post_inputs)
-        output.update({y: o})
+
+        output.update({y: select_output(o)})
 
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
@@ -119,9 +161,9 @@ if __name__ == '__main__':
     _sub_heater = 0.2
     _sub_insulation = 0.5
 
-    output, consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                       _cost_heater, _cost_insulation, _flow_built, _post_inputs, climate=2006,
-                                       smooth=False, efficiency_hour=False, output_consumption=True)
+    _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, climate=2006,
+                                         smooth=False, efficiency_hour=False, output_consumption=True)
 
     print('break')
     print('break')
