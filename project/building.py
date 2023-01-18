@@ -344,18 +344,7 @@ class ThermalBuildings:
 
         return consumption_sd, consumption_3uses, certificate
 
-    def heat_intensity(self, prices, consumption=None):
-        if consumption is None:
-            consumption = self.consumption_heat_sd.copy() * self.surface
-        else:
-            consumption = consumption.copy()
-        energy_bill = AgentBuildings.energy_bill(prices, consumption)
-        if isinstance(energy_bill, Series):
-            budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
-            heating_intensity = thermal.heat_intensity(budget_share)
-            return heating_intensity
-
-    def consumption_actual(self, prices, consumption=None):
+    def consumption_actual(self, prices, consumption=None, store=False):
         """Space heating consumption based on standard space heating consumption and heating intensity (kWh/building.a).
 
 
@@ -382,11 +371,11 @@ class ThermalBuildings:
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, self.stock.index)
             heating_intensity = thermal.heat_intensity(budget_share)
-            # TODO: better store heating_intensity
-            self.heating_intensity = heating_intensity
             consumption *= heating_intensity
-            self.energy_poverty = (self.stock[self.stock.index.get_level_values(
-                'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()
+            if store:
+                self.heating_intensity = heating_intensity
+                self.energy_poverty = (self.stock[self.stock.index.get_level_values(
+                    'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()
         elif isinstance(energy_bill, DataFrame):
             budget_share = (energy_bill.T / reindex_mi(self._income_tenant, self.stock.index)).T
             heating_intensity = thermal.heat_intensity(budget_share)
@@ -468,12 +457,12 @@ class ThermalBuildings:
         consumption = self.consumption_heating(climate=climate, temp_indoor=temp_indoor)
         consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
-        self.heat_consumption = self.consumption_actual(prices, consumption=consumption) * self.stock
+        _consumption_actual = self.consumption_actual(prices, consumption=consumption, store=True) * self.stock
 
-        heat_consumption_energy = self.heat_consumption.groupby(self.energy).sum()
+        consumption_energy = _consumption_actual.groupby(self.energy).sum()
         if self.coefficient_consumption is None:
 
-            consumption = concat((self.heat_consumption, self.energy), axis=1).groupby(
+            consumption = concat((_consumption_actual, self.energy), axis=1).groupby(
                 ['Housing type', 'Energy']).sum().iloc[:, 0] / 10**9
 
             # considering 20% of electricity got wood stove - 50% electricity
@@ -482,7 +471,7 @@ class ThermalBuildings:
             consumption[('Single-family', 'Electricity')] -= electricity_wood
             consumption.groupby('Energy').sum()
 
-            self.heat_consumption.groupby('Housing type').sum() / 10**9
+            _consumption_actual.groupby('Housing type').sum() / 10**9
 
             validation = dict()
 
@@ -507,22 +496,22 @@ class ThermalBuildings:
             validation.update({'Surface (Million m2)': (self.stock * self.surface).sum() / 10**6})
 
             # heating consumption initial
-            temp = concat((self.heat_consumption, self.energy), axis=1).groupby(
+            temp = concat((_consumption_actual, self.energy), axis=1).groupby(
                 ['Housing type', 'Energy']).sum().iloc[:, 0] / 10**9
             temp.index = temp.index.map(lambda x: 'Consumption {} {} (TWh)'.format(x[0], x[1]))
             validation.update(temp)
-            temp = self.heat_consumption.groupby('Housing type').sum() / 10**9
+            temp = _consumption_actual.groupby('Housing type').sum() / 10**9
             temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
             validation.update(temp)
-            validation.update({'Consumption (TWh)': self.heat_consumption.sum() / 10**9})
+            validation.update({'Consumption (TWh)': _consumption_actual.sum() / 10**9})
 
-            self.coefficient_consumption = self._consumption_ini * 10**9 / heat_consumption_energy
+            self.coefficient_consumption = self._consumption_ini * 10**9 / consumption_energy
 
             temp = self.coefficient_consumption.copy()
             temp.index = temp.index.map(lambda x: 'Coefficient calibration {} (%)'.format(x))
             validation.update(temp)
 
-            temp = heat_consumption_energy / 10**9
+            temp = consumption_energy / 10**9
             temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
             validation.update(temp)
 
@@ -535,7 +524,7 @@ class ThermalBuildings:
                 validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
         coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        self.heat_consumption_calib = (coefficient * self.heat_consumption).copy()
+        self.heat_consumption_calib = (coefficient * _consumption_actual).copy()
 
         self.heat_consumption_energy = self.heat_consumption_calib.groupby(self.energy).sum()
 
@@ -548,7 +537,7 @@ class ThermalBuildings:
                 if self.year in tax.value.index:
                     if tax.name not in self.taxes_list:
                         self.taxes_list += [tax.name]
-                    amount = tax.value.loc[self.year, :] * heat_consumption_energy
+                    amount = tax.value.loc[self.year, :] * consumption_energy
                     self.taxes_expenditure_details[tax.name] = amount
                     total_taxes += amount
             self.taxes_expenditure = total_taxes
