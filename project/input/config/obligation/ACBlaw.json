@@ -108,16 +108,8 @@
         "end": 2051,
         "value": 0.055
       },
-      "zero_interest_loan": {
-        "new": true,
-        "start": 2019,
-        "end": 2019,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      },
       "obligation": {
-        "start": 2019,
+        "start": 2020,
         "end": 2051,
         "value": "project/input/policies/agenda_obligation_law.csv",
         "frequency": {"value": [0, 0.021, 0],
@@ -126,14 +118,6 @@
         "intensive": "market_share",
         "minimum_performance": null,
         "sub_obligation": null
-      },
-      "landlord": {
-        "start": 2020,
-        "end": 2020
-      },
-      "multi_family": {
-        "start": 2020,
-        "end": 2020
       }
     },
     "footprint": {

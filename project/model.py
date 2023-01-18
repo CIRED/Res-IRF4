@@ -329,11 +329,13 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             calib_intensive=calib_intensive,
                                             ms_heater=ms_heater,
                                             financing_cost=financing_cost)
-    buildings.add_flows([flow_retrofit, flow_built])
+
+    buildings.add_flows([flow_retrofit])
+    if flow_built is not None:
+        buildings.add_flows([flow_built])
 
     flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
                                                 financing_cost=financing_cost)
-
     if flow_obligation is not None:
         buildings.add_flows([flow_obligation])
 
@@ -383,9 +385,20 @@ def res_irf(config, path):
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
+        if False:
+            year = config['start'] + 1
+            prices = energy_prices.loc[year, :]
+            p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
+            p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
+            buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
+                                             p_insulation, None, year, post_inputs,
+                                             calib_intensive=inputs['calibration_intensive'],
+                                             calib_renovation=inputs['calibration_renovation'],
+                                             ms_heater=ms_heater, financing_cost=financing_cost)
+            buildings.remove_calibration()
+
         for year in range(config['start'] + 1, config['end']):
             start = time()
-
             prices = energy_prices.loc[year, :]
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]

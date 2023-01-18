@@ -50,10 +50,11 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
 
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 flow_built, post_inputs, output_resirf=True, climate=2006, smooth=False, efficiency_hour=False):
+                 flow_built, post_inputs, climate=2006, smooth=False, efficiency_hour=False,
+                 output_consumption=True, full_output=True):
 
     # setting output format
-    buildings.full_output = True
+    buildings.full_output = full_output
 
     # initialize policies
     p_heater, p_insulation = [], []
@@ -70,53 +71,23 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
                          gest='insulation'))  # insulation policy during considered years
 
-    output = dict()
+    output, consumption, prices = dict(), None, None
     for y in range(start, end):
         prices = energy_prices.loc[y, :]
         f_built = flow_built.loc[:, y]
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, y, post_inputs)
+        output.update({y: o})
 
-        if output_resirf is True:
-            output.update({y: o})
+    if output_consumption is True:
+        buildings.logger.info('Calculating hourly consumption')
+        consumption = buildings.consumption_total(prices=prices, freq='hour', standard=False, climate=climate,
+                                                  smooth=smooth, efficiency_hour=efficiency_hour)
 
-        else:
-            o = dict()
-            temp = buildings.heat_consumption_energy / 10 ** 9
-            temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-            o.update(temp.to_dict())
-
-            o['Investment heater (Billion euro)'] = buildings.investment_heater.sum().sum() / 10**9
-            o['Investment insulation (Billion euro)'] = buildings.investment_insulation.sum().sum() / 10**9
-            o['Investment (Billion euro)'] = o['Investment heater (Billion euro)'] + o['Investment insulation (Billion euro)']
-            o['Subsidies heater (Billion euro)'] = buildings.subsidies_heater.sum().sum() / 10**9
-            o['Subsidies insulation (Billion euro)'] = buildings.subsidies_insulation.sum().sum() / 10**9
-            o['Subsidies (Billion euro)'] = o['Subsidies heater (Billion euro)'] + o['Subsidies insulation (Billion euro)']
-
-            o['Health cost (Billion euro)'], _ = buildings.health_cost(post_inputs)
-
-            o['Energy poverty (Thousand)'] = buildings.energy_poverty / 10**3
-            o['Heating intensity (%)'] = (buildings.stock * buildings.heating_intensity).sum() / buildings.stock.sum()
-
-            temp = buildings.replacement_heater.sum() / 10 ** 3
-            temp.index = temp.index.map(lambda x: 'Replacement {} (Thousand)'.format(x))
-            o.update(temp.to_dict())
-
-            temp = buildings.stock.groupby('Heating system').sum() / 10 ** 3
-            temp.index = temp.index.map(lambda x: 'Stock {} (Thousand)'.format(x))
-            o.update(temp.to_dict())
-
-            if y == end - 1:
-                o['Consumption (kWh/h)'] = buildings.consumption_total(prices=prices, freq='hour', standard=False,
-                                                                       climate=climate, smooth=smooth,
-                                                                       efficiency_hour=efficiency_hour)
-            output.update({y: o})
-
-    if output_resirf is True:
-        output = DataFrame(output)
-
-    return output
+    output = DataFrame(output)
+    buildings.logger.info('End of Res-IRF simulation')
+    return output, consumption
 
 
 if __name__ == '__main__':
@@ -140,11 +111,10 @@ if __name__ == '__main__':
     sub_heater = 0.2
     sub_insulation = 0.5
 
-    output = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater,
-                          cost_insulation, flow_built, post_inputs, output_resirf=False, climate=2006, smooth=False,
-                          efficiency_hour=False)
-    print(output[2020]['Consumption (kWh/h)'].sum(axis=1))
-
+    simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
+                 cost_heater, cost_insulation, flow_built, post_inputs, climate=2006,
+                 smooth=False, efficiency_hour=False, output_consumption=False,
+                 full_output=True)
 
     print('break')
     print('break')
