@@ -287,7 +287,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
-                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None):
+                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
+                   prices_before=None):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -304,11 +305,10 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     year
     post_inputs
     ms_heater
-    ms_insulation
-    renovation_rate_ini
-    target_freeriders
+    calib_intensive
+    calib_renovation
     financing_cost
-    rotation
+    prices_before
 
     Returns
     -------
@@ -319,6 +319,9 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     """
 
     buildings.logger.info('Run {}'.format(year))
+    if prices_before is None:
+        prices_before = prices
+
     buildings.year = year
     buildings.add_flows([- buildings.flow_demolition()])
 
@@ -331,8 +334,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             financing_cost=financing_cost)
 
     buildings.add_flows([flow_retrofit])
-
-    buildings.calculate_rebound(prices)
+    buildings.calculate_rebound(prices_before)
 
     flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
                                                 financing_cost=financing_cost)

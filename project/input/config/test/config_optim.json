@@ -15,7 +15,7 @@
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
-    "income_rate": 0.012,
+    "income_rate": 0.0,
     "start": 2018,
     "renovation": {
       "endogenous": true,
@@ -63,13 +63,13 @@
       },
       "mpr_serenite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "insulation": "project/input/policies/mpr_serenite.csv",
         "cap": "project/input/policies/mpr_serenite_cap.csv"
       },
       "cee": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -77,7 +77,7 @@
       },
       "cap": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
@@ -88,14 +88,14 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "value": 0.055
       },
       "zero_interest_loan": {
@@ -116,7 +116,7 @@
       },
       "landlord": {
         "start": 2020,
-        "end": 2020
+        "end": 2021
       },
       "multi_family": {
         "start": 2020,
@@ -136,8 +136,8 @@
       "stock": false,
       "policies": false,
       "income": false,
-      "prices_constant": false,
-      "taxes_constant": false
+      "prices_constant": true,
+      "taxes_constant": true
     },
     "pop_housing": null,
     "share_multi_family": null,
@@ -203,7 +203,7 @@
       },
       "cee": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -211,7 +211,7 @@
       },
       "cap": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
@@ -222,14 +222,14 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "value": 0.055
       },
       "zero_interest_loan": {
@@ -337,7 +337,7 @@
       },
       "cee": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
@@ -345,7 +345,7 @@
       },
       "cap": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "insulation": "project/input/policies/subsidies_cap.csv"
       },
       "carbon_tax": {
@@ -356,14 +356,14 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "value": 0.055
       },
       "zero_interest_loan": {

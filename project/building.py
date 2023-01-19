@@ -1600,12 +1600,12 @@ class AgentBuildings(ThermalBuildings):
                 Level to look for index. Example: 'Occupancy status'
 
             """
-            temp = self.constant_insulation_extensive.copy()
-            temp = temp.drop(temp[temp.index.get_level_values(level) == idx_target].index)
-            t = temp[temp.index.get_level_values(level) == idx_replace]
+            _temp = self.constant_insulation_extensive.copy()
+            _temp = _temp.drop(_temp[_temp.index.get_level_values(level) == idx_target].index)
+            t = _temp[_temp.index.get_level_values(level) == idx_replace]
             t.rename(index={idx_replace: idx_target}, inplace=True)
-            temp = pd.concat((temp, t)).loc[self.constant_insulation_extensive.index]
-            self.constant_insulation_extensive = temp.copy()
+            _temp = pd.concat((_temp, t)).loc[self.constant_insulation_extensive.index]
+            self.constant_insulation_extensive = _temp.copy()
 
         subsidies_total = DataFrame(0, index=index, columns=cost_insulation.columns)
         subsidies_details = {}
@@ -2803,7 +2803,8 @@ class AgentBuildings(ThermalBuildings):
                 _flow = _flow.sum(axis=1)
 
             if 'Heating system final' in _flow.index.names:
-                _flow.droplevel('Heating system final')
+                _flow = _flow.droplevel('Heating system')
+                _flow.index = _flow.index.rename('Heating system', level='Heating system final')
             _flow = _flow.groupby(ref_index.names).sum()
 
             _flow = _flow.reindex(ref_index, fill_value=0)
@@ -2830,7 +2831,7 @@ class AgentBuildings(ThermalBuildings):
         self.consumption_no_rebound = consumption_energy
 
     def calculate_rebound(self, prices):
-        consumption = self.consumption_actual(prices, store=False)
+        consumption = self.consumption_actual(prices, store=False) * self.stock
         consumption_energy = consumption.groupby(self.energy).sum()
         consumption_energy *= self.coefficient_consumption
         rebound = self.consumption_no_rebound - consumption_energy

@@ -53,7 +53,7 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
     buildings.calibration_exogenous(**calibration)
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs
+    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation
 
 
 def select_output(output):
@@ -98,36 +98,36 @@ def select_output(output):
 
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 flow_built, post_inputs, climate=2006, smooth=False, efficiency_hour=False,
+                 flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
                  output_consumption=True, full_output=True):
 
     # setting output format
     buildings.full_output = full_output
 
     # initialize policies
-    p_heater, p_insulation = [], []
-
     if sub_heater is not None:
         sub_heater = Series([sub_heater, sub_heater],
                             index=Index(['Electricity-Heat pump water', 'Electricity-Heat pump air'],
                                         name='Heating system final'))
-        p_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_volarem',
-                                     gest='heater', by='columns'))  # heating policy during considered years
+        policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_volarem',
+                                            gest='heater', by='columns'))  # heating policy during considered years
 
     if sub_insulation is not None:
-        p_insulation.append(
+        policies_insulation.append(
             PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
                          gest='insulation'))  # insulation policy during considered years
 
     output, consumption, prices = dict(), None, None
-    for y in range(start, end):
-        prices = energy_prices.loc[y, :]
-        f_built = flow_built.loc[:, y]
+    for year in range(start, end):
+        prices = energy_prices.loc[year, :]
+        f_built = flow_built.loc[:, year]
+        p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
+        p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                         p_insulation, f_built, y, post_inputs)
+                                         p_insulation, f_built, year, post_inputs)
 
-        output.update({y: select_output(o)})
+        output.update({year: select_output(o)})
 
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
@@ -146,10 +146,10 @@ if __name__ == '__main__':
     _import_calibration = os.path.join(_export_calibration, 'calibration.pkl')
 
     # then
-    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs = ini_res_irf(
+    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
         path=os.path.join('project', 'output', 'ResIRF'),
         logger=None,
-        config=os.path.join('project', 'input', 'config.json'),
+        config=os.path.join('project/input/config/test/config_optim.json'),
         import_calibration=_import_calibration,
         export_calibration=_export_calibration)
 
@@ -162,8 +162,9 @@ if __name__ == '__main__':
     _sub_insulation = 0.5
 
     _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, climate=2006,
-                                         smooth=False, efficiency_hour=False, output_consumption=True)
+                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                                         _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
+                                         output_consumption=False)
 
     print('break')
     print('break')
