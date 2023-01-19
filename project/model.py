@@ -331,13 +331,16 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             financing_cost=financing_cost)
 
     buildings.add_flows([flow_retrofit])
-    if flow_built is not None:
-        buildings.add_flows([flow_built])
+
+    buildings.calculate_rebound(prices)
 
     flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
                                                 financing_cost=financing_cost)
     if flow_obligation is not None:
         buildings.add_flows([flow_obligation])
+
+    if flow_built is not None:
+        buildings.add_flows([flow_built])
 
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
@@ -575,8 +578,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     wall_class[wall_class.index.get_level_values('Wall') >= 2] = 3
     wall_class = wall_class.astype(str).rename('Wall class')
 
-    buildings.consumption_actual(energy_prices.loc[buildings.first_year, :])
-    heating_intensity = buildings.heating_intensity
+    heating_intensity = buildings.to_heating_intensity(heating_need.index, energy_prices.loc[buildings.first_year, :])
 
     heating_need = (heating_intensity * heating_need.T).T
 
@@ -652,13 +654,18 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
 
 if __name__ == '__main__':
+    _dict_cost, _dict_heat = social_planner(aggregation_archetype=None, building_stock='medium_5', freq='hour',
+                                            percent=False)
+
+
+    """
     resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'income'],
                                building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_example.csv'))
-    buildings = resirf_inputs['buildings']
-    prices = resirf_inputs['energy_prices']
-    income = resirf_inputs['income']
+    _buildings = resirf_inputs['buildings']
+    _prices = resirf_inputs['energy_prices']
+    _income = resirf_inputs['income']
+    """
 
-    buildings.optimal_temperature(prices.iloc[0, :])
 
 
     """from utils import make_plots
