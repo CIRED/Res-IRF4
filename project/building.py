@@ -2810,14 +2810,16 @@ class AgentBuildings(ThermalBuildings):
             _flow = _flow.reindex(ref_index, fill_value=0)
             return _flow
 
+        flow_heater = flow_heater.stack()
+
         index = self.stock.index
         c_no_rebound_retrofit = c_no_rebound(flow_retrofit, prices)
         c_no_rebound_retrofit = clean_flow(c_no_rebound_retrofit, index)
-        c_no_rebound_only_heater = c_no_rebound(flow_heater.stack(), prices)
+        c_no_rebound_only_heater = c_no_rebound(flow_heater, prices)
         c_no_rebound_only_heater = clean_flow(c_no_rebound_only_heater, index)
 
-        flow_retrofit = clean_flow(flow_retrofit, index)
-        flow_heater = clean_flow(flow_heater, index)
+        flow_retrofit = clean_flow(flow_retrofit.droplevel('Heating system final'), index)
+        flow_heater = clean_flow(flow_heater.droplevel('Heating system final'), index)
         stock_remaining = self.stock - flow_retrofit - flow_heater
         c_no_rebound_remaining = c_no_rebound(stock_remaining, prices)
 
@@ -2834,8 +2836,9 @@ class AgentBuildings(ThermalBuildings):
         consumption = self.consumption_actual(prices, store=False) * self.stock
         consumption_energy = consumption.groupby(self.energy).sum()
         consumption_energy *= self.coefficient_consumption
-        rebound = self.consumption_no_rebound - consumption_energy
-        cost_rebound = prices * rebound
+        rebound = consumption_energy - self.consumption_no_rebound
+        rebound.sum() / 10**9
+        cost_rebound = (prices * rebound).sum() / 10**9
 
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
                       ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None):
