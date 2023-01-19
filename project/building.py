@@ -224,7 +224,7 @@ class ThermalBuildings:
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
         return df
 
-    def heating_need(self, climate=2006, smooth=False, freq='year', hourly_profile=None, unit='kWh/y'):
+    def need_heating(self, climate=2006, smooth=False, freq='year', hourly_profile=None, unit='kWh/y'):
         """Calculate heating need of the current building stock.
 
         Returns
@@ -263,6 +263,7 @@ class ThermalBuildings:
         temp_indoor
         unit
         full_output: bool, default False
+        efficiency_hour
 
         Returns
         -------
@@ -356,6 +357,8 @@ class ThermalBuildings:
         prices: Series
         consumption: Series or None, optional
             kWh/building.a
+        store: bool, default False
+            Store calculation in object attributes.
 
         Returns
         -------
@@ -384,7 +387,7 @@ class ThermalBuildings:
         return consumption
 
     def consumption_total(self, prices=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
-                          standard=False, efficiency_hour=False, existing=None, energy=False):
+                          standard=False, efficiency_hour=False, existing=False, energy=False):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -396,10 +399,18 @@ class ThermalBuildings:
         smooth
         temp_indoor
         unit
+        standard: bool, default False
+            If yes, consumption standard (conventional). Otherwise, consumption actual.
+        efficiency_hour: bool, default False
+        existing: bool, default False
+            If yes, calculate consumption only for existing buildings.
+        energy: bool, default False
+            If yes, calculate consumption by energy carriers. Otherwise, aggregated consumption.
+
 
         Returns
         -------
-        float
+        float or Series
         """
 
         if standard is True:
@@ -640,7 +651,6 @@ class ThermalBuildings:
 
 
 class AgentBuildings(ThermalBuildings):
-
     """Class AgentBuildings represents thermal dynamic building stock.
 
     Parameters:
@@ -930,12 +940,12 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
+        stock: Series
         prices: Series
         cost_heater: Series
         ms_heater: DataFrame, optional
         policies_heater: list
         probability_replacement: float or Series, default 1/17
-        index: MultiIndex optional, default None
 
         Returns
         -------
@@ -1230,7 +1240,7 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        index: MultiIndex
+        index: MultiIndex or Index
         choice_heater_idx: Index
 
         Returns
@@ -1240,7 +1250,7 @@ class AgentBuildings(ThermalBuildings):
         Series
             Probability replacement.
         """
-        self._market_share_exogenous = {'Wood fuel-Standard boiler': 'Wood fuel-Performance boiler',
+        market_share_exogenous = {'Wood fuel-Standard boiler': 'Wood fuel-Performance boiler',
                                         'Wood fuel-Performance boiler': 'Wood fuel-Performance boiler',
                                         'Oil fuel-Standard boiler': 'Electricity-Heat pump water',
                                         'Oil fuel-Performance boiler': 'Electricity-Heat pump water',
@@ -1254,7 +1264,7 @@ class AgentBuildings(ThermalBuildings):
         market_share = Series(index=index, dtype=float).to_frame().dot(
             Series(index=choice_heater_idx, dtype=float).to_frame().T)
 
-        for initial, final in self._market_share_exogenous.items():
+        for initial, final in market_share_exogenous.items():
             market_share.loc[market_share.index.get_level_values('Heating system') == initial, final] = 1
 
         temp = pd.Series(0, index=index, dtype='float').to_frame().dot(pd.Series(0, index=choice_heater_idx, dtype='float').to_frame().T)
@@ -1409,19 +1419,22 @@ class AgentBuildings(ThermalBuildings):
         certificate_jump_all: DataFrame
         """
 
-        def defined_condition(index_segments, certif, certif_before, certif_before_heater, saved_3uses, cost):
+        def defined_condition(_index, _certificate, _certificate_before, _certificate_before_heater,
+                              _energy_saved_3uses, _cost_insulation):
             """Define condition to get subsidies or loan.
+
 
             Depends on income (index) and energy performance of renovationd defined by certificate jump or
             energy_saved_3uses.
 
             Parameters
             ----------
-            index_segments: MultiIndex
-            certif: DataFrame
-            certif_before: Series
-            certif_before_heater: Series
-            saved_3uses: DataFrame
+            _index: MultiIndex
+            _certificate: DataFrame
+            _certificate_before: Series
+            _certificate_before_heater: Series
+            _energy_saved_3uses: DataFrame
+            _cost_insulation: DataFrame
 
             Returns
             -------
@@ -1433,8 +1446,9 @@ class AgentBuildings(ThermalBuildings):
                 Renovation (including heater replacement) allowed to jump of at least one certificate.
             """
 
-            def define_zil_target(certif, certif_before, saved_3uses):
+            def define_zil_target(__certificate, __certificate_before, __energy_saved_3uses):
                 """Define target (households and insulation work) that can get zil.
+
 
                 Zero_interest_loan_old is the target in terms of EPC jump.
                 zero_interest_loan_new is the requirement to be eligible to a 'global renovation' program,
@@ -1443,9 +1457,9 @@ class AgentBuildings(ThermalBuildings):
 
                 Parameters
                 ----------
-                certif
-                certif_before
-                saved_3uses
+                __certificate
+                __certificate_before
+                __energy_saved_3uses
 
                 Returns
                 -------
@@ -1456,43 +1470,43 @@ class AgentBuildings(ThermalBuildings):
                 energy_saved_min = 0.35
 
                 target_subsidies = {}
-                target_0 = certif.isin(['D', 'C', 'B', 'A']).astype(int).mul(
-                    certif_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
-                target_1 = certif.isin(['B', 'A']).astype(int).mul(certif_before.isin(['D', 'C']).astype(int),
+                target_0 = __certificate.isin(['D', 'C', 'B', 'A']).astype(int).mul(
+                    __certificate_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
+                target_1 = __certificate.isin(['B', 'A']).astype(int).mul(__certificate_before.isin(['D', 'C']).astype(int),
                                                                    axis=0).astype(bool)
                 target_subsidies['zero_interest_loan_old'] = target_0 | target_1
 
-                target_0 = certif.isin(['E', 'D', 'C', 'B', 'A']).astype(bool)
-                target_1 = saved_3uses[saved_3uses >= energy_saved_min].fillna(0).astype(bool)
+                target_0 = __certificate.isin(['E', 'D', 'C', 'B', 'A']).astype(bool)
+                target_1 = __energy_saved_3uses[__energy_saved_3uses >= energy_saved_min].fillna(0).astype(bool)
                 target_subsidies['zero_interest_loan_new'] = target_0 & target_1
 
                 return target_subsidies
 
             condition_target = dict()
 
-            self.out_worst = (~certif.isin(['G', 'F'])).T.multiply(certif_before.isin(['G', 'F'])).T
-            self.out_worst = reindex_mi(self.out_worst, index_segments).fillna(False).astype('float')
-            self.in_best = (certif.isin(['A', 'B'])).T.multiply(~certif_before.isin(['A', 'B'])).T
-            self.in_best = reindex_mi(self.in_best, index_segments).fillna(False).astype('float')
+            self.out_worst = (~_certificate.isin(['G', 'F'])).T.multiply(_certificate_before.isin(['G', 'F'])).T
+            self.out_worst = reindex_mi(self.out_worst, _index).fillna(False).astype('float')
+            self.in_best = (_certificate.isin(['A', 'B'])).T.multiply(~_certificate_before.isin(['A', 'B'])).T
+            self.in_best = reindex_mi(self.in_best, _index).fillna(False).astype('float')
 
             condition_target.update({'bonus_worst': self.out_worst})
             condition_target.update({'bonus_best': self.in_best})
 
             # selecting best cost efficiency opportunities to reach A or B
-            cost_saving = cost / saved_3uses.replace(0, float('nan'))
-            cost_saving = reindex_mi(cost_saving, index_segments)
-            temp = reindex_mi(certif, index_segments)
-            best = temp.isin(['A', 'B']).replace(False, float('nan')) * cost_saving
+            cost_saving = _cost_insulation / _energy_saved_3uses.replace(0, float('nan'))
+            cost_saving = reindex_mi(cost_saving, _index)
+            _temp = reindex_mi(_certificate, _index)
+            best = _temp.isin(['A', 'B']).replace(False, float('nan')) * cost_saving
             # if B is not possible then C or D
             idx = best[best.isna().all(axis=1)].index
-            s_best = temp.loc[idx, :].isin(['C']).replace(False, float('nan')) * cost_saving.loc[idx, :]
+            s_best = _temp.loc[idx, :].isin(['C']).replace(False, float('nan')) * cost_saving.loc[idx, :]
             best = best.dropna(how='all')
             best = concat((best, s_best)).astype(float)
             if s_best.isna().all(axis=1).any():
                 print('D best peformance')
                 idx = s_best[s_best.isna().all(axis=1)].index
                 best = best.dropna(how='all')
-                t_best = temp.loc[idx, :].isin(['D']).replace(False, float('nan')) * cost_saving.loc[idx, :]
+                t_best = _temp.loc[idx, :].isin(['D']).replace(False, float('nan')) * cost_saving.loc[idx, :]
                 best = concat((best, t_best)).astype(float)
 
             self.best_option = (best.T == best.min(axis=1)).T
@@ -1500,31 +1514,31 @@ class AgentBuildings(ThermalBuildings):
             minimum_gest_condition, global_condition = 1, 2
             energy_condition = 0.35
 
-            certificate_jump = - certif.replace(self._epc2int).sub(certif_before.replace(self._epc2int),
-                                                                   axis=0)
-            certificate_jump = reindex_mi(certificate_jump, index_segments)
-            certificate_jump_condition = certificate_jump >= minimum_gest_condition
+            _certificate_jump = - _certificate.replace(self._epc2int).sub(_certificate_before.replace(self._epc2int),
+                                                                          axis=0)
+            _certificate_jump = reindex_mi(_certificate_jump, _index)
+            certificate_jump_condition = _certificate_jump >= minimum_gest_condition
 
-            certif_before_heater = reindex_mi(certif_before_heater, index_segments)
-            certif = reindex_mi(certif, index_segments)
-            certificate_jump_all = - certif.replace(self._epc2int).sub(
-                certif_before_heater.replace(self._epc2int),
+            _certificate_before_heater = reindex_mi(_certificate_before_heater, _index)
+            _certificate = reindex_mi(_certificate, _index)
+            _certificate_jump_all = - _certificate.replace(self._epc2int).sub(
+                _certificate_before_heater.replace(self._epc2int),
                 axis=0)
 
-            condition_target.update({'certificate_jump': certificate_jump_all >= minimum_gest_condition})
-            condition_target.update({'global_renovation': certificate_jump_all >= global_condition})
+            condition_target.update({'certificate_jump': _certificate_jump_all >= minimum_gest_condition})
+            condition_target.update({'global_renovation': _certificate_jump_all >= global_condition})
 
             low_income_condition = ['D1', 'D2', 'D3', 'D4']
             if self.quintiles:
                 low_income_condition = ['C1', 'C2']
-            low_income_condition = index_segments.get_level_values('Income owner').isin(low_income_condition)
-            low_income_condition = pd.Series(low_income_condition, index=index_segments)
+            low_income_condition = _index.get_level_values('Income owner').isin(low_income_condition)
+            low_income_condition = pd.Series(low_income_condition, index=_index)
 
             high_income_condition = ['D5', 'D6', 'D7', 'D8', 'D9', 'D10']
             if self.quintiles:
                 high_income_condition = ['C3', 'C4', 'C5']
-            high_income_condition = index_segments.get_level_values('Income owner').isin(high_income_condition)
-            high_income_condition = pd.Series(high_income_condition, index=index_segments)
+            high_income_condition = _index.get_level_values('Income owner').isin(high_income_condition)
+            high_income_condition = pd.Series(high_income_condition, index=_index)
 
             global_renovation_low_income = (low_income_condition & condition_target['global_renovation'].T).T
             condition_target.update({'global_renovation_low_income': global_renovation_low_income})
@@ -1532,15 +1546,15 @@ class AgentBuildings(ThermalBuildings):
             global_renovation_high_income = (high_income_condition & condition_target['global_renovation'].T).T
             condition_target.update({'global_renovation_high_income': global_renovation_high_income})
 
-            energy_condition = saved_3uses >= energy_condition
+            energy_condition = _energy_saved_3uses >= energy_condition
 
-            condition_mpr_serenite = (reindex_mi(energy_condition, index_segments).T & low_income_condition).T
+            condition_mpr_serenite = (reindex_mi(energy_condition, _index).T & low_income_condition).T
             condition_target.update({'mpr_serenite': condition_mpr_serenite})
 
-            condition_zil = define_zil_target(certif, certif_before, saved_3uses)
+            condition_zil = define_zil_target(_certificate, _certificate_before, _energy_saved_3uses)
             condition_target.update({'zero_interest_loan': condition_zil})
 
-            return condition_target, certificate_jump, certificate_jump_all
+            return condition_target, _certificate_jump, _certificate_jump_all
 
         def apply_regulation(idx_target, idx_replace, level):
             """Apply regulation by replacing utility specific constant.
@@ -1912,6 +1926,7 @@ class AgentBuildings(ThermalBuildings):
                             subsidies_details=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
+
         Utility variables are investment cost, energy bill saving, and subsidies.
         Preferences are object attributes defined initially.
 
@@ -1924,10 +1939,11 @@ class AgentBuildings(ThermalBuildings):
         prices: Series
         subsidies_total: DataFrame
         cost_insulation: DataFrame
-
         stock: Series, default None
         calib_intensive: dict, optional
         calib_renovation: dict, optional
+        min_performance: str, optional
+        subsidies_details: dict, optional
 
         Returns
         -------
@@ -2150,14 +2166,14 @@ class AgentBuildings(ThermalBuildings):
 
             return const
 
-        def calibration_extensive(util, stock_segment, calib_renovation):
+        def calibration_extensive(_utility, _stock, _calib_renovation):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
 
             Parameters
             ----------
-            util: Series
-            stock_segment: Series
-            calib_renovation: dict
+            _utility: Series
+            _stock: Series
+            _calib_renovation: dict
 
             Returns
             -------
@@ -2222,71 +2238,76 @@ class AgentBuildings(ThermalBuildings):
 
                 return rslt
 
-            retrofit_rate_ini = calib_renovation['renovation_rate_ini']
-            calibration_scale = calib_renovation['scale']
+            retrofit_rate_ini = _calib_renovation['renovation_rate_ini']
+            calibration_scale = _calib_renovation['scale']
 
             if 'Performance' in retrofit_rate_ini.index.names:
-                stock_segment = self.add_certificate(stock_segment)
-                stock_retrofit = stock_segment[stock_segment.index.get_level_values('Performance') > 'B']
-                util = self.add_certificate(util)
+                _stock = self.add_certificate(_stock)
+                stock_retrofit = _stock[_stock.index.get_level_values('Performance') > 'B']
+                _utility = self.add_certificate(_utility)
             else:
-                stock_retrofit = stock_segment
+                stock_retrofit = _stock
 
-            constant = retrofit_rate_ini.copy()
-            constant[retrofit_rate_ini > 0] = 0
+            _constant = retrofit_rate_ini.copy()
+            _constant[retrofit_rate_ini > 0] = 0
 
+            _scale = 1.0
             if calibration_scale is not None:
-                x = append(constant.to_numpy(), 1)
+                x = append(_constant.to_numpy(), 1)
 
                 if calibration_scale['name'] == 'freeriders':
-                    root, infodict, ier, mess = fsolve(solve_feeriders, x, args=(
-                        util, stock_retrofit, retrofit_rate_ini, calibration_scale['target_freeriders'], - calibration_scale['delta_subsidies_sum'] / 1000, calibration_scale['pref_subsidies']),
-                                                       full_output=True)
-                    scale = root[-1]
-                    constant = Series(root[:-1], index=retrofit_rate_ini.index) * scale
+                    root, info_dict, ier, mess = fsolve(solve_feeriders, x, args=(
+                        _utility, stock_retrofit, retrofit_rate_ini, calibration_scale['target_freeriders'],
+                        - calibration_scale['delta_subsidies_sum'] / 1000, calibration_scale['pref_subsidies']),
+                                                        full_output=True)
+                    _scale = root[-1]
+                    _constant = Series(root[:-1], index=retrofit_rate_ini.index) * _scale
 
                 elif calibration_scale['name'] == 'standard_deviation':
-                    root, infodict, ier, mess = fsolve(solve_deviation, x, args=(
-                        util, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
-                    scale = root[-1]
-                    constant = Series(root[:-1], index=retrofit_rate_ini.index) * scale
+                    root, info_dict, ier, mess = fsolve(solve_deviation, x, args=(
+                        _utility, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
+                    _scale = root[-1]
+                    _constant = Series(root[:-1], index=retrofit_rate_ini.index) * _scale
 
                 else:
-                    x = constant.to_numpy()
-                    root, infodict, ier, mess = fsolve(solve_noscale, x, args=(util, stock_retrofit, retrofit_rate_ini),
-                                                  full_output=True)
-                    scale = 1.0
-                    constant = Series(root, index=retrofit_rate_ini.index) * scale
+                    x = _constant.to_numpy()
+                    root, info_dict, ier, mess = fsolve(solve_noscale, x,
+                                                        args=(_utility, stock_retrofit, retrofit_rate_ini),
+                                                        full_output=True)
+                    _constant = Series(root, index=retrofit_rate_ini.index) * _scale
 
                 self.logger.info(mess)
-                self.logger.info('Scale: {}'.format(scale))
+                self.logger.info('Scale: {}'.format(_scale))
 
             # without calibration
-            retrofit_ini = retrofit_func(util)
-            agg_ini = (retrofit_ini * stock_segment).groupby(retrofit_rate_ini.index.names).sum()
-            retrofit_rate_agg_ini = agg_ini / stock_segment.groupby(retrofit_rate_ini.index.names).sum()
+            retrofit_ini = retrofit_func(_utility)
+            agg_ini = (retrofit_ini * _stock).groupby(retrofit_rate_ini.index.names).sum()
+            retrofit_rate_agg_ini = agg_ini / _stock.groupby(retrofit_rate_ini.index.names).sum()
 
-            utility_constant = reindex_mi(constant, util.index)
-            util = util * scale + utility_constant
-            retrofit_rate = retrofit_func(util)
-            agg = (retrofit_rate * stock_segment).groupby(retrofit_rate_ini.index.names).sum()
-            retrofit_rate_agg = agg / stock_segment.groupby(retrofit_rate_ini.index.names).sum()
+            utility_constant = reindex_mi(_constant, _utility.index)
+            _utility = _utility * _scale + utility_constant
+            retrofit_rate = retrofit_func(_utility)
+            agg = (retrofit_rate * _stock).groupby(retrofit_rate_ini.index.names).sum()
+            retrofit_rate_agg = agg / _stock.groupby(retrofit_rate_ini.index.names).sum()
 
             retrofit_rate_cst = retrofit_func(utility_constant)
-            agg_cst = (retrofit_rate_cst * stock_segment).groupby(retrofit_rate_ini.index.names).sum()
-            retrofit_rate_agg_cst = agg_cst / stock_segment.groupby(retrofit_rate_ini.index.names).sum()
+            agg_cst = (retrofit_rate_cst * _stock).groupby(retrofit_rate_ini.index.names).sum()
+            retrofit_rate_agg_cst = agg_cst / _stock.groupby(retrofit_rate_ini.index.names).sum()
 
-            coefficient_cost = abs(self.preferences_insulation_ext['investment'] * scale)
-            wtp = constant / coefficient_cost
+            coefficient_cost = abs(self.preferences_insulation_ext['investment'] * _scale)
+            wtp = _constant / coefficient_cost
             ref = ('Single-family', 'Owner-occupied', False)
             diff = wtp - wtp[ref]
 
-            details = concat((constant, retrofit_rate_agg_ini, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3, wtp, diff, retrofit_rate_agg_cst), axis=1,
-                             keys=['constant', 'ini', 'calcul', 'observed', 'thousand', 'wtp', 'market_barriers', 'cste']).round(decimals=3)
+            details = concat((
+                             _constant, retrofit_rate_agg_ini, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3, wtp,
+                             diff, retrofit_rate_agg_cst), axis=1,
+                             keys=['constant', 'ini', 'calcul', 'observed', 'thousand', 'wtp', 'market_barriers',
+                                   'cste']).round(decimals=3)
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
-            return constant, scale
+            return _constant, _scale
 
         def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total, path):
 
@@ -2565,13 +2586,13 @@ class AgentBuildings(ThermalBuildings):
     def exogenous_retrofit(self, stock):
         """Format retrofit rate and market share for each segment.
 
+
         Global retrofit and retrofit rate to match exogenous numbers.
         Retrofit all heating system replacement dwelling.
 
         Parameters
         ----------
-        index: MultiIndex
-        choice_insulation: MultiIndex
+        stock: Series
 
         Returns
         -------
@@ -2682,9 +2703,6 @@ class AgentBuildings(ThermalBuildings):
         assert ~market_share.isna().all(axis=1).any(), "Market-share issue"
         assert (market_share.sum(axis=1).round(5) == 1.0).all(), "Market-share sum issue"
 
-        # ms = market_share.loc[replaced_by.index
-        # idx = ms.loc[ms.sum(axis=1).round(5) != 1.0, :].index
-
         replaced_by = (replaced_by.rename(None) * market_share.T).T
         replaced_by = replaced_by.fillna(0)
 
@@ -2769,15 +2787,13 @@ class AgentBuildings(ThermalBuildings):
         cost_heater: Series
         ms_heater: DataFrame
         cost_insulation
-        ms_insulation: Series
-        renovation_rate_ini: Series
         policies_heater: list
-            List of policies for heating system.
+            Policies for heating system.
         policies_insulation: list
-            List of policies for insulation.
-        target_freeriders: float, default None
-            Number of freeriders in calibration year for the income tax credit.
+            Policies for insulation.
         financing_cost: optional, dict
+        calib_renovation: dict, optional
+        calib_intensive: dict, optional
 
         Returns
         -------
@@ -3511,19 +3527,24 @@ class AgentBuildings(ThermalBuildings):
         self.preferences_insulation_int['investment'] *= scale
         self.preferences_insulation_int['bill_saved'] *= scale
 
-    def calibration_exogenous(self, coefficient_consumption=None,
-                              constant_heater=None,
-                              constant_insulation_intensive=None,
-                              constant_insulation_extensive=None, scale=None, energy_prices=None, taxes=None):
+    def calibration_exogenous(self, coefficient_consumption=None, constant_heater=None,
+                              constant_insulation_intensive=None, constant_insulation_extensive=None, scale=None,
+                              energy_prices=None, taxes=None):
         """Function calibrating buildings object with exogenous data.
+
 
         Parameters
         ----------
+        coefficient_consumption: Series
+        constant_heater: Series
+        constant_insulation_intensive: Series
+        constant_insulation_extensive: Series
         energy_prices: Series
             Energy prices for year y. Index are energy carriers {'Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'}.
         taxes: Series
             Energy taxes for year y.
         """
+
         # calibration energy consumption first year
         if (coefficient_consumption is None) and (energy_prices is not None) and (taxes is not None):
             self.calculate_consumption(energy_prices.loc[self.first_year, :], taxes)
@@ -3559,21 +3580,3 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = constant_insulation_extensive.dropna()
 
         self.scale = scale
-
-    def replace_insulation(self, stock, performance_component, condition):
-        """Replace element from stock with another insulation performance.
-
-        Parameters
-        ----------
-        stock
-        performance_component
-
-        Returns
-        -------
-
-        """
-
-        stock = self.stock.reset_index(performance_component.keys())
-        for k, v in performance_component.items():
-            stock.loc[:, k] = v
-        stock.set_index(performance_component.keys(), append=True, inplace=True)

@@ -559,7 +559,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     energy_prices = resirf_inputs['energy_prices']
     cost_insulation = resirf_inputs['cost_insulation']
 
-    heating_need = buildings.heating_need(freq=freq, climate=climate, smooth=smooth, hourly_profile=hourly_profile)
+    heating_need = buildings.need_heating(freq=freq, climate=climate, smooth=smooth, hourly_profile=hourly_profile)
     heating_need_class = heating_need.sum(axis=1) / (buildings.stock * reindex_mi(buildings._surface, buildings.stock.index))
 
     insulation_class = heating_need_class.copy()
