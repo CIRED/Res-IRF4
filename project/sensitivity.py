@@ -161,7 +161,7 @@ if __name__ == '__main__':
     _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
 
     result = dict()
-    for _sub_insulation in range(1, 11):
+    for _sub_insulation in range(5, 8):
         _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
             path=os.path.join('project', 'output', 'ResIRF'),
             logger=None,

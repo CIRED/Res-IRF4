@@ -2123,14 +2123,10 @@ class AgentBuildings(ThermalBuildings):
 
             _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
 
-            _investment_insulation, _bill_saved_insulation, _subsidies_insulation = to_utility_extensive(_cost_total,
-                                                                                                         _bill_saved,
-                                                                                                         _subsidies_total,
-                                                                                                         _market_share,
-                                                                                                         _utility_intensive)
+            _cost, _bill, _subsidies = to_utility_extensive(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                                            _utility_intensive)
 
-            _renovation_rate, _utility = to_retrofit_rate(_bill_saved_insulation, _subsidies_insulation,
-                                                          _investment_insulation)
+            _renovation_rate, _utility = to_retrofit_rate(_bill, _subsidies, _cost)
 
             return _market_share, _renovation_rate
 
@@ -2607,16 +2603,16 @@ class AgentBuildings(ThermalBuildings):
         if self.constant_insulation_intensive is None and self._threshold is False:
             calibration_coupled(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive)
 
-            result = assess_policies(stock, subsidies_details, cost_total, bill_saved, subsidies_total)
+            """result = assess_policies(stock, subsidies_details, cost_total, bill_saved, subsidies_total)
             if self.path is not None:
                 result.to_csv(os.path.join(self.path_calibration, 'result_policies_assessment.csv'))
 
-            assess_sensitivity(stock, cost_total, bill_saved, subsidies_total, self.path_calibration)
+            assess_sensitivity(stock, cost_total, bill_saved, subsidies_total, self.path_calibration)"""
 
         if self._threshold is False:
-            market_share, renovation_rate = apply_endogenous_retrofit(consumption_saved, subsidies_total, cost_total)
+            market_share, renovation_rate = apply_endogenous_retrofit(bill_saved, subsidies_total, cost_total)
         else:
-            market_share, renovation_rate = apply_rational_choice(bill_saved, subsidies_total, cost_total)
+            market_share, renovation_rate = apply_rational_choice(consumption_saved, subsidies_total, cost_total)
 
         if min_performance is not None:
             certificate = reindex_mi(self.certificate_building_choice, market_share.index)

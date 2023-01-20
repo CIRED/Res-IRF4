@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2051,
+    "end": 2025,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -134,7 +134,7 @@
     "surface_built": null
   },
   "Rawlaw": {
-    "end": 2051,
+    "end": 2025,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -269,7 +269,7 @@
     "surface_built": null
   },
   "Rotation_law": {
-    "end": 2051,
+    "end": 2025,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -406,7 +406,7 @@
     "surface_built": null
   },
   "Anticipated_law": {
-    "end": 2051,
+    "end": 2025,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
