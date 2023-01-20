@@ -105,6 +105,7 @@ def select_output(output):
     variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater_replacement]
     variables += ['Stock {} (Thousand households)'.format(i) for i in heater_stock]
 
+    variables = [v for v in variables if v in output.index]
     return output.loc[variables]
 
 
@@ -116,14 +117,14 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
     buildings.full_output = full_output
 
     # initialize policies
-    if sub_heater is not None:
+    if sub_heater is not None and sub_heater != 0:
         sub_heater = Series([sub_heater, sub_heater],
                             index=Index(['Electricity-Heat pump water', 'Electricity-Heat pump air'],
                                         name='Heating system final'))
         policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_volarem',
                                             gest='heater', by='columns'))  # heating policy during considered years
 
-    if sub_insulation is not None:
+    if sub_insulation is not None and sub_insulation != 0:
         policies_insulation.append(
             PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
                          gest='insulation'))  # insulation policy during considered years
@@ -154,34 +155,53 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 if __name__ == '__main__':
 
     # first time
-    _export_calibration = os.path.join('project', 'output', 'calibration')
-    _import_calibration = os.path.join(_export_calibration, 'calibration.pkl')
+    name = 'calibration'
+    calibration_threshold = True
+    if calibration_threshold is True:
+        name = '{}_threshold'.format(name)
 
-    # then
-    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
-        path=os.path.join('project', 'output', 'ResIRF'),
-        logger=None,
-        config=os.path.join('project/input/config/test/config_optim.json'),
-        import_calibration=_import_calibration,
-        export_calibration=_export_calibration)
+    _export_calibration = os.path.join('project', 'output', '{}'.format(name))
+    _import_calibration = os.path.join(_export_calibration, '{}.pkl'.format(name))
 
-    timestep = 1
-    _year = 2020
-    _start = _year
-    _end = _year + timestep
+    result = dict()
+    for _sub_insulation in range(1, 11):
+        _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
+            path=os.path.join('project', 'output', 'ResIRF'),
+            logger=None,
+            config=os.path.join('project/input/config/test/config_optim.json'),
+            import_calibration=_import_calibration,
+            export_calibration=_export_calibration)
 
-    _sub_heater = 0.1
-    _sub_insulation = 0.1
+        timestep = 1
+        _year = 2020
+        _start = _year
+        _end = _year + timestep
 
-    _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                         _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                                         output_consumption=False)
+        _sub_heater = 0
+        _sub_insulation = _sub_insulation / 10
+
+        _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                                             _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                                             _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
+                                             output_consumption=False)
+        if 'Investment insulation (Billion euro)' not in _output.index:
+            _output['Investment insulation (Billion euro)'] = 0
+
+        result.update({_sub_insulation: _output.loc['Investment insulation (Billion euro)']})
 
     print('break')
     print('break')
+    print(Series(result))
 
-    """list_argument = [(sub_heater, 0.5, 2020, 2021) for sub_heater in [0.1, 0.9]]
+    """
+
+
+
+    
+    
+    
+    
+    list_argument = [(sub_heater, 0.5, 2020, 2021) for sub_heater in [0.1, 0.9]]
 
     with Pool(4) as pool:
         results = pool.starmap(run_resirf, list_argument)

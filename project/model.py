@@ -279,7 +279,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                quintiles=config['simple']['quintiles'],
                                full_output=config.get('full_output'),
                                financing_cost=config.get('financing_cost'),
-                               debug_mode=config.get('debug_mode'))
+                               debug_mode=config.get('debug_mode'),
+                               threshold=config['renovation'].get('threshold'))
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
@@ -324,7 +325,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
 
     buildings.year = year
     buildings.add_flows([- buildings.flow_demolition()])
-
+    buildings.logger.info('Calculation retrofit')
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,
@@ -342,7 +343,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
 
     if flow_built is not None:
         buildings.add_flows([flow_built])
-
+    buildings.logger.info('Calculation energy consumption')
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.full_output:
@@ -527,8 +528,8 @@ def calibration_res_irf(path, config=None):
             'constant_heater': buildings.constant_heater,
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_insulation_extensive': buildings.constant_insulation_extensive,
-            'scale': buildings.scale
-
+            'scale': buildings.scale,
+            'threshold': buildings.threshold_indicator
         }
         return calibration
     except Exception as e:

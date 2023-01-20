@@ -428,7 +428,8 @@ def read_inputs(config, other_inputs=generic_input):
         df = get_pandas(config['renovation']['renovation_rate_ini'])
         renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
         scale_calibration = config['renovation']['scale']
-        calibration_renovation = {'renovation_rate_ini': renovation_rate_ini, 'scale': scale_calibration}
+        calibration_renovation = {'renovation_rate_ini': renovation_rate_ini, 'scale': scale_calibration,
+                                  'threshold': config['renovation'].get('threshold')}
     inputs.update({'calibration_renovation': calibration_renovation})
 
     calibration_intensive = None

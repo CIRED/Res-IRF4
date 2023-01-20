@@ -32,7 +32,8 @@
       "exogenous": {
         "number": 700000,
         "target": "worst"
-      }
+      },
+      "threshold": false
     },
     "ms_insulation": {
         "endogenous": true,
