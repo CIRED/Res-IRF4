@@ -3108,12 +3108,12 @@ class AgentBuildings(ThermalBuildings):
                 output['Surface (Million m2)'] * 10 ** 6)
 
         output['Heating intensity (%)'] = (self.stock * self.heating_intensity).sum() / self.stock.sum()
-        temp = self.rebound / 10**9
-        output['Rebound (TWh)'] = temp.sum()
-        temp.index = temp.index.map(lambda x: 'Rebound {} (TWh)'.format(x))
-        output.update(temp.T)
-
-        output['Cost rebound (Billion euro)'] = self.cost_rebound.sum() / 10**9
+        if self.rebound is not None:
+            temp = self.rebound / 10**9
+            output['Rebound (TWh)'] = temp.sum()
+            temp.index = temp.index.map(lambda x: 'Rebound {} (TWh)'.format(x))
+            output.update(temp.T)
+            output['Cost rebound (Billion euro)'] = self.cost_rebound.sum() / 10**9
 
         output['Energy poverty (Million)'] = self.energy_poverty / 10 ** 6
 
