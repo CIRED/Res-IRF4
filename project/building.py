@@ -2958,14 +2958,6 @@ class AgentBuildings(ThermalBuildings):
         stock_remaining = self.stock - flow_retrofit - flow_heater
         c_no_rebound_remaining, c_rebound_remaining = c_no_rebound(stock_remaining, prices)
 
-        if self.year == 2028:
-            print('break')
-
-        try:
-            assert (stock_remaining + flow_retrofit + flow_heater).sum() == self.stock.sum(), 'Sum issue'
-        except AssertionError:
-            pass
-
         union = c_no_rebound_retrofit.index.union(c_no_rebound_heater.index)
         union = union.union(c_no_rebound_remaining.index)
 
