@@ -250,13 +250,13 @@ class ThermalBuildings:
 
             return heating_need
 
-    def consumption_heating(self, idx=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='kWh/m2.y',
+    def consumption_heating(self, index=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='kWh/m2.y',
                             full_output=False, efficiency_hour=False):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
 
         Parameters
         ----------
-        idx
+        index
         freq
         climate
         smooth
@@ -269,15 +269,15 @@ class ThermalBuildings:
         -------
 
         """
-        if idx is None:
+        if index is None:
             levels = ['Housing type', 'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
-            idx = self.stock.groupby(levels).sum().index
+            index = self.stock.groupby(levels).sum().index
 
-        wall = Series(idx.get_level_values('Wall'), index=idx)
-        floor = Series(idx.get_level_values('Floor'), index=idx)
-        roof = Series(idx.get_level_values('Roof'), index=idx)
-        windows = Series(idx.get_level_values('Windows'), index=idx)
-        heating_system = Series(idx.get_level_values('Heating system'), index=idx).astype('object')
+        wall = Series(index.get_level_values('Wall'), index=index)
+        floor = Series(index.get_level_values('Floor'), index=index)
+        roof = Series(index.get_level_values('Roof'), index=index)
+        windows = Series(index.get_level_values('Windows'), index=index)
+        heating_system = Series(index.get_level_values('Heating system'), index=index).astype('object')
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
@@ -286,7 +286,7 @@ class ThermalBuildings:
         if full_output is True:
             certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
                                                                                self._ratio_surface.copy(),
-                                                                               efficiency, idx)
+                                                                               efficiency, index)
             return consumption, certificate, consumption_3uses
         else:
             return consumption
@@ -318,7 +318,7 @@ class ThermalBuildings:
 
         if not idx.empty:
 
-            consumption, certificate, consumption_3uses = self.consumption_heating(idx=idx, freq='year', climate=None,
+            consumption, certificate, consumption_3uses = self.consumption_heating(index=idx, freq='year', climate=None,
                                                                                    full_output=True)
 
             self.consumption_sd_building = concat((self.consumption_sd_building, consumption))
@@ -727,6 +727,8 @@ class AgentBuildings(ThermalBuildings):
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path=path, year=year,
                          debug_mode=debug_mode)
+        self.consumption_saving_heater = None
+        self.consumption_saving_renovation = None
         self.cost_rebound = None
         self.rebound = None
         self.best_option = None
@@ -883,7 +885,7 @@ class AgentBuildings(ThermalBuildings):
         self.stock = stock
 
     def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None,
-                            level_heater='Heating system', full_output=True):
+                            level_heater='Heating system', full_output=True, store=True):
         """Calculate standard energy consumption and energy performance certificate for each choice insulation for all
         households.
 
@@ -899,6 +901,9 @@ class AgentBuildings(ThermalBuildings):
         DataFrame
             Cerfificate.
         """
+
+        if level_heater == 'Heating system':
+            store = False
 
         if index is None:
             index = self.stock.index
@@ -916,7 +921,7 @@ class AgentBuildings(ThermalBuildings):
         _index = _index[~_index.duplicated()]
 
         # remove idx already calculated
-        if not self.consumption_sd_building_choice.empty:
+        if not self.consumption_sd_building_choice.empty and store is True:
             temp = self.consumption_sd_building_choice.index.intersection(_index)
             idx = _index.drop(temp)
         else:
@@ -950,14 +955,19 @@ class AgentBuildings(ThermalBuildings):
                                     inplace=True)
                 rslt[key] = temp
 
-            if self.consumption_sd_building_choice.empty:
-                self.consumption_sd_building_choice = rslt['consumption_sd']
-                self.consumption_3uses_building_choice = rslt['consumption_3uses']
-                self.certificate_building_choice = rslt['certificate']
+            if store is True:
+                if self.consumption_sd_building_choice.empty:
+                    self.consumption_sd_building_choice = rslt['consumption_sd']
+                    self.consumption_3uses_building_choice = rslt['consumption_3uses']
+                    self.certificate_building_choice = rslt['certificate']
+                else:
+                    self.consumption_sd_building_choice = concat((self.consumption_sd_building_choice, rslt['consumption_sd']))
+                    self.consumption_3uses_building_choice = concat((self.consumption_3uses_building_choice, rslt['consumption_3uses']))
+                    self.certificate_building_choice = concat((self.certificate_building_choice, rslt['certificate']))
             else:
-                self.consumption_sd_building_choice = concat((self.consumption_sd_building_choice, rslt['consumption_sd']))
-                self.consumption_3uses_building_choice = concat((self.consumption_3uses_building_choice, rslt['consumption_3uses']))
-                self.certificate_building_choice = concat((self.certificate_building_choice, rslt['certificate']))
+                consumption_sd = rslt['consumption_sd'].loc[_index.rename({'Heating system': level_heater})]
+                consumption_sd.index.rename({'Heating system': level_heater}, inplace=True)
+                return consumption_sd
 
         consumption_sd = self.consumption_sd_building_choice.loc[_index.rename({'Heating system': level_heater})]
         consumption_sd.index.rename({'Heating system': level_heater}, inplace=True)
@@ -2552,7 +2562,7 @@ class AgentBuildings(ThermalBuildings):
         energy_bill_before = AgentBuildings.energy_bill(prices, consumption_before, level_heater='Heating system final')
 
         consumption_sd = self.prepare_consumption(self._choice_insulation, index=index,
-                                                  level_heater='Heating system final')[0]
+                                                  level_heater='Heating system final', full_output=False)
         consumption_sd = reindex_mi(consumption_sd, index).reindex(self._choice_insulation, axis=1)
 
         energy = pd.Series(index.get_level_values('Heating system final'), index=index).str.split('-').str[0].rename('Energy')
@@ -2766,6 +2776,69 @@ class AgentBuildings(ThermalBuildings):
 
         return replaced_by
 
+    def store_energy_saving(self, flow_retrofit, flow_heater, prices):
+
+        def saving(_flow, _prices):
+            _flow = _flow[_flow > 0]
+            _index = _flow.index
+
+            _consumption_before = self.consumption_standard(_index, level_heater='Heating system', full_output=False)
+            _consumption_before = reindex_mi(_consumption_before, _index) * reindex_mi(self._surface, _index)
+            _consumption_before = self.consumption_actual(prices, consumption=_consumption_before)
+            _consumption_before = (_consumption_before * _flow.T).T
+
+            if isinstance(_flow, DataFrame):
+                # insulation
+                _consumption = self.prepare_consumption(index=_index, level_heater='Heating system',
+                                                        full_output=False)
+                _consumption = reindex_mi(_consumption, _index)
+                _consumption = (_consumption.T * reindex_mi(self._surface, _index)).T
+                heating_intensity = self.to_heating_intensity(_index, _prices, consumption=_consumption,
+                                                              level_heater='Heating system final')
+                _consumption *= _flow
+                _consumption_after = _consumption * heating_intensity
+                _consumption_saving_renovation = _consumption_before - _consumption_after
+
+                # heater
+                _consumption_saving_heater = None
+                if 'Heating system final' in _index.names:
+                    _consumption = self.prepare_consumption(index=_index, level_heater='Heating system final',
+                                                            full_output=False)
+                    _consumption = reindex_mi(_consumption, _index)
+                    _consumption = (_consumption.T * reindex_mi(self._surface, _index)).T
+                    heating_intensity = self.to_heating_intensity(_index, _prices, consumption=_consumption,
+                                                                  level_heater='Heating system final')
+                    _consumption *= _flow
+                    _consumption = _consumption * heating_intensity
+                    _consumption_saving_heater = _consumption_after - _consumption
+
+                return _consumption_saving_renovation, _consumption_saving_heater
+
+            if isinstance(_flow, Series):
+                _consumption_saving_heater = None
+                if 'Heating system final' in _index.names:
+                    _consumption = self.consumption_standard(_index, level_heater='Heating system final',
+                                                             full_output=False)
+                    _consumption = reindex_mi(_consumption, _index)
+                    _consumption = (_consumption.T * reindex_mi(self._surface, _index)).T
+                    heating_intensity = self.to_heating_intensity(_index, _prices, consumption=_consumption,
+                                                                  level_heater='Heating system final')
+                    _consumption *= _flow
+                    _consumption = _consumption * heating_intensity
+                    _consumption_saving_heater = _consumption_before - _consumption
+                    return _consumption_saving_heater
+
+        consumption_saving_renovation, consumption_saving_heater = saving(flow_retrofit, prices)
+        consumption_saving_renovation = consumption_saving_renovation.sum().sum()
+        consumption_saving_heater = consumption_saving_heater.sum().sum()
+
+        consumption_saving_only_heater = saving(flow_heater.stack(), prices)
+        consumption_saving_only_heater = consumption_saving_only_heater.sum().sum()
+        consumption_saving_heater += consumption_saving_only_heater
+        
+        self.consumption_saving_renovation = consumption_saving_renovation
+        self.consumption_saving_heater = consumption_saving_heater
+
     def store_rebound(self, flow_retrofit, flow_heater, prices):
         """Calculate consumption based on new building characteristics but current heating intensity.
 
@@ -2972,6 +3045,7 @@ class AgentBuildings(ThermalBuildings):
         assert round(flow_only_heater.sum().sum(), 0) == round(flow_only_heater_sum, 0), 'Sum problem'
 
         self.store_rebound(replaced_by, flow_only_heater, prices)
+        self.store_energy_saving(replaced_by, flow_only_heater, prices)
 
         flow_only_heater = flow_only_heater.stack('Heating system final')
         to_replace_only_heater = - flow_only_heater.droplevel('Heating system final')
@@ -3117,7 +3191,6 @@ class AgentBuildings(ThermalBuildings):
 
         output['Energy poverty (Million)'] = self.energy_poverty / 10 ** 6
 
-
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
@@ -3131,6 +3204,10 @@ class AgentBuildings(ThermalBuildings):
             output['Stock low-efficient (Million)'] += output['Stock F (Million)']
         if 'Stock G (Million)' in output.keys():
             output['Stock low-efficient (Million)'] += output['Stock G (Million)']
+
+        temp = self.stock.groupby('Heating system').sum() / 10 ** 3
+        temp.index = temp.index.map(lambda x: 'Stock {} (Thousand households)'.format(x))
+        output.update(temp.to_dict())
 
         if self.year > self.first_year:
             temp = self.retrofit_rate.dropna(how='all')
@@ -3426,6 +3503,13 @@ class AgentBuildings(ThermalBuildings):
             output['Investment total HT / households (Thousand euro)'] = output['Investment total HT (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
             output['Investment total / households (Thousand euro)'] = output['Investment total (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
             output['Investment insulation / households (Thousand euro)'] = output['Investment insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
+
+            output['Consumption saving renovation (TWh)'] = self.consumption_saving_renovation / 10**9
+            output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10**9
+
+            # TODO: add discount rate to estimate consumption saving
+            output['Investment insulation / saving (euro / kWh.year)'] = output['Investment insulation (Billion euro)'] / output['Consumption saving renovation (TWh)']
+            output['Investment heater / saving (euro / kWh.year)'] = output['Investment heater (Billion euro)'] / output['Consumption saving heater (TWh)']
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)

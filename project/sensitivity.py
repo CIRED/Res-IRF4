@@ -71,12 +71,17 @@ def select_output(output):
     """
 
     energy = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
-    heater = ['Electricity-Heat pump water',
-              'Electricity-Heat pump air',
-              'Electricity-Performance boiler',
-              'Natural gas-Performance boiler',
-              'Wood fuel-Performance boiler'
-              ]
+    heater_replacement = ['Electricity-Heat pump water',
+                          'Electricity-Heat pump air',
+                          'Electricity-Performance boiler',
+                          'Natural gas-Performance boiler',
+                          'Wood fuel-Performance boiler'
+                          ]
+    heater_stock = heater_replacement + ['Natural gas-Standard boiler',
+                                         'Wood fuel-Standard boiler',
+                                         'Oil fuel-Standard boiler',
+                                         'Oil fuel-Performance boiler',
+                                         ]
 
     variables = list()
     variables += ['Consumption {} (TWh)'.format(i) for i in energy]
@@ -91,9 +96,14 @@ def select_output(output):
         'Energy poverty (Million)',
         'Heating intensity (%)',
         'Emission (MtCO2)',
-        'Cost rebound (Billion euro)'
+        'Cost rebound (Billion euro)',
+        'Consumption saving renovation (TWh)',
+        'Consumption saving heater (TWh)',
+        'Investment insulation / saving (euro / kWh.year)',
+        'Investment heater / saving (euro / kWh.year)'
     ]
-    variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater]
+    variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater_replacement]
+    variables += ['Stock {} (Thousand households)'.format(i) for i in heater_stock]
 
     return output.loc[variables]
 
