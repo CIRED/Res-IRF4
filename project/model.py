@@ -529,7 +529,7 @@ def calibration_res_irf(path, config=None):
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_insulation_extensive': buildings.constant_insulation_extensive,
             'scale': buildings.scale,
-            'threshold': buildings.threshold_indicator
+            'threshold_indicator': buildings.threshold_indicator
         }
         return calibration
     except Exception as e:

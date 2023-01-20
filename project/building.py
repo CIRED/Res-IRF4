@@ -3777,7 +3777,7 @@ class AgentBuildings(ThermalBuildings):
 
     def calibration_exogenous(self, coefficient_consumption=None, constant_heater=None,
                               constant_insulation_intensive=None, constant_insulation_extensive=None, scale=None,
-                              energy_prices=None, taxes=None):
+                              energy_prices=None, taxes=None, threshold_indicator=None):
         """Function calibrating buildings object with exogenous data.
 
 
@@ -3787,10 +3787,12 @@ class AgentBuildings(ThermalBuildings):
         constant_heater: Series
         constant_insulation_intensive: Series
         constant_insulation_extensive: Series
+        scale: float
         energy_prices: Series
             Energy prices for year y. Index are energy carriers {'Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'}.
         taxes: Series
             Energy taxes for year y.
+        threshold_indicator:
         """
 
         # calibration energy consumption first year
@@ -3828,3 +3830,4 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = constant_insulation_extensive.dropna()
 
         self.scale = scale
+        self.threshold_indicator = threshold_indicator

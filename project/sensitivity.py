@@ -42,10 +42,7 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
         calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config)
 
     if export_calibration is not None:
-        if not os.path.isdir(export_calibration):
-            os.mkdir(export_calibration)
-
-        with open(os.path.join(export_calibration, 'calibration.pkl'), "wb") as file:
+        with open(export_calibration, "wb") as file:
             dump(calibration, file)
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
@@ -160,8 +157,8 @@ if __name__ == '__main__':
     if calibration_threshold is True:
         name = '{}_threshold'.format(name)
 
-    _export_calibration = os.path.join('project', 'output', '{}'.format(name))
-    _import_calibration = os.path.join(_export_calibration, '{}.pkl'.format(name))
+    _export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
+    _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
 
     result = dict()
     for _sub_insulation in range(1, 11):
@@ -193,14 +190,7 @@ if __name__ == '__main__':
     print('break')
     print(Series(result))
 
-    """
-
-
-
-    
-    
-    
-    
+    """    
     list_argument = [(sub_heater, 0.5, 2020, 2021) for sub_heater in [0.1, 0.9]]
 
     with Pool(4) as pool:
