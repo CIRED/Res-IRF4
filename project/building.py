@@ -349,7 +349,7 @@ class ThermalBuildings:
         else:
             return consumption_sd
 
-    def to_heating_intensity(self, index, prices):
+    def to_heating_intensity(self, index, prices, consumption=None, level_heater='Heating system'):
         """Calculate heating intensity of index based on energy prices.
 
         Parameters
@@ -362,10 +362,19 @@ class ThermalBuildings:
         Series
             Heating intensity
         """
-        consumption = reindex_mi(self.consumption_standard(index, full_output=False), index) * reindex_mi(self._surface, index)
-        energy_bill = AgentBuildings.energy_bill(prices, consumption, level_heater='Heating system')
-        budget_share = energy_bill / reindex_mi(self._income_tenant, index)
-        heating_intensity = thermal.heat_intensity(budget_share)
+        if consumption is None:
+            consumption = reindex_mi(self.consumption_standard(index, full_output=False), index) * reindex_mi(self._surface, index)
+        energy_bill = AgentBuildings.energy_bill(prices, consumption, level_heater=level_heater)
+
+        if isinstance(energy_bill, Series):
+            budget_share = energy_bill / reindex_mi(self._income_tenant, index)
+            heating_intensity = thermal.heat_intensity(budget_share)
+        elif isinstance(energy_bill, DataFrame):
+            budget_share = (energy_bill.T / reindex_mi(self._income_tenant, energy_bill.index)).T
+            heating_intensity = thermal.heat_intensity(budget_share)
+        else:
+            raise NotImplemented
+
         return heating_intensity
 
     def consumption_actual(self, prices, consumption=None, store=False):
@@ -718,7 +727,8 @@ class AgentBuildings(ThermalBuildings):
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, consumption_ini, path=path, year=year,
                          debug_mode=debug_mode)
-        self.consumption_no_rebound = None
+        self.cost_rebound = None
+        self.rebound = None
         self.best_option = None
         self.constant_test = None
         self.certif_jump_all = None
@@ -2756,7 +2766,7 @@ class AgentBuildings(ThermalBuildings):
 
         return replaced_by
 
-    def store_consumption_no_rebound(self, flow_retrofit, flow_heater, prices):
+    def store_rebound(self, flow_retrofit, flow_heater, prices):
         """Calculate consumption based on new building characteristics but current heating intensity.
 
 
@@ -2775,70 +2785,99 @@ class AgentBuildings(ThermalBuildings):
 
         def c_no_rebound(_flow, _prices):
             # heating intensity is calculated based on index before renovation
+            _flow = _flow[_flow > 0]
             _index = _flow.index
-            heating_intensity = self.to_heating_intensity(_index, _prices)
+            intensity_before = self.to_heating_intensity(_index, _prices)
 
             # consumption standard is calculated based on retrofitting (heating system and insulation)
             # TODO: change prepare_consumption docstring
             if isinstance(_flow, DataFrame):
                 # insulation and heater
-                consumption_after = self.prepare_consumption(index=_index, level_heater='Heating system final',
-                                                             full_output=False)
-                consumption_after = reindex_mi(consumption_after, _index).reindex(consumption_after.columns, axis=1)
-                consumption_after *= _flow
-                consumption_after = (consumption_after.T * heating_intensity * reindex_mi(self._surface, _index)).T
-                return consumption_after.sum(axis=1)
+                _consumption = self.prepare_consumption(index=_index, level_heater='Heating system final',
+                                                        full_output=False)
+                _consumption = reindex_mi(_consumption, _index).reindex(_consumption.columns, axis=1)
+                _consumption = (_consumption.T * reindex_mi(self._surface, _index)).T
+                intensity_after = self.to_heating_intensity(_index, _prices, consumption=_consumption,
+                                                            level_heater='Heating system final')
+                _consumption *= _flow
+
+                _consumption_before = (_consumption.T * intensity_before).T
+                _consumption_before = _consumption_before.sum(axis=1)
+                _consumption_after = _consumption * intensity_after
+                _consumption_after = _consumption_after.sum(axis=1)
+
+                return _consumption_before, _consumption_after
             elif isinstance(_flow, Series):
                 level_heater = 'Heating system'
                 if 'Heating system final' in _index.names:
                     level_heater = 'Heating system final'
-                consumption_after = self.consumption_standard(_index, level_heater=level_heater,
-                                                              full_output=False)
-                consumption_after = reindex_mi(consumption_after, _index)
-                consumption_after *= _flow * heating_intensity * reindex_mi(self._surface, _index)
-                return consumption_after
+                _consumption = self.consumption_standard(_index, level_heater=level_heater, full_output=False)
+                _consumption = reindex_mi(_consumption, _index)
+                _consumption *= reindex_mi(self._surface, _index)
+                intensity_after = self.to_heating_intensity(_index, _prices, consumption=_consumption,
+                                                            level_heater=level_heater)
 
-        def clean_flow(_flow, ref_index):
+                _consumption *= _flow
+                _consumption_before = _consumption * intensity_before
+                _consumption_after = _consumption * intensity_after
+
+                return _consumption_before, _consumption_after
+
+        def clean_flow(_flow, _index):
             if isinstance(_flow, DataFrame):
                 _flow = _flow.sum(axis=1)
 
             if 'Heating system final' in _flow.index.names:
                 _flow = _flow.droplevel('Heating system')
                 _flow.index = _flow.index.rename('Heating system', level='Heating system final')
-            _flow = _flow.groupby(ref_index.names).sum()
+            _flow = _flow.groupby(_index.names).sum()
 
-            _flow = _flow.reindex(ref_index, fill_value=0)
+            _union = _index.union(_flow.index)
+            _flow = _flow.reindex(_union, fill_value=0)
             return _flow
 
         flow_heater = flow_heater.stack()
 
         index = self.stock.index
-        c_no_rebound_retrofit = c_no_rebound(flow_retrofit, prices)
+        c_no_rebound_retrofit, c_rebound_retrofit = c_no_rebound(flow_retrofit, prices)
         c_no_rebound_retrofit = clean_flow(c_no_rebound_retrofit, index)
-        c_no_rebound_only_heater = c_no_rebound(flow_heater, prices)
-        c_no_rebound_only_heater = clean_flow(c_no_rebound_only_heater, index)
+        c_rebound_retrofit = clean_flow(c_rebound_retrofit, index)
+
+        c_no_rebound_heater, c_rebound_heater = c_no_rebound(flow_heater, prices)
+        c_no_rebound_heater = clean_flow(c_no_rebound_heater, index)
+        c_rebound_heater = clean_flow(c_no_rebound_heater, index)
 
         flow_retrofit = clean_flow(flow_retrofit.droplevel('Heating system final'), index)
         flow_heater = clean_flow(flow_heater.droplevel('Heating system final'), index)
         stock_remaining = self.stock - flow_retrofit - flow_heater
-        c_no_rebound_remaining = c_no_rebound(stock_remaining, prices)
+        c_no_rebound_remaining, c_rebound_remaining = c_no_rebound(stock_remaining, prices)
 
         assert (stock_remaining + flow_retrofit + flow_heater).sum() == self.stock.sum(), 'Sum issue'
 
-        consumption = c_no_rebound_retrofit + c_no_rebound_only_heater + c_no_rebound_remaining
+        union = c_no_rebound_retrofit.index.union(c_no_rebound_heater.index)
+        union = union.union(c_no_rebound_remaining.index)
 
-        consumption_energy = consumption.groupby(self.energy).sum()
-        consumption_energy *= self.coefficient_consumption
+        c_no_rebound_retrofit = c_no_rebound_retrofit.reindex(union, fill_value=0)
+        c_rebound_retrofit = c_rebound_retrofit.reindex(union, fill_value=0)
+        c_no_rebound_heater = c_no_rebound_heater.reindex(union, fill_value=0)
+        c_rebound_heater = c_rebound_heater.reindex(union, fill_value=0)
+        c_no_rebound_remaining = c_no_rebound_remaining.reindex(union, fill_value=0)
+        c_rebound_remaining = c_rebound_remaining.reindex(union, fill_value=0)
 
-        self.consumption_no_rebound = consumption_energy
+        c_no_rebound = c_no_rebound_retrofit + c_no_rebound_heater + c_no_rebound_remaining
+        c_rebound = c_rebound_retrofit + c_rebound_heater + c_rebound_remaining
 
-    def calculate_rebound(self, prices):
-        consumption = self.consumption_actual(prices, store=False) * self.stock
-        consumption_energy = consumption.groupby(self.energy).sum()
-        consumption_energy *= self.coefficient_consumption
-        rebound = consumption_energy - self.consumption_no_rebound
-        rebound.sum() / 10**9
-        cost_rebound = (prices * rebound).sum() / 10**9
+        heating_system = Series(union.get_level_values('Heating system'), index=union)
+        energy = heating_system.str.split('-').str[0].rename('Energy')
+
+        c_no_rebound_energy = c_no_rebound.groupby(self.energy).sum()
+        c_no_rebound_energy *= self.coefficient_consumption
+
+        c_rebound_energy = c_rebound.groupby(self.energy).sum()
+        c_rebound_energy *= self.coefficient_consumption
+
+        self.rebound = c_rebound_energy - c_no_rebound_energy
+        self.cost_rebound = (prices * self.rebound).sum()
 
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
                       ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None):
@@ -2932,7 +2971,7 @@ class AgentBuildings(ThermalBuildings):
         flow_only_heater = (share * temp).stack('Income tenant').dropna()
         assert round(flow_only_heater.sum().sum(), 0) == round(flow_only_heater_sum, 0), 'Sum problem'
 
-        self.store_consumption_no_rebound(replaced_by, flow_only_heater, prices)
+        self.store_rebound(replaced_by, flow_only_heater, prices)
 
         flow_only_heater = flow_only_heater.stack('Heating system final')
         to_replace_only_heater = - flow_only_heater.droplevel('Heating system final')
@@ -3069,8 +3108,15 @@ class AgentBuildings(ThermalBuildings):
                 output['Surface (Million m2)'] * 10 ** 6)
 
         output['Heating intensity (%)'] = (self.stock * self.heating_intensity).sum() / self.stock.sum()
+        temp = self.rebound / 10**9
+        output['Rebound (TWh)'] = temp.sum()
+        temp.index = temp.index.map(lambda x: 'Rebound {} (TWh)'.format(x))
+        output.update(temp.T)
+
+        output['Cost rebound (Billion euro)'] = self.cost_rebound.sum() / 10**9
 
         output['Energy poverty (Million)'] = self.energy_poverty / 10 ** 6
+
 
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))

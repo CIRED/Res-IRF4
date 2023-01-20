@@ -10,7 +10,7 @@
     ]
   },
   "Reference": {
-    "end": 2025,
+    "end": 2021,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -116,7 +116,7 @@
       },
       "landlord": {
         "start": 2020,
-        "end": 2021
+        "end": 2020
       },
       "multi_family": {
         "start": 2020,

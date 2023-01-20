@@ -334,7 +334,6 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             financing_cost=financing_cost)
 
     buildings.add_flows([flow_retrofit])
-    buildings.calculate_rebound(prices_before)
 
     flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
                                                 financing_cost=financing_cost)

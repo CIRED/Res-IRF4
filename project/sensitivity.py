@@ -90,7 +90,8 @@ def select_output(output):
         'Health cost (Billion euro)',
         'Energy poverty (Million)',
         'Heating intensity (%)',
-        'Emission (MtCO2)'
+        'Emission (MtCO2)',
+        'Cost rebound (Billion euro)'
     ]
     variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater]
 
@@ -127,6 +128,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs)
 
+        o.to_csv(os.path.join(buildings.path, 'output.csv'))
         output.update({year: select_output(o)})
 
     if output_consumption is True:
@@ -158,8 +160,8 @@ if __name__ == '__main__':
     _start = _year
     _end = _year + timestep
 
-    _sub_heater = 0.2
-    _sub_insulation = 0.5
+    _sub_heater = 0.1
+    _sub_insulation = 0.1
 
     _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
                                          _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
