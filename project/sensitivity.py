@@ -1,4 +1,6 @@
 import time
+
+import pandas as pd
 from pandas import read_csv, concat, Series, Index, DataFrame
 # imports from ResIRF
 from project.model import config2inputs, initialize, stock_turnover, calibration_res_irf
@@ -108,7 +110,7 @@ def select_output(output):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=True, full_output=True):
+                 output_consumption=False, full_output=True):
 
     # setting output format
     buildings.full_output = full_output
@@ -150,7 +152,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
 
 if __name__ == '__main__':
-
+    from copy import deepcopy
     # first time
     name = 'calibration'
     calibration_threshold = True
@@ -160,37 +162,56 @@ if __name__ == '__main__':
     _export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
 
-    result = dict()
+    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
+        path=os.path.join('project', 'output', 'ResIRF'),
+        logger=None,
+        config=os.path.join('project/input/config/test/config_optim_threshold.json'),
+        import_calibration=_import_calibration,
+        export_calibration=_export_calibration)
+
+    timestep = 1
+    _year = 2020
+    _start = _year
+    _end = _year + timestep
+
+    _sub_insulation = [i / 10 for i in range(4, 8)]
+    _len = len(_sub_insulation)
+    _sub_heater = [0] * _len
+    _start = [_start] * _len
+    _end = [_end] * _len
+    _energy_prices = [_energy_prices] * _len
+    _taxes = [_taxes] * _len
+    _cost_heater = [_cost_heater] * _len
+    _cost_insulation = [_cost_insulation] * _len
+    _flow_built = [_flow_built] * _len
+    _post_inputs = [_post_inputs] * _len
+    _p_heater = [_p_heater] * _len
+    _p_insulation = [_p_insulation] * _len
+    _buildings = [deepcopy(_buildings)] * _len
+
+    list_argument = list(zip(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                             _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                             _p_insulation))
+
+    with Pool() as pool:
+
+        results = pool.starmap(simu_res_irf, list_argument)
+
+    test = {list_argument[i][2]: results[i][0].squeeze() for i in range(len(results))}
+    test = DataFrame(test)
+    print('break')
+
+
+    """_output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                                         _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
+                                         output_consumption=False)"""
+
+
+    """
+        result = dict()
     for _sub_insulation in range(5, 8):
-        _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
-            path=os.path.join('project', 'output', 'ResIRF'),
-            logger=None,
-            config=os.path.join('project/input/config/test/config_optim.json'),
-            import_calibration=_import_calibration,
-            export_calibration=_export_calibration)
-
-        timestep = 1
-        _year = 2020
-        _start = _year
-        _end = _year + timestep
-
-        _sub_heater = 0
-        _sub_insulation = _sub_insulation / 10
-
-        _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                             _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                             _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                                             output_consumption=False)
-        if 'Investment insulation (Billion euro)' not in _output.index:
-            _output['Investment insulation (Billion euro)'] = 0
-
-        result.update({_sub_insulation: _output.loc['Investment insulation (Billion euro)']})
-
-    print('break')
-    print('break')
-    print(Series(result))
-
-    """    
+        
     list_argument = [(sub_heater, 0.5, 2020, 2021) for sub_heater in [0.1, 0.9]]
 
     with Pool(4) as pool:
@@ -200,4 +221,13 @@ if __name__ == '__main__':
     sub_insulation = Series([i[1] for i in results], name='Sub insulation')
     df = concat([Series(i[2]) for i in results], axis=1)
     df = concat((sub_heater, sub_insulation, df.T), axis=1).T
-    df.to_csv('output/sensitivity.csv')"""
+    df.to_csv('output/sensitivity.csv')
+    
+        if 'Investment insulation (Billion euro)' not in _output.index:
+        _output['Investment insulation (Billion euro)'] = 0
+
+    result.update({_sub_insulation: _output.loc['Investment insulation (Billion euro)']})
+    print(Series(result))
+    
+    
+    """

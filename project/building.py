@@ -2692,8 +2692,6 @@ class AgentBuildings(ThermalBuildings):
         """
 
         stock = self.stock_mobile.copy()
-        if self.year == 2020:
-            print('break')
 
         obligation = [p for p in policies_insulation if p.name == 'obligation']
         if obligation == []:
