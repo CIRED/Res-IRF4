@@ -10,12 +10,12 @@
     ]
   },
   "Reference": {
-    "end": 2030,
+    "end": 2021,
     "debug_mode": false,
     "full_output": true,
-    "demolition_rate": 0.0035,
-    "construction": true,
-    "income_rate": 0.012,
+    "demolition_rate": 0.0,
+    "construction": false,
+    "income_rate": 0.0,
     "start": 2018,
     "renovation": {
       "endogenous": true,
@@ -39,7 +39,7 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
     "population": "project/input/population.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
@@ -136,11 +136,14 @@
       "stock": false,
       "policies": false,
       "income": false,
-      "prices_constant": false,
-      "taxes_constant": false
+      "prices_constant": true,
+      "taxes_constant": true
     },
     "pop_housing": null,
     "share_multi_family": null,
     "surface_built": null
   }
+
+
+
 }

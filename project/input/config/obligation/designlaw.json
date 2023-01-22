@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2025,
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -45,7 +45,7 @@
     "policies": {
       "mpr": {
         "start": 2021,
-        "end": 2021,
+        "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
         "global_retrofit": null,
@@ -78,7 +78,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -133,8 +133,8 @@
     "share_multi_family": null,
     "surface_built": null
   },
-  "Rawlaw": {
-    "end": 2025,
+  "RawLaw": {
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -212,7 +212,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -268,8 +268,8 @@
     "share_multi_family": null,
     "surface_built": null
   },
-  "Rotation_law": {
-    "end": 2025,
+  "RotationLaw": {
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -347,7 +347,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
@@ -405,8 +405,8 @@
     "share_multi_family": null,
     "surface_built": null
   },
-  "Anticipated_law": {
-    "end": 2025,
+  "AnticipatedLaw": {
+    "end": 2051,
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -484,7 +484,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800

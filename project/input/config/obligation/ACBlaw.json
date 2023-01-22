@@ -98,7 +98,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800

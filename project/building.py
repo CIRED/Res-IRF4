@@ -467,11 +467,15 @@ class ThermalBuildings:
                 if existing is True:
                     consumption = consumption[consumption.index.get_level_values('Existing')]
                 consumption = self.consumption_actual(prices, consumption=consumption) * self.stock
+
+                energy = self.energy.reindex(consumption.index)
+                consumption = consumption.groupby(energy).sum() / 10 ** 9
+                consumption *= self.coefficient_consumption
+
                 if energy is False:
-                    return consumption.sum() / 10 ** 9
+                    return consumption.sum()
                 else:
-                    energy = self.energy.reindex(consumption.index)
-                    return consumption.groupby(energy).sum() / 10**9
+                    return consumption
 
             if freq == 'hour':
                 temp = self.consumption_heating(freq=freq, climate=climate, smooth=smooth, efficiency_hour=efficiency_hour)
@@ -506,7 +510,6 @@ class ThermalBuildings:
 
         consumption_energy = _consumption_actual.groupby(self.energy).sum()
         if self.coefficient_consumption is None:
-
             consumption = concat((_consumption_actual, self.energy), axis=1).groupby(
                 ['Housing type', 'Energy']).sum().iloc[:, 0] / 10**9
 
@@ -569,7 +572,7 @@ class ThermalBuildings:
                 validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
         coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        self.heat_consumption_calib = (coefficient * _consumption_actual).copy()
+        self.heat_consumption_calib = coefficient * _consumption_actual
 
         self.heat_consumption_energy = self.heat_consumption_calib.groupby(self.energy).sum()
 
@@ -588,6 +591,7 @@ class ThermalBuildings:
             self.taxes_expenditure = total_taxes
 
         if self.consumption_before_retrofit is not None:
+            # do not consider coefficient
             consumption_before_retrofit = self.consumption_before_retrofit
             self.consumption_before_retrofit = None
             consumption_after_retrofit = self.store_consumption(prices)
@@ -2688,10 +2692,13 @@ class AgentBuildings(ThermalBuildings):
         """
 
         stock = self.stock_mobile.copy()
+        if self.year == 2020:
+            print('break')
 
         obligation = [p for p in policies_insulation if p.name == 'obligation']
         if obligation == []:
             return None
+        self.logger.info('Calculation flow obligation')
         # only work if there is one obligation
         obligation = obligation[0]
         banned_performance = obligation.value.loc[self.year]
