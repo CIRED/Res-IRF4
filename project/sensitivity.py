@@ -10,6 +10,8 @@ import os
 from pickle import dump, load
 import json
 
+from pathlib import Path
+
 
 def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None):
     """Initialize and calibrate Res-IRF.
@@ -44,6 +46,11 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
         calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config)
 
     if export_calibration is not None:
+        export_calibration = Path(export_calibration)
+        parent = export_calibration.parent.absolute()
+        if not os.path.isdir(parent):
+            print('Creation of calibration folder here: {}'.format(parent))
+            os.mkdir(parent)
         with open(export_calibration, "wb") as file:
             dump(calibration, file)
 
@@ -151,6 +158,36 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
     return output, consumption
 
 
+def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
+                 flow_built, post_inputs, policies_heater, policies_insulation):
+
+    sub_insulation = [i / 10 for i in range(4, 8)]
+    _len = len(sub_insulation)
+    sub_heater = [sub_heater] * _len
+    start = [start] * _len
+    end = [end] * _len
+    energy_prices = [energy_prices] * _len
+    taxes = [taxes] * _len
+    cost_heater = [cost_heater] * _len
+    cost_insulation = [cost_insulation] * _len
+    flow_built = [flow_built] * _len
+    post_inputs = [post_inputs] * _len
+    policies_heater = [policies_heater] * _len
+    policies_insulation = [policies_insulation] * _len
+    buildings = [deepcopy(buildings)] * _len
+
+    list_argument = list(zip(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
+                             cost_heater, cost_insulation, flow_built, post_inputs, policies_heater,
+                             policies_insulation))
+
+    with Pool() as pool:
+        results = pool.starmap(simu_res_irf, list_argument)
+
+    result = {list_argument[i][2]: results[i][0].squeeze() for i in range(len(results))}
+    result = DataFrame(result)
+    return result
+
+
 if __name__ == '__main__':
     from copy import deepcopy
     # first time
@@ -171,67 +208,23 @@ if __name__ == '__main__':
 
     timestep = 1
     _year = 2020
-    _start = _year
-    _end = _year + timestep
 
-    _sub_heater = 0.1
-    _sub_insulation = 0.1
+    _sub_heater = 1
+    _sub_insulation = 0
 
-    _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                         _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                                         output_consumption=True)
+    _concat_output = DataFrame()
+    for _year in range(2020, 2030):
+        _start = _year
+        _end = _year + timestep
 
+        _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                                             _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                                             _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
+                                             output_consumption=False)
+        _concat_output = concat((_concat_output, _output), axis=1)
 
-    """_sub_insulation = [i / 10 for i in range(4, 8)]
-    _len = len(_sub_insulation)
-    _sub_heater = [0] * _len
-    _start = [_start] * _len
-    _end = [_end] * _len
-    _energy_prices = [_energy_prices] * _len
-    _taxes = [_taxes] * _len
-    _cost_heater = [_cost_heater] * _len
-    _cost_insulation = [_cost_insulation] * _len
-    _flow_built = [_flow_built] * _len
-    _post_inputs = [_post_inputs] * _len
-    _p_heater = [_p_heater] * _len
-    _p_insulation = [_p_insulation] * _len
-    _buildings = [deepcopy(_buildings)] * _len
+    _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
 
-    list_argument = list(zip(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                             _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                             _p_insulation))
-
-    with Pool() as pool:
-
-        results = pool.starmap(simu_res_irf, list_argument)
-
-    test = {list_argument[i][2]: results[i][0].squeeze() for i in range(len(results))}
-    test = DataFrame(test)"""
     print('break')
 
 
-
-    """
-        result = dict()
-    for _sub_insulation in range(5, 8):
-        
-    list_argument = [(sub_heater, 0.5, 2020, 2021) for sub_heater in [0.1, 0.9]]
-
-    with Pool(4) as pool:
-        results = pool.starmap(run_resirf, list_argument)
-
-    sub_heater = Series([i[0] for i in results], name='Sub heater')
-    sub_insulation = Series([i[1] for i in results], name='Sub insulation')
-    df = concat([Series(i[2]) for i in results], axis=1)
-    df = concat((sub_heater, sub_insulation, df.T), axis=1).T
-    df.to_csv('output/sensitivity.csv')
-    
-        if 'Investment insulation (Billion euro)' not in _output.index:
-        _output['Investment insulation (Billion euro)'] = 0
-
-    result.update({_sub_insulation: _output.loc['Investment insulation (Billion euro)']})
-    print(Series(result))
-    
-    
-    """

@@ -14,7 +14,7 @@
     "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0,
-    "construction": false,
+    "construction": true,
     "income_rate": 0.0,
     "start": 2018,
     "renovation": {

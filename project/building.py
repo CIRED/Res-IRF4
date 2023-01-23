@@ -77,9 +77,6 @@ class ThermalBuildings:
             self.path_calibration = os.path.join(path, 'calibration')
             if not os.path.isdir(self.path_calibration):
                 os.mkdir(self.path_calibration)
-            self.path_calibration_renovation = os.path.join(self.path_calibration, 'renovation')
-            if not os.path.isdir(self.path_calibration_renovation):
-                os.mkdir(self.path_calibration_renovation)
 
         self._consumption_ini = consumption_ini
         self.coefficient_global, self.coefficient_energy = None, None
@@ -797,6 +794,7 @@ class AgentBuildings(ThermalBuildings):
         # {'max', 'market_share'} define how to calculate utility_extensive
         self._insulation_representative = insulation_representative
 
+        # TODO: rename 'investment' by 'cost' and use only one preferences_insulation
         self.preferences_heater = deepcopy(preferences['heater'])
         self.preferences_insulation_int = deepcopy(preferences['insulation'])
         self.preferences_insulation_ext = deepcopy(preferences['insulation'])
@@ -806,10 +804,6 @@ class AgentBuildings(ThermalBuildings):
                 if key != 'investment':
                     pref_dict[key] = pref_dict[key] / abs(pref_dict['investment'])
             pref_dict['investment'] = -1
-
-        # monetary_unit(self.preferences_heater)
-        # monetary_unit(self.preferences_insulation_int)
-        # monetary_unit(self.preferences_insulation_ext)
 
 
         # self.discount_rate = - self.pref_investment_insulation_ext / self.pref_bill_insulation_ext
@@ -1205,15 +1199,15 @@ class AgentBuildings(ThermalBuildings):
 
     def endogenous_market_share_heater(self, index, prices, subsidies_total, cost_heater, ms_heater=None):
 
-        def calibration_constant_heater(utility, ms_heater):
+        def calibration_constant_heater(_utility, _ms_heater):
             """Constant to match the observed market-share.
 
             Market-share is defined by initial and final heating system.
 
             Parameters
             ----------
-            utility: DataFrame
-            ms_heater: DataFrame
+            _utility: DataFrame
+            _ms_heater: DataFrame
 
             Returns
             -------
@@ -1221,42 +1215,44 @@ class AgentBuildings(ThermalBuildings):
             """
 
             # removing unnecessary level
-            utility_ref = utility.droplevel(['Occupancy status']).copy()
+            utility_ref = _utility.droplevel(['Occupancy status']).copy()
             utility_ref = utility_ref[~utility_ref.index.duplicated(keep='first')]
 
-            possible = reindex_mi(ms_heater, utility_ref.index)
+            possible = reindex_mi(_ms_heater, utility_ref.index)
             utility_ref[~(possible > 0)] = float('nan')
 
-            stock = self.stock.groupby(utility_ref.index.names).sum()
+            stock = self.stock.groupby(utility_ref.index.names).sum() * 1/20
 
             # initializing constant to 0
-            constant = ms_heater.copy()
+            constant = _ms_heater.copy()
             constant[constant > 0] = 0
             market_share_ini, market_share_agg = None, None
             for i in range(50):
                 constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
                 constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
 
-                utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), utility.index)
-                utility = utility_ref + utility_constant
-                market_share = (exp(utility).T / exp(utility).sum(axis=1)).T
-                agg = (market_share.T * stock).T.groupby(['Housing type', 'Heating system']).sum()
+                _utility_constant = reindex_mi(constant.reindex(utility_ref.columns, axis=1), _utility.index)
+                _utility = utility_ref + _utility_constant
+                _market_share = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+                agg = (_market_share.T * stock).T.groupby(['Housing type', 'Heating system']).sum()
                 market_share_agg = (agg.T / agg.sum(axis=1)).T
                 if i == 0:
                     market_share_ini = market_share_agg.copy()
-                constant = constant + log(ms_heater / market_share_agg)
+                constant = constant + log(_ms_heater / market_share_agg)
 
-                ms_heater = ms_heater.reindex(market_share_agg.index)
+                _ms_heater = _ms_heater.reindex(market_share_agg.index)
 
-                if (market_share_agg.round(decimals=3) == ms_heater.round(decimals=3).fillna(0)).all().all():
+                if (market_share_agg.round(decimals=3) == _ms_heater.round(decimals=3).fillna(0)).all().all():
                     self.logger.debug('Constant heater optim worked')
                     break
 
             constant.loc[constant['Electricity-Heat pump water'].notna(), 'Electricity-Heat pump water'] = 0
             constant.loc[constant['Electricity-Heat pump water'].isna(), 'Electricity-Heat pump air'] = 0
 
-            details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), ms_heater.stack()),
-                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed']).round(decimals=3)
+            wtp = - constant / self.preferences_heater['investment']
+
+            details = concat((constant.stack(), market_share_ini.stack(), market_share_agg.stack(), _ms_heater.stack(), agg.stack() / 10**3, wtp.stack()),
+                             axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed', 'thousand', 'wtp']).round(decimals=3)
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
@@ -1302,6 +1298,7 @@ class AgentBuildings(ThermalBuildings):
         utility = utility_inertia + utility_investment + utility_bill_saving + utility_subsidies
 
         if (self.constant_heater is None) and (ms_heater is not None):
+            self.logger.info('Calibration market-share heating system')
             ms_heater.dropna(how='all', inplace=True)
             self.constant_heater = calibration_constant_heater(utility, ms_heater)
         utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
@@ -3183,6 +3180,7 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
+        prices: Series
         inputs: dict
             Exogenous data for post-treatment.
             'carbon_emission'
@@ -3573,13 +3571,15 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Share subsidies {} (%)'.format(x))
                 output.update(temp.T)
 
-            output['Consumption saving renovation (TWh)'] = 0
             if self.consumption_saving_renovation is not None:
                 output['Consumption saving renovation (TWh)'] = self.consumption_saving_renovation / 10**9
+            else:
+                output['Consumption saving renovation (TWh)'] = None
 
-            output['Consumption saving heater (TWh)'] = 0
             if self.consumption_saving_renovation is not None:
                 output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10 ** 9
+            else:
+                output['Consumption saving heater (TWh)'] = None
 
             output['Investment total HT / households (Thousand euro)'] = output['Investment total HT (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
             output['Investment total / households (Thousand euro)'] = output['Investment total (Billion euro)'] * 10 ** 6 / ( output['Retrofit (Thousand households)'] * 10**3)
@@ -3588,11 +3588,13 @@ class AgentBuildings(ThermalBuildings):
             if output['Renovation (Thousand households)'] != 0:
                 output['Investment insulation / households (Thousand euro)'] = output['Investment insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
 
-            if output['Consumption saving renovation (TWh)'] != 0:
-                output['Investment insulation / saving (euro / kWh.year)'] = output['Investment insulation (Billion euro)'] / output['Consumption saving renovation (TWh)']
+            if output['Consumption saving renovation (TWh)'] is not None:
+                if output['Consumption saving renovation (TWh)'] != 0:
+                    output['Investment insulation / saving (euro / kWh.year)'] = output['Investment insulation (Billion euro)'] / output['Consumption saving renovation (TWh)']
 
-            if output['Consumption saving heater (TWh)'] != 0:
-                output['Investment heater / saving (euro / kWh.year)'] = output['Investment heater (Billion euro)'] / output['Consumption saving heater (TWh)']
+            if output['Consumption saving heater (TWh)'] is not None:
+                if output['Consumption saving heater (TWh)'] != 0:
+                    output['Investment heater / saving (euro / kWh.year)'] = output['Investment heater (Billion euro)'] / output['Consumption saving heater (TWh)']
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)
@@ -3846,7 +3848,7 @@ class AgentBuildings(ThermalBuildings):
 
         if constant_heater is None:
             constant_heater = get_pandas('project/input/calibration/calibration_constant_heater.csv',
-                                                     lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze())
+                                         lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze())
             constant_heater = constant_heater.unstack('Heating system final')
 
         elif isinstance(constant_heater, str):
