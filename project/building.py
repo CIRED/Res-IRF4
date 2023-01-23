@@ -82,7 +82,7 @@ class ThermalBuildings:
                 os.mkdir(self.path_calibration_renovation)
 
         self._consumption_ini = consumption_ini
-        self.coefficient_consumption = None
+        self.coefficient_global, self.coefficient_energy = None, None
 
         self._surface_yrs = surface
         self._surface = surface.loc[:, year]
@@ -467,10 +467,7 @@ class ThermalBuildings:
                 if existing is True:
                     consumption = consumption[consumption.index.get_level_values('Existing')]
                 consumption = self.consumption_actual(prices, consumption=consumption) * self.stock
-
-                energy = self.energy.reindex(consumption.index)
-                consumption = consumption.groupby(energy).sum() / 10 ** 9
-                consumption *= self.coefficient_consumption
+                consumption = self.apply_calibration(consumption) / 10**9
 
                 if energy is False:
                     return consumption.sum()
@@ -483,11 +480,30 @@ class ThermalBuildings:
                 t = (temp.T * self.stock * self.surface).T
                 # adding heating intensity
                 t = (t.T * self.heating_intensity).T
-                energy = temp.index.get_level_values('Heating system').str.split('-').str[0]
-                t = t.groupby(energy).sum()
-                t = (t.T * self.coefficient_consumption).T
+                t = self.apply_calibration(t)
                 return t
 
+    def apply_calibration(self, consumption, level_heater='Heating system'):
+        if self.coefficient_global is None:
+            raise AttributeError
+
+        energy = Series(consumption.index.get_level_values(level_heater), index=consumption.index).str.split('-').str[0].rename('Energy')
+        consumption_energy = consumption.groupby(energy).sum()
+        consumption_energy *= self.coefficient_global
+
+        if isinstance(consumption, Series):
+            _consumption_energy = consumption_energy * self.coefficient_energy
+            _consumption_energy['Wood fuel'] += ((1 - self.coefficient_energy) * consumption_energy).sum()
+
+            # coefficient = self.coefficient_energy.reindex(energy).set_axis(consumption.index, axis=0)
+            return _consumption_energy
+
+        elif isinstance(consumption, DataFrame):
+            _consumption_energy = (consumption_energy.T * self.coefficient_energy).T
+            _consumption_energy.loc['Wood fuel', :] += ((1 - self.coefficient_energy) * consumption_energy.T).T.sum()
+
+            return _consumption_energy
+            
     def calculate_consumption(self, prices, taxes=None, climate=None, temp_indoor=None, store=True):
         """Calculate energy indicators.
 
@@ -497,6 +513,8 @@ class ThermalBuildings:
         taxes: Series
         climate
         temp_indoor
+        store: bool, default True
+            If True, store results in object attribute.
 
         Returns
         -------
@@ -509,20 +527,25 @@ class ThermalBuildings:
         _consumption_actual = self.consumption_actual(prices, consumption=consumption, store=store) * self.stock
 
         consumption_energy = _consumption_actual.groupby(self.energy).sum()
-        if self.coefficient_consumption is None:
-            consumption = concat((_consumption_actual, self.energy), axis=1).groupby(
-                ['Housing type', 'Energy']).sum().iloc[:, 0] / 10**9
+        if self.coefficient_global is None:
 
-            # considering 20% of electricity got wood stove - 50% electricity
-            electricity_wood = 0.2 * consumption[('Single-family', 'Electricity')] * 1
-            consumption[('Single-family', 'Wood fuel')] += electricity_wood
-            consumption[('Single-family', 'Electricity')] -= electricity_wood
-            consumption.groupby('Energy').sum()
+            # 1. consumption total
+            coefficient_global = self._consumption_ini.sum() * 10**9 / _consumption_actual.sum()
 
-            _consumption_actual.groupby('Housing type').sum() / 10**9
+            consumption_energy *= coefficient_global
 
+            # 2. coefficient among energies
+            coefficient = self._consumption_ini * 10**9 / consumption_energy
+            coefficient['Wood fuel'] = 1
+
+            # 3. apply coefficient
+            _consumption_energy = coefficient * consumption_energy
+            _consumption_energy['Wood fuel'] += ((1 - coefficient) * consumption_energy).sum()
+            pd.concat((_consumption_energy / 10**9, self._consumption_ini), axis=1)
+            self.coefficient_global = coefficient_global
+            self.coefficient_energy = coefficient
+            self.apply_calibration(_consumption_actual)
             validation = dict()
-
             # stock initial
             temp = concat((self.stock, self.energy), axis=1).groupby(
                 ['Housing type', 'Energy']).sum().iloc[:, 0] / 10**3
@@ -553,9 +576,10 @@ class ThermalBuildings:
             validation.update(temp)
             validation.update({'Consumption (TWh)': _consumption_actual.sum() / 10**9})
 
-            self.coefficient_consumption = self._consumption_ini * 10**9 / consumption_energy
+            validation.update({'Coefficient calibration global (%)': self.coefficient_global})
 
-            temp = self.coefficient_consumption.copy()
+
+            temp = self.coefficient_energy.copy()
             temp.index = temp.index.map(lambda x: 'Coefficient calibration {} (%)'.format(x))
             validation.update(temp)
 
@@ -571,13 +595,13 @@ class ThermalBuildings:
             if self.path is not None:
                 validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
-        coefficient = self.coefficient_consumption.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        self.heat_consumption_calib = coefficient * _consumption_actual
+        consumption_calib = self.coefficient_global * _consumption_actual
 
-        self.heat_consumption_energy = self.heat_consumption_calib.groupby(self.energy).sum()
+        self.heat_consumption_energy = self.apply_calibration(_consumption_actual)
 
+        # TODO: not consistent with assumption
         prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        self.energy_expenditure = prices_reindex * self.heat_consumption_calib
+        self.energy_expenditure = prices_reindex * consumption_calib
 
         if taxes is not None:
             total_taxes = Series(0, index=prices.index)
@@ -597,7 +621,6 @@ class ThermalBuildings:
             consumption_after_retrofit = self.store_consumption(prices)
             self.consumption_saving_retrofit = {k: consumption_before_retrofit[k] - consumption_after_retrofit[k] for k
                                                 in consumption_before_retrofit.keys()}
-            # TODO: quantify rebound effect
 
     @staticmethod
     def energy_bill(prices, consumption, level_heater='Heating system'):
@@ -2815,7 +2838,7 @@ class AgentBuildings(ThermalBuildings):
         return replaced_by
 
     def store_energy_saving(self, flow_retrofit, flow_heater, prices):
-
+        # TODO: need to be calibrated. Apply self.calibration
         def saving(_flow, _prices):
             _flow = _flow[_flow > 0]
             _index = _flow.index
@@ -2824,6 +2847,8 @@ class AgentBuildings(ThermalBuildings):
             _consumption_before = reindex_mi(_consumption_before, _index) * reindex_mi(self._surface, _index)
             _consumption_before = self.consumption_actual(prices, consumption=_consumption_before)
             _consumption_before = (_consumption_before * _flow.T).T
+
+            # _consumption_before_energy = self.apply_calibration(_consumption_before)
 
             if isinstance(_flow, DataFrame):
                 # insulation
@@ -2976,14 +3001,8 @@ class AgentBuildings(ThermalBuildings):
         c_no_rebound = c_no_rebound_retrofit + c_no_rebound_heater + c_no_rebound_remaining
         c_rebound = c_rebound_retrofit + c_rebound_heater + c_rebound_remaining
 
-        heating_system = Series(union.get_level_values('Heating system'), index=union)
-        energy = heating_system.str.split('-').str[0].rename('Energy')
-
-        c_no_rebound_energy = c_no_rebound.groupby(energy).sum()
-        c_no_rebound_energy *= self.coefficient_consumption
-
-        c_rebound_energy = c_rebound.groupby(energy).sum()
-        c_rebound_energy *= self.coefficient_consumption
+        c_no_rebound_energy = self.apply_calibration(c_no_rebound)
+        c_rebound_energy = self.apply_calibration(c_rebound)
 
         self.rebound = c_rebound_energy - c_no_rebound_energy
         self.cost_rebound = (prices * self.rebound).sum()
@@ -3036,7 +3055,7 @@ class AgentBuildings(ThermalBuildings):
                                                                   calib_intensive=calib_intensive,
                                                                   policies_insulation=policies_insulation,
                                                                   financing_cost=financing_cost)
-        self.logger.info('Formatting replacement')
+        self.logger.info('Formatting and storing replacement')
         # heater replacement without insulation upgrade
 
         flow_only_heater = (1 - retrofit_rate.reindex(stock.index).fillna(0)) * stock
@@ -3063,6 +3082,7 @@ class AgentBuildings(ThermalBuildings):
 
         # storing information (flow, investment, subsidies)
         if self.full_output:
+            self.logger.debug('Store information retrofit')
             self.store_information_retrofit(replaced_by)
 
         # removing heater replacement level
@@ -3072,6 +3092,7 @@ class AgentBuildings(ThermalBuildings):
             [c for c in flow_only_heater.index.names if c != 'Heater replacement']).sum()
 
         # adding income tenant information
+        self.logger.debug('Adding income tenant')
         share = (self.stock_mobile.unstack('Income tenant').T / self.stock_mobile.unstack('Income tenant').sum(axis=1)).T
         temp = concat([replaced_by] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
         share = reindex_mi(share, temp.columns, axis=1)
@@ -3086,9 +3107,14 @@ class AgentBuildings(ThermalBuildings):
         flow_only_heater = (share * temp).stack('Income tenant').dropna()
         assert round(flow_only_heater.sum().sum(), 0) == round(flow_only_heater_sum, 0), 'Sum problem'
 
-        self.store_rebound(replaced_by, flow_only_heater, prices)
-        self.store_energy_saving(replaced_by, flow_only_heater, prices)
+        detailed_output = False
+        if detailed_output:
+            self.logger.debug('Calculate rebound effect')
+            self.store_rebound(replaced_by, flow_only_heater, prices)
+            self.logger.debug('Calculate energy saving')
+            self.store_energy_saving(replaced_by, flow_only_heater, prices)
 
+        self.logger.debug('Formatting flow to pandas Series')
         flow_only_heater = flow_only_heater.stack('Heating system final')
         to_replace_only_heater = - flow_only_heater.droplevel('Heating system final')
 
@@ -3149,7 +3175,7 @@ class AgentBuildings(ThermalBuildings):
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
 
-    def parse_output_run(self, inputs):
+    def parse_output_run(self, prices, inputs):
         """Parse output.
 
         Renovation : envelope
@@ -3178,29 +3204,29 @@ class AgentBuildings(ThermalBuildings):
         output = dict()
         output['Consumption standard (TWh)'] = (self.consumption_heat_sd * self.surface * self.stock).sum() / 10 ** 9
 
-        consumption = self.heat_consumption_calib
-        output['Consumption (TWh)'] = consumption.sum() / 10 ** 9
-
-        temp = consumption.groupby(self.energy).sum()
+        consumption = self.consumption_actual(prices) * self.stock
+        consumption_energy = self.apply_calibration(consumption)
+        output['Consumption (TWh)'] = consumption_energy.sum() / 10 ** 9
+        temp = consumption_energy.copy()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
 
-        temp = consumption.groupby('Existing').sum()
+        consumption_calib = consumption * self.coefficient_global
+        temp = consumption_calib.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
 
-        temp = consumption.groupby(self.certificate).sum()
+        temp = consumption_calib.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
         if self.consumption_saving_retrofit is not None:
             temp = {'{} saving'.format(k): i for k, i in self.consumption_saving_retrofit.items()}
             output.update(temp)
 
-        c = self.add_energy(consumption)
-        emission = reindex_mi(inputs['carbon_emission'].T.rename_axis('Energy', axis=0), c.index).loc[:,
-                   self.year] * c
-
+        # TODO: mistakes use consumption_energy
+        c = self.add_energy(consumption_calib)
+        emission = reindex_mi(inputs['carbon_emission'].T.rename_axis('Energy', axis=0), c.index).loc[:, self.year] * c
         output['Emission (MtCO2)'] = emission.sum() / 10 ** 12
 
         temp = emission.groupby('Existing').sum()
@@ -3224,6 +3250,8 @@ class AgentBuildings(ThermalBuildings):
                 output['Surface (Million m2)'] * 10 ** 6)
 
         output['Heating intensity (%)'] = (self.stock * self.heating_intensity).sum() / self.stock.sum()
+
+        output['Rebound (TWh)'], output['Cost rebound (Billion euro)'] = None, None
         if self.rebound is not None:
             temp = self.rebound / 10**9
             output['Rebound (TWh)'] = temp.sum()
@@ -3236,10 +3264,12 @@ class AgentBuildings(ThermalBuildings):
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
-        try:
-            output['Stock efficient (Million)'] = output['Stock A (Million)'] + output['Stock B (Million)']
-        except KeyError:
-            output['Stock efficient (Million)'] = output['Stock B (Million)']
+
+        output['Stock efficient (Million)'] = 0
+        if 'Stock A (Million)' in output.keys():
+            output['Stock efficient (Million)'] += output['Stock A (Million)']
+        if 'Stock B (Million)' in output.keys():
+            output['Stock efficient (Million)'] += output['Stock B (Million)']
 
         output['Stock low-efficient (Million)'] = 0
         if 'Stock F (Million)' in output.keys():
@@ -3543,18 +3573,26 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Share subsidies {} (%)'.format(x))
                 output.update(temp.T)
 
-            output['Investment total HT / households (Thousand euro)'] = output['Investment total HT (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
-            if output['Renovation (Thousand households)'] != 0:
+            output['Consumption saving renovation (TWh)'] = 0
+            if self.consumption_saving_renovation is not None:
+                output['Consumption saving renovation (TWh)'] = self.consumption_saving_renovation / 10**9
 
-                output['Investment total / households (Thousand euro)'] = output['Investment total (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
+            output['Consumption saving heater (TWh)'] = 0
+            if self.consumption_saving_renovation is not None:
+                output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10 ** 9
+
+            output['Investment total HT / households (Thousand euro)'] = output['Investment total HT (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
+            output['Investment total / households (Thousand euro)'] = output['Investment total (Billion euro)'] * 10 ** 6 / ( output['Retrofit (Thousand households)'] * 10**3)
+
+            output['Investment insulation / households (Thousand euro)'] = 0
+            if output['Renovation (Thousand households)'] != 0:
                 output['Investment insulation / households (Thousand euro)'] = output['Investment insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
 
-                output['Consumption saving renovation (TWh)'] = self.consumption_saving_renovation / 10**9
-                output['Investment insulation / saving (euro / kWh.year)'] = output['Investment insulation (Billion euro)'] / output[ 'Consumption saving renovation (TWh)']
+            if output['Consumption saving renovation (TWh)'] != 0:
+                output['Investment insulation / saving (euro / kWh.year)'] = output['Investment insulation (Billion euro)'] / output['Consumption saving renovation (TWh)']
 
-            output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10**9
-            # TODO: add discount rate to estimate consumption saving
-            output['Investment heater / saving (euro / kWh.year)'] = output['Investment heater (Billion euro)'] / output['Consumption saving heater (TWh)']
+            if output['Consumption saving heater (TWh)'] != 0:
+                output['Investment heater / saving (euro / kWh.year)'] = output['Investment heater (Billion euro)'] / output['Consumption saving heater (TWh)']
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)
@@ -3751,13 +3789,17 @@ class AgentBuildings(ThermalBuildings):
         return output
 
     def remove_calibration(self):
+
+        self.coefficient_global = None
+        self.coefficient_energy = None
+
+
         self.preferences_insulation_int['subsidy'] /= self.scale
         self.preferences_insulation_int['investment'] /= self.scale
         self.preferences_insulation_int['bill_saved'] /= self.scale
         self.preferences_insulation_ext['subsidy'] /= self.scale
         self.preferences_insulation_ext['investment'] /= self.scale
         self.preferences_insulation_ext['bill_saved'] /= self.scale
-        self.coefficient_consumption = None
         self.constant_heater = None
         self.constant_insulation_intensive = None
         self.constant_insulation_extensive = None
@@ -3774,7 +3816,7 @@ class AgentBuildings(ThermalBuildings):
         self.preferences_insulation_int['investment'] *= scale
         self.preferences_insulation_int['bill_saved'] *= scale
 
-    def calibration_exogenous(self, coefficient_consumption=None, constant_heater=None,
+    def calibration_exogenous(self, coefficient_global=None, coefficient_energy=None, constant_heater=None,
                               constant_insulation_intensive=None, constant_insulation_extensive=None, scale=None,
                               energy_prices=None, taxes=None, threshold_indicator=None):
         """Function calibrating buildings object with exogenous data.
@@ -3782,7 +3824,8 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        coefficient_consumption: Series
+        coefficient_global: float
+        coefficient_energy: Series
         constant_heater: Series
         constant_insulation_intensive: Series
         constant_insulation_extensive: Series
@@ -3795,10 +3838,11 @@ class AgentBuildings(ThermalBuildings):
         """
 
         # calibration energy consumption first year
-        if (coefficient_consumption is None) and (energy_prices is not None) and (taxes is not None):
+        if (coefficient_global is None) and (energy_prices is not None) and (taxes is not None):
             self.calculate_consumption(energy_prices.loc[self.first_year, :], taxes)
         else:
-            self.coefficient_consumption = coefficient_consumption
+            self.coefficient_global = coefficient_global
+            self.coefficient_energy = coefficient_energy
 
         if constant_heater is None:
             constant_heater = get_pandas('project/input/calibration/calibration_constant_heater.csv',

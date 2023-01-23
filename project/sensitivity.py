@@ -166,7 +166,7 @@ if __name__ == '__main__':
         path=os.path.join('project', 'output', 'ResIRF'),
         logger=None,
         config=os.path.join('project/input/config/test/config_optim_threshold.json'),
-        import_calibration=_import_calibration,
+        import_calibration=None,
         export_calibration=_export_calibration)
 
     timestep = 1
@@ -174,7 +174,16 @@ if __name__ == '__main__':
     _start = _year
     _end = _year + timestep
 
-    _sub_insulation = [i / 10 for i in range(4, 8)]
+    _sub_heater = 0.1
+    _sub_insulation = 0.1
+
+    _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                                         _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
+                                         output_consumption=True)
+
+
+    """_sub_insulation = [i / 10 for i in range(4, 8)]
     _len = len(_sub_insulation)
     _sub_heater = [0] * _len
     _start = [_start] * _len
@@ -198,14 +207,9 @@ if __name__ == '__main__':
         results = pool.starmap(simu_res_irf, list_argument)
 
     test = {list_argument[i][2]: results[i][0].squeeze() for i in range(len(results))}
-    test = DataFrame(test)
+    test = DataFrame(test)"""
     print('break')
 
-
-    """_output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                         _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                                         output_consumption=False)"""
 
 
     """
