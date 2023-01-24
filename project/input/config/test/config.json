@@ -11,10 +11,10 @@
   },
   "Reference": {
     "end": 2021,
-    "debug_mode": true,
+    "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0,
-    "construction": true,
+    "construction": false,
     "income_rate": 0.0,
     "start": 2018,
     "renovation": {

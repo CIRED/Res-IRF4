@@ -2896,8 +2896,8 @@ class AgentBuildings(ThermalBuildings):
         consumption_saving_only_heater = consumption_saving_only_heater.sum().sum()
         consumption_saving_heater += consumption_saving_only_heater
 
-        self.consumption_saving_renovation = consumption_saving_renovation
-        self.consumption_saving_heater = consumption_saving_heater
+        self.consumption_saving_renovation = consumption_saving_renovation * self.coefficient_global
+        self.consumption_saving_heater = consumption_saving_heater * self.coefficient_global
 
     def store_rebound(self, flow_retrofit, flow_heater, prices):
         """Calculate consumption based on new building characteristics but current heating intensity.
@@ -3196,6 +3196,9 @@ class AgentBuildings(ThermalBuildings):
 
         """
 
+        def calculate_annuities(capex, lifetime=40, discount_rate=0.045):
+            return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+
         stock = self.simplified_stock()
 
         output = dict()
@@ -3461,7 +3464,6 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T / 10 ** 9)
             investment_heater = self.investment_heater.sum(axis=1)
 
-
             investment_insulation = self.investment_insulation.sum(axis=1)
             output['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10 ** 9
 
@@ -3589,11 +3591,15 @@ class AgentBuildings(ThermalBuildings):
 
             if output['Consumption saving renovation (TWh)'] is not None:
                 if output['Consumption saving renovation (TWh)'] != 0:
-                    output['Investment insulation / saving (euro / kWh.year)'] = output['Investment insulation (Billion euro)'] / output['Consumption saving renovation (TWh)']
+                    investment = calculate_annuities(output['Investment insulation (Billion euro)'])
+                    output['Investment insulation (euro/year)'] = investment
+                    output['Investment insulation / saving (euro/kWh)'] = investment / output['Consumption saving renovation (TWh)']
 
             if output['Consumption saving heater (TWh)'] is not None:
                 if output['Consumption saving heater (TWh)'] != 0:
-                    output['Investment heater / saving (euro / kWh.year)'] = output['Investment heater (Billion euro)'] / output['Consumption saving heater (TWh)']
+                    investment = calculate_annuities(output['Investment heater (Billion euro)'])
+                    output['Investment heater (euro/year)'] = investment
+                    output['Investment heater / saving (euro/kWh)'] = investment / output['Consumption saving heater (TWh)']
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)
