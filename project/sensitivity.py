@@ -106,7 +106,7 @@ def select_output(output):
         'Heating intensity (%)',
         'Emission (MtCO2)',
         'Cost rebound (Billion euro)',
-        'Consumption saving renovation (TWh)',
+        'Consumption saving insulation (TWh)',
         'Consumption saving heater (TWh)',
         'Investment insulation / saving (euro / kWh.year)',
         'Investment heater / saving (euro / kWh.year)'
@@ -120,7 +120,7 @@ def select_output(output):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=True, sub_design=None):
+                 output_consumption=False, full_output=True, sub_design='global_renovation'):
 
     # initialize policies
     if sub_heater is not None:
@@ -139,6 +139,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                  'Oil fuel-Performance boiler', 'Oil fuel-Standard boiler',
                                  'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler'], name='Heating system')
 
+        target = None
         if sub_design == 'very_low_income':
             sub_insulation = pd.Series([sub_insulation, sub_insulation,
                                         0, 0, 0, 0, 0, 0, 0, 0],
@@ -160,9 +161,24 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, sub_insulation, sub_insulation, 0, 0],
                                        index=energy_index)
 
+        if sub_design == 'global_renovation':
+            target = 'global_renovation'
+
+        if sub_design == 'global_renovation_low_income':
+            target = 'global_renovation_low_income'
+
+        if sub_design == 'mpr_serenite':
+            target = 'mpr_serenite'
+
+        if sub_design == 'bonus_best':
+            target = 'bonus_best'
+
+        if sub_design == 'bonus_worst':
+            target = 'bonus_worst'
+
         policies_insulation.append(
             PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
-                         gest='insulation'))  # insulation policy during considered years
+                         gest='insulation', target=target))  # insulation policy during considered years
 
     output, consumption, prices = dict(), None, None
     for year in range(start, end):
@@ -268,11 +284,11 @@ if __name__ == '__main__':
     timestep = 1
     _year = 2020
 
-    _sub_heater = 0
-    _sub_insulation = 0
+    _sub_heater = 0.1
+    _sub_insulation = 0.5
 
     _concat_output = DataFrame()
-    for _year in range(2025, 2026):
+    for _year in range(2025, 2027):
         _start = _year
         _end = _year + timestep
 

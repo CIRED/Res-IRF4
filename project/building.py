@@ -1705,8 +1705,8 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'subsidy_ad_volarem':
 
-                cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.name),
-                                            cost_included=self.cost_heater.copy())
+
+                cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.target))
 
                 if isinstance(policy.value, (Series, float, int)):
                     temp = reindex_mi(policy.value, cost.index)
@@ -1722,8 +1722,7 @@ class AgentBuildings(ThermalBuildings):
 
             elif policy.policy == 'zero_interest_loan':
 
-                cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.name),
-                                            cost_included=self.cost_heater.copy())
+                cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.name))
                 subsidies_details[policy.name] = policy.value * cost
                 subsidies_total += subsidies_details[policy.name]
                 self.zil_loaned = cost.copy()
