@@ -120,7 +120,7 @@ def select_output(output):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=True, sub_design='natural_gas'):
+                 output_consumption=False, full_output=True, sub_design=None):
 
     # initialize policies
     if sub_heater is not None and sub_heater != 0:
@@ -153,7 +153,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                           columns=['Wall', 'Floor', 'Roof', 'Windows'],
                                           index=low_income_index)
         if sub_design == 'natural_gas':
-            sub_insulation = pd.DataFrame([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
+            sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
                                           index=energy_index)
 
         policies_insulation.append(
