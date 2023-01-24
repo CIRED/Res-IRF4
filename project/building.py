@@ -3104,8 +3104,7 @@ class AgentBuildings(ThermalBuildings):
         flow_only_heater = (share * temp).stack('Income tenant').dropna()
         assert round(flow_only_heater.sum().sum(), 0) == round(flow_only_heater_sum, 0), 'Sum problem'
 
-        detailed_output = False
-        if detailed_output:
+        if self._debug_mode:
             self.logger.debug('Calculate rebound effect')
             self.store_rebound(replaced_by, flow_only_heater, prices)
             self.logger.debug('Calculate energy saving')

@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 
 
-def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None):
+def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None, cost_factor=1):
     """Initialize and calibrate Res-IRF.
 
     Parameters
@@ -57,6 +57,8 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
+    cost_insulation *= cost_factor
+
     buildings.calibration_exogenous(**calibration)
 
     return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation
@@ -117,10 +119,7 @@ def select_output(output):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=True):
-
-    # setting output format
-    buildings.full_output = full_output
+                 output_consumption=False, full_output=False):
 
     # initialize policies
     if sub_heater is not None and sub_heater != 0:
@@ -145,8 +144,11 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs)
 
-        o.to_csv(os.path.join(buildings.path, 'output.csv'))
-        output.update({year: select_output(o)})
+        # o.to_csv(os.path.join(buildings.path, 'output.csv'))
+        if full_output is False:
+            output.update({year: select_output(o)})
+        else:
+            output.update({year: o})
 
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
@@ -159,7 +161,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
 
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 flow_built, post_inputs, policies_heater, policies_insulation):
+                   flow_built, post_inputs, policies_heater, policies_insulation):
 
     sub_insulation = [i / 10 for i in range(4, 8)]
     _len = len(sub_insulation)
@@ -213,7 +215,7 @@ if __name__ == '__main__':
     _sub_insulation = 0
 
     _concat_output = DataFrame()
-    for _year in range(2020, 2030):
+    for _year in range(2020, 2021):
         _start = _year
         _end = _year + timestep
 
@@ -222,6 +224,7 @@ if __name__ == '__main__':
                                              _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
                                              output_consumption=False)
         _concat_output = concat((_concat_output, _output), axis=1)
+
 
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
 

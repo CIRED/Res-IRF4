@@ -11,7 +11,7 @@
   },
   "Reference": {
     "end": 2021,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0,
     "construction": true,
@@ -143,7 +143,4 @@
     "share_multi_family": null,
     "surface_built": null
   }
-
-
-
 }
