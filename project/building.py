@@ -759,7 +759,7 @@ class AgentBuildings(ThermalBuildings):
             self._threshold = threshold
         self.threshold_indicator = None
         self.consumption_saving_heater = None
-        self.consumption_saving_renovation = None
+        self.consumption_saving_insulation = None
         self.cost_rebound = None
         self.rebound = None
         self.best_option = None
@@ -2835,7 +2835,6 @@ class AgentBuildings(ThermalBuildings):
         return replaced_by
 
     def store_energy_saving(self, flow_retrofit, flow_heater, prices):
-        # TODO: need to be calibrated. Apply self.calibration
         def saving(_flow, _prices):
             _flow = _flow[_flow > 0]
             _index = _flow.index
@@ -2857,7 +2856,7 @@ class AgentBuildings(ThermalBuildings):
                                                               level_heater='Heating system final')
                 _consumption *= _flow
                 _consumption_after = _consumption * heating_intensity
-                _consumption_saving_renovation = _consumption_before - _consumption_after
+                _consumption_saving_insulation = _consumption_before - _consumption_after
 
                 # heater
                 _consumption_saving_heater = None
@@ -2872,7 +2871,7 @@ class AgentBuildings(ThermalBuildings):
                     _consumption = _consumption * heating_intensity
                     _consumption_saving_heater = _consumption_after - _consumption
 
-                return _consumption_saving_renovation, _consumption_saving_heater
+                return _consumption_saving_insulation, _consumption_saving_heater
 
             if isinstance(_flow, Series):
                 _consumption_saving_heater = None
@@ -2888,15 +2887,15 @@ class AgentBuildings(ThermalBuildings):
                     _consumption_saving_heater = _consumption_before - _consumption
                     return _consumption_saving_heater
 
-        consumption_saving_renovation, consumption_saving_heater = saving(flow_retrofit, prices)
-        consumption_saving_renovation = consumption_saving_renovation.sum().sum()
+        consumption_saving_insulation, consumption_saving_heater = saving(flow_retrofit, prices)
+        consumption_saving_insulation = consumption_saving_insulation.sum().sum()
         consumption_saving_heater = consumption_saving_heater.sum().sum()
 
         consumption_saving_only_heater = saving(flow_heater.stack(), prices)
         consumption_saving_only_heater = consumption_saving_only_heater.sum().sum()
         consumption_saving_heater += consumption_saving_only_heater
 
-        self.consumption_saving_renovation = consumption_saving_renovation * self.coefficient_global
+        self.consumption_saving_insulation = consumption_saving_insulation * self.coefficient_global
         self.consumption_saving_heater = consumption_saving_heater * self.coefficient_global
 
     def store_rebound(self, flow_retrofit, flow_heater, prices):
@@ -3005,8 +3004,7 @@ class AgentBuildings(ThermalBuildings):
         self.cost_rebound = (prices * self.rebound).sum()
 
     def flow_retrofit(self, prices, cost_heater, cost_insulation, policies_heater=None, policies_insulation=None,
-                      ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None,
-                      ):
+                      ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -3572,12 +3570,12 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Share subsidies {} (%)'.format(x))
                 output.update(temp.T)
 
-            if self.consumption_saving_renovation is not None:
-                output['Consumption saving renovation (TWh)'] = self.consumption_saving_renovation / 10**9
+            if self.consumption_saving_insulation is not None:
+                output['Consumption saving insulation (TWh)'] = self.consumption_saving_insulation / 10**9
             else:
-                output['Consumption saving renovation (TWh)'] = None
+                output['Consumption saving insulation (TWh)'] = None
 
-            if self.consumption_saving_renovation is not None:
+            if self.consumption_saving_insulation is not None:
                 output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10 ** 9
             else:
                 output['Consumption saving heater (TWh)'] = None
@@ -3589,11 +3587,11 @@ class AgentBuildings(ThermalBuildings):
             if output['Renovation (Thousand households)'] != 0:
                 output['Investment insulation / households (Thousand euro)'] = output['Investment insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
 
-            if output['Consumption saving renovation (TWh)'] is not None:
-                if output['Consumption saving renovation (TWh)'] != 0:
+            if output['Consumption saving insulation (TWh)'] is not None:
+                if output['Consumption saving insulation (TWh)'] != 0:
                     investment = calculate_annuities(output['Investment insulation (Billion euro)'])
                     output['Investment insulation (euro/year)'] = investment
-                    output['Investment insulation / saving (euro/kWh)'] = investment / output['Consumption saving renovation (TWh)']
+                    output['Investment insulation / saving (euro/kWh)'] = investment / output['Consumption saving insulation (TWh)']
 
             if output['Consumption saving heater (TWh)'] is not None:
                 if output['Consumption saving heater (TWh)'] != 0:

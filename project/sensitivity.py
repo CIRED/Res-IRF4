@@ -120,7 +120,7 @@ def select_output(output):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=True):
+                 output_consumption=False, full_output=True, sub_design='natural_gas'):
 
     # initialize policies
     if sub_heater is not None and sub_heater != 0:
@@ -130,7 +130,32 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_volarem',
                                             gest='heater', by='columns'))  # heating policy during considered years
 
+    # , 'target_global', 'target_low_efficient', 'target_wall'
     if sub_insulation is not None and sub_insulation != 0:
+        low_income_index = pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], name='Income owner')
+        energy_index = pd.Index(['Electricity-Heat pump water', 'Electricity-Heat pump air',
+                                 'Electricity-Performance boiler',
+                                 'Natural gas-Performance boiler', 'Natural gas-Standard boiler',
+                                 'Oil fuel-Performance boiler', 'Oil fuel-Standard boiler',
+                                 'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler'], name='Heating system')
+
+        if sub_design == 'very_low_income':
+            sub_insulation = pd.Series([sub_insulation, sub_insulation,
+                                        0, 0, 0, 0, 0, 0, 0, 0],
+                                       index=low_income_index)
+
+        if sub_design == 'low_income':
+            sub_insulation = pd.Series([sub_insulation, sub_insulation, sub_insulation, sub_insulation,
+                                        0, 0, 0, 0, 0, 0],
+                                       index=low_income_index)
+        if sub_design == 'wall':
+            sub_insulation = pd.DataFrame([[sub_insulation, 0, 0, 0] for _ in range(len(low_income_index))],
+                                          columns=['Wall', 'Floor', 'Roof', 'Windows'],
+                                          index=low_income_index)
+        if sub_design == 'natural_gas':
+            sub_insulation = pd.DataFrame([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
+                                          index=energy_index)
+
         policies_insulation.append(
             PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
                          gest='insulation'))  # insulation policy during considered years
@@ -195,8 +220,8 @@ if __name__ == '__main__':
     from copy import deepcopy
     # first time
     name = 'calibration'
-    calibration_threshold = True
-    config = 'project/input/config/test/config_optim.json'
+    calibration_threshold = False
+    config = 'project/input/config/test/config_celia.json'
     if calibration_threshold is True:
         name = '{}_threshold'.format(name)
         config = 'project/input/config/test/config_optim_threshold.json'
@@ -209,9 +234,10 @@ if __name__ == '__main__':
         logger=None,
         config=config,
         import_calibration=None,
-        export_calibration=_export_calibration)
+        export_calibration=None)
 
-    _sub_heater = 1
+    """
+    _sub_heater = 0
     _result = run_multi_simu(_buildings, _sub_heater, 2020, 2021, _energy_prices, _taxes, _cost_heater,
                              _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation)
     name = 'cost_efficiency_insulation.png'
@@ -234,29 +260,24 @@ if __name__ == '__main__':
               'Marginal investment insulation / saving (euro/kWh)',
               integer=False, save=os.path.join(_path, name))
 
-    print('break')
-
-
     """
     timestep = 1
     _year = 2020
 
-    _sub_heater = 1
+    _sub_heater = 0
     _sub_insulation = 0
 
     _concat_output = DataFrame()
-    for _year in range(2020, 2021):
+    for _year in range(2025, 2027):
         _start = _year
         _end = _year + timestep
 
         _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
                                              _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                             _p_insulation, climate=2006, smooth=False, efficiency_hour=False,
+                                             _p_insulation, climate=2006, smooth=False, efficiency_hour=True,
                                              output_consumption=False)
         _concat_output = concat((_concat_output, _output), axis=1)
 
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
-
-    """
 
 

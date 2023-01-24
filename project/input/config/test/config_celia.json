@@ -1,6 +1,16 @@
 {
+  "sensitivity": {
+    "activated": false,
+    "building_stock": [
+      "project/input/stock/buildingstock_sdes2018_simple_1.csv",
+      "project/input/stock/buildingstock_sdes2018_simple_3.csv",
+      "project/input/stock/buildingstock_sdes2018_simple_5.csv",
+      "project/input/stock/buildingstock_sdes2018_medium_1.csv",
+      "project/input/stock/buildingstock_sdes2018_medium_5.csv"
+    ]
+  },
   "Reference": {
-    "end": 2021,
+    "end": 2051,
     "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -70,14 +80,14 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
       },
       "reduced_tax": {
         "start": 2019,
-        "end": 2051,
+        "end": 2020,
         "value": 0.055
       },
       "obligation": {
