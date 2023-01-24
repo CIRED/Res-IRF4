@@ -108,14 +108,80 @@ def select_output(output):
         'Cost rebound (Billion euro)',
         'Consumption saving insulation (TWh)',
         'Consumption saving heater (TWh)',
-        'Investment insulation / saving (euro / kWh.year)',
-        'Investment heater / saving (euro / kWh.year)'
+        'Investment insulation / saving (euro/kWh)',
+        'Investment heater / saving (euro/kWh)'
     ]
     variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater_replacement]
     variables += ['Stock {} (Thousand households)'.format(i) for i in heater_stock]
 
     variables = [v for v in variables if v in output.index]
     return output.loc[variables]
+
+
+def create_subsidies(sub_insulation, sub_design, start, end):
+    """
+
+    Parameters
+    ----------
+    sub_insulation
+    sub_design: {'very_low_income', 'low_income', 'wall', 'natural_gas', 'fossil', 'global_renovation',
+    'global_renovation_low_income', 'mpr_serenite', 'bonus_best', 'bonus_worst'}
+    start
+    end
+
+    Returns
+    -------
+
+    """
+
+    low_income_index = pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], name='Income owner')
+    energy_index = pd.Index(['Electricity-Heat pump water', 'Electricity-Heat pump air',
+                             'Electricity-Performance boiler',
+                             'Natural gas-Performance boiler', 'Natural gas-Standard boiler',
+                             'Oil fuel-Performance boiler', 'Oil fuel-Standard boiler',
+                             'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler'], name='Heating system')
+
+    target = None
+    if sub_design == 'very_low_income':
+        sub_insulation = pd.Series([sub_insulation, sub_insulation,
+                                    0, 0, 0, 0, 0, 0, 0, 0],
+                                   index=low_income_index)
+
+    if sub_design == 'low_income':
+        sub_insulation = pd.Series([sub_insulation, sub_insulation, sub_insulation, sub_insulation,
+                                    0, 0, 0, 0, 0, 0],
+                                   index=low_income_index)
+    if sub_design == 'wall':
+        sub_insulation = pd.DataFrame([[sub_insulation, 0, 0, 0] for _ in range(len(low_income_index))],
+                                      columns=['Wall', 'Floor', 'Roof', 'Windows'],
+                                      index=low_income_index)
+    if sub_design == 'natural_gas':
+        sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
+                                   index=energy_index)
+
+    if sub_design == 'fossil':
+        sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, sub_insulation, sub_insulation, 0, 0],
+                                   index=energy_index)
+
+    if sub_design == 'global_renovation':
+        target = 'global_renovation'
+
+    if sub_design == 'global_renovation_low_income':
+        target = 'global_renovation_low_income'
+
+    if sub_design == 'mpr_serenite':
+        target = 'mpr_serenite'
+
+    if sub_design == 'bonus_best':
+        target = 'bonus_best'
+
+    if sub_design == 'bonus_worst':
+        target = 'bonus_worst'
+
+    policy = PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
+                          gest='insulation', target=target)
+
+    return policy
 
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
@@ -132,53 +198,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
     # , 'target_global', 'target_low_efficient', 'target_wall'
     if sub_insulation is not None:
-        low_income_index = pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], name='Income owner')
-        energy_index = pd.Index(['Electricity-Heat pump water', 'Electricity-Heat pump air',
-                                 'Electricity-Performance boiler',
-                                 'Natural gas-Performance boiler', 'Natural gas-Standard boiler',
-                                 'Oil fuel-Performance boiler', 'Oil fuel-Standard boiler',
-                                 'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler'], name='Heating system')
-
-        target = None
-        if sub_design == 'very_low_income':
-            sub_insulation = pd.Series([sub_insulation, sub_insulation,
-                                        0, 0, 0, 0, 0, 0, 0, 0],
-                                       index=low_income_index)
-
-        if sub_design == 'low_income':
-            sub_insulation = pd.Series([sub_insulation, sub_insulation, sub_insulation, sub_insulation,
-                                        0, 0, 0, 0, 0, 0],
-                                       index=low_income_index)
-        if sub_design == 'wall':
-            sub_insulation = pd.DataFrame([[sub_insulation, 0, 0, 0] for _ in range(len(low_income_index))],
-                                          columns=['Wall', 'Floor', 'Roof', 'Windows'],
-                                          index=low_income_index)
-        if sub_design == 'natural_gas':
-            sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
-                                       index=energy_index)
-
-        if sub_design == 'fossil':
-            sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, sub_insulation, sub_insulation, 0, 0],
-                                       index=energy_index)
-
-        if sub_design == 'global_renovation':
-            target = 'global_renovation'
-
-        if sub_design == 'global_renovation_low_income':
-            target = 'global_renovation_low_income'
-
-        if sub_design == 'mpr_serenite':
-            target = 'mpr_serenite'
-
-        if sub_design == 'bonus_best':
-            target = 'bonus_best'
-
-        if sub_design == 'bonus_worst':
-            target = 'bonus_worst'
-
-        policies_insulation.append(
-            PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
-                         gest='insulation', target=target))  # insulation policy during considered years
+        policy = create_subsidies(sub_insulation, sub_design, start, end)
+        policies_insulation.append(policy)  # insulation policy during considered years
 
     output, consumption, prices = dict(), None, None
     for year in range(start, end):
@@ -295,7 +316,7 @@ if __name__ == '__main__':
         _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
                                              _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
                                              _p_insulation, climate=2006, smooth=False, efficiency_hour=True,
-                                             output_consumption=False)
+                                             output_consumption=False, full_output=False)
         _concat_output = concat((_concat_output, _output), axis=1)
 
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
