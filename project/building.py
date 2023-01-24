@@ -1708,7 +1708,7 @@ class AgentBuildings(ThermalBuildings):
                 cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.name),
                                             cost_included=self.cost_heater.copy())
 
-                if isinstance(policy.value, (Series, float)):
+                if isinstance(policy.value, (Series, float, int)):
                     temp = reindex_mi(policy.value, cost.index)
                     subsidies_details[policy.name] = (temp * cost.T).T
                     subsidies_total += subsidies_details[policy.name]

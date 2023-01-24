@@ -123,7 +123,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                  output_consumption=False, full_output=True, sub_design=None):
 
     # initialize policies
-    if sub_heater is not None and sub_heater != 0:
+    if sub_heater is not None:
         sub_heater = Series([sub_heater, sub_heater],
                             index=Index(['Electricity-Heat pump water', 'Electricity-Heat pump air'],
                                         name='Heating system final'))
@@ -131,7 +131,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                             gest='heater', by='columns'))  # heating policy during considered years
 
     # , 'target_global', 'target_low_efficient', 'target_wall'
-    if sub_insulation is not None and sub_insulation != 0:
+    if sub_insulation is not None:
         low_income_index = pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], name='Income owner')
         energy_index = pd.Index(['Electricity-Heat pump water', 'Electricity-Heat pump air',
                                  'Electricity-Performance boiler',
@@ -154,7 +154,11 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                           index=low_income_index)
         if sub_design == 'natural_gas':
             sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
-                                          index=energy_index)
+                                       index=energy_index)
+
+        if sub_design == 'fossil':
+            sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, sub_insulation, sub_insulation, 0, 0],
+                                       index=energy_index)
 
         policies_insulation.append(
             PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
@@ -233,8 +237,8 @@ if __name__ == '__main__':
         path=_path,
         logger=None,
         config=config,
-        import_calibration=None,
-        export_calibration=None)
+        import_calibration=_import_calibration,
+        export_calibration=_export_calibration)
 
     """
     _sub_heater = 0
@@ -268,7 +272,7 @@ if __name__ == '__main__':
     _sub_insulation = 0
 
     _concat_output = DataFrame()
-    for _year in range(2025, 2027):
+    for _year in range(2025, 2026):
         _start = _year
         _end = _year + timestep
 
