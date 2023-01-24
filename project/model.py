@@ -484,7 +484,7 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=T
     return df
 
 
-def calibration_res_irf(path, config=None):
+def calibration_res_irf(path, config=None, cost_factor=1):
     """Calibrate Res-IRF and returns calibrated parameters.
     Function is useful for running multiple scenarios with the same calibration.
     Typical example is for sensitivity analysis or elasticity calculation.
@@ -503,6 +503,8 @@ def calibration_res_irf(path, config=None):
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
         buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
+
+        cost_insulation *= cost_factor
 
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
         buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)

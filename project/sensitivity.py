@@ -43,7 +43,7 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
         with open(import_calibration, "rb") as file:
             calibration = load(file)
     else:
-        calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config)
+        calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config, cost_factor=cost_factor)
 
     if export_calibration is not None:
         export_calibration = Path(export_calibration)
