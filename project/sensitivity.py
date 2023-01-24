@@ -5,6 +5,7 @@ from pandas import read_csv, concat, Series, Index, DataFrame
 # imports from ResIRF
 from project.model import config2inputs, initialize, stock_turnover, calibration_res_irf
 from project.read_input import PublicPolicy
+from project.utils import make_plot
 from multiprocessing import Pool
 import os
 from pickle import dump, load
@@ -119,7 +120,7 @@ def select_output(output):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=False):
+                 output_consumption=False, full_output=True):
 
     # initialize policies
     if sub_heater is not None and sub_heater != 0:
@@ -163,7 +164,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                    flow_built, post_inputs, policies_heater, policies_insulation):
 
-    sub_insulation = [i / 10 for i in range(4, 8)]
+    sub_insulation = [i / 10 for i in range(0, 11)]
     _len = len(sub_insulation)
     sub_heater = [sub_heater] * _len
     start = [start] * _len
@@ -178,7 +179,7 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     policies_insulation = [policies_insulation] * _len
     buildings = [deepcopy(buildings)] * _len
 
-    list_argument = list(zip(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
+    list_argument = list(zip(deepcopy(buildings), deepcopy(sub_heater), deepcopy(sub_insulation), start, end, energy_prices, taxes,
                              cost_heater, cost_insulation, flow_built, post_inputs, policies_heater,
                              policies_insulation))
 
@@ -195,19 +196,48 @@ if __name__ == '__main__':
     # first time
     name = 'calibration'
     calibration_threshold = True
+    config = 'project/input/config/test/config_optim.json'
     if calibration_threshold is True:
         name = '{}_threshold'.format(name)
+        config = 'project/input/config/test/config_optim_threshold.json'
 
     _export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
-
+    _path = os.path.join('project', 'output', 'ResIRF')
     _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
-        path=os.path.join('project', 'output', 'ResIRF'),
+        path=_path,
         logger=None,
-        config=os.path.join('project/input/config/test/config_optim_threshold.json'),
+        config=config,
         import_calibration=None,
         export_calibration=_export_calibration)
 
+    _sub_heater = 1
+    _result = run_multi_simu(_buildings, _sub_heater, 2020, 2021, _energy_prices, _taxes, _cost_heater,
+                             _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation)
+    name = 'cost_efficiency_insulation.png'
+    if calibration_threshold is True:
+        name = 'cost_efficiency_insulation_threshold.png'
+    make_plot(_result.loc['Investment insulation / saving (euro/kWh)', :], 'Investment insulation / saving (euro/kWh)',
+              integer=False, save=os.path.join(_path, name))
+
+    variables = ['Consumption saving renovation (TWh)',
+                 'Investment insulation (euro/year)',
+                 'Investment insulation / saving (euro/kWh)',
+                 ]
+    _result_diff = _result.loc[variables, :].diff(axis=1).dropna(axis=1, how='all')
+    _result_diff.loc['Investment insulation / saving (euro/kWh)'] = _result_diff.loc['Investment insulation (euro/year)'] / _result_diff.loc['Consumption saving renovation (TWh)']
+    name = 'marginal_cost_efficiency_insulation.png'
+    if calibration_threshold is True:
+        name = 'marginal_cost_efficiency_insulation_threshold.png'
+
+    make_plot(_result_diff.loc['Investment insulation / saving (euro/kWh)', :],
+              'Marginal investment insulation / saving (euro/kWh)',
+              integer=False, save=os.path.join(_path, name))
+
+    print('break')
+
+
+    """
     timestep = 1
     _year = 2020
 
@@ -225,9 +255,8 @@ if __name__ == '__main__':
                                              output_consumption=False)
         _concat_output = concat((_concat_output, _output), axis=1)
 
-
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
 
-    print('break')
+    """
 
 

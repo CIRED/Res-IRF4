@@ -1,7 +1,7 @@
 {
   "Reference": {
-    "end": 2051,
-    "debug_mode": false,
+    "end": 2021,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
