@@ -3,7 +3,11 @@ Multi-family,Electricity-Heat pump water,1,,,,,
 Multi-family,Electricity-Heat pump air,,1,,,,
 Multi-family,Electricity-Performance boiler,,0.35,0.65,,,
 Multi-family,Natural gas-Performance boiler,0.072,,0.134,0.795,,
+Multi-family,Natural gas-Standard boiler,0.072,,0.134,0.795,,
 Multi-family,Oil fuel-Performance boiler,0.072,,0.134,0.795,,
+Multi-family,Oil fuel-Standard boiler,0.072,,0.134,0.795,,
+Multi-family,Wood fuel-Performance boiler,0.115,,0.142,0.08,,0.663
+Multi-family,Wood fuel-Standard boiler,0.115,,0.142,0.08,,0.663
 Single-family,Electricity-Heat pump water,0.793,,,,,0.207
 Single-family,Electricity-Heat pump air,,1,,,,
 Single-family,Electricity-Performance boiler,,0.2,0.416,,,0.384

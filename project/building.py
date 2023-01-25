@@ -1230,12 +1230,6 @@ class AgentBuildings(ThermalBuildings):
 
             possible = reindex_mi(_ms_heater, utility_ref.index)
             utility_ref[~(possible > 0)] = float('nan')
-            
-            # add energy performance
-            utility_ref = self.add_certificate(utility_ref)
-            """idx = utility_ref.index.get_level_values('Performance').isin(['F', 'G']).index
-            hp_idx = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
-            utility_ref.loc[idx, hp_idx]"""
 
             stock = self.stock.groupby(utility_ref.index.names).sum() * 1/20
 
@@ -1312,6 +1306,14 @@ class AgentBuildings(ThermalBuildings):
                 utility_inertia.index.get_level_values('Heating system') == hs, hs] = self.preferences_heater['inertia']
 
         utility = utility_inertia + utility_investment + utility_bill_saving + utility_subsidies
+
+        # removing heat-pump for low-efficient buildings
+        utility = self.add_certificate(utility)
+        utility.columns.names = ['Heating system final']
+        idx = utility[utility.index.get_level_values('Performance').isin(['F', 'G'])].index
+        hp_idx = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
+        utility.loc[idx, hp_idx] = float('nan')
+        utility = utility.droplevel('Performance')
 
         if (self.constant_heater is None) and (ms_heater is not None):
             self.logger.info('Calibration market-share heating system')
