@@ -79,7 +79,7 @@ class ThermalBuildings:
                 os.mkdir(self.path_calibration)
 
         self._consumption_ini = consumption_ini
-        self.coefficient_global, self.coefficient_energy = None, None
+        self.coefficient_global, self.coefficient_heater = None, None
 
         self._surface_yrs = surface
         self._surface = surface.loc[:, year]
@@ -484,20 +484,22 @@ class ThermalBuildings:
         if self.coefficient_global is None:
             raise AttributeError
 
-        energy = Series(consumption.index.get_level_values(level_heater), index=consumption.index).str.split('-').str[0].rename('Energy')
-        consumption_energy = consumption.groupby(energy).sum()
-        consumption_energy *= self.coefficient_global
+        consumption_heater = consumption.groupby('Heating system').sum()
+        consumption_heater *= self.coefficient_global
 
         if isinstance(consumption, Series):
-            _consumption_energy = consumption_energy * self.coefficient_energy
-            _consumption_energy['Wood fuel'] += ((1 - self.coefficient_energy) * consumption_energy).sum()
+            _consumption_heater = self.coefficient_heater * consumption_heater
+            consumption_secondary = (1 - self.coefficient_heater) * consumption_heater
+            _consumption_energy = _consumption_heater.groupby(_consumption_heater.index.str.split('-').str[0].rename('Energy')).sum()
+            _consumption_energy['Wood fuel'] += consumption_secondary.sum()
 
-            # coefficient = self.coefficient_energy.reindex(energy).set_axis(consumption.index, axis=0)
             return _consumption_energy
 
         elif isinstance(consumption, DataFrame):
-            _consumption_energy = (consumption_energy.T * self.coefficient_energy).T
-            _consumption_energy.loc['Wood fuel', :] += ((1 - self.coefficient_energy) * consumption_energy.T).T.sum()
+            _consumption_heater = (consumption_heater.T * self.coefficient_heater).T
+            consumption_secondary = (consumption_heater.T * (1 - self.coefficient_heater)).T.sum()
+            _consumption_energy = _consumption_heater.groupby(_consumption_heater.index.str.split('-').str[0].rename('Energy')).sum()
+            _consumption_energy.loc['Wood fuel', :] += consumption_secondary
 
             return _consumption_energy
             
@@ -524,6 +526,7 @@ class ThermalBuildings:
         _consumption_actual = self.consumption_actual(prices, consumption=consumption, store=store) * self.stock
 
         consumption_energy = _consumption_actual.groupby(self.energy).sum()
+        consumption_heater = _consumption_actual.groupby('Heating system').sum()
         if self.coefficient_global is None:
 
             # 1. consumption total
@@ -540,7 +543,15 @@ class ThermalBuildings:
             _consumption_energy['Wood fuel'] += ((1 - coefficient) * consumption_energy).sum()
             pd.concat((_consumption_energy / 10**9, self._consumption_ini), axis=1)
             self.coefficient_global = coefficient_global
-            self.coefficient_energy = coefficient
+            idx_heater = _consumption_actual.index.get_level_values('Heating system').unique()
+            if 'Electricity-Heat pump air' not in idx_heater:
+                idx_heater = idx_heater.insert(0, 'Electricity-Heat pump air')
+            energy = idx_heater.str.split('-').str[0].rename('Energy')
+            self.coefficient_heater = coefficient.reindex(energy)
+            self.coefficient_heater.index = idx_heater
+            idx_heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
+            self.coefficient_heater.loc[idx_heat_pump] = 1
+
             self.apply_calibration(_consumption_actual)
             validation = dict()
             # stock initial
@@ -575,8 +586,7 @@ class ThermalBuildings:
 
             validation.update({'Coefficient calibration global (%)': self.coefficient_global})
 
-
-            temp = self.coefficient_energy.copy()
+            temp = self.coefficient_heater.copy()
             temp.index = temp.index.map(lambda x: 'Coefficient calibration {} (%)'.format(x))
             validation.update(temp)
 
@@ -1220,6 +1230,12 @@ class AgentBuildings(ThermalBuildings):
 
             possible = reindex_mi(_ms_heater, utility_ref.index)
             utility_ref[~(possible > 0)] = float('nan')
+            
+            # add energy performance
+            utility_ref = self.add_certificate(utility_ref)
+            """idx = utility_ref.index.get_level_values('Performance').isin(['F', 'G']).index
+            hp_idx = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
+            utility_ref.loc[idx, hp_idx]"""
 
             stock = self.stock.groupby(utility_ref.index.names).sum() * 1/20
 
@@ -1584,7 +1600,7 @@ class AgentBuildings(ThermalBuildings):
                 best = concat((best, t_best)).astype(float)
 
             self.best_option = (best.T == best.min(axis=1)).T
-
+            condition_target.update({'best_option': self.best_option.copy()})
             minimum_gest_condition, global_condition = 1, 2
             energy_condition = 0.35
 
@@ -1991,7 +2007,7 @@ class AgentBuildings(ThermalBuildings):
                            names=self.surface_insulation.index.names)
 
         if policy == 'subsidy_ad_volarem':
-            # NotImplemented: ad_volarem with different subsidides rate
+            # NotImplemented: ad_volarem with different subsididies rate
             value = [v for v in subsidies_insulation.stack().unique() if v != 0][0]
             subsidies[subsidies > 0] = value
 
@@ -2842,8 +2858,6 @@ class AgentBuildings(ThermalBuildings):
             _consumption_before = reindex_mi(_consumption_before, _index) * reindex_mi(self._surface, _index)
             _consumption_before = self.consumption_actual(prices, consumption=_consumption_before)
             _consumption_before = (_consumption_before * _flow.T).T
-
-            # _consumption_before_energy = self.apply_calibration(_consumption_before)
 
             if isinstance(_flow, DataFrame):
                 # insulation
@@ -3795,7 +3809,7 @@ class AgentBuildings(ThermalBuildings):
     def remove_calibration(self):
 
         self.coefficient_global = None
-        self.coefficient_energy = None
+        self.coefficient_heater = None
 
 
         self.preferences_insulation_int['subsidy'] /= self.scale
@@ -3820,7 +3834,7 @@ class AgentBuildings(ThermalBuildings):
         self.preferences_insulation_int['investment'] *= scale
         self.preferences_insulation_int['bill_saved'] *= scale
 
-    def calibration_exogenous(self, coefficient_global=None, coefficient_energy=None, constant_heater=None,
+    def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
                               constant_insulation_intensive=None, constant_insulation_extensive=None, scale=None,
                               energy_prices=None, taxes=None, threshold_indicator=None):
         """Function calibrating buildings object with exogenous data.
@@ -3829,7 +3843,7 @@ class AgentBuildings(ThermalBuildings):
         Parameters
         ----------
         coefficient_global: float
-        coefficient_energy: Series
+        coefficient_heater: Series
         constant_heater: Series
         constant_insulation_intensive: Series
         constant_insulation_extensive: Series
@@ -3846,7 +3860,7 @@ class AgentBuildings(ThermalBuildings):
             self.calculate_consumption(energy_prices.loc[self.first_year, :], taxes)
         else:
             self.coefficient_global = coefficient_global
-            self.coefficient_energy = coefficient_energy
+            self.coefficient_heater = coefficient_heater
 
         if constant_heater is None:
             constant_heater = get_pandas('project/input/calibration/calibration_constant_heater.csv',

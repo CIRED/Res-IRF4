@@ -527,7 +527,7 @@ def calibration_res_irf(path, config=None, cost_factor=1):
 
         calibration = {
             'coefficient_global': buildings.coefficient_global,
-            'coefficient_energy': buildings.coefficient_energy,
+            'coefficient_heater': buildings.coefficient_heater,
             'constant_heater': buildings.constant_heater,
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_insulation_extensive': buildings.constant_insulation_extensive,

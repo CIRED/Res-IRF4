@@ -291,6 +291,8 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     """Monthly stead-state space heating final energy delivered.
 
 
+    Heat-pump formula come from Stafell et al., 2012.
+
     Parameters
     ----------
     u_wall: pd.Series
@@ -332,8 +334,8 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
         data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
         temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
         delta_temperature = TEMP_SINK - temp_ext
-
-        efficiency_hp = 6.81 - 0.121 * delta_temperature + 0.00063 * delta_temperature ** 2
+        # TODO replace 0 by nan
+        efficiency_hp = 6.81 - 0.121 * delta_temperature + 0.00063 * (delta_temperature ** 2)
 
         heat_pumps = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
         efficiency = pd.concat([efficiency] * efficiency_hp.shape[0], axis=1, keys=efficiency_hp.index, names=efficiency_hp.index.names)

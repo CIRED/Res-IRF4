@@ -89,7 +89,7 @@ class PublicPolicy:
         cost = cost_insulation.copy()
         target = None
         if self.target is not None and target_subsidies is not None:
-            cost = cost[target_subsidies].fillna(0)
+            cost = cost[target_subsidies.astype(bool)].fillna(0)
         if self.cost_max is not None:
             cost_max = reindex_mi(self.cost_max, cost.index)
             cost_max = pd.concat([cost_max] * cost.shape[1], axis=1).set_axis(cost.columns, axis=1)
