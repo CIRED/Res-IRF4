@@ -288,7 +288,8 @@ class ThermalBuildings:
         else:
             return consumption
 
-    def consumption_standard(self, indexes, level_heater='Heating system', unit='kWh/m2.y', full_output=True):
+    def consumption_standard(self, indexes, level_heater='Heating system', unit='kWh/m2.y', full_output=True,
+                             climate=None):
         """Pre-calculate space energy consumption based only on relevant levels.
 
         Parameters
@@ -297,6 +298,8 @@ class ThermalBuildings:
             Used to estimate consumption standard.
         level_heater: {'Heating system', 'Heating system final'}, default 'Heating system'
         unit
+        full_output: bool, default True
+        climate: int, optional
 
         Returns
         -------
@@ -315,7 +318,7 @@ class ThermalBuildings:
 
         if not idx.empty:
 
-            consumption, certificate, consumption_3uses = self.consumption_heating(index=idx, freq='year', climate=None,
+            consumption, certificate, consumption_3uses = self.consumption_heating(index=idx, freq='year', climate=climate,
                                                                                    full_output=True)
 
             self.consumption_sd_building = concat((self.consumption_sd_building, consumption))
@@ -3184,7 +3187,7 @@ class AgentBuildings(ThermalBuildings):
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
 
-    def parse_output_run(self, prices, inputs):
+    def parse_output_run(self, prices, inputs, climate=None):
         """Parse output.
 
         Renovation : envelope
@@ -3203,6 +3206,7 @@ class AgentBuildings(ThermalBuildings):
             'Carbon footprint construction (MtCO2)'
             'health_expenditure', 'mortality_cost', 'loss_well_being'
             'Embodied energy construction (TWh PE)'
+        climate: int, optional
 
         Returns
         -------
@@ -3215,15 +3219,26 @@ class AgentBuildings(ThermalBuildings):
         stock = self.simplified_stock()
 
         output = dict()
-        output['Consumption standard (TWh)'] = (self.consumption_heat_sd * self.surface * self.stock).sum() / 10 ** 9
+        output['Consumption standard (TWh)'] = self.consumption_total(prices=prices, freq='year', climate=climate,
+                                                                      standard=True, energy=False)
 
-        consumption = self.consumption_actual(prices) * self.stock
-        consumption_energy = self.apply_calibration(consumption)
-        output['Consumption (TWh)'] = consumption_energy.sum() / 10 ** 9
+        consumption_energy = self.consumption_total(prices=prices, freq='year', climate=None, standard=False, energy=True)
+        output['Consumption (TWh)'] = consumption_energy.sum()
         temp = consumption_energy.copy()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-        output.update(temp.T / 10 ** 9)
+        output.update(temp.T)
 
+        consumption_energy_climate = None
+        if climate is not None:
+            consumption_energy_climate = self.consumption_total(prices=prices, freq='year', climate=climate,
+                                                                standard=False, energy=True)
+            output['Consumption climate (TWh)'] = consumption_energy_climate.sum()
+            temp = consumption_energy_climate.copy()
+            temp.index = temp.index.map(lambda x: 'Consumption {} climate (TWh)'.format(x))
+            output.update(temp.T)
+            output['Factor climate (%)'] = output['Consumption climate (TWh)'] / output['Consumption (TWh)']
+
+        consumption = self.consumption_actual(prices) * self.stock
         consumption_calib = consumption * self.coefficient_global
         temp = consumption_calib.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
@@ -3238,16 +3253,23 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp)
 
         # TODO: mistakes use consumption_energy
+        carbon_emission = inputs['carbon_emission'].loc[self.year, :]
+        temp = consumption_energy * carbon_emission
+        output['Emission (MtCO2)'] = temp.sum() / 10 ** 3
+        temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
+        output.update(temp.T / 10 ** 3)
+
+        if consumption_energy_climate is not None:
+            temp = consumption_energy_climate * carbon_emission
+            output['Emission climate (MtCO2)'] = temp.sum() / 10 ** 3
+            temp.index = temp.index.map(lambda x: 'Emission climate {} (MtCO2)'.format(x))
+            output.update(temp.T / 10 ** 3)
+
+        # TODO: wrong because not calibrate
         c = self.add_energy(consumption_calib)
         emission = reindex_mi(inputs['carbon_emission'].T.rename_axis('Energy', axis=0), c.index).loc[:, self.year] * c
-        output['Emission (MtCO2)'] = emission.sum() / 10 ** 12
-
         temp = emission.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
-        temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
-        output.update(temp.T / 10 ** 12)
-
-        temp = emission.groupby('Energy').sum()
         temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
         output.update(temp.T / 10 ** 12)
 
@@ -3608,11 +3630,21 @@ class AgentBuildings(ThermalBuildings):
                     output['Investment insulation (euro/year)'] = investment
                     output['Investment insulation / saving (euro/kWh)'] = investment / output['Consumption saving insulation (TWh)']
 
+                    investment = calculate_annuities(output['Investment insulation (Billion euro)'], lifetime=50,
+                                                     discount_rate=0.032)
+                    output['Investment insulation low (euro/year)'] = investment
+                    output['Investment insulation / saving low (euro/kWh)'] = investment / output['Consumption saving insulation (TWh)']
+
             if output['Consumption saving heater (TWh)'] is not None:
                 if output['Consumption saving heater (TWh)'] != 0:
-                    investment = calculate_annuities(output['Investment heater (Billion euro)'])
+                    investment = calculate_annuities(output['Investment heater (Billion euro)'], lifetime=20)
                     output['Investment heater (euro/year)'] = investment
                     output['Investment heater / saving (euro/kWh)'] = investment / output['Consumption saving heater (TWh)']
+
+                    investment = calculate_annuities(output['Investment insulation (Billion euro)'], lifetime=20,
+                                                     discount_rate=0.032)
+                    output['Investment heater low (euro/year)'] = investment
+                    output['Investment heater / saving low (euro/kWh)'] = investment / output['Consumption saving heater (TWh)']
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)

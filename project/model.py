@@ -289,7 +289,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
-                   prices_before=None):
+                   prices_before=None, climate=None):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -310,6 +310,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     calib_renovation
     financing_cost
     prices_before
+    climate: int, optional
 
     Returns
     -------
@@ -347,7 +348,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.full_output:
-        stock, output = buildings.parse_output_run(prices, post_inputs)
+        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate)
     else:
         stock = buildings.simplified_stock().rename(year)
         output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
@@ -401,7 +402,8 @@ def res_irf(config, path):
                                              p_insulation, f_built, year, post_inputs,
                                              calib_intensive=inputs['calibration_intensive'],
                                              calib_renovation=inputs['calibration_renovation'],
-                                             ms_heater=ms_heater, financing_cost=financing_cost)
+                                             ms_heater=ms_heater, financing_cost=financing_cost,
+                                             climate=config.get('climate'))
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

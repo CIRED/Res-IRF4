@@ -203,7 +203,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_volarem',
                                             gest='heater', by='columns'))  # heating policy during considered years
 
-    # , 'target_global', 'target_low_efficient', 'target_wall'
     if sub_insulation is not None:
         policy = create_subsidies(sub_insulation, sub_design, start, end)
         policies_insulation.append(policy)  # insulation policy during considered years
@@ -216,7 +215,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                         p_insulation, f_built, year, post_inputs)
+                                         p_insulation, f_built, year, post_inputs, climate=climate)
 
         # o.to_csv(os.path.join(buildings.path, 'output.csv'))
         if full_output is False:
@@ -366,7 +365,6 @@ def run_simu(calibration_threshold=False, output_consumption=False):
         _concat_output = concat((_concat_output, _output), axis=1)
 
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
-
 
 
 if __name__ == '__main__':
