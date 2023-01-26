@@ -502,6 +502,16 @@ def parse_inputs(inputs, taxes, config, stock):
     if 'prices_factor' in config.keys():
         prices_factor = config['prices_factor']
 
+    if 'technical_progress' in config.keys():
+        if 'insulation' in config['technical_progress'].keys():
+            if config['technical_progress']['insulation']['activated']:
+                value = config['technical_progress']['insulation']['value_end']
+                start = config['technical_progress']['insulation']['start']
+                end = config['technical_progress']['insulation']['end']
+                value = round((1 + value) ** (1 / (end - start + 1)) - 1, 5)
+                parsed_inputs['technical_progress'] = dict()
+                parsed_inputs['technical_progress']['insulation'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
+
     parsed_inputs['cost_heater'] *= cost_factor
     parsed_inputs['cost_insulation'] *= cost_factor
     parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor

@@ -1,0 +1,19 @@
+Housing type,Heating system,Electricity-Heat pump water,Electricity-Heat pump air,Electricity-Performance boiler,Natural gas-Performance boiler,Oil fuel-Performance boiler,Wood fuel-Performance boiler
+Multi-family,Electricity-Heat pump water,1.00,,,,,
+Multi-family,Electricity-Heat pump air,,1.00,,,,
+Multi-family,Electricity-Performance boiler,0.03,0.10,0.83,0.04,,
+Multi-family,Natural gas-Performance boiler,0.03,,,0.95,,0.02
+Multi-family,Natural gas-Standard boiler,0.03,,,0.95,,0.02
+Multi-family,Oil fuel-Performance boiler,0.06,,,0.05,0.79,0.10
+Multi-family,Oil fuel-Standard boiler,0.06,,,0.05,0.79,0.10
+Multi-family,Wood fuel-Performance boiler,,,,,,1.00
+Multi-family,Wood fuel-Standard boiler,,,,,,1.00
+Single-family,Electricity-Heat pump water,1.00,,,,,0.21
+Single-family,Electricity-Heat pump air,,1.00,,,,
+Single-family,Electricity-Performance boiler,0.03,0.20,0.59,0.02,,0.15
+Single-family,Natural gas-Performance boiler,0.03,,,0.91,,0.06
+Single-family,Oil fuel-Performance boiler,0.11,,,0.05,0.64,0.20
+Single-family,Wood fuel-Performance boiler,,,,,,1.00
+Single-family,Wood fuel-Standard boiler,,,,,,1.00
+Single-family,Natural gas-Standard boiler,0.03,,,0.91,,0.06
+Single-family,Oil fuel-Standard boiler,0.11,,,0.05,0.64,0.20

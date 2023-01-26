@@ -58,13 +58,13 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
             dump(calibration, file)
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
+    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
     cost_insulation *= cost_factor
 
     buildings.calibration_exogenous(**calibration)
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation
+    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress
 
 
 def select_output(output):

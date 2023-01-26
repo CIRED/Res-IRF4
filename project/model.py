@@ -219,7 +219,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
                      'health_cost', 'income']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, cost_financing = initialize(
+    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, cost_financing, technical_progress = initialize(
         inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': buildings,
               'income': inputs['income'],
@@ -282,9 +282,14 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                debug_mode=config.get('debug_mode'),
                                threshold=config['renovation'].get('threshold'))
 
+    technical_progress = None
+    if 'technical_progress' in parsed_inputs.keys():
+        if 'insulation' in parsed_inputs['technical_progress'].keys():
+            technical_progress = parsed_inputs['technical_progress']['insulation']
+
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
-               'calibration_renovation'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing')
+               'calibration_renovation'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing'), technical_progress
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
@@ -381,7 +386,7 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
@@ -397,6 +402,9 @@ def res_irf(config, path):
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
             f_built = flow_built.loc[:, year]
+
+            if technical_progress is not None:
+                cost_insulation *= (1 + technical_progress.loc[year])
 
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                              p_insulation, f_built, year, post_inputs,
@@ -503,7 +511,7 @@ def calibration_res_irf(path, config=None, cost_factor=1):
     try:
         logger.info('Reading input')
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         cost_insulation *= cost_factor
