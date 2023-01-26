@@ -365,7 +365,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         import_calibration=None,
         export_calibration=_export_calibration)
 
-    timestep = 2
+    timestep = 1
     _year = 2020
 
     _sub_heater = 0
