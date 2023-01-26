@@ -10,7 +10,7 @@
     ]
   },
   "Reference": {
-    "end": 2031,
+    "end": 2023,
     "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -41,7 +41,7 @@
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "population": "project/input/population.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
+    "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "cost_heater": "project/input/cost_heater.csv",
     "cost_insulation": "project/input/cost_insulation.csv",
@@ -144,15 +144,15 @@
     "surface_built": null,
     "technical_progress": {
       "insulation": {
-        "activated": false,
+        "activated": true,
         "start": 2020,
         "end": 2035,
-        "value_end": -0.1
+        "value_end": -0.5
       }
     }
   },
-  "Transition2050": {
-    "end": 2031,
+  "Control": {
+    "end": 2023,
     "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -289,8 +289,9 @@
         "activated": false,
         "start": 2020,
         "end": 2035,
-        "value_end": -0.1
+        "value_end": -0.5
       }
     }
   }
+
 }

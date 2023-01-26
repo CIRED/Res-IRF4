@@ -15,6 +15,8 @@ from pathlib import Path
 
 from copy import deepcopy
 
+ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
+
 
 def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None, cost_factor=1):
     """Initialize and calibrate Res-IRF.
@@ -93,9 +95,13 @@ def select_output(output):
                                          'Oil fuel-Standard boiler',
                                          'Oil fuel-Performance boiler',
                                          ]
+    consumption_energy = ['Consumption {} climate (TWh)'.format(i) for i in energy]
+    rebound_energy = ['Rebound {} (TWh)'.format(i) for i in energy]
 
     variables = list()
-    variables += ['Consumption {} (TWh)'.format(i) for i in energy]
+    variables += consumption_energy
+    variables += rebound_energy
+
     variables += [
         'Investment heater (Billion euro)',
         'Investment insulation (Billion euro)',
@@ -193,7 +199,7 @@ def create_subsidies(sub_insulation, sub_design, start, end):
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, sub_design,
                  climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=True):
+                 output_consumption=False, full_output=True, rebound=True, technical_progress=None):
 
     # initialize policies
     if sub_heater is not None:
@@ -214,6 +220,10 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
 
+        if technical_progress is not None:
+            cost_insulation *= (1 + technical_progress.loc[year])
+            print(cost_insulation)
+
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs, climate=climate)
 
@@ -223,12 +233,20 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         else:
             output.update({year: o})
 
+    output = DataFrame(output)
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
+
         consumption = buildings.consumption_total(prices=prices, freq='hour', standard=False, climate=climate,
                                                   smooth=smooth, efficiency_hour=efficiency_hour)
+        if rebound is False:
+            # TODO: only work if there at least two years
+            consumption_energy = output.loc[['Consumption {} climate (TWh)'.format(i) for i in ENERGY], :].sum(axis=1).set_axis(ENERGY)
+            rebound_energy = output.loc[['Rebound {} (TWh)'.format(i) for i in ENERGY], :].sum(axis=1).set_axis(ENERGY)
+            rebound_energy.index = ENERGY
+            rebound_factor = rebound_energy / consumption_energy
+            consumption = (consumption.T * (1 - rebound_factor)).T
 
-    output = DataFrame(output)
     buildings.logger.info('End of Res-IRF simulation')
     return output, consumption
 
@@ -328,7 +346,7 @@ def test_design_subsidies(import_calibration=None):
                )
 
 
-def run_simu(calibration_threshold=False, output_consumption=False):
+def run_simu(calibration_threshold=False, output_consumption=False, rebound=True):
     # first time
     _name = 'calibration'
 
@@ -340,28 +358,29 @@ def run_simu(calibration_threshold=False, output_consumption=False):
     _export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(_name))
     _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(_name))
     _path = os.path.join('project', 'output', 'ResIRF')
-    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation = ini_res_irf(
+    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation, _technical_progress = ini_res_irf(
         path=_path,
         logger=None,
         config=_config,
         import_calibration=None,
         export_calibration=_export_calibration)
 
-    timestep = 1
+    timestep = 2
     _year = 2020
 
     _sub_heater = 0
     _sub_insulation = 0
     _sub_design = None
     _concat_output = DataFrame()
-    for _year in range(2025, 2027):
+    for _year in range(2025, 2026):
         _start = _year
         _end = _year + timestep
 
         _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
                                              _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
                                              _p_insulation, _sub_design, climate=2006, smooth=False, efficiency_hour=True,
-                                             output_consumption=output_consumption, full_output=True)
+                                             output_consumption=output_consumption, full_output=True, rebound=rebound,
+                                             technical_progress=_technical_progress)
         _concat_output = concat((_concat_output, _output), axis=1)
 
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
@@ -369,4 +388,4 @@ def run_simu(calibration_threshold=False, output_consumption=False):
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=True)
+    run_simu(calibration_threshold=False, output_consumption=True, rebound=False)
