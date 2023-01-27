@@ -221,7 +221,11 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
 
         if technical_progress is not None:
-            cost_insulation *= (1 + technical_progress.loc[year])
+            if technical_progress.get('insulation') is not None:
+                cost_insulation *= (1 + technical_progress['insulation'].loc[year])
+            if technical_progress.get('heater') is not None:
+                heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
+                cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs, climate=climate)
@@ -381,4 +385,4 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=True, rebound=False, _end=2020)
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, _end=2022)

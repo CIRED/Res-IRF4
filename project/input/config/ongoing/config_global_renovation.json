@@ -120,7 +120,7 @@
       },
       "heat_pump": {
         "start": 2020,
-        "end": 2051,
+        "end": 2020,
         "value": 1,
         "gest": "heater",
         "columns": "project/input/policies/target_heat_pump.csv",
@@ -496,7 +496,6 @@
         "policy": "sub_ad_volarem",
         "name": "global_renovation"
       },
-
       "low_income_global_renovation": {
         "start": 2020,
         "end": 2020,
@@ -863,7 +862,6 @@
         "policy": "sub_ad_volarem",
         "name": "global_renovation"
       },
-
       "low_income_global_renovation": {
         "start": 2020,
         "end": 2020,
