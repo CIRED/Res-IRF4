@@ -346,7 +346,7 @@ def test_design_subsidies(import_calibration=None):
                )
 
 
-def run_simu(calibration_threshold=False, output_consumption=False, rebound=True):
+def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, _start=2019, _end=2051):
     # first time
     _name = 'calibration'
 
@@ -365,27 +365,21 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         import_calibration=None,
         export_calibration=_export_calibration)
 
-    timestep = 1
-    _year = 2020
+    _sub_heater = 1
+    _sub_insulation = 1
+    _sub_design = 'global_renovation'
 
-    _sub_heater = 0
-    _sub_insulation = 0
-    _sub_design = None
     _concat_output = DataFrame()
-    for _year in range(2025, 2026):
-        _start = _year
-        _end = _year + timestep
-
-        _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                             _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                             _p_insulation, _sub_design, climate=2006, smooth=False, efficiency_hour=True,
-                                             output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                             technical_progress=_technical_progress)
-        _concat_output = concat((_concat_output, _output), axis=1)
+    _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
+                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
+                                         _p_insulation, _sub_design, climate=2006, smooth=False, efficiency_hour=True,
+                                         output_consumption=output_consumption, full_output=True, rebound=rebound,
+                                         technical_progress=_technical_progress)
+    _concat_output = concat((_concat_output, _output), axis=1)
 
     _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
 
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=True, rebound=False)
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False)

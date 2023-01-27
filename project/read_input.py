@@ -289,10 +289,12 @@ def read_policies(config):
     def read_ad_volarem(data):
         l = list()
         value = data['value']
+        if data.get('index') is not None:
+            mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            value *= mask
+
         l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
-                              gest='heater'))
-        l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
-                              gest='insulation'))
+                              gest=data['gest'], target=data.get('target')))
         return l
 
     def read_oil_fuel_elimination(data):
@@ -325,17 +327,22 @@ def read_policies(config):
     def read_multi_family(data):
         return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
 
-    read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
+    read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap,
+            'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
             'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination,
             'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
 
+    list_ad_volarem = list()
     list_policies = list()
     for key, item in config['policies'].items():
         if key in read.keys():
             list_policies += read[key](item)
         else:
-            print('{} reading function is not implemented'.format(key))
+            if item.get('policy') == 'sub_ad_volarem':
+                list_ad_volarem += read_ad_volarem(item)
+            else:
+                print('{} reading function is not implemented'.format(key))
 
     policies_heater = [p for p in list_policies if p.gest == 'heater']
     policies_insulation = [p for p in list_policies if p.gest == 'insulation']

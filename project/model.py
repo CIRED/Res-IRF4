@@ -9,6 +9,7 @@ from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
 from project.utils import reindex_mi
+from pickle import load
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -294,7 +295,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
-                   prices_before=None, climate=None):
+                   prices_before=None, climate=None, step=1):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -330,7 +331,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
         prices_before = prices
 
     buildings.year = year
-    buildings.add_flows([- buildings.flow_demolition()])
+    buildings.add_flows([- buildings.flow_demolition(step=step)])
     buildings.logger.info('Calculation retrofit')
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation,
                                             policies_heater=p_heater,
@@ -338,7 +339,9 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
                                             calib_renovation=calib_renovation,
                                             calib_intensive=calib_intensive,
                                             ms_heater=ms_heater,
-                                            financing_cost=financing_cost)
+                                            financing_cost=financing_cost,
+                                            climate=climate,
+                                            step=step)
 
     buildings.add_flows([flow_retrofit])
 
@@ -396,22 +399,46 @@ def res_irf(config, path):
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
-        for year in range(config['start'] + 1, config['end']):
+        if config.get('calibration'):
+            with open(config['calibration'], "rb") as file:
+                calibration = load(file)
+                buildings.calibration_exogenous(**calibration)
+
+        timestep = 1
+        if config.get('step'):
+            timestep = config['step']
+        years = [config['start'] + 1]
+        years += range(config['start'] + 2, config['end'], timestep)
+        if config['end'] - 1 not in years:
+            years.append(config['end'] - 1)
+
+        for k, year in enumerate(years):
             start = time()
+
+            try:
+                yrs = range(year, years[k + 1])
+                step = years[k + 1] - year
+            except IndexError:
+                yrs = [year]
+                step = 1
+
             prices = energy_prices.loc[year, :]
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-            f_built = flow_built.loc[:, year]
+            f_built = flow_built.loc[:, yrs]
+            if isinstance(f_built, pd.DataFrame):
+                f_built = f_built.sum(axis=1).rename(year)
 
             if technical_progress is not None:
-                cost_insulation *= (1 + technical_progress.loc[year])
+                # implement with step > 1
+                cost_insulation *= (1 + technical_progress.loc[year])**step
 
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                              p_insulation, f_built, year, post_inputs,
                                              calib_intensive=inputs['calibration_intensive'],
                                              calib_renovation=inputs['calibration_renovation'],
                                              ms_heater=ms_heater, financing_cost=financing_cost,
-                                             climate=config.get('climate'))
+                                             climate=config.get('climate'), step=step)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
