@@ -285,8 +285,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
-        if 'insulation' in parsed_inputs['technical_progress'].keys():
-            technical_progress = parsed_inputs['technical_progress']['insulation']
+        technical_progress = parsed_inputs['technical_progress']
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
@@ -430,8 +429,11 @@ def res_irf(config, path):
                 f_built = f_built.sum(axis=1).rename(year)
 
             if technical_progress is not None:
-                # implement with step > 1
-                cost_insulation *= (1 + technical_progress.loc[year])**step
+                if technical_progress.get('insulation') is not None:
+                    cost_insulation *= (1 + technical_progress['insulation'].loc[year])**step
+                if technical_progress.get('heater') is not None:
+                    heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
+                    cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                              p_insulation, f_built, year, post_inputs,

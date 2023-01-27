@@ -293,8 +293,18 @@ def read_policies(config):
             mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
             value *= mask
 
-        l.append(PublicPolicy('sub_ad_volarem', data['start'], data['end'], value, 'subsidy_ad_volarem',
-                              gest=data['gest'], target=data.get('target')))
+        by = 'index'
+        if data.get('columns') is not None:
+            mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            value *= mask
+            by = 'columns'
+
+        name = 'sub_ad_volarem'
+        if data.get('name') is not None:
+            name = data['name']
+
+        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_volarem',
+                              gest=data['gest'], by=by))
         return l
 
     def read_oil_fuel_elimination(data):
@@ -333,14 +343,13 @@ def read_policies(config):
             'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination,
             'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
 
-    list_ad_volarem = list()
     list_policies = list()
     for key, item in config['policies'].items():
         if key in read.keys():
             list_policies += read[key](item)
         else:
             if item.get('policy') == 'sub_ad_volarem':
-                list_ad_volarem += read_ad_volarem(item)
+                list_policies += read_ad_volarem(item)
             else:
                 print('{} reading function is not implemented'.format(key))
 
@@ -518,6 +527,14 @@ def parse_inputs(inputs, taxes, config, stock):
                 value = round((1 + value) ** (1 / (end - start + 1)) - 1, 5)
                 parsed_inputs['technical_progress'] = dict()
                 parsed_inputs['technical_progress']['insulation'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
+        if 'heater' in config['technical_progress'].keys():
+            if config['technical_progress']['heater']['activated']:
+                value = config['technical_progress']['heater']['value_end']
+                start = config['technical_progress']['heater']['start']
+                end = config['technical_progress']['heater']['end']
+                value = round((1 + value) ** (1 / (end - start + 1)) - 1, 5)
+                parsed_inputs['technical_progress'] = dict()
+                parsed_inputs['technical_progress']['heater'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
 
     parsed_inputs['cost_heater'] *= cost_factor
     parsed_inputs['cost_insulation'] *= cost_factor

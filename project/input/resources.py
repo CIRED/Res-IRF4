@@ -162,7 +162,11 @@ colors = {
     'Windows': 'royalblue',
     'Roof': 'darkorange',
     'Floor': 'grey',
-    'Wall': 'darkslategrey'
+    'Wall': 'darkslategrey',
+    "Very low income global renovation": "darkorange",
+    "Low income global renovation": "darkslategrey",
+    "Global renovation": "grey",
+    "Heat pump": "royalblue",
 }
 
 resources_data['colors'] = colors

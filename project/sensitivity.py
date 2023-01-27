@@ -222,7 +222,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
         if technical_progress is not None:
             cost_insulation *= (1 + technical_progress.loc[year])
-            print(cost_insulation)
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs, climate=climate)
@@ -362,7 +361,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         path=_path,
         logger=None,
         config=_config,
-        import_calibration=None,
+        import_calibration=_import_calibration,
         export_calibration=_export_calibration)
 
     _sub_heater = 1
@@ -382,4 +381,4 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False)
+    run_simu(calibration_threshold=False, output_consumption=True, rebound=False, _end=2020)

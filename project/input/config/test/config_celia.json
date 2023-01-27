@@ -125,6 +125,20 @@
     },
     "pop_housing": null,
     "share_multi_family": null,
-    "surface_built": null
+    "surface_built": null,
+    "technical_progress": {
+      "insulation": {
+        "activated": true,
+        "start": 2020,
+        "end": 2035,
+        "value_end": -0.1
+      },
+      "heater": {
+        "activated": true,
+        "start": 2020,
+        "end": 2035,
+        "value_end": -0.2
+      }
+    }
   }
 }
