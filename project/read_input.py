@@ -87,7 +87,6 @@ class PublicPolicy:
 
         """
         cost = cost_insulation.copy()
-        target = None
         if self.target is not None and target_subsidies is not None:
             cost = cost[target_subsidies.astype(bool)].fillna(0)
         if self.cost_max is not None:
@@ -304,7 +303,7 @@ def read_policies(config):
             name = data['name']
 
         l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_volarem',
-                              gest=data['gest'], by=by))
+                              gest=data['gest'], by=by, target=data.get('target')))
         return l
 
     def read_oil_fuel_elimination(data):

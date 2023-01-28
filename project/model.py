@@ -470,7 +470,7 @@ def res_irf(config, path):
         raise e
 
 
-def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=True, marginal=False):
+def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False, consumption_before=None):
     """Create cost curve.
 
     Parameters
@@ -504,6 +504,8 @@ def cost_curve(consumption_before, consumption_saved, cost_insulation, percent=T
     df.sort_values(y.name, inplace=True)
 
     if percent is True:
+        if consumption_before is None:
+            raise AttributeError
         df[x.name] = x / consumption_before.sum()
         # x.name = '{} (%/initial)'.format(x.name)
     else:
@@ -685,13 +687,13 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
 
     dict_cost, dict_heat = dict(), dict()
     if aggregation_archetype is not None:
-        dict_cost = {n: cost_curve(consumption_before.loc[g.index], g, cost_insulation.loc[g.index, :], percent=percent,
-                                   marginal=marginal) for n, g in consumption_saved.groupby(aggregation_archetype)}
+        dict_cost = {n: cost_curve(g, cost_insulation.loc[g.index, :], percent=percent,
+                                   marginal=marginal, consumption_before=consumption_before.loc[g.index]) for n, g in consumption_saved.groupby(aggregation_archetype)}
         heating_need_grouped = heating_need.groupby(aggregation_archetype).sum()
         dict_heat = {i: heating_need_grouped.loc[i, :] for i in heating_need_grouped.index}
     else:
-        dict_cost['global'] = cost_curve(consumption_before, consumption_saved, cost_insulation, marginal=marginal,
-                                         percent=percent)
+        dict_cost['global'] = cost_curve(consumption_saved, cost_insulation, marginal=marginal,
+                                         percent=percent, consumption_before=consumption_before)
         dict_heat['global'] = heating_need.sum()
 
     return dict_cost, dict_heat

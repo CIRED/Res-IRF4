@@ -167,6 +167,11 @@ colors = {
     "Low income global renovation": "darkslategrey",
     "Global renovation": "grey",
     "Heat pump": "royalblue",
+    "Best efficiency": 'lightblue',
+    "Best efficiency fg": 'lightblue',
+    "Global renovation fg": 'lightblue',
+    "Global renovation fge": 'lightblue',
+    "Fg": 'lightblue'
 }
 
 resources_data['colors'] = colors

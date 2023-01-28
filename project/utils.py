@@ -127,7 +127,11 @@ def reindex_mi(df, mi_index, levels=None, axis=0):
     return df_reindex
 
 
-def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, xinteger=True):
+def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
+    return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+
+
+def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
     """
 
     Parameters
@@ -163,8 +167,11 @@ def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, xin
 
     if ymin is not None:
         ax.set_ylim(ymin=0)
-        _, ymax = ax.get_ylim()
-        ax.set_ylim(ymax=ymax * 1.1)
+        _, y_max = ax.get_ylim()
+        ax.set_ylim(ymax=y_max * 1.1)
+
+    if ymax is not None:
+        ax.set_ylim(ymax=ymax)
 
     if xinteger:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -217,7 +224,7 @@ def save_fig(fig, save=None, bbox_inches='tight'):
 
 
 def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
-              ymin=0):
+              ymin=0, ymax=None):
     """Make plot.
 
     Parameters
@@ -242,7 +249,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer)
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax)
     if legend:
         format_legend(ax)
     save_fig(fig, save=save)

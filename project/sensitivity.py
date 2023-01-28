@@ -178,17 +178,17 @@ def create_subsidies(sub_insulation, sub_design, start, end):
     if sub_design == 'global_renovation_low_income':
         target = 'global_renovation_low_income'
 
-    if sub_design == 'mpr_serenite':
-        target = 'mpr_serenite'
+    if sub_design == 'best_efficiency':
+        target = 'best_efficiency'
 
-    if sub_design == 'bonus_best':
-        target = 'bonus_best'
+    if sub_design == 'best_efficiency_fg':
+        target = 'best_efficiency'
 
-    if sub_design == 'bonus_worst':
-        target = 'bonus_worst'
+    if sub_design == 'global_renovation_fg':
+        target = 'global_renovation_fg'
 
-    if sub_design == 'best_option':
-        target = 'best_option'
+    if sub_design == 'global_renovation_fge':
+        target = 'global_renovation_fge'
 
     policy = PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
                           gest='insulation', target=target)
@@ -356,7 +356,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     _config = 'project/input/config/test/config_celia.json'
     if calibration_threshold is True:
         _name = '{}_threshold'.format(_name)
-        _config = 'project/input/config/test/config_optim_threshold.json'
+        _config = 'project/input/config/test/config_threshold.json'
 
     _export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(_name))
     _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(_name))
@@ -385,4 +385,4 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, _end=2022)
+    run_simu(calibration_threshold=True, output_consumption=False, rebound=False, _end=2022)

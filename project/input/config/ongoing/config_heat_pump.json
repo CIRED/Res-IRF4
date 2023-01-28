@@ -375,7 +375,7 @@
     },
     "calibration": "project/input/calibration/calibration.pkl"
   },
-  "GlobalRenovation100": {
+  "HeatPump100": {
     "end": 2051,
     "step": 1,
     "debug_mode": false,
@@ -491,7 +491,7 @@
       },
       "heat_pump": {
         "start": 2020,
-        "end": 2020,
+        "end": 2051,
         "value": 1,
         "gest": "heater",
         "columns": "project/input/policies/target_heat_pump.csv",
@@ -500,7 +500,7 @@
       },
       "global_renovation": {
         "start": 2020,
-        "end": 2051,
+        "end": 2020,
         "value": 1,
         "gest": "insulation",
         "target": "global_renovation",
@@ -565,7 +565,7 @@
     },
     "calibration": "project/input/calibration/calibration.pkl"
   },
-  "GlobalRenovation30": {
+  "HeatPump30": {
     "end": 2051,
     "step": 1,
     "debug_mode": false,
@@ -680,18 +680,18 @@
         "end": 2020
       },
       "heat_pump": {
-        "start": 2020,
-        "end": 2020,
-        "value": 1,
-        "gest": "heater",
-        "columns": "project/input/policies/target_heat_pump.csv",
-        "policy": "sub_ad_volarem",
-        "name": "heat_pump"
-      },
-      "global_renovation": {
         "start": 2020,
         "end": 2051,
         "value": 0.3,
+        "gest": "heater",
+        "columns": "project/input/policies/target_heat_pump.csv",
+        "policy": "sub_ad_volarem",
+        "name": "heat_pump"
+      },
+      "global_renovation": {
+        "start": 2020,
+        "end": 2020,
+        "value": 1,
         "gest": "insulation",
         "target": "global_renovation",
         "policy": "sub_ad_volarem",
@@ -717,6 +717,8 @@
         "policy": "sub_ad_volarem",
         "name": "very_low_income_global_renovation"
       }
+
+
     },
     "footprint": {
       "Traditional material": 1.0,
@@ -753,7 +755,7 @@
     },
     "calibration": "project/input/calibration/calibration.pkl"
   },
-  "GlobalRenovation50": {
+  "HeatPump50": {
     "end": 2051,
     "step": 1,
     "debug_mode": false,
@@ -869,7 +871,7 @@
       },
       "heat_pump": {
         "start": 2020,
-        "end": 2020,
+        "end": 2051,
         "value": 0.5,
         "gest": "heater",
         "columns": "project/input/policies/target_heat_pump.csv",
@@ -878,8 +880,8 @@
       },
       "global_renovation": {
         "start": 2020,
-        "end": 2051,
-        "value": 0.5,
+        "end": 2020,
+        "value": 1,
         "gest": "insulation",
         "target": "global_renovation",
         "policy": "sub_ad_volarem",
@@ -905,8 +907,6 @@
         "policy": "sub_ad_volarem",
         "name": "very_low_income_global_renovation"
       }
-
-
     },
     "footprint": {
       "Traditional material": 1.0,
@@ -943,7 +943,7 @@
     },
     "calibration": "project/input/calibration/calibration.pkl"
   },
-  "GlobalRenovation70": {
+  "HeatPump70": {
     "end": 2051,
     "step": 1,
     "debug_mode": false,
@@ -1058,18 +1058,18 @@
         "end": 2020
       },
       "heat_pump": {
-        "start": 2020,
-        "end": 2020,
-        "value": 0.5,
-        "gest": "heater",
-        "columns": "project/input/policies/target_heat_pump.csv",
-        "policy": "sub_ad_volarem",
-        "name": "heat_pump"
-      },
-      "global_renovation": {
         "start": 2020,
         "end": 2051,
         "value": 0.7,
+        "gest": "heater",
+        "columns": "project/input/policies/target_heat_pump.csv",
+        "policy": "sub_ad_volarem",
+        "name": "heat_pump"
+      },
+      "global_renovation": {
+        "start": 2020,
+        "end": 2020,
+        "value": 1,
         "gest": "insulation",
         "target": "global_renovation",
         "policy": "sub_ad_volarem",
@@ -1133,7 +1133,7 @@
     },
     "calibration": "project/input/calibration/calibration.pkl"
   },
-  "GlobalRenovation50MultiFamilyLandlord": {
+  "HeatPump50MultiFamilyLandlord": {
     "end": 2051,
     "step": 1,
     "debug_mode": false,
@@ -1249,7 +1249,7 @@
       },
       "heat_pump": {
         "start": 2020,
-        "end": 2020,
+        "end": 2051,
         "value": 0.5,
         "gest": "heater",
         "columns": "project/input/policies/target_heat_pump.csv",
@@ -1259,7 +1259,7 @@
       "global_renovation": {
         "start": 2020,
         "end": 2020,
-        "value": 0.5,
+        "value": 1,
         "gest": "insulation",
         "target": "global_renovation",
         "policy": "sub_ad_volarem",

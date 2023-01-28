@@ -10,12 +10,12 @@
     ]
   },
   "Reference": {
-    "end": 2051,
+    "end": 2025,
     "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
-    "income_rate": 0.0,
+    "income_rate": 0.012,
     "start": 2018,
     "renovation": {
       "endogenous": true,
@@ -40,7 +40,7 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-    "building_stock": "project/input/stock/buildingstock_sdes2018_simple_1.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "population": "project/input/population.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
@@ -54,14 +54,6 @@
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2021,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
       "mpr_serenite": {
         "start": 2019,
         "end": 2020,
@@ -99,14 +91,6 @@
         "end": 2020,
         "value": 0.055
       },
-      "zero_interest_loan": {
-        "new": true,
-        "start": 2019,
-        "end": 2019,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      },
       "obligation": {
         "start": 2019,
         "end": 2019,
@@ -137,12 +121,25 @@
       "stock": false,
       "policies": false,
       "income": false,
-      "prices_constant": true,
-      "taxes_constant": true
+      "prices_constant": false,
+      "taxes_constant": false
     },
     "pop_housing": null,
     "share_multi_family": null,
-    "surface_built": null
+    "surface_built": null,
+    "technical_progress": {
+      "insulation": {
+        "activated": true,
+        "start": 2020,
+        "end": 2035,
+        "value_end": -0.1
+      },
+      "heater": {
+        "activated": true,
+        "start": 2020,
+        "end": 2035,
+        "value_end": -0.2
+      }
+    }
   }
-
 }
