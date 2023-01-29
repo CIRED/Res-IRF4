@@ -103,7 +103,7 @@ class ThermalBuildings:
 
         self.taxes_expenditure, self.energy_expenditure = None, None
         self.taxes_list = []
-        self.taxes_expenditure_details = {}
+        self.taxes_expenditure_store = {}
 
         self.consumption_before_retrofit = None
         self.consumption_saving_retrofit = None
@@ -124,6 +124,7 @@ class ThermalBuildings:
     def year(self, year):
         self._year = year
         self._surface = self._surface_yrs.loc[:, year]
+        self.taxes_expenditure_store = {}
 
     @property
     def stock(self):
@@ -633,8 +634,9 @@ class ThermalBuildings:
                     if tax.name not in self.taxes_list:
                         self.taxes_list += [tax.name]
                     amount = tax.value.loc[self.year, :] * consumption_energy
-                    self.taxes_expenditure_details[tax.name] = amount
+                    self.taxes_expenditure_store[tax.name] = amount
                     total_taxes += amount
+                    print(self.taxes_expenditure_store)
             self.taxes_expenditure = total_taxes
 
         if self.consumption_before_retrofit is not None:
@@ -909,6 +911,7 @@ class AgentBuildings(ThermalBuildings):
         self.certificate_jump_all = None
         self.subsidies_details_insulation, self.subsidies_count_insulation, self.subsidies_count_heater = {}, {}, {}
         self.subsidies_average_heater, self.subsidies_average_insulation = {}, {}
+        self.taxes_expenditure_store = {}
 
     def add_flows(self, flows):
         """Update stock attribute by adding flow series.
@@ -3668,7 +3671,7 @@ class AgentBuildings(ThermalBuildings):
 
             # output['Zero interest loan headcount'] = self.zil_count
             # output['Zero interest loan average amount'] = self.zil_loaned_avg
-            taxes_expenditures = self.taxes_expenditure_details
+            taxes_expenditures = self.taxes_expenditure_store
             taxes_expenditures = DataFrame(taxes_expenditures).sum()
             taxes_expenditures.index = taxes_expenditures.index.map(
                 lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))

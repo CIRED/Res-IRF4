@@ -7,7 +7,7 @@
   "CurrentPolicies": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -188,7 +188,7 @@
   "Reference": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -378,7 +378,7 @@
   "fg": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -537,7 +537,7 @@
   "best_efficiency": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -706,7 +706,7 @@
   "best_efficiency_fg": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -874,7 +874,7 @@
   "global_renovation_fg": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -1042,7 +1042,7 @@
   "global_renovation_fge": {
     "end": 2025,
     "step": 1,
-    "debug_mode": false,
+    "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
