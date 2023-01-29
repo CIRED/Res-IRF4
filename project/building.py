@@ -636,7 +636,6 @@ class ThermalBuildings:
                     amount = tax.value.loc[self.year, :] * consumption_energy
                     self.taxes_expenditure_store[tax.name] = amount
                     total_taxes += amount
-                    print(self.taxes_expenditure_store)
             self.taxes_expenditure = total_taxes
 
         if self.consumption_before_retrofit is not None:
@@ -3420,6 +3419,14 @@ class AgentBuildings(ThermalBuildings):
         temp = self.stock.groupby('Heating system').sum() / 10 ** 3
         temp.index = temp.index.map(lambda x: 'Stock {} (Thousand households)'.format(x))
         output.update(temp.to_dict())
+
+        output['Stock Electricity (Thousand households)'] = output['Stock Electricity-Performance boiler (Thousand households)']
+        output['Stock Heat pump (Thousand households)'] = output['Stock Electricity-Heat pump water (Thousand households)']
+        if 'Stock Electricity-Heat pump air (Thousand households)' in output.keys():
+            output['Stock Heat pump (Thousand households)'] += output['Stock Electricity-Heat pump air (Thousand households)']
+        output['Stock Oil fuel (Thousand households)'] = output['Stock Oil fuel-Performance boiler (Thousand households)'] + output['Stock Oil fuel-Standard boiler (Thousand households)']
+        output['Stock Wood fuel (Thousand households)'] = output['Stock Wood fuel-Performance boiler (Thousand households)'] + output['Stock Wood fuel-Standard boiler (Thousand households)']
+        output['Stock Natural gas (Thousand households)'] = output['Stock Natural gas-Performance boiler (Thousand households)'] + output['Stock Natural gas-Standard boiler (Thousand households)']
 
         if self.year > self.first_year:
             temp = self.retrofit_rate.dropna(how='all')

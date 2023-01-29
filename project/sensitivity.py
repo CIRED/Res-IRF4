@@ -182,7 +182,7 @@ def create_subsidies(sub_insulation, sub_design, start, end):
         target = 'best_efficiency'
 
     if sub_design == 'best_efficiency_fg':
-        target = 'best_efficiency'
+        target = 'best_efficiency_fg'
 
     if sub_design == 'global_renovation_fg':
         target = 'global_renovation_fg'
@@ -286,10 +286,12 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
 
 
 def test_design_subsidies(import_calibration=None):
-    sub_design_list = ['electricity', 'very_low_income', 'low_income', 'natural_gas', 'fossil', 'global_renovation',
-                       'global_renovation_low_income', 'mpr_serenite', 'bonus_best', 'bonus_worst', 'best_option',
+    sub_design_list = ['best_efficiency', 'best_efficiency_fg', 'global_renovation',
+                       'global_renovation_fg', 'global_renovation_fge',
                        None
                        ]
+
+
     config = 'project/input/config/test/config_celia.json'
 
     if import_calibration is None:
@@ -349,7 +351,8 @@ def test_design_subsidies(import_calibration=None):
                )
 
 
-def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, _start=2019, _end=2051):
+def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, _start=2020, _end=2051,
+             _sub_design='global_renovation'):
     # first time
     _name = 'calibration'
 
@@ -365,12 +368,11 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         path=_path,
         logger=None,
         config=_config,
-        import_calibration=_import_calibration,
+        import_calibration=None,
         export_calibration=_export_calibration)
 
-    _sub_heater = 1
+    _sub_heater = 0
     _sub_insulation = 1
-    _sub_design = 'global_renovation'
 
     _concat_output = DataFrame()
     _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
@@ -385,4 +387,5 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=True, output_consumption=False, rebound=False, _end=2022)
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, _end=2021,
+             _sub_design='global_renovation')

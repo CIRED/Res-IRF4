@@ -5,7 +5,7 @@
     "ZP": true
   },
   "CurrentPolicies": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,
@@ -147,8 +147,6 @@
         "policy": "sub_ad_volarem",
         "name": "very_low_income_global_renovation"
       }
-
-
     },
     "footprint": {
       "Traditional material": 1.0,
@@ -186,7 +184,7 @@
     "calibration": "project/input/calibration/calibration.pkl"
   },
   "Reference": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,
@@ -376,7 +374,7 @@
     "calibration": "project/input/calibration/calibration.pkl"
   },
   "fg": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,
@@ -535,7 +533,7 @@
     "calibration": "project/input/calibration/calibration.pkl"
   },
   "best_efficiency": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,
@@ -704,7 +702,7 @@
     "calibration": "project/input/calibration/calibration.pkl"
   },
   "best_efficiency_fg": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,
@@ -872,7 +870,7 @@
     "calibration": "project/input/calibration/calibration.pkl"
   },
   "global_renovation_fg": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,
@@ -1040,7 +1038,7 @@
     "calibration": "project/input/calibration/calibration.pkl"
   },
   "global_renovation_fge": {
-    "end": 2025,
+    "end": 2022,
     "step": 1,
     "debug_mode": true,
     "full_output": true,

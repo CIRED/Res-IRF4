@@ -90,14 +90,6 @@
         "end": 2020,
         "value": 0.055
       },
-      "obligation": {
-        "start": 2019,
-        "end": 2019,
-        "value": "project/input/policies/agenda_obligation.csv",
-        "frequency": null,
-        "intensive": "market_share",
-        "minimum_performance": null
-      },
       "landlord": {
         "start": 2020,
         "end": 2020

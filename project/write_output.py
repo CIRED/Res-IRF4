@@ -58,8 +58,6 @@ def plot_scenario(output, stock, buildings):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
-    #mf_heater_index = [heater for heater in resources_data['index']['Heater']
-    #                   if heater not in ['Oil fuel-Performance boiler', 'Wood fuel-Performance boiler']]
     df = pd.DataFrame(
         [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
     df.columns = resources_data['index']['Heating system']
@@ -237,17 +235,20 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y), None,
                                        resources_data['emissions_total_objectives']),
+                 'Stock Heat pump (Thousand households)': ('stock_heat_pump.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Retrofit (Thousand households)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Renovation (Thousand households)': ('renovation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Renovation >= 1 EPC (Thousand households)': (
-                 'renovation_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
-                 resources_data['retrofit_comparison']),
+                 'Investment insulation / households (Thousand euro)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Consumption saving insulation (TWh)': ('saving_insulation.png', lambda y, _: '{:,.1f}'.format(y)),
+                 'Consumption saving heater (TWh)': ('saving_heater.png', lambda y, _: '{:,.1f}'.format(y)),
+
                  'Retrofit >= 1 EPC (Thousand households)': (
                      'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
                      resources_data['retrofit_comparison']),
+
                  'Bonus best renovation (Thousand households)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Global renovation (Thousand households)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
@@ -289,11 +290,11 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
             variables}
         return {k: i for k, i in temp.items() if not i.empty}
 
-
     variables_output = {
         'Consumption {} (TWh)': [
             ('Energy', lambda y, _: '{:,.0f}'.format(y), 2, resources_data['consumption_hist'])],
         'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
+        'Stock {} (Thousand households)': [('Heater', lambda y, _: '{:,.0f}'.format(y))],
         'Subsidies total {} (Million euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
                                               ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
                                               ],
