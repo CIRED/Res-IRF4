@@ -1,16 +1,7 @@
 {
-  "sensitivity": {
-    "activated": false,
-    "building_stock": [
-      "project/input/stock/buildingstock_sdes2018_simple_1.csv",
-      "project/input/stock/buildingstock_sdes2018_simple_3.csv",
-      "project/input/stock/buildingstock_sdes2018_simple_5.csv",
-      "project/input/stock/buildingstock_sdes2018_medium_1.csv",
-      "project/input/stock/buildingstock_sdes2018_medium_5.csv"
-    ]
-  },
   "Reference": {
-    "end": 2025,
+    "end": 2021,
+    "step": 1,
     "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -41,7 +32,7 @@
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "population": "project/input/population.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
+    "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "cost_heater": "project/input/cost_heater.csv",
     "cost_insulation": "project/input/cost_insulation.csv",
@@ -112,8 +103,8 @@
       "stock": false,
       "policies": false,
       "income": false,
-      "prices_constant": false,
-      "taxes_constant": false
+      "prices_constant": true,
+      "taxes_constant": true
     },
     "pop_housing": null,
     "share_multi_family": null,

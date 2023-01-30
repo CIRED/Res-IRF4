@@ -3955,7 +3955,6 @@ class AgentBuildings(ThermalBuildings):
         self.coefficient_global = None
         self.coefficient_heater = None
 
-
         self.preferences_insulation_int['subsidy'] /= self.scale
         self.preferences_insulation_int['investment'] /= self.scale
         self.preferences_insulation_int['bill_saved'] /= self.scale

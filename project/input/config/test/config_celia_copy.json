@@ -1,12 +1,16 @@
 {
   "sensitivity": {
     "activated": false,
-    "prices_constant": true,
-    "ZP": true
+    "building_stock": [
+      "project/input/stock/buildingstock_sdes2018_simple_1.csv",
+      "project/input/stock/buildingstock_sdes2018_simple_3.csv",
+      "project/input/stock/buildingstock_sdes2018_simple_5.csv",
+      "project/input/stock/buildingstock_sdes2018_medium_1.csv",
+      "project/input/stock/buildingstock_sdes2018_medium_5.csv"
+    ]
   },
-  "best_efficiency": {
-    "end": 2021,
-    "step": 1,
+  "Reference": {
+    "end": 2025,
     "debug_mode": true,
     "full_output": true,
     "demolition_rate": 0.0035,
@@ -37,7 +41,7 @@
     },
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "population": "project/input/population.csv",
-    "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
+    "ms_heater": "project/input/revealed_data/market_share_heater.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "cost_heater": "project/input/cost_heater.csv",
     "cost_insulation": "project/input/cost_insulation.csv",
@@ -93,15 +97,6 @@
       "multi_family": {
         "start": 2020,
         "end": 2020
-      },
-      "best_efficiency": {
-        "start": 2020,
-        "end": 2051,
-        "value": 1,
-        "gest": "insulation",
-        "target": "best_efficiency",
-        "policy": "sub_ad_volarem",
-        "name": "best_efficiency"
       }
     },
     "footprint": {
@@ -117,8 +112,8 @@
       "stock": false,
       "policies": false,
       "income": false,
-      "prices_constant": true,
-      "taxes_constant": true
+      "prices_constant": false,
+      "taxes_constant": false
     },
     "pop_housing": null,
     "share_multi_family": null,

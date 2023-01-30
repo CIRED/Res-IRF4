@@ -18,7 +18,8 @@ from copy import deepcopy
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
 
-def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None, cost_factor=1):
+def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None, cost_factor=1,
+                climate=2006):
     """Initialize and calibrate Res-IRF.
 
     Parameters
@@ -62,9 +63,26 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
-    cost_insulation *= cost_factor
 
+    # calibration
     buildings.calibration_exogenous(**calibration)
+
+    buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
+    output = pd.DataFrame()
+    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
+    output = pd.concat((output, o), axis=1)
+
+    # run second year
+    year = 2019
+    prices = energy_prices.loc[year, :]
+    p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
+    p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
+    f_built = flow_built.loc[:, year]
+
+    buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
+                                     p_insulation, f_built, year, post_inputs, climate=climate)
+    output = pd.concat((output, o), axis=1)
+    output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
     return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress
 
@@ -230,7 +248,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs, climate=climate)
 
-        # o.to_csv(os.path.join(buildings.path, 'output.csv'))
         if full_output is False:
             output.update({year: select_output(o)})
         else:
@@ -291,7 +308,6 @@ def test_design_subsidies(import_calibration=None):
                        None
                        ]
 
-
     config = 'project/input/config/test/config_celia.json'
 
     if import_calibration is None:
@@ -351,41 +367,42 @@ def test_design_subsidies(import_calibration=None):
                )
 
 
-def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, _start=2020, _end=2051,
-             _sub_design='global_renovation'):
+def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, start=2020, end=2051,
+             sub_design='global_renovation'):
     # first time
-    _name = 'calibration'
+    name = 'calibration'
 
-    _config = 'project/input/config/test/config_celia.json'
+    config = 'project/input/config/test/config_celia.json'
     if calibration_threshold is True:
-        _name = '{}_threshold'.format(_name)
-        _config = 'project/input/config/test/config_threshold.json'
+        name = '{}_threshold'.format(name)
+        config = 'project/input/config/test/config_threshold.json'
 
-    _export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(_name))
-    _import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(_name))
-    _path = os.path.join('project', 'output', 'ResIRF')
-    _buildings, _energy_prices, _taxes, _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater, _p_insulation, _technical_progress = ini_res_irf(
-        path=_path,
+    export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
+    import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
+    path = os.path.join('project', 'output', 'ResIRF')
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, p_heater, p_insulation, technical_progress = ini_res_irf(
+        path=path,
         logger=None,
-        config=_config,
+        config=config,
         import_calibration=None,
-        export_calibration=_export_calibration)
+        export_calibration=None)
 
-    _sub_heater = 0
-    _sub_insulation = 1
+    sub_heater = 0
+    sub_insulation = 1
 
-    _concat_output = DataFrame()
-    _output, _consumption = simu_res_irf(_buildings, _sub_heater, _sub_insulation, _start, _end, _energy_prices, _taxes,
-                                         _cost_heater, _cost_insulation, _flow_built, _post_inputs, _p_heater,
-                                         _p_insulation, _sub_design, climate=2006, smooth=False, efficiency_hour=True,
-                                         output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                         technical_progress=_technical_progress)
-    _concat_output = concat((_concat_output, _output), axis=1)
+    concat_output = DataFrame()
+    output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
+                                       cost_heater, cost_insulation, flow_built, post_inputs, p_heater,
+                                       p_insulation, sub_design, climate=2006, smooth=False, efficiency_hour=True,
+                                       output_consumption=output_consumption, full_output=True, rebound=rebound,
+                                       technical_progress=technical_progress)
 
-    _concat_output.to_csv(os.path.join(_buildings.path, 'output.csv'))
+    concat_output = concat((concat_output, output), axis=1)
+
+    concat_output.to_csv(os.path.join(buildings.path, 'output.csv'))
 
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, _end=2021,
-             _sub_design='global_renovation')
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2020,
+             sub_design='best_efficiency')
