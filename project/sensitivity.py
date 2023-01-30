@@ -64,6 +64,8 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
+    print(financing_cost)
+
     # calibration
     buildings.calibration_exogenous(**calibration)
 
@@ -80,11 +82,11 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     f_built = flow_built.loc[:, year]
 
     buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                     p_insulation, f_built, year, post_inputs, climate=climate)
+                                     p_insulation, f_built, year, post_inputs, climate=climate, financing_cost=financing_cost)
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress
+    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
 
 
 def select_output(output):
@@ -217,7 +219,8 @@ def create_subsidies(sub_insulation, sub_design, start, end):
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  flow_built, post_inputs, policies_heater, policies_insulation, sub_design,
                  climate=2006, smooth=False, efficiency_hour=False,
-                 output_consumption=False, full_output=True, rebound=True, technical_progress=None):
+                 output_consumption=False, full_output=True, rebound=True, technical_progress=None,
+                 financing_cost=None):
 
     # initialize policies
     if sub_heater is not None:
@@ -246,7 +249,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                 cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])
 
         buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                         p_insulation, f_built, year, post_inputs, climate=climate)
+                                         p_insulation, f_built, year, post_inputs, climate=climate,
+                                         financing_cost=financing_cost)
 
         if full_output is False:
             output.update({year: select_output(o)})
@@ -380,7 +384,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     path = os.path.join('project', 'output', 'ResIRF')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, p_heater, p_insulation, technical_progress = ini_res_irf(
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
         logger=None,
         config=config,
@@ -395,7 +399,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
                                        cost_heater, cost_insulation, flow_built, post_inputs, p_heater,
                                        p_insulation, sub_design, climate=2006, smooth=False, efficiency_hour=True,
                                        output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                       technical_progress=technical_progress)
+                                       technical_progress=technical_progress, financing_cost=financing_cost)
 
     concat_output = concat((concat_output, output), axis=1)
 

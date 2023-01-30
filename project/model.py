@@ -293,7 +293,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
-                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=True,
+                   post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, step=1):
     """Update stock vintage due to renovation, demolition and construction.
     
