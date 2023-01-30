@@ -80,7 +80,8 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     f_built = flow_built.loc[:, year]
 
     buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                     p_insulation, f_built, year, post_inputs, climate=climate, financing_cost=financing_cost)
+                                     p_insulation, f_built, year, post_inputs, climate=climate,
+                                     financing_cost=financing_cost)
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
@@ -208,6 +209,9 @@ def create_subsidies(sub_insulation, sub_design, start, end):
     if sub_design == 'global_renovation_fge':
         target = 'global_renovation_fge'
 
+    if sub_design == 'efficiency_100':
+        target = 'efficiency_100'
+
     policy = PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
                           gest='insulation', target=target)
 
@@ -215,10 +219,10 @@ def create_subsidies(sub_insulation, sub_design, start, end):
 
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 flow_built, post_inputs, policies_heater, policies_insulation, sub_design,
+                 flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
                  climate=2006, smooth=False, efficiency_hour=False,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
-                 financing_cost=None):
+                 ):
 
     # initialize policies
     if sub_heater is not None:
@@ -274,7 +278,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
 
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                   flow_built, post_inputs, policies_heater, policies_insulation, sub_design=None):
+                   flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=None):
 
     sub_insulation = [i / 10 for i in range(0, 11)]
     _len = len(sub_insulation)
@@ -291,10 +295,11 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     policies_insulation = [policies_insulation] * _len
     buildings = [deepcopy(buildings)] * _len
     sub_design = [sub_design] * _len
+    financing_cost = [financing_cost] * _len
 
     list_argument = list(zip(deepcopy(buildings), deepcopy(sub_heater), deepcopy(sub_insulation), start, end, energy_prices, taxes,
                              cost_heater, cost_insulation, flow_built, post_inputs, policies_heater,
-                             policies_insulation, sub_design))
+                             policies_insulation, sub_design, financing_cost))
 
     with Pool() as pool:
         results = pool.starmap(simu_res_irf, list_argument)
@@ -305,17 +310,21 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
 
 
 def test_design_subsidies(import_calibration=None):
-    sub_design_list = ['best_efficiency', 'best_efficiency_fg', 'global_renovation',
-                       'global_renovation_fg', 'global_renovation_fge',
-                       None
-                       ]
+    sub_design_list = {'Efficiency measure': 'best_efficiency',
+                       'Efficiency measure FG': 'best_efficiency_fg',
+                       'Global renovation': 'global_renovation',
+                       'Global renovation FG': 'global_renovation_fg',
+                       'Global renovation FGE': 'global_renovation_fge',
+                       'Cost efficiency 100': 'efficiency_100',
+                       'Uniform': None
+                       }
 
     config = 'project/input/config/test/config_celia.json'
 
     if import_calibration is None:
         import_calibration = 'project/output/calibration/calibration.pkl'
     path = os.path.join('project', 'output', 'ResIRF')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, p_heater, p_insulation = ini_res_irf(
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
         logger=None,
         config=config,
@@ -323,24 +332,17 @@ def test_design_subsidies(import_calibration=None):
         export_calibration=None)
 
     concat_result, concat_result_marginal = dict(), dict()
-    for p in ['landlord', 'multi-family', 'both', 'nothing']:
-        if p in ['landlord', 'both']:
-            policy = [p for p in p_insulation if p.name == 'landlord'][0]
-            policy.end = 2021
-        if p in ['multi-family', 'both']:
-            policy = [p for p in p_insulation if p.name == 'landlord'][0]
-            policy.end = 2021
 
-    for sub_design in sub_design_list:
+    for k, sub_design in sub_design_list.items():
         print(sub_design)
 
         sub_heater = 0
         result = run_multi_simu(buildings, sub_heater, 2020, 2021, energy_prices, taxes, cost_heater,
-                                cost_insulation, flow_built, post_inputs, p_heater, p_insulation, sub_design=sub_design)
+                                cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=sub_design)
         name = 'cost_efficiency_insulation_{}.png'.format(sub_design)
-        make_plot(result.loc['Investment insulation / saving (euro/kWh)', :],
+        """make_plot(result.loc['Investment insulation / saving (euro/kWh)', :],
                   'Investment insulation / saving (euro/kWh)',
-                  integer=False, save=os.path.join(path, name))
+                  integer=False, save=os.path.join(path, name))"""
 
         variables = ['Consumption saving insulation (TWh)',
                      'Investment insulation (euro/year)',
@@ -352,12 +354,12 @@ def test_design_subsidies(import_calibration=None):
                                                                         result_diff.loc[
                                                                             'Consumption saving insulation (TWh)']
         name = 'marginal_cost_efficiency_insulation_{}.png'.format(sub_design)
-        make_plot(result_diff.loc['Investment insulation / saving (euro/kWh)', :],
+        """make_plot(result_diff.loc['Investment insulation / saving (euro/kWh)', :],
                   'Marginal investment insulation / saving (euro/kWh)',
-                  integer=False, save=os.path.join(path, name))
+                  integer=False, save=os.path.join(path, name))"""
 
-        concat_result.update({sub_design: result.loc['Investment insulation / saving (euro/kWh)', :]})
-        concat_result_marginal.update({sub_design: result_diff.loc['Investment insulation / saving (euro/kWh)', :]})
+        concat_result.update({k: result.loc['Investment insulation / saving (euro/kWh)', :]})
+        concat_result_marginal.update({k: result_diff.loc['Investment insulation / saving (euro/kWh)', :]})
 
     make_plots(concat_result, 'Investment insulation / saving (euro/kWh)',
                save=os.path.join(path, 'cost_efficiency_insulation_comparison.png'),
@@ -387,17 +389,18 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         logger=None,
         config=config,
         import_calibration=None,
-        export_calibration=None)
+        export_calibration=export_calibration)
 
-    sub_heater = None
-    sub_insulation = None
+    sub_heater = 0
+    sub_insulation = 1
 
     concat_output = DataFrame()
     output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
                                        cost_heater, cost_insulation, flow_built, post_inputs, p_heater,
-                                       p_insulation, sub_design, climate=2006, smooth=False, efficiency_hour=True,
+                                       p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
+                                       efficiency_hour=True,
                                        output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                       technical_progress=technical_progress, financing_cost=financing_cost)
+                                       technical_progress=technical_progress)
 
     concat_output = concat((concat_output, output), axis=1)
 
@@ -405,6 +408,6 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 
 if __name__ == '__main__':
-    # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2023,
-             sub_design='best_efficiency')
+    test_design_subsidies(import_calibration=None)
+    """run_simu(calibration_threshold=True, output_consumption=False, rebound=False, start=2020, end=2025,
+             sub_design='efficiency_100')"""

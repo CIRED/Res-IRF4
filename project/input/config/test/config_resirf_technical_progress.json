@@ -1,7 +1,7 @@
 {
   "Reference": {
     "end": 2051,
-    "debug_mode": true,
+    "debug_mode": false,
     "full_output": true,
     "demolition_rate": 0.0035,
     "construction": true,
@@ -109,18 +109,18 @@
     "share_multi_family": null,
     "surface_built": null,
     "technical_progress": {
-      "insulation": {
-        "activated": true,
-        "start": 2020,
-        "end": 2035,
-        "value_end": -0.1
-      },
+    "insulation": {
+      "activated": true,
+      "start": 2020,
+      "end": 2035,
+      "value_end": -0.1
+    },
       "heater": {
-        "activated": true,
-        "start": 2020,
-        "end": 2035,
-        "value_end": -0.2
-      }
-    }
+    "activated": true,
+    "start": 2020,
+    "end": 2035,
+    "value_end": -0.2
+  }
+}
   }
 }

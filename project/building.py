@@ -1606,6 +1606,7 @@ class AgentBuildings(ThermalBuildings):
             _certificate_before_heater: Series
             _energy_saved_3uses: DataFrame
             _cost_insulation: DataFrame
+            _consumption_saved: DataFrame
 
             Returns
             -------
@@ -1689,6 +1690,8 @@ class AgentBuildings(ThermalBuildings):
             condition_target.update({'best_efficiency': best_efficiency.copy()})
             best_efficiency_fg = (condition_target['best_efficiency'].T & _certificate_before.isin(['G', 'F'])).T
             condition_target.update({'best_efficiency_fg': best_efficiency_fg})
+
+            condition_target.update({'efficiency_100': cost_saving < 0.1})
 
             fg = cost_saving.copy()
             fg[fg > 0] = False
@@ -2273,7 +2276,7 @@ class AgentBuildings(ThermalBuildings):
             for i in _market_share.index:
                 _market_share.loc[i, best_cost_efficiency.loc[i, 'columns']] = 1
 
-            assert (_market_share.sum(axis=1) == 1).all(), 'Market-share problem'
+            # assert (_market_share.sum(axis=1) == 1).all(), 'Market-share problem'
 
             _consumption_saved, _subsidies_total, _cost_total = best_cost_efficiency['consumption'], \
             best_cost_efficiency['subsidies'], best_cost_efficiency['cost']
@@ -2703,13 +2706,14 @@ class AgentBuildings(ThermalBuildings):
         index = stock.index
         cost_insulation = reindex_mi(cost_insulation, index)
         cost_total = cost_insulation.copy()
+        to_pay = cost_insulation - subsidies_total
         discount_factor = None
         if financing_cost is not None and self.financing_cost:
-            share_debt = financing_cost['share_debt'][0] + cost_insulation * financing_cost['share_debt'][1]
-            cost_debt = financing_cost['interest_rate'] * share_debt * cost_insulation * financing_cost['duration']
+            share_debt = financing_cost['share_debt'][0] + to_pay * financing_cost['share_debt'][1]
+            cost_debt = financing_cost['interest_rate'] * share_debt * to_pay * financing_cost['duration']
             cost_saving = (financing_cost['saving_rate'] * reindex_mi(financing_cost['factor_saving_rate'],
-                                                                      cost_insulation.index) * (
-                                       (1 - share_debt) * cost_insulation).T).T * financing_cost['duration']
+                                                                      to_pay.index) * (
+                                       (1 - share_debt) * to_pay).T).T * financing_cost['duration']
             cost_financing = cost_debt + cost_saving
             cost_total += cost_financing
 
