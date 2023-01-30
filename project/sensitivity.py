@@ -64,8 +64,6 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
-    print(financing_cost)
-
     # calibration
     buildings.calibration_exogenous(**calibration)
 
@@ -371,7 +369,7 @@ def test_design_subsidies(import_calibration=None):
                )
 
 
-def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, start=2020, end=2051,
+def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, start=2020, end=2025,
              sub_design='global_renovation'):
     # first time
     name = 'calibration'
@@ -391,8 +389,8 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         import_calibration=None,
         export_calibration=None)
 
-    sub_heater = 0
-    sub_insulation = 1
+    sub_heater = None
+    sub_insulation = None
 
     concat_output = DataFrame()
     output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
@@ -408,5 +406,5 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2020,
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2023,
              sub_design='best_efficiency')
