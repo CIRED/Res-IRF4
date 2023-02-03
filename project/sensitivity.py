@@ -376,7 +376,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     # first time
     name = 'calibration'
 
-    config = 'project/input/config/test/config_celia.json'
+    config = 'project/input/config/test/config.json'
     if calibration_threshold is True:
         name = '{}_threshold'.format(name)
         config = 'project/input/config/test/config_threshold.json'
@@ -388,7 +388,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         path=path,
         logger=None,
         config=config,
-        import_calibration=None,
+        import_calibration=import_calibration,
         export_calibration=export_calibration)
 
     sub_heater = 0
@@ -408,6 +408,6 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 
 if __name__ == '__main__':
-    test_design_subsidies(import_calibration=None)
-    """run_simu(calibration_threshold=True, output_consumption=False, rebound=False, start=2020, end=2025,
-             sub_design='efficiency_100')"""
+    # test_design_subsidies(import_calibration=None)
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2020,
+             sub_design='efficiency_100')

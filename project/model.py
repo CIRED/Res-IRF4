@@ -545,7 +545,6 @@ def calibration_res_irf(path, config=None, cost_factor=1):
         buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
-
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
         buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
 
@@ -580,34 +579,6 @@ def calibration_res_irf(path, config=None, cost_factor=1):
             'scale': buildings.scale,
             'threshold_indicator': buildings.threshold_indicator
         }
-
-        # test
-        """inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
-            inputs, stock, year, taxes, path=path, config=config, logger=logger)
-
-        buildings.calibration_exogenous(**calibration)
-
-        buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
-        output = pd.DataFrame()
-        _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
-        output = pd.concat((output, o), axis=1)
-
-        year = buildings.first_year + 1
-        prices = energy_prices.loc[year, :]
-        p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
-        p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-        f_built = flow_built.loc[:, year]
-
-        buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                         p_insulation, f_built, year, post_inputs,
-                                         calib_intensive=inputs['calibration_intensive'],
-                                         calib_renovation=inputs['calibration_renovation'],
-                                         ms_heater=ms_heater, financing_cost=financing_cost)
-
-        output = pd.concat((output, o), axis=1)
-        output.to_csv(os.path.join(buildings.path, 'output_calibration_test.csv'))"""
 
         return calibration
 

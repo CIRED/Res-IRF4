@@ -2742,7 +2742,6 @@ class AgentBuildings(ThermalBuildings):
             result = assess_policies(stock, subsidies_details, cost_total, bill_saved, subsidies_total)
             if self.path is not None:
                 result.to_csv(os.path.join(self.path_calibration, 'result_policies_assessment.csv'))
-
             assess_sensitivity(stock, cost_total, bill_saved, subsidies_total, self.path_calibration)
 
         if self._threshold is False:
@@ -4020,4 +4019,5 @@ class AgentBuildings(ThermalBuildings):
             self.constant_insulation_extensive = constant_insulation_extensive.dropna()
 
         self.scale = scale
+        self.apply_scale(scale)
         self.threshold_indicator = threshold_indicator
