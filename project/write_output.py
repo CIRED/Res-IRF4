@@ -263,6 +263,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
 
     for variable, infos in variables.items():
         temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
+        temp = temp.interpolate(limit_area='inside').fillna(0)
         try:
             temp = pd.concat((temp, infos[2]), axis=1)
             temp.sort_index(inplace=True)
@@ -318,7 +319,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
         n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
         temp = grouped(data, [v.format(i) for i in resources_data['index'][inf[0]]])
         replace = {v.format(i): i for i in resources_data['index'][inf[0]]}
-        temp = {replace[key]: item for key, item in temp.items()}
+        temp = {replace[key]: item.interpolate(limit_area='inside').fillna(0) for key, item in temp.items()}
 
         try:
             n_columns = inf[2]

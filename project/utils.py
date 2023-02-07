@@ -336,7 +336,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
             ax.spines['left'].set_visible(False)
             ax.set_ylim(ymax=y_max)
 
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=90)
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
             if n_bins is not None:
                 plt.locator_params(axis='x', nbins=n_bins)
 

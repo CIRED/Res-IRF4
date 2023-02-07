@@ -3290,7 +3290,7 @@ class AgentBuildings(ThermalBuildings):
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
 
-    def parse_output_run(self, prices, inputs, climate=None):
+    def parse_output_run(self, prices, inputs, climate=None, step=1):
         """Parse output.
 
         Renovation : envelope
@@ -3364,7 +3364,7 @@ class AgentBuildings(ThermalBuildings):
             temp.index = temp.index.map(lambda x: 'Emission climate {} (MtCO2)'.format(x))
             output.update(temp.T / 10 ** 3)
 
-        # TODO: wrong because not calibrate
+        # approximation
         c = self.add_energy(consumption_calib)
         emission = reindex_mi(inputs['carbon_emission'].T.rename_axis('Energy', axis=0), c.index).loc[:, self.year] * c
         temp = emission.groupby('Existing').sum()
@@ -3456,15 +3456,15 @@ class AgentBuildings(ThermalBuildings):
             # self.gest_nb: number of renovation types (number of insulated components by renovation)
             temp = self.gest_nb.copy()
             temp.index = temp.index.map(lambda x: 'Renovation types {} (Thousand households)'.format(x))
-            output['Renovation (Thousand households)'] = temp.sum() / 10 ** 3
-            output['Renovation with heater replacement (Thousand households)'] = self.retrofit_with_heater / 10 ** 3
-            output['Replacement (Thousand renovating)'] = (self.gest_nb * self.gest_nb.index).sum() / 10 ** 3
+            output['Renovation (Thousand households)'] = temp.sum() / 10 ** 3 / step
+            output['Renovation with heater replacement (Thousand households)'] = self.retrofit_with_heater / 10 ** 3 / step
+            output['Replacement (Thousand renovating)'] = (self.gest_nb * self.gest_nb.index).sum() / 10 ** 3 / step
             output.update(temp.T / 10 ** 3)
             output['Replacement total (Thousand)'] = output['Replacement (Thousand renovating)'] - output[
-                'Renovation with heater replacement (Thousand households)'] + self.replacement_heater.sum().sum() / 10 ** 3
+                'Renovation with heater replacement (Thousand households)'] + self.replacement_heater.sum().sum() / 10 ** 3 / step
 
             output['Retrofit (Thousand households)'] = output['Renovation (Thousand households)'] - output[
-                'Renovation with heater replacement (Thousand households)'] + self.replacement_heater.sum().sum() / 10 ** 3
+                'Renovation with heater replacement (Thousand households)'] + self.replacement_heater.sum().sum() / 10 ** 3 / step
 
             # output['Renovation (Thousand households)'] = self.certificate_jump.sum().sum() / 10 ** 3
             # We need them by income for freeriders ratios per income deciles
@@ -3482,23 +3482,21 @@ class AgentBuildings(ThermalBuildings):
                 t_heater = 0
                 if i in self.certificate_jump_heater.index:
                     t_heater = self.certificate_jump_heater.loc[i]
-                o['Retrofit {} EPC (Thousand households)'.format(i)] = (t_renovation + t_heater) / 10 ** 3
+                o['Retrofit {} EPC (Thousand households)'.format(i)] = (t_renovation + t_heater) / 10 ** 3 / step
             o = Series(o).sort_index(ascending=False)
 
             output['Renovation >= 1 EPC (Thousand households)'] = self.certificate_jump_all.loc[:,
                                                      [i for i in self.certificate_jump_all.columns if
-                                                      i > 0]].sum().sum() / 10 ** 3
+                                                      i > 0]].sum().sum() / 10 ** 3 / step
             output['Retrofit >= 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >=1])
 
             output.update(o.T)
-            # output['Retrofit rate {} EPC (%)'.format(i)] = temp.sum() / stock.sum()
 
-            # output['Efficient retrofits (Thousand)'] = Series(self.efficient_renovation_yrs) / 10**3
-            output['Global renovation high income (Thousand households)'] = self.global_renovation_high_income / 10 ** 3
-            output['Global renovation low income (Thousand households)'] = self.global_renovation_low_income / 10 ** 3
+            output['Global renovation high income (Thousand households)'] = self.global_renovation_high_income / 10 ** 3 / step
+            output['Global renovation low income (Thousand households)'] = self.global_renovation_low_income / 10 ** 3 / step
             output['Global renovation (Thousand households)'] = output['Global renovation high income (Thousand households)'] + output['Global renovation low income (Thousand households)']
-            output['Bonus best renovation (Thousand households)'] = self.bonus_best / 10 ** 3
-            output['Bonus worst renovation (Thousand households)'] = self.bonus_worst / 10 ** 3
+            output['Bonus best renovation (Thousand households)'] = self.bonus_best / 10 ** 3 / step
+            output['Bonus worst renovation (Thousand households)'] = self.bonus_worst / 10 ** 3 / step
             if output['Renovation (Thousand households)'] != 0:
                 output['Percentage of global renovation (% households)'] = output['Global renovation (Thousand households)'] / output[
                     'Renovation (Thousand households)']
@@ -3510,48 +3508,40 @@ class AgentBuildings(ThermalBuildings):
             temp = self.certificate_jump_all.sum(axis=1)
             t = temp.groupby('Income owner').sum()
             t.index = t.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
-            output.update(t.T / 10 ** 3)
+            output.update(t.T / 10 ** 3 / step)
 
             # for replacement output need to be presented by technologies (what is used) and by agent (who change)
             temp = self.replacement_heater.sum()
-            output['Replacement heater (Thousand households)'] = temp.sum() / 10 ** 3
+            output['Replacement heater (Thousand households)'] = temp.sum() / 10 ** 3 / step
             heat_pump = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
-            output['Replacement Heat pump (Thousand households)'] = temp[heat_pump].sum() / 10 ** 3
+            output['Replacement Heat pump (Thousand households)'] = temp[heat_pump].sum() / 10 ** 3 / step
 
             heater_efficient = heat_pump + ['Wood fuel-Performance boiler', 'Natural gas-Performance boiler']
-            output['Replacement Heater efficient (Thousand households)'] = temp[heater_efficient].sum().sum() / 10 ** 3
+            output['Replacement Heater efficient (Thousand households)'] = temp[heater_efficient].sum().sum() / 10 ** 3 / step
             t = temp.copy()
             t.index = t.index.map(lambda x: 'Replacement heater {} (Thousand households)'.format(x))
-            output.update((t / 10 ** 3).T)
-
-            """
-            # summing accoridng to heating system beafore instead of final 
-            temp = self.replacement_heater.sum(axis=1) 
-            t = temp.groupby(['Heating system', 'Housing type']).sum()
-            t.index = t.index.map(lambda x: 'Replacement heater {} {} (Thousand households)'.format(x[0], x[1]))
-            output.update((t / 10 ** 3).T)
-            """
+            output.update((t / 10 ** 3 / step).T)
 
             t = self.replacement_heater.groupby('Housing type').sum().loc['Multi-family']
             t.index = t.index.map(lambda x: 'Replacement heater Multi-family {} (Thousand households)'.format(x))
-            output.update((t / 10 ** 3).T)
+            output.update((t / 10 ** 3 / step).T)
 
             t = self.replacement_heater.groupby('Housing type').sum().loc['Single-family']
             t.index = t.index.map(lambda x: 'Replacement heater Single-family {} (Thousand households)'.format(x))
-            output.update((t / 10 ** 3).T)
+            output.update((t / 10 ** 3 / step).T)
 
             temp = self.replacement_insulation.sum(axis=1)
             output['Replacement insulation (Thousand households)'] = temp.sum() / 10 ** 3
             t = temp.groupby(['Housing type']).sum()
             t.index = t.index.map(lambda x: 'Replacement insulation {} (Thousand households)'.format(x))
-            output.update((t / 10 ** 3).T)
+            output.update((t / 10 ** 3 / step).T)
 
             t = temp.groupby(['Housing type', 'Occupancy status']).sum()
             t.index = t.index.map(lambda x: 'Replacement insulation {} - {} (Thousand households)'.format(x[0], x[1]))
-            output.update((t / 10 ** 3).T)
+            output.update((t / 10 ** 3 / step).T)
             t = temp.groupby('Income owner').sum()
             t.index = t.index.map(lambda x: 'Replacement insulation {} (Thousand households)'.format(x))
-            output.update(t.T / 10 ** 3)
+            output.update(t.T / 10 ** 3 / step)
 
             """t.index = t.index.str.replace('Thousand', '%')
             s = stock.groupby(['Housing type', 'Occupancy status']).sum()
@@ -3561,20 +3551,20 @@ class AgentBuildings(ThermalBuildings):
             o = {}
             for i in ['Wall', 'Floor', 'Roof', 'Windows']:
                 temp = self.replacement_insulation.xs(True, level=i, axis=1).sum(axis=1)
-                o['Replacement {} (Thousand households)'.format(i)] = temp.sum() / 10 ** 3
+                o['Replacement {} (Thousand households)'.format(i)] = temp.sum() / 10 ** 3 / step
 
                 cost = self.cost_component.loc[:, i]
                 t = reindex_mi(cost, temp.index) * temp
                 surface = reindex_mi(inputs['surface'].loc[:, self.year], t.index)
-                o['Investment {} (Billion euro)'.format(i)] = (t * surface).sum() / 10 ** 9
+                o['Investment {} (Billion euro)'.format(i)] = (t * surface).sum() / 10 ** 9 / step
 
                 surface = reindex_mi(inputs['surface'].loc[:, self.year], temp.index)
                 o['Embodied energy {} (TWh PE)'.format(i)] = (temp * surface *
                                                                    inputs['embodied_energy_renovation'][
-                                                                       i]).sum() / 10 ** 9
+                                                                       i]).sum() / 10 ** 9 / step
                 o['Carbon footprint {} (MtCO2)'.format(i)] = (temp * surface *
                                                                    inputs['carbon_footprint_renovation'][
-                                                                       i]).sum() / 10 ** 9
+                                                                       i]).sum() / 10 ** 9 / step
             output['Replacement insulation (Thousand)'] = sum(
                 [o['Replacement {} (Thousand households)'.format(i)] for i in
                  ['Wall', 'Floor', 'Roof', 'Windows']])
@@ -3601,41 +3591,41 @@ class AgentBuildings(ThermalBuildings):
                 'Carbon footprint construction (MtCO2)']
 
             temp = self.investment_heater.sum()
-            output['Investment heater (Billion euro)'] = temp.sum() / 10 ** 9
+            output['Investment heater (Billion euro)'] = temp.sum() / 10 ** 9 / step
             temp.index = temp.index.map(lambda x: 'Investment {} (Billion euro)'.format(x))
-            output.update(temp.T / 10 ** 9)
+            output.update(temp.T / 10 ** 9 / step)
             investment_heater = self.investment_heater.sum(axis=1)
 
             investment_insulation = self.investment_insulation.sum(axis=1)
-            output['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10 ** 9
+            output['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10 ** 9 / step
 
             index = investment_heater.index.union(investment_insulation.index)
             investment_total = investment_heater.reindex(index, fill_value=0) + investment_insulation.reindex(index,
                                                                                                               fill_value=0)
-            output['Investment total (Billion euro)'] = investment_total.sum() / 10 ** 9
+            output['Investment total (Billion euro)'] = investment_total.sum() / 10 ** 9 / step
             temp = investment_total.groupby('Income owner').sum()
             temp.index = temp.index.map(lambda x: 'Investment total {} (Billion euro)'.format(x))
-            output.update(temp.T / 10 ** 9)
+            output.update(temp.T / 10 ** 9 / step)
             temp = investment_total.groupby(['Housing type', 'Occupancy status']).sum()
             temp.index = temp.index.map(lambda x: 'Investment total {} - {} (Billion euro)'.format(x[0], x[1]))
-            output.update(temp.T / 10 ** 9)
+            output.update(temp.T / 10 ** 9 / step)
 
             subsidies_heater = self.subsidies_heater.sum(axis=1)
-            output['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9
+            output['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9 / step
 
             subsidies_insulation = self.subsidies_insulation.sum(axis=1)
-            output['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10 ** 9
+            output['Subsidies insulation (Billion euro)'] = subsidies_insulation.sum() / 10 ** 9 / step
 
             index = subsidies_heater.index.union(subsidies_insulation.index)
             subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index,
                                                                                                            fill_value=0)
-            output['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10 ** 9
+            output['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10 ** 9 / step
             temp = subsidies_total.groupby('Income owner').sum()
             temp.index = temp.index.map(lambda x: 'Subsidies total {} (Million euro)'.format(x))
-            output.update(temp.T / 10 ** 6)
+            output.update(temp.T / 10 ** 6 / step)
             temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
             temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
-            output.update(temp.T / 10 ** 6)
+            output.update(temp.T / 10 ** 6 / step)
 
             # policies amount and number of beneficiaries
             subsidies, subsidies_count, sub_count = None, None, None
@@ -3651,10 +3641,10 @@ class AgentBuildings(ThermalBuildings):
                 for i in subsidies_details.index:
                     temp = sub_count[i]
                     temp.index = temp.index.map(lambda x: '{} {} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), gest, x))
-                    output.update(temp.T / 10 ** 3)
+                    output.update(temp.T / 10 ** 3 / step)
                     # output['{} {} (Thousand)'.format(i.capitalize().replace('_', ' '), gest)] =
                     output['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = \
-                    subsidies_details.loc[i] / 10 ** 9
+                    subsidies_details.loc[i] / 10 ** 9 / step
                 if subsidies is None:
                     subsidies = subsidies_details.copy()
                     subsidies_count = sub_count.copy()
@@ -3666,10 +3656,10 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_count = subsidies_count.groupby(subsidies_count.index).sum()
                 for i in subsidies.index:
                     temp = subsidies_count[i]
-                    output['{} (Thousand households)'.format(i.capitalize().replace('_', ' '))] = temp.sum() / 10**3
+                    output['{} (Thousand households)'.format(i.capitalize().replace('_', ' '))] = temp.sum() / 10**3 / step
                     temp.index = temp.index.map(lambda x: '{} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), x))
                     output.update(temp.T / 10 ** 3)
-                    output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9
+                    output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9 / step
 
             # output['Zero interest loan headcount'] = self.zil_count
             # output['Zero interest loan average amount'] = self.zil_loaned_avg
@@ -3677,26 +3667,28 @@ class AgentBuildings(ThermalBuildings):
             taxes_expenditures = DataFrame(taxes_expenditures).sum()
             taxes_expenditures.index = taxes_expenditures.index.map(
                 lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
-            output.update((taxes_expenditures / 10 ** 9).T)
-            output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / 10 ** 9
+            output.update((taxes_expenditures / 10 ** 9 / step).T)
+            output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / 10 ** 9 / step
 
             energy_expenditure = self.energy_expenditure
-            output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
+            output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9 / step
             temp = energy_expenditure.groupby('Income tenant').sum()
             temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
-            output.update(temp.T / 10 ** 9)
+            output.update(temp.T / 10 ** 9 / step)
 
-            output['VTA heater (Billion euro)'] = self.tax_heater.sum().sum() / 10 ** 9
+            output['VTA heater (Billion euro)'] = self.tax_heater.sum().sum() / 10 ** 9 / step
 
-            output['VTA insulation (Billion euro)'] = self.taxed_insulation.sum().sum() / 10 ** 9
+            output['VTA insulation (Billion euro)'] = self.taxed_insulation.sum().sum() / 10 ** 9 / step
             output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
 
             output['Investment total HT (Billion euro)'] = output['Investment total (Billion euro)'] - output[
                 'VTA (Billion euro)']
 
-            output['Carbon value (Billion euro)'] = (consumption_energy * inputs['carbon_value_kwh'].loc[self.year, :]).sum() / 10 ** 9
+            output['Carbon value (Billion euro)'] = (consumption_energy * inputs['carbon_value_kwh'].loc[self.year, :]).sum() / 10 ** 9 / step
 
             output['Health cost (Billion euro)'], o = self.health_cost(inputs)
+            output['Health cost (Billion euro)'] /= step
+            # TODO need to be divide by step
             output.update(o)
 
             output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output[
@@ -3713,12 +3705,12 @@ class AgentBuildings(ThermalBuildings):
                 output.update(temp.T)
 
             if self.consumption_saving_insulation is not None:
-                output['Consumption saving insulation (TWh)'] = self.consumption_saving_insulation / 10**9
+                output['Consumption saving insulation (TWh)'] = self.consumption_saving_insulation / 10**9 / step
             else:
                 output['Consumption saving insulation (TWh)'] = None
 
             if self.consumption_saving_insulation is not None:
-                output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10 ** 9
+                output['Consumption saving heater (TWh)'] = self.consumption_saving_heater / 10 ** 9 / step
             else:
                 output['Consumption saving heater (TWh)'] = None
 

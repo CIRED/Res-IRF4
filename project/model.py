@@ -355,7 +355,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.full_output:
-        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate)
+        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step)
     else:
         stock = buildings.simplified_stock().rename(year)
         output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
@@ -414,12 +414,12 @@ def res_irf(config, path):
         for k, year in enumerate(years):
             start = time()
 
-            try:
-                yrs = range(year, years[k + 1])
-                step = years[k + 1] - year
-            except IndexError:
+            if year == config['start'] + 1:
                 yrs = [year]
-                step = 1
+            else:
+                yrs = range(years[k - 1] + 1, year + 1)
+
+            step = len(yrs)
 
             prices = energy_prices.loc[year, :]
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]

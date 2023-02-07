@@ -10,7 +10,7 @@
     ]
   },
   "Reference": {
-    "end": 2051,
+    "end": 2031,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -180,10 +180,11 @@
         "end": 2035,
         "value_end": -0.1
       }
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   },
   "Step5": {
-    "end": 2051,
+    "end": 2031,
     "step": 5,
     "debug_mode": false,
     "full_output": true,
@@ -353,10 +354,12 @@
         "end": 2035,
         "value_end": -0.1
       }
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
+
   },
   "Step2": {
-    "end": 2051,
+    "end": 2031,
     "step": 2,
     "debug_mode": false,
     "full_output": true,
@@ -526,6 +529,8 @@
         "end": 2035,
         "value_end": -0.1
       }
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
+
   }
 }
