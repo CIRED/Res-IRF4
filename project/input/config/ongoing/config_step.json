@@ -180,8 +180,7 @@
         "end": 2035,
         "value_end": -0.1
       }
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   },
   "Step5": {
     "end": 2051,
@@ -354,8 +353,7 @@
         "end": 2035,
         "value_end": -0.1
       }
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   },
   "Step2": {
     "end": 2051,
@@ -528,7 +526,6 @@
         "end": 2035,
         "value_end": -0.1
       }
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }

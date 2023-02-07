@@ -825,16 +825,6 @@ class AgentBuildings(ThermalBuildings):
         self.preferences_insulation_int = deepcopy(preferences['insulation'])
         self.preferences_insulation_ext = deepcopy(preferences['insulation'])
 
-        def monetary_unit(pref_dict):
-            for key in pref_dict.keys():
-                if key != 'investment':
-                    pref_dict[key] = pref_dict[key] / abs(pref_dict['investment'])
-            pref_dict['investment'] = -1
-
-
-        # self.discount_rate = - self.pref_investment_insulation_ext / self.pref_bill_insulation_ext
-        # self.discount_factor = (1 - (1 + self.discount_rate) ** -self.lifetime_insulation) / self.discount_rate
-
         self.scale = 1.0
         self.calibration_scale = 'cite'
         self.param_supply = None
@@ -884,6 +874,8 @@ class AgentBuildings(ThermalBuildings):
         self.tax_insulation, self.taxed_insulation = None, None
         self.subsidies_insulation = None, None
         self.subsidies_details_insulation = {}
+
+        self.store_consumption_saved = None
 
         self.certificate_jump_all = None
 
@@ -1966,7 +1958,6 @@ class AgentBuildings(ThermalBuildings):
             self.investment_insulation = (replaced_by * self.cost_insulation_indiv).groupby(levels).sum()
             self.taxed_insulation = (replaced_by * self.tax_insulation).groupby(levels).sum()
             self.subsidies_insulation = (replaced_by * self.subsidies_insulation_indiv).groupby(levels).sum()
-
             for key in self.subsidies_details_insulation_indiv.keys():
                 self.subsidies_details_insulation[key] = (replaced_by * reindex_mi(
                     self.subsidies_details_insulation_indiv[key], replaced_by.index)).groupby(levels).sum()
@@ -2729,6 +2720,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_after = reindex_mi(consumption_after, index).reindex(self._choice_insulation, axis=1)
         consumption_after = (consumption_after.T * reindex_mi(self._surface, index)).T
         consumption_saved = (consumption_before - consumption_after.T).T
+        self.store_consumption_saved = consumption_saved
 
         energy = pd.Series(index.get_level_values('Heating system final'), index=index).str.split('-').str[0].rename(
             'Energy')
