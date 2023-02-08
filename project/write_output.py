@@ -50,26 +50,26 @@ def plot_scenario(output, stock, buildings):
                    save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), colors=resources_data['colors'], loc='left', left=1.1)
 
-    df = pd.DataFrame([output.loc['Replacement heater {} (Thousand households)'.format(i), :] for i in
+    df = pd.DataFrame([output.loc['Switch {} (Thousand households)'.format(i), :] for i in
                        resources_data['index']['Heating system']]).T.dropna()
     df.columns = resources_data['index']['Heating system']
-    make_area_plot(df, 'Replacement (Thousand households)',
-                   save=os.path.join(buildings.path, 'replacement_heater.png'), total=False,
+    make_area_plot(df, 'Switch (Thousand households)',
+                   save=os.path.join(buildings.path, 'switch_heater.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
     df = pd.DataFrame(
-        [output.loc['Replacement heater Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
+        [output.loc['Switch Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
     df.columns = resources_data['index']['Heating system']
-    make_area_plot(df, 'Replacement (Thousand households)',
+    make_area_plot(df, 'Switch (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
-    df = pd.DataFrame([output.loc['Replacement heater Single-family {} (Thousand households)'.format(i), :] for i in
+    df = pd.DataFrame([output.loc['Switch Single-family {} (Thousand households)'.format(i), :] for i in
                        resources_data['index']['Heating system']]).T.dropna()
     df.columns = resources_data['index']['Heating system']
-    make_area_plot(df, 'Replacement (Thousand households)',
+    make_area_plot(df, 'Switch (Thousand households)',
                    save=os.path.join(buildings.path, 'replacement_heater_sf.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
@@ -244,7 +244,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Investment insulation / households (Thousand euro)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Consumption saving insulation (TWh)': ('saving_insulation.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Consumption saving heater (TWh)': ('saving_heater.png', lambda y, _: '{:,.1f}'.format(y)),
-
                  'Retrofit >= 1 EPC (Thousand households)': (
                      'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
                      resources_data['retrofit_comparison']),
@@ -258,7 +257,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Replacement total (Thousand)': ('replacement_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Replacement insulation (Thousand)': ('replacement_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement heater (Thousand households)': ('replacement_heater.png', lambda y, _: '{:,.0f}'.format(y))
+                 'Switch heater (Thousand households)': ('switch_heater.png', lambda y, _: '{:,.0f}'.format(y))
                  }
 
     for variable, infos in variables.items():
@@ -304,12 +303,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
             ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Replacement {} (Thousand households)': [
             ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, resources_data['retrofit_hist'])],
-        'Replacement insulation {} (Thousand households)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Renovation rate {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
-        'Renovation rate heater {} (%)': [
-            ('Decision maker', lambda y, _: '{:,.0%}'.format(y), 2)],
         'Renovation types {} (Thousand households)': [
             ('Count', lambda y, _: '{:,.0f}'.format(y), 2)
         ]
@@ -319,7 +312,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
         n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
         temp = grouped(data, [v.format(i) for i in resources_data['index'][inf[0]]])
         replace = {v.format(i): i for i in resources_data['index'][inf[0]]}
-        temp = {replace[key]: item.interpolate(limit_area='inside').fillna(0) for key, item in temp.items()}
+        # temp = {replace[key]: item.interpolate(limit_area='inside').fillna(0) for key, item in temp.items()}
 
         try:
             n_columns = inf[2]
@@ -573,10 +566,6 @@ def indicator_policies(result, folder, config, discount_rate=0.045, years=30):
                 else:
                     indicator = pd.concat((indicator, df), axis=0)
 
-                indicator.loc['Retrofit rate difference (%)', s] = result['Reference'].loc['Renovation rate (%)', year] - (
-                    result[s].loc['Renovation rate (%)', year])
-                """indicator.loc['Impact on retrofit rate (%)', s] = (result['Reference'].loc['Renovation rate (%)', year] - (
-                    result[s].loc['Renovation rate (%)', year])) / comparison.loc['{} (Billion euro)'.format(policy_name), s]"""
     else:
         indicator = pd.DataFrame(indicator).T
 

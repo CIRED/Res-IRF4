@@ -355,7 +355,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     buildings.calculate_consumption(prices, taxes)
     buildings.logger.info('Writing output')
     if buildings.full_output:
-        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step)
+        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
     else:
         stock = buildings.simplified_stock().rename(year)
         output = buildings.heat_consumption_energy.rename(year) / 10 ** 9

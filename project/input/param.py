@@ -102,7 +102,7 @@ else:
     bill_saving_preferences = bill_saving_preferences.xs('Single-family', level='Housing type')
 
 generic_input['preferences'] = {}
-generic_input['preferences']['heater'] = {'investment': investment_preferences_heater,
+generic_input['preferences']['heater'] = {'cost': investment_preferences_heater,
                                           'subsidy': subsidy_preferences_heater,
                                           'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
                                           'inertia': inertia}
@@ -115,7 +115,7 @@ generic_input['preferences']['insulation'] = {'investment': investment_preferenc
                                               }
 """
 
-generic_input['preferences']['insulation'] = {'investment': investment_preferences_heater,
+generic_input['preferences']['insulation'] = {'cost': investment_preferences_heater,
                                               'subsidy': subsidy_preferences_heater,
                                               'bill_saved': bill_saving_preferences.loc[:, 'Heater'],
                                               }

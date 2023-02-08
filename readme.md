@@ -17,15 +17,19 @@ specific functions. Use only with care and caution._**
 **Step 1**: Git **clone Res-IRF folder** in your computer.
    - Use your terminal and go to a location where you want to store the Res-IRF project.
    - `https://github.com/CIRED/Res-IRF4.git`
+   - If the code is not released in open-source. [Create a token](https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token). 
+   - `git clone https://oauth-key-goes-here@/github.com/CIRED/Res-IRF4.git`
+
 
 **Step 2**: **Create a conda environment** from the environment.yml file:
-   - The requirements.txt file is in the Res-IRF folder.
+   - A conda environment contains the required version of Python and packages. It is an easy way to install all the requirements.
+   - The `environment.yml` file is in the Res-IRF folder.
    - Use the **terminal** and go to the Res-IRF folder stored on your computer.
    - Type: `conda env create -f environment.yml`
 
 **Step 3**: **Activate the new environment**.
    - The first line of the yml file sets the new environment's name.
-   - Type: `conda activate envResIRF`
+   - Type: `conda activate envResIRF` (in the terminal)
 
 **Step 4**: **Launch Res-IRF**
    - Launch from Res-IRF root folder (not from `/project`):
