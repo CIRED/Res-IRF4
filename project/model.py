@@ -10,6 +10,7 @@ from project.read_input import read_stock, read_policies, read_inputs, parse_inp
 from project.write_output import plot_scenario, compare_results
 from project.utils import reindex_mi
 from pickle import load
+from pickle import dump
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -193,7 +194,7 @@ def select_post_inputs(parsed_inputs):
 
     vars = ['carbon_emission', 'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
-            'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh']
+            'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh', 'carbon_value']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
@@ -448,6 +449,15 @@ def res_irf(config, path):
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
             if year == 2019 and buildings.full_output:
                 compare_results(o, buildings.path)
+                with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
+                    dump({
+                        'coefficient_global': buildings.coefficient_global,
+                        'coefficient_heater': buildings.coefficient_heater,
+                        'constant_insulation_extensive': buildings.constant_insulation_extensive,
+                        'constant_insulation_intensive': buildings.constant_insulation_intensive,
+                        'constant_heater': buildings.constant_heater,
+                        'scale': buildings.scale
+                    }, file)
 
         if path is not None:
             buildings.logger.info('Dumping output in {}'.format(path))

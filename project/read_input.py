@@ -42,7 +42,8 @@ class PublicPolicy:
 
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
-                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None):
+                 new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None,
+                 bonus=False):
         self.name = name
         self.start = start
         self.end = end
@@ -59,6 +60,7 @@ class PublicPolicy:
         self.frequency = frequency
         self.intensive = intensive
         self.min_performance = min_performance
+        self.bonus = bonus
 
     def cost_targeted(self, cost_insulation, target_subsidies=None):
         """
@@ -138,35 +140,19 @@ def read_policies(config):
                                 lambda x: pd.read_csv(x, index_col=[0]))
 
         if data['global_retrofit']:
-            if isinstance(data['global_retrofit'], dict):
-                global_retrofit = get_pandas(data['global_retrofit']['value'],
-                                             lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-                l.append(PublicPolicy('mpr', data['global_retrofit']['start'], data['global_retrofit']['end'], global_retrofit, 'subsidy_non_cumulative',
-                                      gest='insulation'))
-            else:
-                global_retrofit = get_pandas(data['global_retrofit'],
-                                             lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-                l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
-                                      gest='insulation'))
+            global_retrofit = get_pandas(data['global_retrofit'],
+                                         lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
+                                  gest='insulation', target='global_retrofit'))
 
         if data['bonus']:
-            if isinstance(data['bonus'], dict):
-                bonus_best = get_pandas(data['bonus']['value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-                bonus_worst = get_pandas(data['bonus']['value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            bonus_worst = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
-                """bonus_best = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')
-                bonus_worst = pd.read_csv(data['bonus']['value'], index_col=[0]).squeeze('columns')"""
-                l.append(PublicPolicy('mpr', data['bonus']['start'], data['bonus']['end'], bonus_best, 'bonus_best', gest='insulation'))
-                l.append(PublicPolicy('mpr', data['bonus']['start'], data['bonus']['end'], bonus_worst, 'bonus_worst', gest='insulation'))
-            else:
-                bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-                bonus_worst = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
-                """bonus_best = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')
-                bonus_worst = pd.read_csv(data['bonus'], index_col=[0]).squeeze('columns')"""
-                l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus_best', gest='insulation'))
-                l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus_worst', gest='insulation'))
+            l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus', gest='insulation',
+                                  target='bonus_best'))
+            l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus', gest='insulation',
+                                  target='bonus_worst'))
 
         l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
@@ -189,11 +175,10 @@ def read_policies(config):
         list
         """
         l = list()
-        mpr_serenite = get_pandas(data['insulation'],
-                                  lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-
+        mpr_serenite = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(PublicPolicy('mpr_serenite', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
-                              gest='insulation', non_cumulative=['mpr', 'cite'], cap=data['cap']))
+                              target='mpr_serenite', gest='insulation', non_cumulative=['mpr', 'cite'],
+                              cap=data['cap']))
         return l
 
     def read_cee(data):
@@ -236,11 +221,11 @@ def read_policies(config):
         """
         l = list()
         heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_volarem', gest='heater',
+        l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_valorem', gest='heater',
                               cap=data['cap'], by='columns'))
         insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(
-            PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_volarem', gest='insulation',
+            PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_valorem', gest='insulation',
                          cap=data['cap']))
         return l
 
@@ -275,7 +260,7 @@ def read_policies(config):
         """
         data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         return [
-                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_volarem',
+                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_valorem',
                              target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
 
     def read_reduced_tax(data):
@@ -285,7 +270,7 @@ def read_policies(config):
             PublicPolicy('reduced_tax', data['start'], data['end'], data['value'], 'reduced_tax', gest='insulation'))
         return l
 
-    def read_ad_volarem(data):
+    def read_ad_valorem(data):
         l = list()
         value = data['value']
         if data.get('index') is not None:
@@ -298,11 +283,11 @@ def read_policies(config):
             value *= mask
             by = 'columns'
 
-        name = 'sub_ad_volarem'
+        name = 'sub_ad_valorem'
         if data.get('name') is not None:
             name = data['name']
 
-        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_volarem',
+        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_valorem',
                               gest=data['gest'], by=by, target=data.get('target')))
         return l
 
@@ -326,7 +311,7 @@ def read_policies(config):
 
         if data.get('sub_obligation') is not None:
             value = get_pandas(data['sub_obligation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            l.append(PublicPolicy('sub_obligation', start, data['end'], value, 'subsidy_ad_volarem',
+            l.append(PublicPolicy('sub_obligation', start, data['end'], value, 'subsidy_ad_valorem',
                                   gest='insulation'))
         return l
 
@@ -339,7 +324,7 @@ def read_policies(config):
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap,
             'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
-            'sub_ad_volarem': read_ad_volarem, 'oil_fuel_elimination': read_oil_fuel_elimination,
+            'sub_ad_valorem': read_ad_valorem, 'oil_fuel_elimination': read_oil_fuel_elimination,
             'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
 
     list_policies = list()
@@ -347,8 +332,8 @@ def read_policies(config):
         if key in read.keys():
             list_policies += read[key](item)
         else:
-            if item.get('policy') == 'sub_ad_volarem':
-                list_policies += read_ad_volarem(item)
+            if item.get('policy') == 'sub_ad_valorem':
+                list_policies += read_ad_valorem(item)
             else:
                 print('{} reading function is not implemented'.format(key))
 
@@ -869,5 +854,5 @@ def generate_price_scenarios(energy_prices, year_2=2020, year_1=2019, year_0=201
 
 
 def create_simple_policy(start, end, value=0.3, gest='insulation'):
-    return PublicPolicy('sub_ad_volarem', start, end, value, 'subsidy_ad_volarem',
+    return PublicPolicy('sub_ad_valorem', start, end, value, 'subsidy_ad_valorem',
                         gest=gest)

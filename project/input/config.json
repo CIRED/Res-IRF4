@@ -44,7 +44,7 @@
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
       "mpr": {
-        "start": 2021,
+        "start": 2019,
         "end": 2021,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
@@ -88,14 +88,6 @@
         "end": 2051,
         "value": 0.055
       },
-      "zero_interest_loan": {
-        "new": true,
-        "start": 2019,
-        "end": 2019,
-        "value": 0.0917729,
-        "min": 5000,
-        "max": "project/input/policies/zil_max.csv"
-      },
       "obligation": {
         "start": 2019,
         "end": 2019,
@@ -103,14 +95,6 @@
         "frequency": null,
         "intensive": "market_share",
         "minimum_performance": null
-      },
-      "landlord": {
-        "start": 2020,
-        "end": 2021
-      },
-      "multi_family": {
-        "start": 2020,
-        "end": 2020
       }
     },
     "footprint": {
@@ -131,6 +115,7 @@
     },
     "pop_housing": null,
     "share_multi_family": null,
-    "surface_built": null
+    "surface_built": null,
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }
