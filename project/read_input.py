@@ -370,20 +370,19 @@ def read_inputs(config, other_inputs=generic_input):
     idx = range(config['start'], config['end'])
 
     inputs.update(other_inputs)
-
-    cost_heater = get_pandas(config['cost_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-    inputs.update({'cost_heater': cost_heater})
-
-    cost_insulation = get_pandas(config['cost_insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-    inputs.update({'cost_insulation': cost_insulation})
-
-    energy_prices = get_pandas(config['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+    energy_prices = get_pandas(config['macro']['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
     inputs.update({'energy_prices': energy_prices.loc[:config['end'], :]})
 
-    energy_taxes = get_pandas(config['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+    energy_taxes = get_pandas(config['macro']['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
     inputs.update({'energy_taxes': energy_taxes.loc[:config['end'], :]})
 
-    efficiency = get_pandas(config['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+    cost_heater = get_pandas(config['technical']['cost_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+    inputs.update({'cost_heater': cost_heater})
+
+    cost_insulation = get_pandas(config['technical']['cost_insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+    inputs.update({'cost_insulation': cost_insulation})
+
+    efficiency = get_pandas(config['technical']['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
     inputs.update({'efficiency': efficiency})
 
     ms_heater = get_pandas(config['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
@@ -406,36 +405,46 @@ def read_inputs(config, other_inputs=generic_input):
         calibration_intensive = {'ms_insulation_ini': ms_insulation_ini, 'minimum_performance': minimum_performance}
     inputs.update({'calibration_intensive': calibration_intensive})
 
-    population = get_pandas(config['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+    population = get_pandas(config['macro']['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'population': population.loc[:config['end']]})
 
-    inputs.update({'stock_ini': other_inputs['stock_ini']})
+    inputs.update({'stock_ini': config['macro']['stock_ini']})
 
-    if config['pop_housing'] is None:
+    if config['macro']['pop_housing'] is None:
         inputs.update({'pop_housing_min': other_inputs['pop_housing_min']})
         inputs.update({'factor_pop_housing': other_inputs['factor_pop_housing']})
     else:
-        pop_housing = get_pandas(config['pop_housing'],
+        pop_housing = get_pandas(config['macro']['pop_housing'],
                                           lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'pop_housing': pop_housing.loc[:config['end']]})
 
-    if config['share_multi_family'] is None:
+    if config['macro']['share_multi_family'] is None:
         inputs.update({'factor_multi_family': other_inputs['factor_multi_family']})
     else:
-        share_multi_family = get_pandas(config['share_multi_family'],
+        share_multi_family = get_pandas(config['macro']['share_multi_family'],
                                                  lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'share_multi_family': share_multi_family})
 
-    inputs.update({'available_income': other_inputs['available_income']})
-    inputs.update({'income_rate': config['income_rate']})
-    inputs.update({'demolition_rate': config['demolition_rate']})
+    inputs.update({'available_income': config['macro']['available_income']})
+    inputs.update({'income_rate': config['macro']['income_rate']})
+    income = get_pandas(config['macro']['income'], lambda x: pd.read_csv(x, index_col=[0])).squeeze().rename_axis('Income').rename(None)
+    inputs.update({'income': income})
 
-    if config['surface_built'] is None:
-        inputs.update({'surface': other_inputs['surface']})
+    inputs.update({'demolition_rate': config['macro']['demolition_rate']})
+    rotation_rate = get_pandas(config['macro']['rotation_rate'], lambda x: pd.read_csv(x, index_col=[0])).squeeze().rename(None)
+    inputs.update({'rotation_rate': rotation_rate})
+
+    surface = get_pandas(config['technical']['surface'], lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze().rename(None))
+    inputs.update({'surface': surface})
+
+    ratio_surface = get_pandas(config['technical']['ratio_surface'], lambda x: pd.read_csv(x, index_col=[0]))
+    inputs.update({'ratio_surface': ratio_surface})
+
+    if config['macro']['surface_built'] is None:
         inputs.update({'surface_max': other_inputs['surface_max']})
         inputs.update({'surface_elasticity': other_inputs['surface_elasticity']})
     else:
-        surface_built = get_pandas(config['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
+        surface_built = get_pandas(config['macro']['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
         inputs.update({'surface_built': surface_built})
 
     ms_heater_built = get_pandas(config['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
@@ -451,23 +460,17 @@ def read_inputs(config, other_inputs=generic_input):
     carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
     inputs.update({'carbon_value': carbon_value.loc[idx]})
 
-    carbon_emission = get_pandas(config['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
+    carbon_emission = get_pandas(config['technical']['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
     inputs.update({'carbon_emission': carbon_emission.loc[idx, :]})
 
-    footprint_built = get_pandas(config['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
+    footprint_built = get_pandas(config['technical']['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
     inputs.update({'footprint_built': footprint_built})
-    footprint_renovation = get_pandas(config['footprint']['renovation'], lambda x: pd.read_csv(x, index_col=[0, 1]))
+    footprint_renovation = get_pandas(config['technical']['footprint']['renovation'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     inputs.update({'footprint_renovation': footprint_renovation})
 
-    inputs.update({'traditional_material': config['footprint']['Traditional material']})
-    inputs.update({'bio_material': config['footprint']['Bio material']})
+    inputs.update({'traditional_material': config['technical']['footprint']['Traditional material']})
+    inputs.update({'bio_material': config['technical']['footprint']['Bio material']})
 
-    """levels_category = ['Housing type', 'Occupancy status', 'Income tenant', 'Income owner', 'Heating system']
-    for key, item in inputs.items():
-        if isinstance(item, (Series, DataFrame)):
-            level = [i for i in item.index.names if i in levels_category]
-            inputs[key] = item.reset_index(level).astype({i: 'category' for i in level}).set_index(
-                level, append=True).squeeze()"""
     return inputs
 
 
@@ -543,7 +546,7 @@ def parse_inputs(inputs, taxes, config, stock):
                                                                  inputs['factor_multi_family'])
 
     parsed_inputs['available_income'] = pd.Series(
-        [inputs['available_income'] * (1 + config['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
+        [inputs['available_income'] * (1 + config['macro']['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
     parsed_inputs['available_income_pop'] = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
 
@@ -585,7 +588,7 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['flow_built'] = pd.concat([parsed_inputs['flow_built']], keys=[False],
                                             names=['Existing']).reorder_levels(stock.index.names)
 
-    if not config['construction']:
+    if not config['macro']['construction']:
         parsed_inputs['flow_built'][parsed_inputs['flow_built'] > 0] = 0
 
     df = inputs['health_cost']
@@ -646,10 +649,7 @@ def parse_inputs(inputs, taxes, config, stock):
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
     parsed_inputs['energy_prices'] = energy_prices
 
-    if config.get('remove_market_failures'):
-        parsed_inputs['remove_market_failures'] = config['remove_market_failures']
-    else:
-        parsed_inputs['remove_market_failures'] = None
+    parsed_inputs['input_financing'].update(config['financing_cost'])
 
     return parsed_inputs
 

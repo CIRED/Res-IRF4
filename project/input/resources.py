@@ -35,7 +35,6 @@ resources_data['emissions_total_objectives'] = Series([23, 0], index=[2030, 2050
 
 resources_data['low_eff_objectives'] = Series([0], index=[2050], name='Objectives')
 
-
 resources_data['retrofit_hist'] = get_pandas('project/input/resources_dir/hist_retrofit.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
 resources_data['retrofit_hist'] = {k: DataFrame({2019: item}).T / 10 ** 3 for k, item in
                                    resources_data['retrofit_hist'].T.to_dict().items()}
@@ -101,6 +100,11 @@ colors = {
     "C": "darkgreen",
     "B": "forestgreen",
     "A": "limegreen",
+    1: "dimgrey",
+    2: "grey",
+    3: "darkgreen",
+    4: "forestgreen",
+    5: "limegreen",
     "C1": "black",
     "C2": "darkred",
     "C3": "firebrick",

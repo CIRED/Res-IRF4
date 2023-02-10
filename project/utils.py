@@ -252,6 +252,8 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax)
     if legend:
         format_legend(ax)
+    # plt.ticklabel_format(style='plain', axis='x')
+
     save_fig(fig, save=save)
 
 
@@ -310,9 +312,14 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     list_keys = list(dict_df.keys())
     if order is not None:
         list_keys = order
-
-    sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
-    y_max = max([i.fillna(0).to_numpy().max() for i in dict_df.values()]) * 1.1
+    try:
+        sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
+    except:
+        print('break')
+    try:
+        y_max = max([i.fillna(0).to_numpy().max() for i in dict_df.values()]) * 1.1
+    except ValueError:
+        print('break')
 
     n_axes = int(len(list_keys))
     n_rows = ceil(n_axes / n_columns)
@@ -359,7 +366,7 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
 
 
 def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, total=True, offset=1,
-                   ymin=None, loc='upper', scatter=None, left=1.04):
+                   ymin=None, loc='upper', scatter=None, left=1.04, xinteger=True):
 
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
@@ -373,7 +380,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
-    ax = format_ax(ax, title=y_label, xinteger=True, format_y=format_y, ymin=ymin)
+    ax = format_ax(ax, title=y_label, xinteger=xinteger, format_y=format_y, ymin=ymin)
     format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
 
     save_fig(fig, save=save)

@@ -22,11 +22,8 @@ generic_input = dict()
 generic_input['pop_housing_min'] = 2
 generic_input['factor_pop_housing'] = -0.007
 generic_input['factor_multi_family'] = 0.87
-generic_input['available_income'] = 1421 * 10**9
 generic_input['price_index'] = 1
-generic_input['income'] = pd.Series([10030, 15910, 19730, 23680, 28150, 33320, 39260, 46450, 57230, 102880],
-                                    index=pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
-                                                   name='Income'))
+
 input_financing = dict()
 input_financing['share_debt'] = (0.139, 1.15 * 10**-5)
 
@@ -34,13 +31,8 @@ input_financing['factor_saving_rate'] = pd.Series([2, 2, 2, 2, 1.6, 1.6, 1.3, 1.
                                                   index=pd.Index(
                                                       ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                                                       name='Income owner'))
-input_financing['interest_rate'] = 0.04
-input_financing['saving_rate'] = 0.025
 generic_input['input_financing'] = input_financing
-input_financing['duration'] = 10
 
-
-generic_input['stock_ini'] = 29037000
 
 surface_elasticity = pd.Series({('Single-family', 'Owner-occupied'): 0.2,
                                 ('Single-family', 'Privately rented'): 0.2,
@@ -60,9 +52,6 @@ surface_max = pd.Series({('Single-family', 'Owner-occupied'): 160,
 surface_max.index.set_names(['Housing type', 'Occupancy status'], inplace=True)
 generic_input['surface_max'] = surface_max
 
-generic_input['rotation_rate'] = pd.Series([0.121, 0.021, 0.052],
-                                           index=pd.Index(['Owner-occupied', 'Privately rented', 'Social-housing'],
-                                                          name='Occupancy status'))
 
 generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
                                              index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
@@ -71,13 +60,8 @@ generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})
 
 
-generic_input['ratio_surface'] = pd.DataFrame(
-    [[1.42, 0.75, 0.77, 0.17], [0.78, 0.28, 0.29, 0.19]],
-    index=pd.Index(['Single-family', 'Multi-family'], name='Housing type'),
-    columns=['Wall', 'Floor', 'Roof', 'Windows'])
-
 subsidy_preferences_heater = 0.167
-bill_saving_preferences = get_pandas('project/input/bill_saving_preferences.csv', lambda x: pd.read_csv(x, index_col=[0, 1]))
+bill_saving_preferences = get_pandas('project/input/revealed_data/bill_saving_preferences.csv', lambda x: pd.read_csv(x, index_col=[0, 1]))
 # subsidy_loan_preferences_heater, subsidy_loan_preferences_insulation = 0.473, 0.343
 
 inertia = 0.8299
@@ -124,9 +108,6 @@ generic_input['performance_insulation'] = {'Wall': 0.1,
                                            'Floor': round(1 / 3.6, 1),
                                            'Roof': round(1 / 8.6, 1),
                                            'Windows': 1.3}
-
-generic_input['surface'] = get_pandas('project/input/surface.csv', lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze().rename(None))
-
 
 
 """generic_input['supply'] = {

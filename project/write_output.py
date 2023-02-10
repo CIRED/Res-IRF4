@@ -24,25 +24,65 @@ from project.utils import make_plot, make_grouped_subplots, make_area_plot, wate
     assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot
 
 
-def plot_scenario(output, stock, buildings):
-
-    """fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-    for year in t.columns:
-        df = pd.concat((s_temp[year - 1], t[year]), axis=1, keys=['Stock', 'Retrofit rate']).sort_values(
-            'Retrofit rate')
-        df['Stock'] = df['Stock'].cumsum() / 10 ** 6
-        df = df.set_index('Stock').squeeze().sort_values()
-        df.plot(ax=ax)
-    format_ax(ax, format_y=lambda x, _: '{:.0%}'.format(x), y_label='Retrofit rate (%)')
-    ax.set_xlabel('Cumulated buildings stock (Million)')
-    format_legend(ax, labels=t.columns)
-    save_fig(fig, save=os.path.join(buildings.path, 'retrofit_rate.png'))"""
+def plot_scenario(output, stock, buildings, detailed_graph=False):
 
     if buildings.quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
         resources_data['index']['Income owner'] = resources_data['quintiles']
 
-    # graph
+    # energy consumption
+    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
+    df.columns = resources_data['index']['Energy']
+    make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   save=os.path.join(buildings.path, 'consumption_energy.png'),
+                   total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
+    # consumption existing vs new
+    if detailed_graph:
+        t = output.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
+        t.index = ['Renovation', 'Construction']
+        if 'Consumption New (TWh)' in output.index:
+            l = ['Existing', 'New']
+        else:
+            l = ['Existing']
+        temp = output.loc[['Consumption {} (TWh)'.format(i) for i in l], :]
+        temp.index = l
+        temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
+        make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Consumption (TWh)', colors=resources_data['colors'],
+                       save=os.path.join(buildings.path, 'consumption.png'), total=False,
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
+
+    # emission
+    t = output.loc[['Carbon footprint renovation (MtCO2)', 'Carbon footprint construction (MtCO2)'], :]
+    t.index = ['Renovation', 'Construction']
+    if 'Emission New (MtCO2)' in output.index:
+        l = ['Existing', 'New']
+    else:
+        l = ['Existing']
+    temp = output.loc[['Emission {} (MtCO2)'.format(i) for i in l], :]
+    temp.index = l
+    temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
+    make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Emission (MtCO2)', colors=resources_data['colors'],
+                   save=os.path.join(buildings.path, 'emission.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
+                   scatter=resources_data['emissions_total_objectives'])
+
+    # building stock performance
+    df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
+    make_area_plot(df, 'Dwelling stock (Million)', colors=resources_data['colors'],
+                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
+                   save=os.path.join(buildings.path, 'stock_performance.png'), total=False,
+                   loc='left')
+
+    # building stock heating system
+    df = output.loc[['Stock {} (Million)'.format(i) for i in resources_data['index']['Heater']], :].T
+    df.columns = resources_data['index']['Heater']
+    make_area_plot(df, 'Dwelling stock (Million)', colors=resources_data['colors'],
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   save=os.path.join(buildings.path, 'stock_heater.png'), total=False,
+                   loc='left', left=1.1)
+
+    # replacement insulation
     df = pd.DataFrame(
         [output.loc['Replacement {} (Thousand households)'.format(i), :] for i in resources_data['index']['Insulation']]).T.dropna()
     df.columns = resources_data['index']['Insulation']
@@ -50,6 +90,23 @@ def plot_scenario(output, stock, buildings):
                    save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), colors=resources_data['colors'], loc='left', left=1.1)
 
+    df = output.loc[['Renovation {} (Thousand households)'.format(i) for i in resources_data['index']['Decision maker']], :].T
+    df.dropna(inplace=True)
+    df.columns = resources_data['index']['Decision maker']
+    make_area_plot(df, 'Renovation (Thousand households)',
+                   save=os.path.join(buildings.path, 'renovation_decision_maker.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   colors=resources_data['colors'], loc='left', left=1.25)
+
+    df = output.loc[['Retrofit measures {} (Thousand households)'.format(i) for i in resources_data['index']['Count']], :].T
+    df.dropna(inplace=True)
+    df.columns = resources_data['index']['Count']
+    make_area_plot(df, 'Retrofit measures (Thousand households)',
+                   save=os.path.join(buildings.path, 'retrofit_measures.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   colors=resources_data['colors'], loc='left', left=1.25)
+
+    # switch heating system
     df = pd.DataFrame([output.loc['Switch {} (Thousand households)'.format(i), :] for i in
                        resources_data['index']['Heating system']]).T.dropna()
     df.columns = resources_data['index']['Heating system']
@@ -57,22 +114,22 @@ def plot_scenario(output, stock, buildings):
                    save=os.path.join(buildings.path, 'switch_heater.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
+    if detailed_graph is True:
+        df = pd.DataFrame(
+            [output.loc['Switch Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
+        df.columns = resources_data['index']['Heating system']
+        make_area_plot(df, 'Switch (Thousand households)',
+                       save=os.path.join(buildings.path, 'switch_heater_mf.png'), total=False,
+                       format_y=lambda y, _: '{:.0f}'.format(y),
+                       colors=resources_data['colors'], loc='left', left=1.25)
 
-    df = pd.DataFrame(
-        [output.loc['Switch Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
-    df.columns = resources_data['index']['Heating system']
-    make_area_plot(df, 'Switch (Thousand households)',
-                   save=os.path.join(buildings.path, 'replacement_heater_mf.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y),
-                   colors=resources_data['colors'], loc='left', left=1.25)
-
-    df = pd.DataFrame([output.loc['Switch Single-family {} (Thousand households)'.format(i), :] for i in
-                       resources_data['index']['Heating system']]).T.dropna()
-    df.columns = resources_data['index']['Heating system']
-    make_area_plot(df, 'Switch (Thousand households)',
-                   save=os.path.join(buildings.path, 'replacement_heater_sf.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y),
-                   colors=resources_data['colors'], loc='left', left=1.25)
+        df = pd.DataFrame([output.loc['Switch Single-family {} (Thousand households)'.format(i), :] for i in
+                           resources_data['index']['Heating system']]).T.dropna()
+        df.columns = resources_data['index']['Heating system']
+        make_area_plot(df, 'Switch (Thousand households)',
+                       save=os.path.join(buildings.path, 'switch_heater_sf.png'), total=False,
+                       format_y=lambda y, _: '{:.0f}'.format(y),
+                       colors=resources_data['colors'], loc='left', left=1.25)
 
     # graph subsidies
     non_subsidies = ['subsidies_cap', 'obligation']
@@ -83,7 +140,6 @@ def plot_scenario(output, stock, buildings):
     subset.fillna(0, inplace=True)
     subset = subset.loc[:, (subset != 0).any(axis=0)].T
     subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
-    # subset.dropna(inplace=True, how='all')
     if not subset.empty:
         scatter = resources_data['public_policies_2019']
         if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan', 'Mpr serenite']:
@@ -120,69 +176,28 @@ def plot_scenario(output, stock, buildings):
                        colors=resources_data['colors'],
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
-    df = output.loc[['Investment total {} (Billion euro)'.format(i) for i in resources_data['index']['Income owner']], :].T
-    df.dropna(inplace=True)
-    df.columns = resources_data['index']['Income owner']
-    make_area_plot(df, 'Investment (Billion euro)', colors=resources_data['colors'],
-                   save=os.path.join(buildings.path, 'investment_income.png'), total=False, loc='left',
-                   format_y=lambda y, _: '{:.0f}'.format(y))
+    # graph investment total and financing
+    subset = output.loc[['Investment insulation (Billion euro)', 'Investment heater (Billion euro)',
+                         'Financing insulation (Billion euro)', 'Financing heater (Billion euro)'], :].T
+    subset.dropna(how='any', inplace=True)
+    subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
+    if not subset.empty:
+        make_area_plot(subset, 'Investement (Billion euro)', save=os.path.join(buildings.path, 'investment.png'),
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
+                       colors=['firebrick', 'royalblue', 'darksalmon', 'lightblue'])
 
-    df = output.loc[['Investment total {} (Billion euro)'.format(i) for i in resources_data['index']['Decision maker']], :].T
-    df.dropna(inplace=True)
-    df.columns = resources_data['index']['Decision maker']
+    subset = output.loc[['Saving total (Billion euro)', 'Debt total (Billion euro)', 'Subsidies total (Billion euro)'], :].T
+    subset.dropna(how='any', inplace=True)
+    subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
+    if not subset.empty:
+        make_area_plot(subset, 'Financing (Billion euro)', save=os.path.join(buildings.path, 'financing.png'),
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
+                       colors=['darkred', 'darkgrey', 'darkgreen'])
 
-    make_area_plot(df, 'Investment (Billion euro)',
-                   save=os.path.join(buildings.path, 'investment_decision_maker.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y),
-                   colors=resources_data['colors'], loc='left', left=1.25)
-
-    # graph consumption
-    t = output.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
-    t.index = ['Renovation', 'Construction']
-    if 'Consumption New (TWh)' in output.index:
-        l = ['Existing', 'New']
-    else:
-        l = ['Existing']
-    temp = output.loc[['Consumption {} (TWh)'.format(i) for i in l], :]
-    temp.index = l
-    temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
-    make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Consumption (TWh)', colors=resources_data['colors'],
-                   save=os.path.join(buildings.path, 'consumption.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
-
-    # graph emissions
-    t = output.loc[['Carbon footprint renovation (MtCO2)', 'Carbon footprint construction (MtCO2)'], :]
-    t.index = ['Renovation', 'Construction']
-    if 'Emission New (MtCO2)' in output.index:
-        l = ['Existing', 'New']
-    else:
-        l = ['Existing']
-    temp = output.loc[['Emission {} (MtCO2)'.format(i) for i in l], :]
-    temp.index = l
-    temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
-    make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Emission (MtCO2)', colors=resources_data['colors'],
-                   save=os.path.join(buildings.path, 'emission.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2)
-
-    df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
-    make_area_plot(df, 'Dwelling stock (Millions)', colors=resources_data['colors'],
-                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                   save=os.path.join(buildings.path, 'stock_performance.png'), total=False,
-                   loc='left')
-
-    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
-    df.columns = resources_data['index']['Energy']
-    make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
-                   format_y=lambda y, _: '{:.0f}'.format(y),
-                   save=os.path.join(buildings.path, 'consumption_energy.png'),
-                   total=False, loc='left', left=1.2)
-
-    # TODO: add in output.csv
-    """df = consumption.groupby('Income tenant').sum().T.loc[:, resources_data['index']['Income tenant']]
-    make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
-                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 9),
-                   save=os.path.join(buildings.path, 'consumption_income.png'), loc='left', total=False)"""
-
+    df = output.loc[['Budget share {} (%)'.format(i) for i in resources_data['index']['Income tenant']], :].T
+    df.columns = resources_data['index']['Income tenant']
+    make_plot(df, 'Budget share (%)', colors=resources_data['colors'], format_y=lambda y, _: '{:.1%}'.format(y),
+              save=os.path.join(buildings.path, 'budget_share.png'), legend=True, integer=True)
 
 def grouped_output(result, folder, config_runs=None, config_sensitivity=None, quintiles=None):
     """Grouped scenarios output.
@@ -235,7 +250,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
                  'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y), None,
                                        resources_data['emissions_total_objectives']),
-                 'Stock Heat pump (Thousand households)': ('stock_heat_pump.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Stock Heat pump (Million)': ('stock_heat_pump.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
@@ -244,10 +259,9 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Investment insulation / households (Thousand euro)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Consumption saving insulation (TWh)': ('saving_insulation.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Consumption saving heater (TWh)': ('saving_heater.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Retrofit >= 1 EPC (Thousand households)': (
+                 'Retrofit at least 1 EPC (Thousand households)': (
                      'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
                      resources_data['retrofit_comparison']),
-
                  'Bonus best renovation (Thousand households)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Global renovation (Thousand households)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
@@ -294,20 +308,17 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
     variables_output = {
         'Consumption {} (TWh)': [
             ('Energy', lambda y, _: '{:,.0f}'.format(y), 2, resources_data['consumption_hist'])],
-        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y))],
-        'Stock {} (Thousand households)': [('Heater', lambda y, _: '{:,.0f}'.format(y))],
-        'Subsidies total {} (Million euro)': [('Income owner', lambda y, _: '{:,.0f}'.format(y)),
-                                              ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)
-                                              ],
+        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y)),
+                               ('Heater', lambda y, _: '{:,.0f}'.format(y))],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Investment total {} (Billion euro)': [
-            ('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Replacement {} (Thousand households)': [
-            ('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, resources_data['retrofit_hist'])],
-        'Renovation types {} (Thousand households)': [
-            ('Count', lambda y, _: '{:,.0f}'.format(y), 2)
-        ]
+        'Retrofit measures {} (Thousand households)': [('Count', lambda y, _: '{:,.0f}'.format(y), 2)],
+
+        'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
+        'Budget share {} (%)': [('Income tenant', lambda y, _: '{:,.1%}'.format(y))],
+        'Renovation {} (Thousand households)': [('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
     }
+
+    # Replacement {} (Thousand households)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, resources_data['retrofit_hist'])],
 
     def details_graphs(data, v, inf, folder_img):
         n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
@@ -348,12 +359,9 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                                            resources_data['consumption_total_hist'],
                                            resources_data['consumption_total_objectives']),
                      'Emission (MtCO2)': ('emission_uncertainty.png', lambda y, _: '{:,.0f}'.format(y)),
-                     'Retrofit >= 1 EPC (Thousand households)': (
+                     'Retrofit at least 1 EPC (Thousand households)': (
                          'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
-                         resources_data['retrofit_comparison']),
-                     'Renovation >= 1 EPC (Thousand households)': (
-                         'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
-                         resources_data['retrofit_comparison']),
+                         resources_data['retrofit_comparison'])
                      }
         for variable, infos in variables.items():
             print(variable)
