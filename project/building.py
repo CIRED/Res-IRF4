@@ -112,8 +112,7 @@ class ThermalBuildings:
 
         self.taxes_list = []
 
-        self.consumption_before_retrofit = None
-        self.consumption_saving_retrofit = None
+        self._consumption_before_retrofit = None
 
         # store values to not recalculate standard energy consumption
         self._consumption_save, self._consumption_3uses_save, self._certificate_save = Series(
@@ -526,7 +525,7 @@ class ThermalBuildings:
 
             return _consumption_energy
             
-    def calculate_consumption(self, prices, taxes=None, climate=None, temp_indoor=None, store=True):
+    def calculate_consumption(self, prices, climate=None, temp_indoor=None, store=True):
         """Calculate energy indicators.
 
         Parameters
@@ -626,16 +625,7 @@ class ThermalBuildings:
                 validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
         # consumption_calib = self.coefficient_global * _consumption_actual
-
-        consumption_energy = self.apply_calibration(_consumption_actual)
-
-        if self.consumption_before_retrofit is not None:
-            # do not consider coefficient
-            consumption_before_retrofit = self.consumption_before_retrofit
-            self.consumption_before_retrofit = None
-            consumption_after_retrofit = self.store_consumption(prices)
-            self.consumption_saving_retrofit = {k: consumption_before_retrofit[k] - consumption_after_retrofit[k] for k
-                                                in consumption_before_retrofit.keys()}
+        # consumption_energy = self.apply_calibration(_consumption_actual)
 
     @staticmethod
     def energy_bill(prices, consumption, level_heater='Heating system'):
@@ -716,11 +706,13 @@ class ThermalBuildings:
         """
         output = dict()
         temp = self.consumption_total(freq='year', standard=True, existing=True, energy=True)
+        output.update({'Consumption standard (TWh)': temp.sum()})
         temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
         output.update(temp)
 
         temp = self.consumption_total(prices=prices, freq='year', standard=False, climate=None, smooth=False,
                                       existing=True, energy=True)
+        output.update({'Consumption (TWh)': temp.sum()})
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp)
         return output
@@ -840,7 +832,8 @@ class AgentBuildings(ThermalBuildings):
     def year(self, year):
         self._year = year
         self._surface = self._surface_yrs.loc[:, year]
-        
+        self._consumption_before_retrofit = None
+
         self._renovation_store['market_share'], self._renovation_store['renovation_rate'] = None, None
 
         ini = {
@@ -2833,11 +2826,11 @@ class AgentBuildings(ThermalBuildings):
                 levels).sum().sum(axis=1).groupby('Income owner').sum()
             self._renovation_store['saving'] = (replaced_by * self._renovation_store['saving']).groupby(
                 levels).sum().sum(axis=1).groupby('Income owner').sum()
-
             self._renovation_store['discount'] = self._renovation_store['discount'].groupby(
                 levels).mean()
 
-            self._renovation_store['annuities'] = calculate_annuities(self._renovation_store['cost'], lifetime=10,
+            to_pay = self._renovation_store['cost'] - self._renovation_store['subsidies']
+            self._renovation_store['annuities'] = calculate_annuities(to_pay, lifetime=10,
                                                                       discount_rate=self._renovation_store['discount'])
 
             certificate_jump_all = self._condition_store['certificate_jump_all']
@@ -2872,6 +2865,8 @@ class AgentBuildings(ThermalBuildings):
             self._renovation_store['replacement'] += temp
             temp = (replaced_by * self._renovation_store['cost_households']).groupby(levels).sum().reindex(idx).fillna(0)
             self._renovation_store['cost'] += temp
+            temp = (replaced_by * self._renovation_store['cost_financing_households']).groupby(levels).sum().reindex(idx).fillna(0)
+            self._renovation_store['cost_financing'] += temp
             temp = (replaced_by * self._renovation_store['vta_households']).groupby(levels).sum().reindex(idx).fillna(0)
             self._renovation_store['vta'] += temp
             temp = (replaced_by * self._renovation_store['subsidies_households']).groupby(levels).sum().reindex(idx).fillna(0)
@@ -3116,7 +3111,7 @@ class AgentBuildings(ThermalBuildings):
         """
 
         # store consumption before retrofit
-        self.consumption_before_retrofit = self.store_consumption(prices)
+        self._consumption_before_retrofit = self.store_consumption(prices)
 
         # select only stock mobile and existing before the first year
         stock_mobile = self.stock_mobile.groupby([i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
@@ -3366,9 +3361,6 @@ class AgentBuildings(ThermalBuildings):
         temp = consumption_calib.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
-        if self.consumption_saving_retrofit is not None:
-            temp = {'{} saving'.format(k): i for k, i in self.consumption_saving_retrofit.items()}
-            output.update(temp)
 
         emission = inputs['carbon_emission'].loc[self.year, :]
         temp = consumption_energy * emission
@@ -3695,6 +3687,24 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T)
 
             # consumption saving
+            if self._consumption_before_retrofit is not None:
+                # do not consider coefficient
+                consumption_before_retrofit = self._consumption_before_retrofit
+                consumption_after_retrofit = self.store_consumption(prices)
+                temp = {'{} saving'.format(k): consumption_before_retrofit[k] - consumption_after_retrofit[k]
+                        for k in consumption_before_retrofit.keys()}
+                output.update(temp)
+
+            output.update({'Consumption standard saving insulation (TWh)': self._renovation_store['consumption_saved'].sum().sum() / 10**9})
+
+            consumption = self.consumption_heating_store(self._renovation_store['consumption_saved_households'].index, full_output=False, level_heater='Heating system final')
+            consumption = reindex_mi(consumption, self._renovation_store['consumption_saved_households'].index)
+            consumption *= reindex_mi(self._surface, consumption.index)
+
+            # TODO: NOT IMPLEMENTED YET
+            consumption_saved = (self._renovation_store['consumption_saved_households'].T / consumption).T
+            mean = (consumption_saved * self._renovation_store['replacement']).sum() / self._renovation_store['replacement'].sum()
+
             if self.consumption_saving_insulation is not None:
                 output['Consumption saving insulation (TWh)'] = self.consumption_saving_insulation / 10**9 / step
             else:
@@ -3711,6 +3721,8 @@ class AgentBuildings(ThermalBuildings):
             output['Investment insulation / households (Thousand euro)'] = 0
             if output['Renovation (Thousand households)'] != 0:
                 output['Investment insulation / households (Thousand euro)'] = output['Investment insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
+
+
 
             if output['Consumption saving insulation (TWh)'] is not None:
                 if output['Consumption saving insulation (TWh)'] != 0:

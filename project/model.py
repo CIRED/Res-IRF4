@@ -353,7 +353,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_hea
     if flow_built is not None:
         buildings.add_flows([flow_built])
     buildings.logger.info('Calculation energy consumption')
-    buildings.calculate_consumption(prices, taxes)
+    buildings.calculate_consumption(prices)
     buildings.logger.info('Writing output')
     if buildings.full_output:
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
@@ -394,7 +394,7 @@ def res_irf(config, path):
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
+        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :])
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
@@ -556,7 +556,7 @@ def calibration_res_irf(path, config=None, cost_factor=1):
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
+        buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :])
 
         output = pd.DataFrame()
         _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
