@@ -33,8 +33,8 @@ specific functions. Use only with care and caution._**
 
 **Step 4**: **Launch Res-IRF**
    - Launch from Res-IRF root folder (not from `/project`):
-   - `python -m project.main -c project/input/config.json`
-   - `project/input/config.json` is the path to the configuration file
+   - `python -m project.main -c project/config/test/config.json`
+   - `project/config/test/config.json` is the path to the configuration file
 
 ## Getting started
 
