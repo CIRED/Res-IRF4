@@ -5,3 +5,5 @@
 .DS_Store
 /ResIRF.egg-info/
 /project/test.py
+/project/input/prices/
+/project/input/scenarios/
