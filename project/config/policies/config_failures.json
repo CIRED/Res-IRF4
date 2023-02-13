@@ -1,7 +1,7 @@
-{
-  "sensitivity": {
-    "activated": true,
-    "deviation": [0.04, 0.05, 0.06, 0.1]
+{  "sensitivity": {
+    "activated": false,
+    "prices_constant": true,
+    "ZP": true
   },
   "Reference": {
     "end": 2051,
@@ -164,6 +164,14 @@
                     "name": "Occupancy status"},
         "intensive": "market_share",
         "minimum_performance": "E"
+      },
+      "landlord": {
+        "start": 2020,
+        "end": 2020
+      },
+      "multi_family": {
+        "start": 2020,
+        "end": 2020
       }
     },
     "simple": {
