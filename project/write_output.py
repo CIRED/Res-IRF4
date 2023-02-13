@@ -256,7 +256,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Retrofit (Thousand households)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Renovation (Thousand households)': ('renovation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Investment insulation / households (Thousand euro)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Investment total (Thousand euro/household)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Consumption saving insulation (TWh)': ('saving_insulation.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Consumption saving heater (TWh)': ('saving_heater.png', lambda y, _: '{:,.1f}'.format(y)),
                  'Retrofit at least 1 EPC (Thousand households)': (

@@ -4,7 +4,7 @@
     "ZP": true
   },
   "Reference": {
-    "end": 2020,
+    "end": 2051,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -44,6 +44,7 @@
       "cost_heater": "project/input/technical/cost_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
       "efficiency": "project/input/technical/efficiency.csv",
+      "lifetime_heater": "project/input/technical/lifetime_heater.csv",
       "carbon_emission": "project/input/technical/carbon_emission.csv",
       "technical_progress": {
         "insulation": {
@@ -126,10 +127,43 @@
         "insulation": "project/input/policies/cite_insulation.csv",
         "cap": 4800
       },
-      "reduced_tax": {
+      "reduced_vta": {
         "start": 2019,
         "end": 2051,
         "value": 0.055
+      },
+      "restriction_heater_single": {
+        "start": 2019,
+        "end": 2051,
+        "value": {
+          "Oil fuel": 2019,
+          "Natural gas": 2025
+        },
+        "target": "Single-family"
+      },
+      "restriction_heater_multi": {
+        "start": 2019,
+        "end": 2051,
+        "value": {
+          "Oil fuel": 2019
+        },
+        "target": "Multi-family"
+      },
+      "premature_replacement_oil": {
+        "start": 2023,
+        "end": 2051,
+        "value": 0.16,
+        "target": "Oil fuel"
+      },
+      "obligation": {
+        "start": 2020,
+        "end": 2051,
+        "value": "project/input/policies/agenda_obligation_law.csv",
+        "frequency": {"value": [0, 0.021, 0.052],
+                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
+                    "name": "Occupancy status"},
+        "intensive": "market_share",
+        "minimum_performance": "E"
       }
     },
     "simple": {
@@ -141,7 +175,6 @@
       "income": false,
       "prices_constant": false,
       "taxes_constant": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }

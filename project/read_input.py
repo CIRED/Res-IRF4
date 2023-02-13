@@ -77,16 +77,12 @@ class PublicPolicy:
             Cost of an insulation gesture
         target_subsidies: pd.DataFrame
             Boolean values. If self.new it corresponds to the global renovations
-        cost_included: pd.DataFrame
-            After tax cost of a heater
 
 
         Returns
         -------
         cost: pd.DataFrame
             Each cell of the DataFrame corresponds to the cost after subventions of a specific gesture and segment
-
-
         """
         cost = cost_insulation.copy()
         if self.target is not None and target_subsidies is not None:
@@ -263,11 +259,11 @@ def read_policies(config):
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_valorem',
                              target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
 
-    def read_reduced_tax(data):
+    def read_reduced_vta(data):
         l = list()
-        l.append(PublicPolicy('reduced_tax', data['start'], data['end'], data['value'], 'reduced_tax', gest='heater'))
+        l.append(PublicPolicy('reduced_vta', data['start'], data['end'], data['value'], 'reduced_vta', gest='heater'))
         l.append(
-            PublicPolicy('reduced_tax', data['start'], data['end'], data['value'], 'reduced_tax', gest='insulation'))
+            PublicPolicy('reduced_vta', data['start'], data['end'], data['value'], 'reduced_vta', gest='insulation'))
         return l
 
     def read_ad_valorem(data):
@@ -291,9 +287,15 @@ def read_policies(config):
                               gest=data['gest'], by=by, target=data.get('target')))
         return l
 
-    def read_oil_fuel_elimination(data):
-        return [PublicPolicy('oil_fuel_elimination', data['start'], data['end'], data['value'],
-                             'heater_regulation', gest='heater')]
+    def restriction_heater(data):
+        value = pd.Series(data['value']).rename_axis('Energy')
+        return [PublicPolicy('restriction_heater_{}'.format(data.get('target').replace('-', '_').lower()),
+                             data['start'], data['end'], value,
+                             'restriction_heater', gest='heater', target=data.get('target'))]
+
+    def premature_heater(data):
+        return [PublicPolicy('premature_heater_{}'.format(data.get('target').replace(' ', '_').lower()), data['start'], data['end'], data['value'],
+                             'premature_heater', gest='heater', target=data.get('target'))]
 
     def read_obligation(data):
         l = list()
@@ -323,8 +325,12 @@ def read_policies(config):
 
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap,
             'carbon_tax': read_carbon_tax,
-            'cite': read_cite, 'reduced_tax': read_reduced_tax, 'zero_interest_loan': read_zil,
-            'sub_ad_valorem': read_ad_valorem, 'oil_fuel_elimination': read_oil_fuel_elimination,
+            'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil,
+            'sub_ad_valorem': read_ad_valorem,
+            'restriction_heater_single': restriction_heater,
+            'restriction_heater_multi': restriction_heater,
+            'premature_replacement_gas': premature_heater,
+            'premature_replacement_oil': premature_heater,
             'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
 
     list_policies = list()
@@ -382,8 +388,11 @@ def read_inputs(config, other_inputs=generic_input):
     cost_insulation = get_pandas(config['technical']['cost_insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
     inputs.update({'cost_insulation': cost_insulation})
 
-    efficiency = get_pandas(config['technical']['efficiency'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+    efficiency = get_pandas(config['technical']['efficiency'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'efficiency': efficiency})
+
+    lifetime_heater = get_pandas(config['technical']['lifetime_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename(None)
+    inputs.update({'lifetime_heater': lifetime_heater})
 
     ms_heater = get_pandas(config['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     ms_heater.columns.set_names('Heating system final', inplace=True)
