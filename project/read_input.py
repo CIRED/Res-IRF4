@@ -294,7 +294,8 @@ def read_policies(config):
                              'restriction_heater', gest='heater', target=data.get('target'))]
 
     def premature_heater(data):
-        return [PublicPolicy('premature_heater_{}'.format(data.get('target').replace(' ', '_').lower()), data['start'], data['end'], data['value'],
+        return [PublicPolicy('premature_heater_{}'.format(data.get('target').replace(' ', '_').lower()), data['start'],
+                             data['end'], data['value'],
                              'premature_heater', gest='heater', target=data.get('target'))]
 
     def read_obligation(data):

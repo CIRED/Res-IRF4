@@ -135,7 +135,9 @@
           "Oil fuel": 2019,
           "Natural gas": 2025
         },
-        "target": "Single-family"
+        "target": "Single-family",
+        "policy": "restriction_heater"
+
       },
       "restriction_heater_multi": {
         "start": 2019,
@@ -143,13 +145,15 @@
         "value": {
           "Oil fuel": 2019
         },
-        "target": "Multi-family"
+        "target": "Multi-family",
+        "policy": "restriction_heater"
       },
       "premature_replacement_oil": {
-        "start": 2023,
+        "start": 2021,
         "end": 2051,
         "value": 0.16,
-        "target": "Oil fuel"
+        "target": "Oil fuel",
+        "policy": "premature_heater"
       },
       "obligation": {
         "start": 2020,

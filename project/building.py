@@ -1470,7 +1470,7 @@ class AgentBuildings(ThermalBuildings):
         probability = 1 / lifetime_heater
         probability *= step
         if isinstance(lifetime_heater, (float, int)):
-            probability = Series(len(list_heater) * [1 / lifetime_heater], Index(list_heater, name='Heating system final'))
+            probability = Series(len(list_heater) * [1 / lifetime_heater], Index(list_heater, name='Heating system'))
 
         premature_heater = [p for p in policies_heater if p.policy == 'premature_heater']
         for premature in premature_heater:
@@ -1501,8 +1501,9 @@ class AgentBuildings(ThermalBuildings):
         else:
             market_share = self.exogenous_market_share_heater(index, cost_heater.index)
 
-        # market_share[market_share.index.get_level_values('Heating system') == 'Oil fuel-Standard boiler'].sum(axis=1)
-        replacement = ((market_share * probability).T * stock).T
+        assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
+
+        replacement = (market_share.T * stock * reindex_mi(probability, stock.index)).T
 
         stock_replacement = replacement.stack('Heating system final')
         to_replace = replacement.sum(axis=1)
@@ -1511,8 +1512,7 @@ class AgentBuildings(ThermalBuildings):
 
         # adding heating system final equal to heating system because no switch
         stock = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
-                                      name='Heating system final')), axis=1).set_index('Heating system final',
-                                                                                       append=True).squeeze()
+                                      name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
         stock = concat((stock.reorder_levels(stock_replacement.index.names), stock_replacement),
                        axis=0, keys=[False, True], names=['Heater replacement'])
         assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(), 0) == 0, 'Sum problem'
@@ -3414,7 +3414,6 @@ class AgentBuildings(ThermalBuildings):
 
             output.update({'Consumption standard saving insulation (TWh/year)': self._renovation_store['consumption_saved'].sum().sum() / 10**9})
             output.update({'Consumption standard saving insulation (%)': self._renovation_store['consumption_saved_mean']})
-            output.update({'Consumption standard saving (%)': self._renovation_store['consumption_saved_mean']})
             temp = self._renovation_store['consumption_saved_investor']
             temp.index = temp.index.map(lambda x: 'Consumption standard saving {} - {} (%)'.format(x[0], x[1]))
             output.update(temp.T)
@@ -3591,7 +3590,6 @@ class AgentBuildings(ThermalBuildings):
                 output['Subsidies insulation (Thousand euro/household)'] = output['Subsidies insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
                 output['Saving insulation (Thousand euro/household)'] = output['Saving insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
                 output['Debt insulation (Thousand euro/household)'] = output['Debt insulation (Billion euro)'] * 10**6 / (output['Renovation (Thousand households)'] * 10**3)
-
 
             # economic private impact - distributive indicator
             prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)
