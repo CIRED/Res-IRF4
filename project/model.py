@@ -272,7 +272,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
             json.dump(config, fp)
 
     buildings = AgentBuildings(stock, parsed_inputs['surface'], parsed_inputs['ratio_surface'], parsed_inputs['efficiency'],
-                               parsed_inputs['income'], parsed_inputs['consumption_ini'], parsed_inputs['preferences'],
+                               parsed_inputs['income'], parsed_inputs['preferences'],
                                parsed_inputs['performance_insulation'], path=path,
                                year=year, demolition_rate=parsed_inputs['demolition_rate'],
                                endogenous=config['renovation']['endogenous'],
@@ -290,7 +290,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['lifetime_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
-               'calibration_renovation'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing'), technical_progress
+               'calibration_renovation'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing'), technical_progress, parsed_inputs['consumption_ini']
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
@@ -392,12 +392,12 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :])
+        buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
@@ -556,11 +556,11 @@ def calibration_res_irf(path, config=None, cost_factor=1):
     try:
         logger.info('Reading input')
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-        buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :])
+        buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
 
         output = pd.DataFrame()
         _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
@@ -572,7 +572,8 @@ def calibration_res_irf(path, config=None, cost_factor=1):
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
         f_built = flow_built.loc[:, year]
 
-        buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
+        buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
+                                         cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs,
                                          calib_intensive=inputs['calibration_intensive'],
                                          calib_renovation=inputs['calibration_renovation'],

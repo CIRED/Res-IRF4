@@ -61,13 +61,12 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
             dump(calibration, file)
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress = initialize(
+    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
     # calibration
     buildings.calibration_exogenous(**calibration)
 
-    buildings.calculate_consumption(energy_prices.loc[buildings.first_year, :], taxes)
     output = pd.DataFrame()
     _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
     output = pd.concat((output, o), axis=1)
@@ -79,9 +78,12 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
     f_built = flow_built.loc[:, year]
 
-    buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                     p_insulation, f_built, year, post_inputs, climate=climate,
-                                     financing_cost=financing_cost)
+    buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
+                                     cost_insulation, p_heater,
+                                     p_insulation, f_built, year, post_inputs,
+                                     ms_heater=ms_heater, financing_cost=financing_cost,
+                                     climate=climate)
+
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
@@ -250,9 +252,11 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                 heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
                 cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])
 
-        buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, p_heater,
-                                         p_insulation, f_built, year, post_inputs, climate=climate,
-                                         financing_cost=financing_cost)
+        buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
+                                         cost_insulation, p_heater,
+                                         p_insulation, f_built, year, post_inputs,
+                                         ms_heater=ms_heater, financing_cost=financing_cost,
+                                         climate=climate)
 
         if full_output is False:
             output.update({year: select_output(o)})
@@ -376,7 +380,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     # first time
     name = 'calibration'
 
-    config = 'project/input/config/test/config.json'
+    config = 'project/config/test/config.json'
     if calibration_threshold is True:
         name = '{}_threshold'.format(name)
         config = 'project/input/config/test/config_threshold.json'
