@@ -3163,72 +3163,73 @@ class AgentBuildings(ThermalBuildings):
 
         stock = self.stock_mobile.copy()
 
-        obligation = [p for p in policies_insulation if p.policy == 'obligation']
-        if obligation == []:
+        list_obligation = [p for p in policies_insulation if p.policy == 'obligation']
+        if list_obligation == []:
             return None
         self.logger.info('Calculation flow obligation')
         # only work if there is one obligation
-        obligation = obligation[0]
-        banned_performance = obligation.value.loc[self.year]
-        if not isinstance(banned_performance, str):
-            return None
+        flows_obligation = []
+        for obligation in list_obligation:
+            banned_performance = obligation.value.loc[self.year]
+            if not isinstance(banned_performance, str):
+                return None
 
-        performance_target = [i for i in resources_data['index']['Performance'] if i >= banned_performance]
+            performance_target = [i for i in resources_data['index']['Performance'] if i >= banned_performance]
 
-        stock_certificate = self.add_certificate(stock)
-        idx = stock.index[stock_certificate.index.get_level_values('Performance').isin(performance_target)]
-        if idx.empty:
-            return None
+            stock_certificate = self.add_certificate(stock)
+            idx = stock.index[stock_certificate.index.get_level_values('Performance').isin(performance_target)]
+            if idx.empty:
+                return None
 
-        proba = 1
-        if obligation.frequency is not None:
-            proba = obligation.frequency
-            proba = reindex_mi(proba, idx)
+            proba = 1
+            if obligation.frequency is not None:
+                proba = obligation.frequency
+                proba = reindex_mi(proba, idx)
 
-        to_replace = stock.loc[idx] * proba
+            to_replace = stock.loc[idx] * proba
 
-        # formatting replace_by
-        replaced_by = to_replace.copy()
-        replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Income tenant']).sum()
+            # formatting replace_by
+            replaced_by = to_replace.copy()
+            replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Income tenant']).sum()
 
-        if 'Heater replacement' not in replaced_by:
-            replaced_by = concat([replaced_by], keys=[False], names=['Heater replacement'])
-        if 'Heating system final' not in replaced_by.index.names:
-            temp = replaced_by.reset_index('Heating system')
-            temp['Heating system final'] = temp['Heating system']
-            replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
-        replaced_by.index = replaced_by.index.reorder_levels(self._renovation_store['market_share'].index.names)
+            if 'Heater replacement' not in replaced_by:
+                replaced_by = concat([replaced_by], keys=[False], names=['Heater replacement'])
+            if 'Heating system final' not in replaced_by.index.names:
+                temp = replaced_by.reset_index('Heating system')
+                temp['Heating system final'] = temp['Heating system']
+                replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
+            replaced_by.index = replaced_by.index.reorder_levels(self._renovation_store['market_share'].index.names)
 
-        _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
-                                                      policies_insulation=policies_insulation,
-                                                      financing_cost=financing_cost,
-                                                      min_performance=obligation.min_performance)
+            _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
+                                                          policies_insulation=policies_insulation,
+                                                          financing_cost=financing_cost,
+                                                          min_performance=obligation.min_performance)
 
-        if obligation.intensive == 'market_share':
-            # market_share endogenously calculated by insulation_replacement
-            pass
-        elif obligation.intensive == 'global':
-            market_share = DataFrame(0, index=replaced_by.index, columns=self._choice_insulation)
-            market_share.loc[:, (True, True, True, True)] = 1
-        else:
-            raise NotImplemented
+            if obligation.intensive == 'market_share':
+                # market_share endogenously calculated by insulation_replacement
+                pass
+            elif obligation.intensive == 'global':
+                market_share = DataFrame(0, index=replaced_by.index, columns=self._choice_insulation)
+                market_share.loc[:, (True, True, True, True)] = 1
+            else:
+                raise NotImplemented
 
-        assert ~market_share.isna().all(axis=1).any(), "Market-share issue"
-        assert (market_share.sum(axis=1).round(5) == 1.0).all(), "Market-share sum issue"
+            assert ~market_share.isna().all(axis=1).any(), "Market-share issue"
+            assert (market_share.sum(axis=1).round(5) == 1.0).all(), "Market-share sum issue"
 
-        replaced_by = (replaced_by.rename(None) * market_share.T).T
-        replaced_by = replaced_by.fillna(0)
+            replaced_by = (replaced_by.rename(None) * market_share.T).T
+            replaced_by = replaced_by.fillna(0)
 
-        if self.full_output:
-            self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
-            # self.store_information_retrofit(replaced_by)
+            if self.full_output:
+                self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
 
-        replaced_by = self.frame_to_flow(replaced_by)
+            replaced_by = self.frame_to_flow(replaced_by)
 
-        assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
-        flow_obligation = concat((- to_replace, replaced_by), axis=0)
-        flow_obligation = flow_obligation.groupby(flow_obligation.index.names).sum()
-        return flow_obligation
+            assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
+            flow_obligation = concat((- to_replace, replaced_by), axis=0)
+            flow_obligation = flow_obligation.groupby(flow_obligation.index.names).sum()
+            flows_obligation.append(flow_obligation)
+        return flows_obligation
 
     def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None, detailed_output=True):
         """Parse output.

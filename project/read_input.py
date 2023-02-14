@@ -18,6 +18,7 @@
 import pandas as pd
 from pandas import Series, DataFrame, concat, MultiIndex, Index
 from numpy.random import normal
+from numpy.testing import assert_almost_equal
 
 import copy
 import os
@@ -112,10 +113,23 @@ def read_stock(config):
         MultiIndex Series with building stock attributes as levels.
     """
 
-    stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8]).squeeze())
+    stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8]).squeeze()).rename('Stock buildings')
+    stock_sum = stock.sum()
 
     stock = stock.reset_index('Heating system')
-    stock['Heating system'] = stock['Heating system'].str.replace('Electricity-Heat pump', 'Electricity-Heat pump water')
+    repartition = 0.8
+    idx = stock['Heating system'] == 'Electricity-Heat pump'
+    hp_water = stock.loc[idx, :].copy()
+    hp_water['Stock buildings'] *= repartition
+    hp_water['Heating system'] = hp_water['Heating system'].str.replace('Electricity-Heat pump', 'Electricity-Heat pump water')
+
+    hp_air = stock.loc[idx, :].copy()
+    hp_air['Stock buildings'] *= (1 - repartition)
+    hp_air['Heating system'] = hp_air['Heating system'].str.replace('Electricity-Heat pump', 'Electricity-Heat pump air')
+
+    stock = stock.loc[~idx, :]
+    stock = pd.concat((stock, hp_water, hp_air), axis=0)
+
     stock = stock.set_index('Heating system', append=True).squeeze()
     year = config['start']
 
@@ -124,6 +138,8 @@ def read_stock(config):
                  'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
 
     stock = stock.reorder_levels(idx_names)
+
+    assert_almost_equal(stock.sum(), stock_sum)
     return stock, year
 
 
@@ -289,13 +305,11 @@ def read_policies(config):
 
     def restriction_heater(data):
         value = pd.Series(data['value']).rename_axis('Energy')
-        return [PublicPolicy('restriction_heater_{}'.format(data.get('target').replace('-', '_').lower()),
-                             data['start'], data['end'], value,
+        return [PublicPolicy(data['name'], data['start'], data['end'], value,
                              'restriction_heater', gest='heater', target=data.get('target'))]
 
     def premature_heater(data):
-        return [PublicPolicy('premature_heater_{}'.format(data.get('target').replace(' ', '_').lower()), data['start'],
-                             data['end'], data['value'],
+        return [PublicPolicy(data['name'], data['start'], data['end'], data['value'],
                              'premature_heater', gest='heater', target=data.get('target'))]
 
     def read_obligation(data):
@@ -308,7 +322,7 @@ def read_policies(config):
         if frequency is not None:
             frequency = pd.Series(frequency["value"], index=pd.Index(frequency["index"], name=frequency["name"]))
 
-        l.append(PublicPolicy('obligation', start, data['end'], banned_performance, 'obligation',
+        l.append(PublicPolicy(data['name'], start, data['end'], banned_performance, 'obligation',
                               gest='insulation', frequency=frequency, intensive=data['intensive'],
                               min_performance=data['minimum_performance']))
 
@@ -327,20 +341,22 @@ def read_policies(config):
     read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap,
             'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil,
-            'sub_ad_valorem': read_ad_valorem,
-            'restriction_heater_single': restriction_heater,
-            'restriction_heater_multi': restriction_heater,
-            'premature_replacement_gas': premature_heater,
-            'premature_replacement_oil': premature_heater,
-            'obligation': read_obligation, 'landlord': read_landlord, 'multi_family': read_multi_family}
+            'landlord': read_landlord, 'multi_family': read_multi_family}
 
     list_policies = list()
     for key, item in config['policies'].items():
+        item['name'] = key
         if key in read.keys():
             list_policies += read[key](item)
         else:
             if item.get('policy') == 'sub_ad_valorem':
                 list_policies += read_ad_valorem(item)
+            elif item.get('policy') == 'premature_heater':
+                list_policies += premature_heater(item)
+            elif item.get('policy') == 'restriction_heater':
+                list_policies += restriction_heater(item)
+            elif item.get('policy') == 'obligation':
+                list_policies += read_obligation(item)
             else:
                 print('{} reading function is not implemented'.format(key))
 

@@ -347,10 +347,10 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
 
     buildings.add_flows([flow_retrofit])
 
-    flow_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
-                                                financing_cost=financing_cost)
-    if flow_obligation is not None:
-        buildings.add_flows([flow_obligation])
+    flows_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
+                                                 financing_cost=financing_cost)
+    if flows_obligation is not None:
+        buildings.add_flows(flows_obligation)
 
     buildings.store_information_retrofit()
 

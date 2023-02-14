@@ -4,7 +4,7 @@
     "ZP": true
   },
   "Reference": {
-    "end": 2020,
+    "end": 2022,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -139,7 +139,8 @@
           "Oil fuel": 2022,
           "Natural gas": 2025
         },
-        "target": "Single-family"
+        "target": "Single-family",
+        "policy": "restriction_heater"
       },
       "restriction_heater_multi": {
         "start": 2019,
@@ -147,24 +148,42 @@
         "value": {
           "Oil fuel": 2022
         },
-        "target": "Multi-family"
+        "target": "Multi-family",
+        "policy": "restriction_heater"
+
       },
       "premature_replacement_oil": {
         "start": 2023,
         "end": 2051,
         "value": 0.16,
-        "target": "Oil fuel"
+        "target": "Oil fuel",
+        "policy": "premature_heater"
+
       },
-      "obligation": {
+      "obligation_landlord": {
         "start": 2020,
         "end": 2051,
-        "value": "project/input/policies/agenda_obligation_law.csv",
-        "frequency": {"value": [0, 0.021, 0.052],
+        "value": "project/input/policies/agenda_obligation.csv",
+        "frequency": {"value": [0, 0.5, 0.052],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},
         "intensive": "market_share",
-        "minimum_performance": "E"
+        "minimum_performance": "C",
+        "policy": "obligation"
+
+      },
+      "obligation_owner": {
+        "start": 2021,
+        "end": 2051,
+        "value": "project/input/policies/agenda_obligation.csv",
+        "frequency": {"value": [0.5, 0.0, 0.0],
+                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
+                    "name": "Occupancy status"},
+        "intensive": "market_share",
+        "minimum_performance": "E",
+        "policy": "obligation"
       }
+
     },
     "simple": {
       "quintiles": false,
