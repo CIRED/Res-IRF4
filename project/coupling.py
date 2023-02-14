@@ -68,8 +68,8 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     buildings.calibration_exogenous(**calibration)
 
     output = pd.DataFrame()
-    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
-    output = pd.concat((output, o), axis=1)
+    """_, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
+    output = pd.concat((output, o), axis=1)"""
 
     # run second year
     year = 2019
@@ -87,7 +87,7 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
+    return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
 
 
 def select_output(output):
@@ -221,7 +221,7 @@ def create_subsidies(sub_insulation, sub_design, start, end):
 
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
+                 lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
                  climate=2006, smooth=False, efficiency_hour=False,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
                  ):
@@ -255,7 +255,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
                                          cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs,
-                                         ms_heater=ms_heater, financing_cost=financing_cost,
+                                         financing_cost=financing_cost,
                                          climate=climate)
 
         if full_output is False:
@@ -388,7 +388,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     path = os.path.join('project', 'output', 'ResIRF')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
         logger=None,
         config=config,
@@ -400,7 +400,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
     concat_output = DataFrame()
     output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
-                                       cost_heater, cost_insulation, flow_built, post_inputs, p_heater,
+                                       cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater,
                                        p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
                                        efficiency_hour=True,
                                        output_consumption=output_consumption, full_output=True, rebound=rebound,
@@ -413,5 +413,5 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2020,
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2022,
              sub_design='efficiency_100')
