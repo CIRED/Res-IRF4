@@ -49,6 +49,7 @@ INSULATION = {'Wall': (True, False, False, False), 'Floor': (False, True, False,
               'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
 CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']
 
+
 class ThermalBuildings:
     """ThermalBuildings classes.
 
@@ -108,9 +109,6 @@ class ThermalBuildings:
         self.first_year = year
         self._year = year
 
-        self.energy_poverty_save = None
-        self.heating_intensity_save = None
-
         self.taxes_list = []
 
         self.consumption_before_retrofit = None
@@ -135,8 +133,6 @@ class ThermalBuildings:
     def year(self, year):
         self._year = year
         self._surface = self._surface_yrs.loc[:, year]
-        self.energy_poverty_save = None
-        self.heating_intensity_save = None
         self.consumption_before_retrofit = None
 
     @property
@@ -402,7 +398,7 @@ class ThermalBuildings:
 
         return heating_intensity
 
-    def consumption_actual(self, prices, consumption=None, store=False):
+    def consumption_actual(self, prices, consumption=None, store=False, full_output=False):
         """Space heating consumption based on standard space heating consumption and heating intensity (kWh/building.a).
 
 
@@ -431,21 +427,21 @@ class ThermalBuildings:
             consumption = consumption.copy()
             index = consumption.index
 
+        heating_intensity, budget_share = None, None
         energy_bill = AgentBuildings.energy_bill(prices, consumption)
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, index)
             heating_intensity = thermal.heat_intensity(budget_share)
             consumption *= heating_intensity
-            if store:
-                self.heating_intensity_save = heating_intensity
-                self.energy_poverty_save = (self.stock[self.stock.index.get_level_values(
-                    'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()
         elif isinstance(energy_bill, DataFrame):
             budget_share = (energy_bill.T / reindex_mi(self._income_tenant, index)).T
             heating_intensity = thermal.heat_intensity(budget_share)
             consumption = heating_intensity * consumption
 
-        return consumption
+        if full_output is False:
+            return consumption
+        else:
+            return consumption, heating_intensity, budget_share
 
     def consumption_total(self, prices=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
                           standard=False, efficiency_hour=False, existing=False, energy=False):
@@ -506,7 +502,7 @@ class ThermalBuildings:
                 temp = reindex_mi(temp, self.stock.index)
                 t = (temp.T * self.stock * self.surface).T
                 # adding heating intensity
-                t = (t.T * self.heating_intensity_save).T
+                t = (t.T * self.heating_intensity_store).T
                 t = self.apply_calibration(t)
                 return t
 
@@ -1464,7 +1460,6 @@ class AgentBuildings(ThermalBuildings):
         cost_heater: Series
         ms_heater: DataFrame, optional
         policies_heater: list
-        probability_replacement: float or Series, default 1/17
 
         Returns
         -------
@@ -3331,7 +3326,13 @@ class AgentBuildings(ThermalBuildings):
         output['Consumption (TWh)'] = consumption_energy.sum()
         output['Consumption (kWh/m2)'] = (output['Consumption (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
-        output['Heating intensity (%)'] = (self.stock * self.heating_intensity_save).sum() / self.stock.sum()
+
+        _, heating_intensity, budget_share = self.consumption_actual(prices, full_output=True)
+        energy_poverty = (self.stock[self.stock.index.get_level_values(
+                'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()
+
+        output['Heating intensity (%)'] = (self.stock * heating_intensity).sum() / self.stock.sum()
+        output['Energy poverty (Million)'] = energy_poverty / 10 ** 6
 
         temp = consumption_energy.copy()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -3388,7 +3389,6 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T)
             output['Cost rebound (Billion euro)'] = self.cost_rebound.sum() / 10**9
 
-        output['Energy poverty (Million)'] = self.energy_poverty_save / 10 ** 6
 
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
