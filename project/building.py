@@ -3521,7 +3521,6 @@ class AgentBuildings(ThermalBuildings):
             # insulation
             # who is renovating ?
             temp = self._renovation_store['replacement'].sum(axis=1)
-            output['Renovation (Thousand households)'] = temp.sum() / 10 ** 3
             t = temp.groupby(['Housing type']).sum()
             t.index = t.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
             output.update((t / 10 ** 3 / step).T)
@@ -3749,8 +3748,6 @@ class AgentBuildings(ThermalBuildings):
                 output['Consumption saving heater (TWh)'] = None
 
 
-
-
             if output['Consumption saving insulation (TWh)'] is not None:
                 if output['Consumption saving insulation (TWh)'] != 0:
                     investment = calculate_annuities(output['Investment insulation (Billion euro)'])
@@ -3795,11 +3792,8 @@ class AgentBuildings(ThermalBuildings):
                 output['Carbon value indirect (Billion euro)'] = output['Carbon footprint (MtCO2)'] * \
                                                                  inputs['carbon_value'].loc[self.year] / 10 ** 3 / step
 
-            output['Carbon value (Billion euro)'] = (consumption_energy * inputs['carbon_value_kwh'].loc[self.year, :]).sum() / step
-
+            output['Carbon value (Billion euro)'] = (consumption_energy * inputs['carbon_value_kwh'].loc[self.year, :]).sum()
             output['Health cost (Billion euro)'], o = self.health_cost(inputs)
-            output['Health cost (Billion euro)'] /= step
-            # TODO need to be divide by step
             output.update(o)
 
             # subsidies - details

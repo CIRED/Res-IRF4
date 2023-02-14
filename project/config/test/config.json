@@ -4,8 +4,8 @@
     "ZP": true
   },
   "Reference": {
-    "end": 2021,
-    "step": 1,
+    "end": 2023,
+    "step": 2,
     "debug_mode": false,
     "full_output": true,
     "start": 2018,
@@ -136,8 +136,7 @@
         "start": 2019,
         "end": 2051,
         "value": {
-          "Oil fuel": 2019,
-          "Natural gas": 2025
+          "Oil fuel": 2022
         },
         "target": "Single-family",
         "policy": "restriction_heater"
@@ -147,7 +146,7 @@
         "start": 2019,
         "end": 2051,
         "value": {
-          "Oil fuel": 2019
+          "Oil fuel": 2022
         },
         "target": "Multi-family",
         "policy": "restriction_heater"
