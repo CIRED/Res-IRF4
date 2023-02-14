@@ -380,7 +380,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     # first time
     name = 'calibration'
 
-    config = 'project/config/test/config.json'
+    config = 'project/config/coupling_energy/config_coupling.json'
     if calibration_threshold is True:
         name = '{}_threshold'.format(name)
         config = 'project/input/config/test/config_threshold.json'
@@ -393,9 +393,9 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
         logger=None,
         config=config,
         import_calibration=import_calibration,
-        export_calibration=export_calibration)
+        export_calibration=None)
 
-    sub_heater = 0
+    sub_heater = 0.5
     sub_insulation = 1
 
     concat_output = DataFrame()
@@ -413,5 +413,5 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2020, end=2022,
+    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2025, end=2030,
              sub_design='efficiency_100')

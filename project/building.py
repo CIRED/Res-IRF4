@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique, read_csv
 from numpy import exp, log, append, array
+from numpy.testing import assert_almost_equal
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import logging
@@ -502,7 +503,8 @@ class ThermalBuildings:
                 temp = reindex_mi(temp, self.stock.index)
                 t = (temp.T * self.stock * self.surface).T
                 # adding heating intensity
-                t = (t.T * self.heating_intensity_store).T
+                _, heating_intensity, _ = self.consumption_actual(prices, full_output=True)
+                t = (t.T * heating_intensity).T
                 t = self.apply_calibration(t)
                 return t
 
@@ -922,11 +924,23 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
+        df_sum = None
+        if isinstance(df, Series):
+            df_sum = df.sum()
+        elif isinstance(df, DataFrame):
+            df_sum = df.sum().sum()
+
         share = (ref.unstack(level).T / ref.unstack(level).sum(axis=1)).T
         temp = concat([df] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
         share = reindex_mi(share, temp.columns, axis=1)
         share = reindex_mi(share, temp.index)
         df = (share * temp).stack(level).dropna()
+
+        if isinstance(df, Series):
+            assert_almost_equal(df.sum(), df_sum, decimal=1)
+        elif isinstance(df, DataFrame):
+            assert_almost_equal(df.sum().sum(), df_sum, decimal=1)
+
         return df
 
     def frame_to_flow(self, replaced_by):
@@ -3143,7 +3157,7 @@ class AgentBuildings(ThermalBuildings):
             flows_obligation.append(flow_obligation)
         return flows_obligation
 
-    def store_information_retrofit(self):
+    def store_information_retrofit(self, prices):
         """Calculate and store main statistics based on yearly retrofit.
 
         Parameters
@@ -3199,7 +3213,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_saved = (self._renovation_store['consumption_saved_households'].T / consumption).T
         assert (consumption_saved <= 1).all().all(), 'Percent issue'
         self._renovation_store['consumption_saved_mean'] = (consumption_saved * replaced_by).sum().sum() / replaced_by.sum().sum()
-        self._renovation_store['consumption_saved_investor'] = (consumption_saved * replaced_by).sum(
+        self._renovation_store['consumption_saved_decision'] = (consumption_saved * replaced_by).sum(
             axis=1).groupby(['Housing type', 'Occupancy status']).sum() / replaced_by.sum(axis=1).groupby(
             ['Housing type', 'Occupancy status']).sum()
 
@@ -3219,6 +3233,20 @@ class AgentBuildings(ThermalBuildings):
             levels).sum().sum(axis=1).groupby('Income owner').sum()
 
         self._renovation_store['discount'] = self._renovation_store['discount'].groupby(levels).mean()
+
+        prices_reindex = prices.reindex(
+            self.to_energy(self._renovation_store['consumption_saved_households'])).set_axis(
+            self._renovation_store['consumption_saved_households'].index, axis=0)
+        bill_saved = (self._renovation_store['consumption_saved_households'].T * prices_reindex).T
+        bill_saved = (replaced_by * bill_saved).groupby(levels).sum().sum(axis=1)
+        bill_saved_mean = bill_saved.sum() / replaced_by.sum().sum()
+        self._renovation_store['bill_saved_mean'] = bill_saved_mean
+
+        """
+        bill_saved = self.add_level(replaced_by * bill_saved, self.stock_mobile, 'Income tenant').sum(axis=1)
+
+        bill_saved = (replaced_by * bill_saved).groupby(levels).sum().sum(axis=1).groupby('Income tenant').sum()
+        self._renovation_store['bill_saved_income'] = bill_saved"""
 
         certificate_jump_all = self._condition_store['certificate_jump_all']
         temp = {}
@@ -3389,7 +3417,6 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T)
             output['Cost rebound (Billion euro)'] = self.cost_rebound.sum() / 10**9
 
-
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
@@ -3429,7 +3456,7 @@ class AgentBuildings(ThermalBuildings):
 
             output.update({'Consumption standard saving insulation (TWh/year)': self._renovation_store['consumption_saved'].sum().sum() / 10**9})
             output.update({'Consumption standard saving insulation (%)': self._renovation_store['consumption_saved_mean']})
-            temp = self._renovation_store['consumption_saved_investor']
+            temp = self._renovation_store['consumption_saved_decision']
             temp.index = temp.index.map(lambda x: 'Consumption standard saving {} - {} (%)'.format(x[0], x[1]))
             output.update(temp.T)
 
