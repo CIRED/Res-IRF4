@@ -82,8 +82,7 @@
       "demolition_rate": 0.0035,
       "stock_ini": 29037000,
       "available_income": 1421000000000,
-      "rotation_rate": "project/input/macro/rotation_rate.csv",
-      "flow_construction": null
+      "rotation_rate": "project/input/macro/rotation_rate.csv"
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",

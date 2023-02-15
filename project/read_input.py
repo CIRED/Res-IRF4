@@ -473,7 +473,7 @@ def read_inputs(config, other_inputs=generic_input):
         surface_built = get_pandas(config['macro']['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
         inputs.update({'surface_built': surface_built})
 
-    if config['macro']['flow_construction'] is not None:
+    if config['macro'].get('flow_construction') is not None:
         flow_construction = get_pandas(config['macro']['flow_construction'],
                                         lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'flow_construction': flow_construction})
