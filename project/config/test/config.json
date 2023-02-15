@@ -4,8 +4,8 @@
     "ZP": true
   },
   "Reference": {
-    "end": 2023,
-    "step": 2,
+    "end": 2051,
+    "step": 5,
     "debug_mode": false,
     "full_output": true,
     "start": 2018,
@@ -82,7 +82,8 @@
       "demolition_rate": 0.0035,
       "stock_ini": 29037000,
       "available_income": 1421000000000,
-      "rotation_rate": "project/input/macro/rotation_rate.csv"
+      "rotation_rate": "project/input/macro/rotation_rate.csv",
+      "flow_construction": null
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",

@@ -473,6 +473,11 @@ def read_inputs(config, other_inputs=generic_input):
         surface_built = get_pandas(config['macro']['surface_built'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
         inputs.update({'surface_built': surface_built})
 
+    if config['macro']['flow_construction'] is not None:
+        flow_construction = get_pandas(config['macro']['flow_construction'],
+                                        lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        inputs.update({'flow_construction': flow_construction})
+
     ms_heater_built = get_pandas(config['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
     ms_heater_built.columns.set_names(['Heating system'], inplace=True)
     ms_heater_built.index.set_names(['Housing type'], inplace=True)
@@ -554,6 +559,8 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
     parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
 
+    parsed_inputs['flow_demolition'] = pd.Series(inputs['demolition_rate'] * stock.sum(), index=idx[1:])
+
     parsed_inputs['population_total'] = inputs['population']
     parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
     parsed_inputs['population'] = inputs['population'] * parsed_inputs['sizing_factor']
@@ -567,6 +574,9 @@ def parse_inputs(inputs, taxes, config, stock):
                                                                                inputs['pop_housing_min'],
                                                                                config['start'],
                                                                                inputs['factor_pop_housing'])
+    parsed_inputs['flow_need'] = parsed_inputs['stock_need'] - parsed_inputs['stock_need'].shift(1)
+    parsed_inputs['flow_construction'] = parsed_inputs['flow_need'] + parsed_inputs['flow_demolition']
+
     if 'share_multi_family' not in inputs.keys():
         parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
                                                                  inputs['factor_multi_family'])
@@ -574,17 +584,14 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['available_income'] = pd.Series(
         [inputs['available_income'] * (1 + config['macro']['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
-    parsed_inputs['available_income_pop'] = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
-
-    parsed_inputs['flow_demolition'] = pd.Series(inputs['demolition_rate'] * stock.sum(), index=idx[1:])
-    parsed_inputs['flow_need'] = parsed_inputs['stock_need'] - parsed_inputs['stock_need'].shift(1)
-    parsed_inputs['flow_construction'] = parsed_inputs['flow_need'] + parsed_inputs['flow_demolition']
 
     if 'surface_built' in inputs.keys():
         surface_built = inputs['surface_built']
     else:
+        available_income_pop = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
+
         surface_built = evolution_surface_built(inputs['surface'].xs(False, level='Existing'), inputs['surface_max'],
-                                                inputs['surface_elasticity'], parsed_inputs['available_income_pop'])
+                                                inputs['surface_elasticity'], available_income_pop)
 
     surface_existing = pd.concat([parsed_inputs['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
                                  keys=surface_built.columns)

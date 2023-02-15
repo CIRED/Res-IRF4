@@ -766,8 +766,6 @@ class AgentBuildings(ThermalBuildings):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          debug_mode=debug_mode)
 
-        self._replaced_by = None
-        self._only_heater = None
 
 
         if logger is None:
@@ -808,6 +806,9 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
         self.scale = 1.0
 
+        self._stock_ref = None
+        self._replaced_by = None
+        self._only_heater = None
         self._heater_store = {}
         self._renovation_store = {}
         self._condition_store = None
@@ -834,6 +835,7 @@ class AgentBuildings(ThermalBuildings):
     @year.setter
     def year(self, year):
         self._year = year
+        self._stock_ref = self.stock_mobile.copy()
         self._surface = self._surface_yrs.loc[:, year]
         self.consumption_before_retrofit = None
         self._condition_store = None
@@ -3243,7 +3245,7 @@ class AgentBuildings(ThermalBuildings):
         self._renovation_store['bill_saved_mean'] = bill_saved_mean
 
         """
-        bill_saved = self.add_level(replaced_by * bill_saved, self.stock_mobile, 'Income tenant').sum(axis=1)
+        bill_saved = self.add_level(replaced_by * bill_saved, self._stock_ref, 'Income tenant').sum(axis=1)
 
         bill_saved = (replaced_by * bill_saved).groupby(levels).sum().sum(axis=1).groupby('Income tenant').sum()
         self._renovation_store['bill_saved_income'] = bill_saved"""
@@ -3655,9 +3657,12 @@ class AgentBuildings(ThermalBuildings):
 
             output['Stock annuities (Billion euro/year)'] = self._annuities_store['stock_annuities'].loc[yrs].sum()
 
+            if self.year == 2035:
+                print('break')
+
             annuities = annuities.groupby(
                 [c for c in annuities.index.names if c != 'Heater replacement']).sum()
-            annuities = self.add_level(annuities, self.stock_mobile, 'Income tenant').sum(axis=1)
+            annuities = self.add_level(annuities, self._stock_ref, 'Income tenant').sum(axis=1)
             annuities = annuities.groupby(['Occupancy status', 'Income owner', 'Income tenant']).sum()
             coefficient = pd.Series([1, 0.5, 0.5],
                                     index=pd.Index(['Owner-occupied', 'Privately rented', 'Social-housing'],
