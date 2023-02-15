@@ -151,11 +151,11 @@ def read_policies(config):
         insulation = get_pandas(data['insulation'],
                                 lambda x: pd.read_csv(x, index_col=[0]))
 
-        if data['global_retrofit']:
-            global_retrofit = get_pandas(data['global_retrofit'],
-                                         lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            l.append(PublicPolicy('mpr', data['start'], data['end'], global_retrofit, 'subsidy_non_cumulative',
-                                  gest='insulation', target='global_retrofit'))
+        if data['global_renovation']:
+            global_renovation = get_pandas(data['global_renovation'],
+                                           lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            l.append(PublicPolicy('mpr', data['start'], data['end'], global_renovation, 'subsidy_ad_valorem',
+                                  gest='insulation', target='global_renovation'))
 
         if data['bonus']:
             bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
@@ -189,7 +189,7 @@ def read_policies(config):
         l = list()
         mpr_serenite = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(PublicPolicy('mpr_serenite', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
-                              target='mpr_serenite', gest='insulation', non_cumulative=['mpr', 'cite'],
+                              target=data.get('target'), gest='insulation', non_cumulative=data.get('non_cumulative'),
                               cap=data['cap']))
         return l
 

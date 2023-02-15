@@ -182,17 +182,54 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
     if not subset.empty:
-        make_area_plot(subset, 'Investement (Billion euro)', save=os.path.join(buildings.path, 'investment.png'),
+        make_area_plot(subset, 'Investment (Billion euro)', save=os.path.join(buildings.path, 'investment.png'),
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['firebrick', 'royalblue', 'darksalmon', 'lightblue'])
 
-    subset = output.loc[['Saving total (Billion euro)', 'Debt total (Billion euro)', 'Subsidies total (Billion euro)'], :].T
+    subset = output.loc[['Saving total (Billion euro)', 'Debt total (Billion euro)',
+                         'Subsidies total (Billion euro)'], :].T
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
     if not subset.empty:
         make_area_plot(subset, 'Financing (Billion euro)', save=os.path.join(buildings.path, 'financing.png'),
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['darkred', 'darkgrey', 'darkgreen'])
+
+    subset = output.loc[['Saving insulation (Thousand euro/household)', 'Debt insulation (Thousand euro/household)',
+                         'Subsidies insulation (Thousand euro/household)'], :].T
+    subset.dropna(how='any', inplace=True)
+    subset.columns = [c.split(' (Thousand euro/household)')[0] for c in subset.columns]
+    if not subset.empty:
+        make_area_plot(subset, 'Financing (Thousand euro per household)', save=os.path.join(buildings.path, 'financing_households.png'),
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
+                       colors=['darkred', 'darkgrey', 'darkgreen'])
+
+    subset = output.loc[['Balance Tenant private - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
+    subset.dropna(how='any', inplace=True)
+    subset.columns = resources_data['index']['Income tenant']
+    if not subset.empty:
+        make_plot(subset, 'Balance Tenant private (euro per year)',
+                  save=os.path.join(buildings.path, 'balance_tenant.png'),
+                  format_y=lambda y, _: '{:.0f}'.format(y),
+                  colors=resources_data['colors'], ymin=None)
+
+    subset = output.loc[['Balance Tenant private - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
+    subset.dropna(how='any', inplace=True)
+    subset.columns = resources_data['index']['Income tenant']
+    if not subset.empty:
+        make_plot(subset, 'Balance Tenant private (euro per year)',
+                  save=os.path.join(buildings.path, 'balance_tenant.png'),
+                  format_y=lambda y, _: '{:.0f}'.format(y),
+                  colors=resources_data['colors'], ymin=None)
+
+    subset = output.loc[['Balance Owner-occupied - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
+    subset.dropna(how='any', inplace=True)
+    subset.columns = resources_data['index']['Income tenant']
+    if not subset.empty:
+        make_plot(subset, 'Balance Owner occupied (euro per year)',
+                  save=os.path.join(buildings.path, 'balance_owner.png'),
+                  format_y=lambda y, _: '{:.0f}'.format(y),
+                  colors=resources_data['colors'], ymin=None)
 
 
 def grouped_output(result, folder, config_runs=None, config_sensitivity=None, quintiles=None):
@@ -248,8 +285,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                                        resources_data['emissions_total_objectives']),
                  'Stock Heat pump (Million)': ('stock_heat_pump.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Stock low-efficient (Million)': ('stock_low_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Stock efficient (Million)': ('stock_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Retrofit (Thousand households)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Renovation (Thousand households)': ('renovation.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Thousand euro/household)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
@@ -258,7 +293,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Retrofit at least 1 EPC (Thousand households)': (
                      'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
                      resources_data['retrofit_comparison']),
-                 'Bonus best renovation (Thousand households)': ('renovation_efficient.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Global renovation (Thousand households)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),

@@ -1881,6 +1881,17 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_details[policy.name] = temp * cost
                     subsidies_total += subsidies_details[policy.name]
 
+        subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
+        for policy in subsidies_non_cumulative:
+            sub = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T.astype(float)
+            for policy_compare in policy.non_cumulative:
+                if policy_compare in subsidies_details.keys():
+                    subsidies_total -= subsidies_details[policy_compare]
+                    comp = reindex_mi(subsidies_details[policy_compare], sub.index)
+                    subsidies_details[policy_compare] = comp.where(comp > sub, 0)
+                    subsidies_details[policy.name] = sub.where(sub > comp, 0)
+                    subsidies_total += subsidies_details[policy.name] + subsidies_details[policy_compare]
+
         subsidies_bonus = [p for p in policies_insulation if p.policy == 'bonus']
         for policy in subsidies_bonus:
             temp = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T
@@ -1890,28 +1901,8 @@ class AgentBuildings(ThermalBuildings):
             else:
                 subsidies_details[policy.name] = temp.copy()
 
-        subsidies_non_cumulative = [p for p in policies_insulation if p.policy == 'subsidy_non_cumulative']
-        for policy in subsidies_non_cumulative:
-            sub = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T
-            sub = sub.astype(float)
-            for name in policy.non_cumulative:
-                # TODO: could be a bug here when policy.non_cumulative are all there and when non cumulative alone
-                if name in subsidies_details.keys():
-                    subsidies_total -= subsidies_details[name]
-                    comp = reindex_mi(subsidies_details[name], sub.index)
-                    temp = comp.where(comp > sub, 0)
-                    subsidies_details[name] = temp.copy()
-                    temp = sub.where(sub > comp, 0)
-                    subsidies_details[policy.name] = temp.copy()
-                    subsidies_total += subsidies_details[name] + subsidies_details[policy.name]
-
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_uncaped = subsidies_total.copy()
-
-        zil = [p for p in policies_insulation if p.policy == 'subsidy_ad_valorem' and p.name == 'zero_interest_loan']
-        if 'zero_interest_loan' in subsidies_details.keys() and zil is []:
-            subsidies_uncaped -= subsidies_details['zero_interest_loan']
-
         if subsidies_cap:
             subsidies_cap = subsidies_cap[0]
             subsidies_cap = reindex_mi(subsidies_cap.value, subsidies_uncaped.index)
@@ -1954,7 +1945,6 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        financing_cost
         prices: Series
         subsidies_total: DataFrame
         cost_insulation: DataFrame
@@ -3501,6 +3491,7 @@ class AgentBuildings(ThermalBuildings):
 
             output.update({'Consumption standard saving insulation (TWh/year)': self._renovation_store['consumption_saved'].sum().sum() / 10**9})
             output.update({'Consumption saving insulation (TWh/year)': self._renovation_store['consumption_saved_actual'].sum().sum() / 10**9})
+            output['Performance gap (% standard)'] = output['Consumption saving insulation (TWh/year)'] / output['Consumption standard saving insulation (TWh/year)']
 
             temp = self._renovation_store['consumption_saved'].sum(axis=1)
             output.update({'Emission standard saving insulation (MtCO2/year)': self.to_emission(temp, emission).sum() / 10**12})
