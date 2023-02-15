@@ -62,7 +62,7 @@ resources_data['investment_per_renovating_houshold_income_owner'] = {k:  DataFra
 
 resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
                            'Income owner': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'],
-                           'Occupation status': ['Owner-occupied', 'Privately rented', 'Social-housing'],
+                           'Occupancy status': ['Owner-occupied', 'Privately rented', 'Social-housing'],
                            'Housing type': ['Single-family', 'Multi-family'],
                            'Performance': ['G', 'F', 'E', 'D', 'C', 'B', 'A'],
                            'Energy': ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],

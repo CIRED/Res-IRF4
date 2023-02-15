@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2020,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -175,6 +175,7 @@
       "income": false,
       "prices_constant": false,
       "taxes_constant": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

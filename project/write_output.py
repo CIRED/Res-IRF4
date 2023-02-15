@@ -194,10 +194,6 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['darkred', 'darkgrey', 'darkgreen'])
 
-    df = output.loc[['Budget share {} (%)'.format(i) for i in resources_data['index']['Income tenant']], :].T
-    df.columns = resources_data['index']['Income tenant']
-    make_plot(df, 'Budget share (%)', colors=resources_data['colors'], format_y=lambda y, _: '{:.1%}'.format(y),
-              save=os.path.join(buildings.path, 'budget_share.png'), legend=True, integer=True)
 
 def grouped_output(result, folder, config_runs=None, config_sensitivity=None, quintiles=None):
     """Grouped scenarios output.
@@ -314,7 +310,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
         'Retrofit measures {} (Thousand households)': [('Count', lambda y, _: '{:,.0f}'.format(y), 2)],
 
         'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
-        'Budget share {} (%)': [('Income tenant', lambda y, _: '{:,.1%}'.format(y))],
         'Renovation {} (Thousand households)': [('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
     }
 
