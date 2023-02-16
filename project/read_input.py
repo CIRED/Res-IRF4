@@ -167,7 +167,7 @@ def read_policies(config):
         insulation = get_pandas(data['insulation'],
                                 lambda x: pd.read_csv(x, index_col=[0]))
 
-        if data['global_renovation']:
+        if data.get('global_renovation'):
             global_renovation = get_pandas(data['global_renovation'],
                                            lambda x: pd.read_csv(x, index_col=[0]).squeeze())
             l.append(PublicPolicy('mpr', data['start'], data['end'], global_renovation, 'subsidy_ad_valorem',

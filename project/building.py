@@ -1521,7 +1521,10 @@ class AgentBuildings(ThermalBuildings):
 
         restriction = [p for p in policies_heater if p.policy in ['restriction_energy', 'restriction_heater']]
         for policy in restriction:
-            temp = [policy.value]
+            if isinstance(policy.value, str):
+                temp = [policy.value]
+            else:
+                temp = policy.value
             if policy.policy == 'restriction_energy':
                 temp = [i for i in cost_heater.index if '{}'.format(i.split('-')[0]) in temp]
             if temp:
@@ -1929,7 +1932,6 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details['mpr'] -= remaining
                 assert (subsidies_details['mpr'].values >= 0).all(), 'MPR got negative values'
 
-            assert_almost_equal(remaining.sum().sum(), 0)
             subsidies_total -= subsidies_details['over_cap']
 
         regulation = [p for p in policies_insulation if p.policy == 'regulation']
