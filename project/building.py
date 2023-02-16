@@ -30,7 +30,7 @@ from copy import deepcopy
 from itertools import product
 
 
-from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities
+from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, select
 from project.input.resources import resources_data
 import project.thermal as thermal
 
@@ -559,10 +559,11 @@ class ThermalBuildings:
             _consumption_actual = self.consumption_actual(prices, consumption=consumption, store=store) * self.stock
 
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
+            consumption_energy = consumption_energy.drop('Heating')
 
             # 1. consumption total
-            coefficient_global = consumption_ini.sum() * 10**9 / _consumption_actual.sum()
-
+            coefficient_global = consumption_ini.sum() * 10**9 / consumption_energy.sum()
+            self.coefficient_global = coefficient_global
             consumption_energy *= coefficient_global
 
             # 2. coefficient among energies
@@ -573,15 +574,14 @@ class ThermalBuildings:
             _consumption_energy = coefficient * consumption_energy
             _consumption_energy['Wood fuel'] += ((1 - coefficient) * consumption_energy).sum()
             pd.concat((_consumption_energy / 10**9, consumption_ini), axis=1)
-            self.coefficient_global = coefficient_global
             idx_heater = _consumption_actual.index.get_level_values('Heating system').unique()
-            if 'Electricity-Heat pump air' not in idx_heater:
-                idx_heater = idx_heater.insert(0, 'Electricity-Heat pump air')
+            idx_heater = idx_heater.drop('Heating-District heating')
             energy = idx_heater.str.split('-').str[0].rename('Energy')
             self.coefficient_heater = coefficient.reindex(energy)
             self.coefficient_heater.index = idx_heater
             idx_heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
             self.coefficient_heater.loc[idx_heat_pump] = 1
+            self.coefficient_heater.loc['Heating-District heating'] = 1
 
             self.apply_calibration(_consumption_actual)
             validation = dict()
@@ -964,7 +964,6 @@ class AgentBuildings(ThermalBuildings):
 
     def add_tenant(self, df):
         pass
-
 
     def frame_to_flow(self, replaced_by):
         """Transform insulation transition Dataframe to flow.
@@ -1378,10 +1377,10 @@ class AgentBuildings(ThermalBuildings):
         utility = utility_inertia + utility_cost + utility_bill_saving + utility_subsidies
 
         # removing heat-pump for low-efficient buildings
+        hp_idx = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
         utility = self.add_certificate(utility)
         utility.columns.names = ['Heating system final']
-        idx = utility[utility.index.get_level_values('Performance').isin(['F', 'G'])].index
-        hp_idx = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
+        idx = (utility.index.get_level_values('Performance').isin(['F', 'G'])) & (~utility.index.get_level_values('Heating system').isin(hp_idx))
         utility.loc[idx, hp_idx] = float('nan')
         utility = utility.droplevel('Performance')
 
@@ -1415,15 +1414,15 @@ class AgentBuildings(ThermalBuildings):
             Probability replacement.
         """
         market_share_exogenous = {'Wood fuel-Standard boiler': 'Wood fuel-Performance boiler',
-                                        'Wood fuel-Performance boiler': 'Wood fuel-Performance boiler',
-                                        'Oil fuel-Standard boiler': 'Electricity-Heat pump water',
-                                        'Oil fuel-Performance boiler': 'Electricity-Heat pump water',
-                                        'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
-                                        'Natural gas-Performance boiler': 'Natural gas-Performance boiler',
-                                        'Electricity-Performance boiler': 'Electricity-Heat pump air',
-                                        'Electricity-Heat pump air': 'Electricity-Heat pump air',
-                                        'Electricity-Heat pump water': 'Electricity-Heat pump water',
-                                        }
+                                  'Wood fuel-Performance boiler': 'Wood fuel-Performance boiler',
+                                  'Oil fuel-Standard boiler': 'Electricity-Heat pump water',
+                                  'Oil fuel-Performance boiler': 'Electricity-Heat pump water',
+                                  'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
+                                  'Natural gas-Performance boiler': 'Natural gas-Performance boiler',
+                                  'Electricity-Performance boiler': 'Electricity-Heat pump air',
+                                  'Electricity-Heat pump air': 'Electricity-Heat pump air',
+                                  'Electricity-Heat pump water': 'Electricity-Heat pump water',
+                                  }
 
         market_share = Series(index=index, dtype=float).to_frame().dot(
             Series(index=choice_heater_idx, dtype=float).to_frame().T)
@@ -1487,7 +1486,7 @@ class AgentBuildings(ThermalBuildings):
             self._heater_store['subsidies_average'].update({key: sub.sum().sum() / replacement.fillna(0).sum().sum()})
 
     def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, ms_heater=None,
-                           step=1, financing_cost=None):
+                           step=1, financing_cost=None, district_heating=None):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -1520,14 +1519,15 @@ class AgentBuildings(ThermalBuildings):
         cost_heater, vta_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(index, policies_heater,
                                                                                                   cost_heater.copy())
 
-        restriction_heater = [p for p in policies_heater if p.policy == 'restriction_heater']
-        for restriction in restriction_heater:
-            temp = [i for i in restriction.value.index if self.year >= restriction.value[i]]
-            temp = [i for i in cost_heater.index if '{}'.format(i.split('-')[0]) in temp]
+        restriction = [p for p in policies_heater if p.policy in ['restriction_energy', 'restriction_heater']]
+        for policy in restriction:
+            temp = [policy.value]
+            if policy.policy == 'restriction_energy':
+                temp = [i for i in cost_heater.index if '{}'.format(i.split('-')[0]) in temp]
             if temp:
                 idx = subsidies_total.index
-                if restriction.target is not None:
-                    idx = subsidies_total.index.get_level_values('Housing type') == restriction.target
+                if policy.target is not None:
+                    idx = subsidies_total.index.get_level_values('Housing type') == policy.target
                 subsidies_total.loc[idx, temp] = float('nan')
 
         cost_total, cost_financing, amount_debt, amount_saving, discount = self.calculate_financing(
@@ -1543,7 +1543,13 @@ class AgentBuildings(ThermalBuildings):
 
         assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
 
-        replacement = (market_share.T * stock * reindex_mi(probability, stock.index)).T
+        flow_replace = stock * reindex_mi(probability, stock.index)
+        to_district_heating = (reindex_mi(district_heating, flow_replace.index) * flow_replace).fillna(0)
+        flow_remaining = flow_replace - to_district_heating
+        replacement = (market_share.T * flow_remaining).T
+        replacement = concat((replacement, to_district_heating.rename('Heating-District heating')), axis=1)
+        replacement = replacement.groupby(replacement.columns, axis=1).sum()
+        replacement.columns.names = ['Heating system final']
 
         stock_replacement = replacement.stack('Heating system final')
         to_replace = replacement.sum(axis=1)
@@ -1901,9 +1907,11 @@ class AgentBuildings(ThermalBuildings):
             else:
                 subsidies_details[policy.name] = temp.copy()
 
+        # TODO: better code this part. Subsidies_cap should have as argument policies that need to be reduced
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_uncaped = subsidies_total.copy()
         if subsidies_cap:
+            # only one subsidy cap
             subsidies_cap = subsidies_cap[0]
             subsidies_cap = reindex_mi(subsidies_cap.value, subsidies_uncaped.index)
             cap = (reindex_mi(cost_insulation, index).T * subsidies_cap).T
@@ -1921,6 +1929,7 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details['mpr'] -= remaining
                 assert (subsidies_details['mpr'].values >= 0).all(), 'MPR got negative values'
 
+            assert_almost_equal(remaining.sum().sum(), 0)
             subsidies_total -= subsidies_details['over_cap']
 
         regulation = [p for p in policies_insulation if p.policy == 'regulation']
@@ -2979,8 +2988,8 @@ class AgentBuildings(ThermalBuildings):
         self.cost_rebound = (prices * self.rebound).sum()
 
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
-                      policies_insulation=None,
-                      ms_heater=None, financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
+                      policies_insulation=None,  ms_heater=None, district_heating=None,
+                      financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
                       step=1):
         """Compute heater replacement and insulation retrofit.
 
@@ -3018,7 +3027,8 @@ class AgentBuildings(ThermalBuildings):
         # accounts for heater replacement - depends on energy prices, cost and policies heater
         self.logger.info('Calculation heater replacement')
         stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
-                                        ms_heater=ms_heater, step=step, financing_cost=financing_cost)
+                                        ms_heater=ms_heater, step=step, financing_cost=financing_cost,
+                                        district_heating=district_heating)
 
         self.logger.debug('Agents: {:,.0f}'.format(stock.shape[0]))
         self.logger.info('Calculation insulation replacement')
@@ -3477,6 +3487,8 @@ class AgentBuildings(ThermalBuildings):
         output['Stock Oil fuel (Million)'] = temp[['Oil fuel-Performance boiler', 'Oil fuel-Standard boiler']].sum()/ 10**6
         output['Stock Wood fuel (Million)'] = temp[['Wood fuel-Performance boiler', 'Wood fuel-Standard boiler']].sum()/ 10**6
         output['Stock Natural gas (Million)'] = temp[['Natural gas-Performance boiler', 'Natural gas-Standard boiler']].sum() / 10**6
+        output['Stock District heating (Million)'] = temp['Heating-District heating'] / 10**6
+        # output['Stock Heating (Million)'] = temp['Heating-District heating'] / 10**6
 
         if self.year > self.first_year:
 

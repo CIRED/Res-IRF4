@@ -92,13 +92,17 @@ SOLAR_RADIATION_3CL = 306.4 # kWh/m2.an
 DHW_NEED = pd.Series([15.3, 19.8], index=pd.Index(['Single-family',	'Multi-family'], name='Housing type')) # kWh/m2.a
 DHW_EFFICIENCY = {'Electricity-Performance boiler': 0.7,
                   'Electricity-Heat pump air': 0.7,
+                  'Electricity-Heat pump': 2.5,
                   'Electricity-Heat pump water': 2.5,
                   'Natural gas-Performance boiler': 0.6,
                   'Natural gas-Standard boiler': 0.6,
+                  'Natural gas-Collective boiler': 0.6,
                   'Oil fuel-Performance boiler': 0.6,
                   'Oil fuel-Standard boiler': 0.6,
+                  'Oil fuel-Collective boiler': 0.6,
                   'Wood fuel-Performance boiler': 0.6,
-                  'Wood fuel-Standard boiler': 0.6
+                  'Wood fuel-Standard boiler': 0.6,
+                  'Heating-District heating': 0.6
                   }
 
 C_LIGHT = 0.9

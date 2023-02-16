@@ -127,6 +127,17 @@ def reindex_mi(df, mi_index, levels=None, axis=0):
     return df_reindex
 
 
+def select(df, dict_levels):
+    idx = np.array([True] * df.shape[0])
+    for level, value in dict_levels.items():
+        if not isinstance(value, list):
+            value = [value]
+        idx *= df.index.get_level_values(level).isin(value)
+    if isinstance(df, pd.DataFrame):
+        return df.loc[idx, :]
+    elif isinstance(df, pd.Series):
+        return df.loc[idx]
+
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 

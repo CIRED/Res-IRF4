@@ -53,8 +53,9 @@ surface_max.index.set_names(['Housing type', 'Occupancy status'], inplace=True)
 generic_input['surface_max'] = surface_max
 
 
-generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76],
-                                             index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'],
+generic_input['consumption_ini'] = pd.Series([39, 129, 40, 76, 12],
+                                             index=pd.Index(['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel',
+                                                             'District heating'],
                                                             name='Heating energy'))
 generic_input['vta_energy_prices'] = pd.Series(
     {'Electricity': 0.15, 'Natural gas': 0.15, 'Oil fuel': 0.2, 'Wood fuel': 0.1})

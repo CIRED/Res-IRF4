@@ -1,7 +1,10 @@
 ﻿Heating system final,
 Electricity-Heat pump water,13000
+Electricity-Heat pump air,8000
 Electricity-Performance boiler,3600
 Natural gas-Performance boiler,6000
+Natural gas-Collective boiler,6000
 Oil fuel-Performance boiler,8500
+Oil fuel-Collective boiler,8500
 Wood fuel-Performance boiler,12500
-Electricity-Heat pump air,8000
+Heating-District heating,0

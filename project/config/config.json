@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2020,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -34,6 +34,7 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
+    "district_heating": "project/input/revealed_data/district_heating_transition2050.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "technical": {
@@ -84,7 +85,7 @@
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
       "mpr": {
-        "start": 2020,
+        "start": 2021,
         "end": 2051,
         "heater": "project/input/policies/mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation.csv",
@@ -130,28 +131,20 @@
         "end": 2051,
         "value": 0.055
       },
-      "restriction_heater_single": {
-        "start": 2019,
+      "restriction_oil": {
+        "start": 2023,
         "end": 2051,
-        "value": {
-          "Oil fuel": 2019,
-          "Natural gas": 2025
-        },
-        "target": "Single-family",
-        "policy": "restriction_heater"
-
+        "value": "Oil fuel",
+        "policy": "restriction_energy"
       },
-      "restriction_heater_multi": {
-        "start": 2019,
+      "restriction_collective_gas": {
+        "start": 2026,
         "end": 2051,
-        "value": {
-          "Oil fuel": 2019
-        },
-        "target": "Multi-family",
+        "value": "Natural gas-Collective boiler",
         "policy": "restriction_heater"
       },
       "premature_replacement_oil": {
-        "start": 2021,
+        "start": 2023,
         "end": 2051,
         "value": 0.16,
         "target": "Oil fuel",

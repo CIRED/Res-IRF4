@@ -117,6 +117,8 @@ def read_stock(config):
     stock_sum = stock.sum()
 
     stock = stock.reset_index('Heating system')
+
+    # specify heat-pump
     repartition = 0.8
     idx = stock['Heating system'] == 'Electricity-Heat pump'
     hp_water = stock.loc[idx, :].copy()
@@ -130,17 +132,31 @@ def read_stock(config):
     stock = stock.loc[~idx, :]
     stock = pd.concat((stock, hp_water, hp_air), axis=0)
 
-    stock = stock.set_index('Heating system', append=True).squeeze()
-    year = config['start']
+    multi_family = stock.index.get_level_values('Housing type') == 'Multi-family'
+    oil_fuel = stock['Heating system'].isin(['Oil fuel-Performance boiler', 'Oil fuel-Standard boiler'])
+    stock.loc[multi_family & oil_fuel, 'Heating system'] = 'Oil fuel-Collective boiler'
 
+    repartition = 0.5
+    idx_gas = stock['Heating system'].isin(['Natural gas-Performance boiler', 'Natural gas-Standard boiler']) & multi_family
+    collective_gas = stock.loc[idx_gas, :].copy()
+    collective_gas['Stock buildings'] *= repartition
+    collective_gas['Heating system'] = collective_gas['Heating system'].str.replace('Natural gas-Performance boiler', 'Natural gas-Collective boiler')
+    collective_gas['Heating system'] = collective_gas['Heating system'].str.replace('Natural gas-Standard boiler', 'Natural gas-Collective boiler')
+    individual_gas = stock.loc[idx_gas, :].copy()
+    individual_gas['Stock buildings'] *= (1 - repartition)
+    stock = stock.loc[~idx_gas, :]
+    stock = pd.concat((stock, collective_gas, individual_gas), axis=0)
+
+    stock = stock.set_index('Heating system', append=True).squeeze()
+    stock = stock.groupby(stock.index.names).sum()
     stock = pd.concat([stock], keys=[True], names=['Existing'])
     idx_names = ['Existing', 'Occupancy status', 'Income owner', 'Income tenant', 'Housing type',
                  'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
 
     stock = stock.reorder_levels(idx_names)
-
     assert_almost_equal(stock.sum(), stock_sum)
-    return stock, year
+
+    return stock
 
 
 def read_policies(config):
@@ -303,9 +319,14 @@ def read_policies(config):
                               gest=data['gest'], by=by, target=data.get('target')))
         return l
 
+    def restriction_energy(data):
+        # value = pd.Series(data['value']).rename_axis('Energy')
+        return [PublicPolicy(data['name'], data['start'], data['end'], data['value'],
+                             'restriction_energy', gest='heater', target=data.get('target'))]
+
     def restriction_heater(data):
-        value = pd.Series(data['value']).rename_axis('Energy')
-        return [PublicPolicy(data['name'], data['start'], data['end'], value,
+        # value = pd.Series(data['value']).rename_axis('Heating system')
+        return [PublicPolicy(data['name'], data['start'], data['end'], data['value'],
                              'restriction_heater', gest='heater', target=data.get('target'))]
 
     def premature_heater(data):
@@ -353,6 +374,8 @@ def read_policies(config):
                 list_policies += read_ad_valorem(item)
             elif item.get('policy') == 'premature_heater':
                 list_policies += premature_heater(item)
+            elif item.get('policy') == 'restriction_energy':
+                list_policies += restriction_energy(item)
             elif item.get('policy') == 'restriction_heater':
                 list_policies += restriction_heater(item)
             elif item.get('policy') == 'obligation':
@@ -414,6 +437,9 @@ def read_inputs(config, other_inputs=generic_input):
     ms_heater = get_pandas(config['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     ms_heater.columns.set_names('Heating system final', inplace=True)
     inputs.update({'ms_heater': ms_heater})
+
+    district_heating = get_pandas(config['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+    inputs.update({'district_heating': district_heating})
 
     calibration_renovation = None
     if config['renovation']['endogenous']:

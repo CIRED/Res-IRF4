@@ -49,7 +49,7 @@ def create_logger(path=None):
 
 
 def get_config() -> dict:
-    with resources.path('project.input', 'config.json') as f:
+    with resources.path('project.config', 'config.json') as f:
         with open(f) as file:
             return json.load(file)['Reference']
 
@@ -78,7 +78,8 @@ def config2inputs(config=None, building_stock=None, end=None):
     if end is not None:
         config['end'] = end
 
-    stock, year = read_stock(config)
+    year = config['start']
+    stock = read_stock(config)
     policies_heater, policies_insulation, taxes = read_policies(config)
     inputs = read_inputs(config)
 
@@ -221,7 +222,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
                      'health_cost', 'income']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, flow_built, cost_financing, technical_progress = initialize(
+    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': buildings,
               'income': inputs['income'],
@@ -230,8 +231,8 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
               'carbon_emission': post_inputs['carbon_emission'],
               'carbon_value_kwh': post_inputs['carbon_value_kwh'],
               'health_cost': post_inputs['health_expenditure'] + post_inputs['mortality_cost'] + post_inputs['loss_well_being'],
-              'efficiency': buildings._efficiency,
-              'performance_insulation': buildings._performance_insulation
+              'efficiency': inputs['efficiency'],
+              'performance_insulation': inputs['performance_insulation']
               }
     output = {k: item for k, item in output.items() if k in variables}
 
@@ -295,7 +296,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
-                   prices_before=None, climate=None, step=1):
+                   prices_before=None, climate=None, district_heating=None, step=1):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -341,6 +342,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             calib_renovation=calib_renovation,
                                             calib_intensive=calib_intensive,
                                             ms_heater=ms_heater,
+                                            district_heating=district_heating,
                                             financing_cost=financing_cost,
                                             climate=climate,
                                             step=step)
@@ -445,7 +447,8 @@ def res_irf(config, path):
                                              calib_intensive=inputs['calibration_intensive'],
                                              calib_renovation=inputs['calibration_renovation'],
                                              ms_heater=ms_heater, financing_cost=financing_cost,
-                                             climate=config.get('climate'), step=step)
+                                             climate=config.get('climate'),
+                                             district_heating=inputs.get('district_heating'),step=step)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

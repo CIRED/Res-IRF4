@@ -342,7 +342,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                                ('Heater', lambda y, _: '{:,.0f}'.format(y))],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Retrofit measures {} (Thousand households)': [('Count', lambda y, _: '{:,.0f}'.format(y), 2)],
-
         'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
         'Renovation {} (Thousand households)': [('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
     }
