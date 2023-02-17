@@ -71,11 +71,13 @@
       "income": "project/input/macro/income.csv",
       "energy_prices": "project/input/macro/energy_prices_ht.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
+      "flow_construction": "project/input/macro/flow_construction_sfec.csv",
       "pop_housing": null,
       "share_multi_family": null,
+      "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
-      "demolition_rate": 0.0035,
+      "demolition_rate": "project/input/macro/demolition_rate_sfec.csv",
       "stock_ini": 29037000,
       "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv"
@@ -83,19 +85,13 @@
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2021,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "global_retrofit": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
       "mpr_serenite": {
         "start": 2019,
         "end": 2020,
         "insulation": "project/input/policies/mpr_serenite.csv",
-        "cap": "project/input/policies/mpr_serenite_cap.csv"
+        "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
+        "non_cumulative": ["cite", "mpr"],
+        "target": "mpr_serenite"
       },
       "cee": {
         "start": 2018,
@@ -112,7 +108,7 @@
       },
       "carbon_tax": {
         "start": 2018,
-        "end": 2051,
+        "end": 2020,
         "tax": "project/input/policies/carbon_tax.csv",
         "emission": "project/input/policies/carbon_tax_emission.csv"
       },
@@ -128,46 +124,6 @@
         "end": 2020,
         "value": 0.055
       },
-      "restriction_heater_single": {
-        "start": 2019,
-        "end": 2019,
-        "value": {
-          "Oil fuel": 2022,
-          "Natural gas": 2025
-        },
-        "target": "Single-family",
-        "policy": "restriction_heater"
-      },
-      "restriction_heater_multi": {
-        "start": 2019,
-        "end": 2019,
-        "value": {
-          "Oil fuel": 2022
-        },
-        "target": "Multi-family",
-        "policy": "restriction_heater"
-
-      },
-      "premature_replacement_oil": {
-        "start": 2019,
-        "end": 2019,
-        "value": 0.16,
-        "target": "Oil fuel",
-        "policy": "premature_heater"
-
-      },
-      "obligation_landlord": {
-        "start": 2021,
-        "end": 2021,
-        "value": "project/input/policies/agenda_obligation_law.csv",
-        "frequency": {"value": [0, 0.021, 0.052],
-                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
-                    "name": "Occupancy status"},
-        "intensive": "market_share",
-        "minimum_performance": "C",
-        "policy": "obligation"
-
-      },
       "landlord": {
         "start": 2020,
         "end": 2020
@@ -176,7 +132,6 @@
         "start": 2020,
         "end": 2020
       }
-
     },
     "simple": {
       "quintiles": false,

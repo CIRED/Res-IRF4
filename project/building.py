@@ -3772,11 +3772,11 @@ class AgentBuildings(ThermalBuildings):
             energy_expenditure = consumption_calib * coefficient_heater * prices_reindex
             energy_expenditure += consumption_calib * (1 - coefficient_heater) * prices.loc['Wood fuel']
 
-            output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9 / step
+            output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
             energy_expenditure = energy_expenditure.groupby('Income tenant').sum()
             temp = energy_expenditure.loc[self._resources_data['index']['Income tenant']]
             temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
-            output.update(temp.T / 10 ** 9 / step)
+            output.update(temp.T / 10 ** 9)
 
             # economic state impact
             output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step

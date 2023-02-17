@@ -61,15 +61,13 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
             dump(calibration, file)
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
-        inputs, stock, year, taxes, path=path, config=config, logger=logger)
+    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
+        inputs, stock, year, taxes, path=path, config=config)
 
     # calibration
     buildings.calibration_exogenous(**calibration)
 
     output = pd.DataFrame()
-    """_, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
-    output = pd.concat((output, o), axis=1)"""
 
     # run second year
     year = 2019
@@ -87,7 +85,7 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
+    return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
 
 
 def select_output(output):
@@ -222,7 +220,7 @@ def create_subsidies(sub_insulation, sub_design, start, end):
 
 def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
-                 climate=2006, smooth=False, efficiency_hour=False,
+                 climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
                  ):
 
@@ -256,7 +254,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                          cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs,
                                          financing_cost=financing_cost,
-                                         climate=climate)
+                                         climate=climate, demolition_rate=demolition_rate)
 
         if full_output is False:
             output.update({year: select_output(o)})
@@ -388,7 +386,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     path = os.path.join('project', 'output', 'ResIRF')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
         logger=None,
         config=config,
@@ -402,7 +400,7 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
     output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
                                        cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater,
                                        p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
-                                       efficiency_hour=True,
+                                       efficiency_hour=True, demolition_rate=demolition_rate,
                                        output_consumption=output_consumption, full_output=True, rebound=rebound,
                                        technical_progress=technical_progress)
 

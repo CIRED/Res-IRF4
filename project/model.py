@@ -107,6 +107,9 @@ def config2inputs(config=None, building_stock=None, end=None):
             raise NotImplemented
         inputs['ms_heater'].drop([i for i in replace.keys() if i in inputs['ms_heater'].columns], axis=1, inplace=True)
 
+    if config['simple'].get('insulation'):
+        print('break')
+
     if config['simple']['surface']:
         surface = (reindex_mi(inputs['surface'], stock.index) * stock).sum() / stock.sum()
         inputs['surface'] = pd.Series(round(surface, 0), index=inputs['surface'].index)
@@ -198,7 +201,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
                      'health_cost', 'income']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
+    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': buildings,
               'income': inputs['income'],
@@ -538,7 +541,7 @@ def calibration_res_irf(path, config=None, cost_factor=1):
     try:
         logger.info('Reading input')
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
@@ -559,7 +562,8 @@ def calibration_res_irf(path, config=None, cost_factor=1):
                                          p_insulation, f_built, year, post_inputs,
                                          calib_intensive=inputs['calibration_intensive'],
                                          calib_renovation=inputs['calibration_renovation'],
-                                         ms_heater=ms_heater, financing_cost=financing_cost)
+                                         ms_heater=ms_heater, financing_cost=financing_cost,
+                                         demolition_rate=demolition_rate)
 
         output = pd.concat((output, o), axis=1)
         output.to_csv(os.path.join(buildings.path, 'output_calibration.csv'))

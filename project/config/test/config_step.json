@@ -157,7 +157,6 @@
         "value": "Natural gas-Collective boiler",
         "policy": "restriction_heater"
       },
-
       "restriction_indiv_gas": {
         "start": 2025,
         "end": 2025,
@@ -165,7 +164,6 @@
         "policy": "restriction_heater",
         "target": "Single-family"
       },
-
       "obligation": {
         "start": 2020,
         "end": 2020,

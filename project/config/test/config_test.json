@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -148,7 +148,6 @@
         "target": "Oil fuel",
         "policy": "premature_heater"
       },
-      
       "restriction_collective_gas": {
         "start": 2027,
         "end": 2051,
@@ -186,15 +185,15 @@
       "prices_constant": false,
       "taxes_constant": false,
       "heating_system": {
-        "Oil fuel-Standard boiler":  "Oil fuel-Performant boiler",
-        "Natural gas-Standard boiler":  "Natural gas-Performant boiler",
-        "Wood fuel-Standard boiler":  "Wood fuel-Performant boiler",
+        "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler":  "Wood fuel-Performance boiler",
         "Electricity-Heat pump air":  "Electricity-Heat pump water",
         "Heating-District heating": null,
-        "Natural gas-Collective boiler": "Natural gas-Performant boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performant boiler"
-      }
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
+      },
+      "insulation": true
+    }
   }
 }

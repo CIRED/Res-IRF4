@@ -444,8 +444,9 @@ def read_inputs(config, other_inputs=generic_input):
     ms_heater.columns.set_names('Heating system final', inplace=True)
     inputs.update({'ms_heater': ms_heater})
 
-    district_heating = get_pandas(config['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
-    inputs.update({'district_heating': district_heating})
+    if 'district_heating' in config.keys():
+        district_heating = get_pandas(config['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+        inputs.update({'district_heating': district_heating})
 
     calibration_renovation = None
     if config['renovation']['endogenous']:
@@ -580,20 +581,20 @@ def parse_inputs(inputs, taxes, config, stock):
     if 'prices_factor' in config.keys():
         prices_factor = config['prices_factor']
 
-    if 'technical_progress' in config.keys():
-        if 'insulation' in config['technical_progress'].keys():
-            if config['technical_progress']['insulation']['activated']:
-                value = config['technical_progress']['insulation']['value_end']
-                start = config['technical_progress']['insulation']['start']
-                end = config['technical_progress']['insulation']['end']
+    if config['technical'].get('technical_progress') is not None:
+        if 'insulation' in config['technical']['technical_progress'].keys():
+            if config['technical']['technical_progress']['insulation']['activated']:
+                value = config['technical']['technical_progress']['insulation']['value_end']
+                start = config['technical']['technical_progress']['insulation']['start']
+                end = config['technical']['technical_progress']['insulation']['end']
                 value = round((1 + value) ** (1 / (end - start + 1)) - 1, 5)
                 parsed_inputs['technical_progress'] = dict()
                 parsed_inputs['technical_progress']['insulation'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
-        if 'heater' in config['technical_progress'].keys():
-            if config['technical_progress']['heater']['activated']:
-                value = config['technical_progress']['heater']['value_end']
-                start = config['technical_progress']['heater']['start']
-                end = config['technical_progress']['heater']['end']
+        if 'heater' in config['technical']['technical_progress'].keys():
+            if config['technical']['technical_progress']['heater']['activated']:
+                value = config['technical']['technical_progress']['heater']['value_end']
+                start = config['technical']['technical_progress']['heater']['start']
+                end = config['technical']['technical_progress']['heater']['end']
                 value = round((1 + value) ** (1 / (end - start + 1)) - 1, 5)
                 parsed_inputs['technical_progress'] = dict()
                 parsed_inputs['technical_progress']['heater'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
