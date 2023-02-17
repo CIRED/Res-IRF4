@@ -342,11 +342,9 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                                ('Heater', lambda y, _: '{:,.0f}'.format(y))],
         'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
         'Retrofit measures {} (Thousand households)': [('Count', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
         'Renovation {} (Thousand households)': [('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
     }
-
-    # Replacement {} (Thousand households)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2, None, resources_data['retrofit_hist'])],
+    #         'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
 
     def details_graphs(data, v, inf, folder_img):
         n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
@@ -392,7 +390,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                          resources_data['retrofit_comparison'])
                      }
         for variable, infos in variables.items():
-            print(variable)
             temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
             columns = temp.columns
             try:
