@@ -136,6 +136,12 @@ def run(path=None):
                     configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
                     configuration['PriceConstant']['simple']['prices_constant'] = True
                     configuration['PriceConstant']['simple']['taxes_constant'] = True
+            if 'step' in config_sensitivity.keys():
+                values = config_sensitivity['step']
+                for v in values:
+                    name = 'Step{}'.format(v)
+                    configuration[name] = copy.deepcopy(configuration['Reference'])
+                    configuration[name]['step'] = int(v)
 
             if 'building_stock' in config_sensitivity.keys():
                 values = config_sensitivity['building_stock']
@@ -182,20 +188,6 @@ def run(path=None):
                         configuration['Exogenous{}'.format(v)] = copy.deepcopy(configuration['Reference'])
                         configuration['Exogenous{}'.format(v)]['renovation']['endogenous'] = False
                         configuration['Exogenous{}'.format(v)]['renovation']['exogenous']['number'] = v
-
-            if 'renovation_rate_ini' in config_sensitivity.keys():
-                if config_sensitivity['renovation_rate_ini']:
-                    configuration['RetrofitIni'] = copy.deepcopy(configuration['Reference'])
-                    configuration['RetrofitIni']['renovation_rate_ini'] = config_sensitivity['renovation_rate_ini']
-            if 'target_freeriders' in config_sensitivity.keys():
-                values = config_sensitivity['target_freeriders']
-                if values:
-                    if isinstance(values, float):
-                        values = [values]
-                    for v in values:
-                        configuration['FreeridersIni{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
-                        configuration['FreeridersIni{:.0f}'.format(v * 100)]['target_freeriders'] = v
-
 
 
         del configuration['sensitivity']

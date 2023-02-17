@@ -86,15 +86,34 @@ def config2inputs(config=None, building_stock=None, end=None):
     if config['simple']['quintiles']:
         stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
                                                                                 policies_insulation, inputs)
+
+    if config['simple'].get('heating_system'):
+        replace = config['simple']['heating_system']
+        shape_ini = stock.shape[0]
+        stock = stock.reset_index('Heating system')
+        stock['Heating system'] = stock['Heating system'].replace(replace)
+        stock = stock.dropna()
+        stock = stock.set_index('Heating system', append=True).squeeze()
+        stock = stock.groupby(stock.index.names).sum()
+        shape_out = stock.shape[0]
+        print('From {} to {}'.format(shape_ini, shape_out))
+        to_drop = []
+        if 'Heating-District heating' in config['simple']['heating_system'].keys():
+            if config['simple']['heating_system']['Heating-District heating'] is None:
+                inputs['district_heating'] = None
+                to_drop += ['Heating-District heating']
+        to_replace = [k for k, i in replace.items() if i not in inputs['ms_heater'].columns and i is not None]
+        if to_replace:
+            raise NotImplemented
+        inputs['ms_heater'].drop([i for i in replace.keys() if i in inputs['ms_heater'].columns], axis=1, inplace=True)
+
     if config['simple']['surface']:
         surface = (reindex_mi(inputs['surface'], stock.index) * stock).sum() / stock.sum()
         inputs['surface'] = pd.Series(round(surface, 0), index=inputs['surface'].index)
-
     if config['simple']['ratio_surface']:
         ratio_surface = (reindex_mi(inputs['ratio_surface'], stock.index).T * stock).T.sum() / stock.sum()
         for idx in inputs['ratio_surface'].index:
             inputs['ratio_surface'].loc[idx, :] = ratio_surface.round(1)
-
     if config['simple']['policies']:
         p = create_simple_policy(config['start'], config['end'], gest='insulation', value=0.3)
         policies_insulation = [p]

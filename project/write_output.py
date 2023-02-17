@@ -293,7 +293,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
                  'Retrofit at least 1 EPC (Thousand households)': (
                      'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
                      resources_data['retrofit_comparison']),
-                 'Global renovation (Thousand households)': ('renovation_global.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Energy expenditures (Billion euro)': (
