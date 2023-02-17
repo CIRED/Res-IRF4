@@ -513,7 +513,7 @@ class ThermalBuildings:
                 t = self.apply_calibration(t)
                 return t
 
-    def apply_calibration(self, consumption, level_heater='Heating system'):
+    def apply_calibration(self, consumption):
         if self.coefficient_global is None:
             raise AttributeError
 
@@ -563,6 +563,7 @@ class ThermalBuildings:
             consumption_energy = consumption_energy.drop('Heating')
 
             # 1. consumption total
+            consumption_ini = consumption_ini.drop('District heating')
             coefficient_global = consumption_ini.sum() * 10**9 / consumption_energy.sum()
             self.coefficient_global = coefficient_global
             consumption_energy *= coefficient_global
@@ -763,7 +764,7 @@ class AgentBuildings(ThermalBuildings):
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
-                 performance_insulation, path=None, year=2018, demolition_rate=0.0,
+                 performance_insulation, path=None, year=2018,
                  endogenous=True, exogenous=None, insulation_representative='market_share',
                  logger=None, debug_mode=False, calib_scale=True, full_output=None,
                  quintiles=None, financing_cost=True, threshold=None, resources_data=None
@@ -787,8 +788,6 @@ class AgentBuildings(ThermalBuildings):
 
         self.financing_cost = financing_cost
 
-        self._demolition_rate = demolition_rate
-        self._demolition_total = (stock * self._demolition_rate).sum()
         self._target_demolition = ['E', 'F', 'G']
 
         choice_insulation = {'Wall': [False, True], 'Floor': [False, True], 'Roof': [False, True],
@@ -3985,7 +3984,7 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = None
         self.scale = None
 
-    def flow_demolition(self, step=1):
+    def flow_demolition(self, demolition_rate, step=1):
         """Demolition of E, F and G buildings based on their share in the mobile stock.
 
         Returns
@@ -3993,8 +3992,11 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
         self.logger.info('Demolition')
+        if isinstance(demolition_rate, Series):
+            demolition_rate = demolition_rate.loc[self.year]
+        demolition_total = (demolition_rate * self.stock_mobile).sum() * step
+
         stock_demolition = self.stock_mobile[self.certificate.isin(self._target_demolition)]
-        demolition_total = self._demolition_total * step
 
         if stock_demolition.sum() < demolition_total:
             self._target_demolition = ['G', 'F', 'E', 'D']

@@ -72,11 +72,13 @@
       "income": "project/input/macro/income.csv",
       "energy_prices": "project/input/macro/energy_prices_ht.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
+      "flow_construction": "project/input/macro/flow_construction_sfec.csv",
       "pop_housing": null,
       "share_multi_family": null,
+      "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
-      "demolition_rate": 0.0035,
+      "demolition_rate": "project/input/macro/demolition_rate_sfec.csv",
       "stock_ini": 29037000,
       "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv"
@@ -191,7 +193,6 @@
       "income": false,
       "prices_constant": false,
       "taxes_constant": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }

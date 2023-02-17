@@ -476,19 +476,31 @@ def read_inputs(config, other_inputs=generic_input):
                                           lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'pop_housing': pop_housing.loc[:config['end']]})
 
-    if config['macro']['share_multi_family'] is None:
-        inputs.update({'factor_multi_family': other_inputs['factor_multi_family']})
+    if config['macro']['share_single_family_construction'] is not None:
+        temp = get_pandas(config['macro']['share_single_family_construction'],
+                          lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+        inputs.update({'share_single_family_construction': temp})
+
     else:
-        share_multi_family = get_pandas(config['macro']['share_multi_family'],
-                                                 lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-        inputs.update({'share_multi_family': share_multi_family})
+        if config['macro']['share_multi_family'] is None:
+            inputs.update({'factor_multi_family': other_inputs['factor_multi_family']})
+        else:
+            _share_multi_family = get_pandas(config['macro']['share_multi_family'],
+                                                     lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            inputs.update({'share_multi_family': _share_multi_family})
 
     inputs.update({'available_income': config['macro']['available_income']})
     inputs.update({'income_rate': config['macro']['income_rate']})
     income = get_pandas(config['macro']['income'], lambda x: pd.read_csv(x, index_col=[0])).squeeze().rename_axis('Income').rename(None)
     inputs.update({'income': income})
 
-    inputs.update({'demolition_rate': config['macro']['demolition_rate']})
+    if isinstance(config['macro']['demolition_rate'], (float, int)):
+        demolition_rate = config['macro']['demolition_rate']
+    else:
+        demolition_rate = get_pandas(config['macro']['demolition_rate'],
+                                     lambda x: pd.read_csv(x, index_col=[0], header=None)).squeeze().rename(None)
+
+    inputs.update({'demolition_rate': demolition_rate})
     rotation_rate = get_pandas(config['macro']['rotation_rate'], lambda x: pd.read_csv(x, index_col=[0])).squeeze().rename(None)
     inputs.update({'rotation_rate': rotation_rate})
 
@@ -591,7 +603,10 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
     parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
 
-    parsed_inputs['flow_demolition'] = pd.Series(inputs['demolition_rate'] * stock.sum(), index=idx[1:])
+    if isinstance(inputs['demolition_rate'], (float, int)):
+        inputs['demolition_rate'] = pd.Series(inputs['demolition_rate'], index=idx[1:])
+
+    parsed_inputs['flow_demolition'] = inputs['demolition_rate'] * stock.sum()
 
     parsed_inputs['population_total'] = inputs['population']
     parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
@@ -607,30 +622,34 @@ def parse_inputs(inputs, taxes, config, stock):
                                                                                config['start'],
                                                                                inputs['factor_pop_housing'])
     parsed_inputs['flow_need'] = parsed_inputs['stock_need'] - parsed_inputs['stock_need'].shift(1)
-    parsed_inputs['flow_construction'] = parsed_inputs['flow_need'] + parsed_inputs['flow_demolition']
-
-    if 'share_multi_family' not in inputs.keys():
-        parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
-                                                                 inputs['factor_multi_family'])
+    if 'flow_construction' not in parsed_inputs.keys():
+        parsed_inputs['flow_construction'] = parsed_inputs['flow_need'] + parsed_inputs['flow_demolition']
 
     parsed_inputs['available_income'] = pd.Series(
         [inputs['available_income'] * (1 + config['macro']['income_rate']) ** (i - idx[0]) for i in idx], index=idx)
 
-
-    if 'surface_built' in inputs.keys():
-        surface_built = inputs['surface_built']
-    else:
+    if False:
         available_income_pop = (parsed_inputs['available_income'] / parsed_inputs['population_total']).dropna()
 
         surface_built = evolution_surface_built(inputs['surface'].xs(False, level='Existing'), inputs['surface_max'],
                                                 inputs['surface_elasticity'], available_income_pop)
 
-    surface_existing = pd.concat([parsed_inputs['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
-                                 keys=surface_built.columns)
-    parsed_inputs['surface'] = pd.concat((surface_existing, surface_built), axis=0, keys=[True, False], names=['Existing'])
+        surface_existing = pd.concat([parsed_inputs['surface'].xs(True, level='Existing')] * surface_built.shape[1], axis=1,
+                                     keys=surface_built.columns)
+        parsed_inputs['surface'] = pd.concat((surface_existing, surface_built), axis=0, keys=[True, False], names=['Existing'])
 
-    type_built = share_type_built(parsed_inputs['stock_need'], parsed_inputs['share_multi_family'],
-                                  parsed_inputs['flow_construction']) * parsed_inputs['flow_construction']
+    parsed_inputs['surface'] = pd.concat([parsed_inputs['surface']] * len(idx), axis=1, keys=idx)
+
+    if 'share_single_family_construction' in inputs.keys():
+        temp = pd.concat((inputs['share_single_family_construction'], (1 - inputs['share_single_family_construction'])),
+                         axis=1, keys=['Single-family', 'Multi-family'], names=['Housing type'])
+        type_built = parsed_inputs['flow_construction'] * temp.T
+    else:
+        if 'share_multi_family' not in inputs.keys():
+            parsed_inputs['share_multi_family'] = share_multi_family(parsed_inputs['stock_need'],
+                                                                     inputs['factor_multi_family'])
+        type_built = share_type_built(parsed_inputs['stock_need'], parsed_inputs['share_multi_family'],
+                                      parsed_inputs['flow_construction']) * parsed_inputs['flow_construction']
 
     share_decision_maker = stock.groupby(
         ['Occupancy status', 'Housing type', 'Income owner', 'Income tenant']).sum().unstack(
@@ -740,7 +759,6 @@ def dump_inputs(parsed_inputs, path):
     summary_input['Buildings built (Thousands)'] = parsed_inputs['flow_construction'] / 10**3
     summary_input['Buildings demolished (Thousands)'] = parsed_inputs['flow_demolition'] / 10**3
     summary_input['Person by housing'] = parsed_inputs['pop_housing']
-    summary_input['Share multi-family (%)'] = parsed_inputs['share_multi_family']
 
     temp = parsed_inputs['surface'].xs(True, level='Existing', drop_level=True)
     temp.index = temp.index.map(lambda x: 'Surface existing {} - {} (m2/dwelling)'.format(x[0], x[1]))

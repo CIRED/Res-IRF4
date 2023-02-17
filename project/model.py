@@ -232,7 +232,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
     buildings = AgentBuildings(stock, parsed_inputs['surface'], parsed_inputs['ratio_surface'], parsed_inputs['efficiency'],
                                parsed_inputs['income'], parsed_inputs['preferences'],
                                parsed_inputs['performance_insulation'], path=path,
-                               year=year, demolition_rate=parsed_inputs['demolition_rate'],
+                               year=year,
                                endogenous=config['renovation']['endogenous'],
                                exogenous=config['renovation']['exogenous'],
                                logger=logger,
@@ -249,12 +249,12 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
     return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['lifetime_heater'], parsed_inputs['ms_heater'], \
            parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
-               'calibration_renovation'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing'), technical_progress, parsed_inputs['consumption_ini']
+               'calibration_renovation'], parsed_inputs['demolition_rate'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing'), technical_progress, parsed_inputs['consumption_ini']
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
-                   prices_before=None, climate=None, district_heating=None, step=1):
+                   prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -291,7 +291,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
         prices_before = prices
 
     buildings.year = year
-    buildings.add_flows([- buildings.flow_demolition(step=step)])
+    if demolition_rate is not None:
+        buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
     buildings.consumption_before_retrofit = buildings.store_consumption(prices)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation,
@@ -352,7 +353,7 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
+        buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 
         output, stock = pd.DataFrame(), pd.DataFrame()
@@ -406,7 +407,8 @@ def res_irf(config, path):
                                              calib_renovation=inputs['calibration_renovation'],
                                              ms_heater=ms_heater, financing_cost=financing_cost,
                                              climate=config.get('climate'),
-                                             district_heating=inputs.get('district_heating'),step=step)
+                                             district_heating=inputs.get('district_heating'),
+                                             step=step, demolition_rate=demolition_rate)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
