@@ -1,9 +1,6 @@
-{ "sensitivity": {
-    "activated": true,
-    "step": [2]
-  },
+{
   "Reference": {
-    "end": 2031,
+    "end": 2051,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -37,7 +34,6 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-    "district_heating": "project/input/revealed_data/district_heating_transition2050.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "technical": {
@@ -80,7 +76,7 @@
       "share_multi_family": null,
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
       "surface_built": null,
-      "income_rate": 0.0,
+      "income_rate": 0.012,
       "demolition_rate": "project/input/macro/demolition_rate_sfec.csv",
       "stock_ini": 29037000,
       "available_income": 1421000000000,
@@ -89,16 +85,6 @@
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2021,
-        "heater": "project/input/policies/mpr_heater_sfec.csv",
-        "growth_heater": "project/input/policies/growth_mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation_sfec.csv",
-        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
-        "global_renovation": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
       "mpr_serenite": {
         "start": 2019,
         "end": 2020,
@@ -138,54 +124,34 @@
         "end": 2020,
         "value": 0.055
       },
-      "restriction_oil": {
-        "start": 2022,
-        "end": 2022,
-        "value": "Oil fuel",
-        "policy": "restriction_energy"
-      },
-      "premature_replacement_oil": {
-        "start": 2023,
-        "end": 2023,
-        "value": 0.18,
-        "target": "Oil fuel",
-        "policy": "premature_heater"
-      },
-      "restriction_collective_gas": {
-        "start": 2027,
-        "end": 2027,
-        "value": "Natural gas-Collective boiler",
-        "policy": "restriction_heater"
-      },
-      "restriction_indiv_gas": {
-        "start": 2025,
-        "end": 2025,
-        "value": ["Natural gas-Standard boiler", "Natural gas-Performance boiler"],
-        "policy": "restriction_heater",
-        "target": "Single-family"
-      },
-      "obligation": {
+      "landlord": {
         "start": 2020,
-        "end": 2020,
-        "value": "project/input/policies/agenda_obligation_law.csv",
-        "frequency": {"value": [0.54, 0.33, 0.33],
-                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
-                    "name": "Occupancy status"},
-        "intensive": "market_share",
-        "minimum_performance": "C",
-        "policy": "obligation"
+        "end": 2020
+      },
+      "multi_family": {
+        "start": 2020,
+        "end": 2020
       }
     },
     "simple": {
-      "quintiles": false,
+      "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "policies": false,
       "income": false,
-      "prices_constant": true,
-      "taxes_constant": true,
-      "heating_system": false
+      "prices_constant": false,
+      "taxes_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler":  "Wood fuel-Performance boiler",
+        "Electricity-Heat pump air":  "Electricity-Heat pump water",
+        "Heating-District heating": null,
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
+      },
+      "insulation": true
     },
     "calibration": "project/input/calibration/calibration.pkl"
   }
