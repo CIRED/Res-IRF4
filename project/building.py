@@ -1238,7 +1238,12 @@ class AgentBuildings(ThermalBuildings):
             if policy.name not in self.policies and policy.policy in ['subsidy_target', 'subsidy_non_cumulative', 'subsidy_ad_valorem', 'subsidies_cap']:
                 self.policies += [policy.name]
             if policy.policy == 'subsidy_target':
-                sub = policy.value.reindex(cost_heater.index, axis=1).fillna(0)
+                if isinstance(policy.value, dict):
+                    value = policy.value[self.year]
+                else:
+                    value = policy.value
+
+                sub = value.reindex(cost_heater.index, axis=1).fillna(0)
                 sub = reindex_mi(sub, index)
             elif policy.policy == 'subsidy_ad_valorem':
 
@@ -1868,6 +1873,11 @@ class AgentBuildings(ThermalBuildings):
                 self.policies += [policy.name]
 
             if policy.policy == 'subsidy_target':
+                if isinstance(policy.value, dict):
+                    value = policy.value[self.year]
+                else:
+                    value = policy.value
+
                 temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
                                    index).T * surface).T
                 subsidies_total += temp

@@ -88,8 +88,10 @@
         "start": 2021,
         "end": 2051,
         "heater": "project/input/policies/mpr_heater_sfec.csv",
+        "growth_heater": "project/input/policies/growth_mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation_sfec.csv",
-        "global_renovation": "project/input/policies/mpr_global_renovation_sfec.csv",
+        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
+        "global_renovation": null,
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "mpr_serenite": {

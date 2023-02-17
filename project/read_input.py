@@ -164,13 +164,19 @@ def read_policies(config):
         l = list()
         heater = get_pandas(data['heater'],
                             lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system'))
-        insulation = get_pandas(data['insulation'],
-                                lambda x: pd.read_csv(x, index_col=[0]))
+        if data.get('growth_heater'):
+            growth_heater = get_pandas(data['growth_heater'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            heater = {k: i * heater for k, i in growth_heater.items()}
+
+        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
+        if data.get('growth_insulation'):
+            growth_insulation = get_pandas(data['growth_insulation'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            insulation = {k: i * insulation for k, i in growth_insulation.items()}
 
         if data.get('global_renovation'):
             global_renovation = get_pandas(data['global_renovation'],
                                            lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            l.append(PublicPolicy('mpr', data['start'], data['end'], global_renovation, 'subsidy_ad_valorem',
+            l.append(PublicPolicy('mpr', data['start'], data['end'], global_renovation, 'subsidy_target',
                                   gest='insulation', target='global_renovation'))
 
         if data['bonus']:
