@@ -27,6 +27,13 @@ from time import time
 from importlib import resources
 from pathlib import Path, PosixPath, WindowsPath
 
+DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
+                     'D3': 'C2', 'D4': 'C2',
+                     'D5': 'C3', 'D6': 'C3',
+                     'D7': 'C4', 'D8': 'C4',
+                     'D9': 'C5', 'D10': 'C5'}
+
+
 COLOR = 'dimgrey'
 SMALL_SIZE = 10
 MEDIUM_SIZE = 18
@@ -137,6 +144,69 @@ def select(df, dict_levels):
         return df.loc[idx, :]
     elif isinstance(df, pd.Series):
         return df.loc[idx]
+
+
+def deciles2quintiles_pandas(data, func='mean'):
+
+    level_income = []
+    for key in ['Income owner', 'Income tenant', 'Income']:
+        if key in data.index.names:
+            level_income += [key]
+
+    for level in level_income:
+        names = None
+        if isinstance(data.index, pd.MultiIndex):
+            names = data.index.names
+
+        data = data.rename(index=DECILES2QUINTILES, level=level)
+
+        if func == 'mean':
+            data = data.groupby(data.index).mean()
+        elif func == 'sum':
+            data = data.groupby(data.index).sum()
+
+        if names:
+            data.index = pd.MultiIndex.from_tuples(data.index)
+            data.index.names = names
+
+    return data
+
+
+def deciles2quintiles_list(item):
+    new_item = []
+    for i in item:
+        if i in DECILES2QUINTILES.keys():
+            i = DECILES2QUINTILES[i]
+        new_item.append(i)
+
+    return list(set(new_item))
+
+def deciles2quintiles_dict(inputs):
+
+    for key, item in inputs.items():
+        if isinstance(item, (pd.Series, pd.DataFrame)):
+            inputs[key] = deciles2quintiles_pandas(item)
+        elif isinstance(item, list):
+            inputs[key] = deciles2quintiles_list(item)
+        elif isinstance(item, dict):
+            for k, i in item.items():
+                if isinstance(i, (pd.Series, pd.DataFrame)):
+                    inputs[key][k] = deciles2quintiles_pandas(i)
+                elif isinstance(i, list):
+                    inputs[key][k] = deciles2quintiles_list(i)
+                elif isinstance(i, dict):
+                    for kk, ii in i.items():
+                        if isinstance(ii, (pd.Series, pd.DataFrame)):
+                            inputs[key][k][kk] = deciles2quintiles_pandas(ii)
+                        elif isinstance(ii, list):
+                            inputs[key][k][kk] = deciles2quintiles_list(ii)
+                        elif isinstance(ii, dict):
+                            for kkk, iii in ii.items():
+                                if isinstance(iii, (pd.Series, pd.DataFrame)):
+                                    inputs[key][k][kk][kkk] = deciles2quintiles_pandas(iii)
+
+    return inputs
+
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))

@@ -4,13 +4,13 @@ import logging
 from time import time
 import json
 from importlib import resources
+from pickle import load, dump
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi
-from pickle import load
-from pickle import dump
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict
+from project.input.resources import resources_data
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -121,62 +121,19 @@ def deciles2quintiles(stock, policies_heater, policies_insulation, inputs):
 
     """
 
-    replace = {'D1': 'C1', 'D2': 'C1',
-               'D3': 'C2', 'D4': 'C2',
-               'D5': 'C3', 'D6': 'C3',
-               'D7': 'C4', 'D8': 'C4',
-               'D9': 'C5', 'D10': 'C5'}
+    inputs = deciles2quintiles_dict(inputs)
 
-    def apply_to_pandas(data, func='mean'):
-        level_income = []
-        for key in ['Income owner', 'Income tenant', 'Income']:
-            if key in data.index.names:
-                level_income += [key]
-
-        for level in level_income:
-            names = None
-            if isinstance(data.index, pd.MultiIndex):
-                names = data.index.names
-
-            data = data.rename(index=replace, level=level)
-
-            if func == 'mean':
-                data = data.groupby(data.index).mean()
-            elif func == 'sum':
-                data = data.groupby(data.index).sum()
-
-            if names:
-                data.index = pd.MultiIndex.from_tuples(data.index)
-                data.index.names = names
-
-        return data
-
-    for key, item in inputs.items():
-        if isinstance(item, (pd.Series, pd.DataFrame)):
-            inputs[key] = apply_to_pandas(item)
-        elif isinstance(item, dict):
-            for k, i in item.items():
-                if isinstance(i, (pd.Series, pd.DataFrame)):
-                    inputs[key][k] = apply_to_pandas(i)
-                elif isinstance(i, dict):
-                    for kk, ii in i.items():
-                        if isinstance(ii, (pd.Series, pd.DataFrame)):
-                            inputs[key][k][kk] = apply_to_pandas(ii)
-                        elif isinstance(ii, dict):
-                            for kkk, iii in ii.items():
-                                if isinstance(iii, (pd.Series, pd.DataFrame)):
-                                    inputs[key][k][kk][kkk] = apply_to_pandas(iii)
-
-    stock = apply_to_pandas(stock, func='sum')
+    stock = deciles2quintiles_pandas(stock, func='sum')
 
     for policy in policies_insulation + policies_heater:
         attributes = [a for a in dir(policy) if not a.startswith('__') and getattr(policy, a) is not None]
         for att in attributes:
             item = getattr(policy, att)
             if isinstance(item, (pd.Series, pd.DataFrame)):
-                setattr(policy, att, apply_to_pandas(item))
+                setattr(policy, att, deciles2quintiles_pandas(item, func='mean'))
             if isinstance(item, dict):
-                print(item)
+                new_item = {k: deciles2quintiles_pandas(i, func='mean') for k, i in item.items()}
+                setattr(policy, att, new_item)
 
     return stock, policies_heater, policies_insulation, inputs
 
@@ -283,7 +240,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                full_output=config.get('full_output'),
                                financing_cost=config.get('financing_cost'),
                                debug_mode=config.get('debug_mode'),
-                               threshold=config['renovation'].get('threshold'))
+                               threshold=config['renovation'].get('threshold'),
+                               resources_data=resources_data)
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():

@@ -30,8 +30,7 @@ from copy import deepcopy
 from itertools import product
 
 
-from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, select
-from project.input.resources import resources_data
+from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict
 import project.thermal as thermal
 
 
@@ -77,12 +76,14 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 debug_mode=False):
+                 debug_mode=False, resources_data=None):
 
         self._debug_mode = debug_mode
 
         if isinstance(stock, MultiIndex):
             stock = Series(index=stock, dtype=float)
+
+        self._resources_data = resources_data
 
         self._efficiency = efficiency
         self._ratio_surface = ratio_surface
@@ -626,8 +627,8 @@ class ThermalBuildings:
             validation.update(temp)
 
             validation = Series(validation)
-            if resources_data['data_calibration'] is not None:
-                validation = concat((validation, resources_data['data_calibration']), keys=['Calcul', 'Data'], axis=1)
+            if self._resources_data['data_calibration'] is not None:
+                validation = concat((validation, self._resources_data['data_calibration']), keys=['Calcul', 'Data'], axis=1)
                 validation['Error'] = (validation['Calcul'] - validation['Data']) / validation['Data']
 
             if self.path is not None:
@@ -765,18 +766,18 @@ class AgentBuildings(ThermalBuildings):
                  performance_insulation, path=None, year=2018, demolition_rate=0.0,
                  endogenous=True, exogenous=None, insulation_representative='market_share',
                  logger=None, debug_mode=False, calib_scale=True, full_output=None,
-                 quintiles=None, financing_cost=True, threshold=None
+                 quintiles=None, financing_cost=True, threshold=None, resources_data=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
-                         debug_mode=debug_mode)
-
-
+                         debug_mode=debug_mode, resources_data=resources_data)
 
         if logger is None:
             logger = logging.getLogger()
         self.logger = logger
 
         self.quintiles = quintiles
+        if self.quintiles:
+            self._resources_data = deciles2quintiles_dict(self._resources_data)
 
         if full_output is None:
             full_output = True
@@ -867,8 +868,8 @@ class AgentBuildings(ThermalBuildings):
             'subsidies': DataFrame(0, index=index, columns=self._choice_insulation),
             'annuities': DataFrame(0, index=index, columns=self._choice_insulation),
             'consumption_saved': DataFrame(0, index=index, columns=self._choice_insulation),
-            'debt': Series(0, index=resources_data['index']['Income owner']),
-            'saving': Series(0, index=resources_data['index']['Income owner']),
+            'debt': Series(0, index=self._resources_data['index']['Income owner']),
+            'saving': Series(0, index=self._resources_data['index']['Income owner']),
             'nb_measures': Series(0, index=[1, 2, 3, 4, 5]),
             'subsidies_count': {},
             'subsidies_average': {},
@@ -953,12 +954,11 @@ class AgentBuildings(ThermalBuildings):
 
         return df
 
-    @staticmethod
-    def add_attribute(df, levels):
+    def add_attribute(self, df, levels):
         if isinstance(levels, str):
             levels = [levels]
         for lvl in levels:
-            df = concat([df] * len(resources_data['index'][lvl]), keys=resources_data['index'][lvl], names=[lvl],
+            df = concat([df] * len(self._resources_data['index'][lvl]), keys=self._resources_data['index'][lvl], names=[lvl],
                         axis=1).stack(lvl).squeeze()
         return df
 
@@ -1877,9 +1877,7 @@ class AgentBuildings(ThermalBuildings):
                     value = policy.value[self.year]
                 else:
                     value = policy.value
-
-                temp = (reindex_mi(self.prepare_subsidy_insulation(policy.value),
-                                   index).T * surface).T
+                temp = (reindex_mi(self.prepare_subsidy_insulation(value), index).T * surface).T
                 subsidies_total += temp
                 if policy.name in subsidies_details.keys():
                     subsidies_details[policy.name] = subsidies_details[policy.name] + temp
@@ -3157,7 +3155,7 @@ class AgentBuildings(ThermalBuildings):
             if not isinstance(banned_performance, str):
                 return None
 
-            performance_target = [i for i in resources_data['index']['Performance'] if i >= banned_performance]
+            performance_target = [i for i in self._resources_data['index']['Performance'] if i >= banned_performance]
 
             stock_certificate = self.add_certificate(stock)
             idx = stock.index[stock_certificate.index.get_level_values('Performance').isin(performance_target)]
@@ -3413,8 +3411,8 @@ class AgentBuildings(ThermalBuildings):
                 output['Surface (Million m2)'] * 10 ** 6)
 
         _, heating_intensity, budget_share = self.consumption_actual(prices, full_output=True)
-        energy_poverty = (self.stock[self.stock.index.get_level_values(
-                'Income owner') == ('D1' or 'D2' or 'D3')])[budget_share >= 0.08].sum()
+        condition_poverty = self.stock.index.get_level_values('Income tenant').isin(['D1', 'D2', 'D3', 'C1', 'C2']) & (budget_share >= 0.08)
+        energy_poverty = self.stock[condition_poverty].sum()
 
         output['Heating intensity (%)'] = (self.stock * heating_intensity).sum() / self.stock.sum()
         output['Energy poverty (Million)'] = energy_poverty / 10 ** 6
@@ -3575,7 +3573,7 @@ class AgentBuildings(ThermalBuildings):
                     'Renovation (Thousand households)']
 
             """temp = self._renovation_store['certificate_jump_all'].sum(axis=1)
-            t = temp.groupby('Income owner').sum().loc[resources_data['index']['Income owner']]
+            t = temp.groupby('Income owner').sum().loc[self._resources_data['index']['Income owner']]
             t.index = t.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
             output.update(t.T / 10 ** 3 / step)"""
 
@@ -3662,10 +3660,10 @@ class AgentBuildings(ThermalBuildings):
             subsidies_heater = self._heater_store['subsidies'].sum(axis=1)
             output['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9 / step
 
-            temp = self._heater_store['debt'].loc[resources_data['index']['Income owner']]
+            temp = self._heater_store['debt'].loc[self._resources_data['index']['Income owner']]
             output['Debt heater (Billion euro)'] = temp.sum() / 10 ** 9 / step
 
-            temp = self._heater_store['saving'].loc[resources_data['index']['Income owner']]
+            temp = self._heater_store['saving'].loc[self._resources_data['index']['Income owner']]
             output['Saving heater (Billion euro)'] = temp.sum() / 10 ** 9 / step
 
             index = subsidies_heater.index.union(subsidies_insulation.index)
@@ -3686,7 +3684,7 @@ class AgentBuildings(ThermalBuildings):
 
             # subsidies - description
             temp = subsidies_total.groupby('Income owner').sum() / investment_total.groupby('Income owner').sum()
-            temp = temp.loc[resources_data['index']['Income owner']]
+            temp = temp.loc[self._resources_data['index']['Income owner']]
             temp.index = temp.index.map(lambda x: 'Share subsidies {} (%)'.format(x))
             output.update(temp.T)
 
@@ -3713,7 +3711,7 @@ class AgentBuildings(ThermalBuildings):
             owner_tenant = self.add_level(owner_tenant, self._stock_ref, 'Income tenant')
             owner_private = owner_tenant.xs('Privately rented', level='Occupancy status', drop_level=False)
             temp = temp.groupby('Income tenant').sum() / owner_private.groupby('Income tenant').sum()
-            temp = temp.loc[resources_data['index']['Income tenant']]
+            temp = temp.loc[self._resources_data['index']['Income tenant']]
             temp.index = temp.index.map(lambda x: 'Rent {} (euro/year.household)'.format(x))
             output.update(temp.T)
 
@@ -3734,30 +3732,30 @@ class AgentBuildings(ThermalBuildings):
             # private balance
             temp = [- output['Annuities insulation Owner-occupied - {} (euro/year.household)'.format(i)] + output[
                 'Bill saving Owner-occupied - {} (euro/year.household)'.format(i)] for i in
-                    resources_data['index']['Income owner']]
-            temp = pd.Series(temp, index=resources_data['index']['Income owner'])
+                    self._resources_data['index']['Income owner']]
+            temp = pd.Series(temp, index=self._resources_data['index']['Income owner'])
             temp.index = temp.index.map(lambda x: 'Balance Owner-occupied - {} (euro/year.household)'.format(x))
             output.update(temp.T)
 
             temp = [- output['Rent {} (euro/year.household)'.format(i)] + output[
                 'Bill saving Privately rented - {} (euro/year.household)'.format(i)] for i in
-                    resources_data['index']['Income tenant']]
-            temp = pd.Series(temp, index=resources_data['index']['Income tenant'])
+                    self._resources_data['index']['Income tenant']]
+            temp = pd.Series(temp, index=self._resources_data['index']['Income tenant'])
             temp.index = temp.index.map(lambda x: 'Balance Tenant private - {} (euro/year.household)'.format(x))
             output.update(temp.T)
 
             # private balance standard
             temp = [- output['Annuities insulation Owner-occupied - {} (euro/year.household)'.format(i)] + output[
                 'Bill saving standard Owner-occupied - {} (euro/year.household)'.format(i)] for i in
-                    resources_data['index']['Income owner']]
-            temp = pd.Series(temp, index=resources_data['index']['Income owner'])
+                    self._resources_data['index']['Income owner']]
+            temp = pd.Series(temp, index=self._resources_data['index']['Income owner'])
             temp.index = temp.index.map(lambda x: 'Balance standard Owner-occupied - {} (euro/year.household)'.format(x))
             output.update(temp.T)
 
             temp = [- output['Rent {} (euro/year.household)'.format(i)] + output[
                 'Bill saving standard Privately rented - {} (euro/year.household)'.format(i)] for i in
-                    resources_data['index']['Income tenant']]
-            temp = pd.Series(temp, index=resources_data['index']['Income tenant'])
+                    self._resources_data['index']['Income tenant']]
+            temp = pd.Series(temp, index=self._resources_data['index']['Income tenant'])
             temp.index = temp.index.map(lambda x: 'Balance standard Tenant private - {} (euro/year.household)'.format(x))
             output.update(temp.T)
 
@@ -3769,7 +3767,7 @@ class AgentBuildings(ThermalBuildings):
 
             output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9 / step
             energy_expenditure = energy_expenditure.groupby('Income tenant').sum()
-            temp = energy_expenditure.loc[resources_data['index']['Income tenant']]
+            temp = energy_expenditure.loc[self._resources_data['index']['Income tenant']]
             temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
             output.update(temp.T / 10 ** 9 / step)
 
