@@ -3624,6 +3624,7 @@ class AgentBuildings(ThermalBuildings):
             annuities = calculate_annuities(self._renovation_store['cost'], lifetime=lifetime, discount_rate=discount_rate)
             output['Annuities insulation (Billion euro/year)'] = annuities.sum().sum() / 10 ** 9 / step
             output['Efficiency insulation (euro/kWh standard)'] = output['Annuities insulation (Billion euro/year)'] / output['Consumption standard saving insulation (TWh/year)']
+            output['Efficiency insulation (euro/kWh)'] = output['Annuities insulation (Billion euro/year)'] / output['Consumption saving insulation (TWh/year)']
             output['Efficiency insulation (euro/tCO2 standard)'] = output['Annuities insulation (Billion euro/year)'] * 10**3 / output['Emission standard saving insulation (MtCO2/year)']
 
             index = investment_heater.index.union(investment_insulation.index)

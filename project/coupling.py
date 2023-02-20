@@ -42,7 +42,10 @@ def ini_res_irf(path=None, config=None, climate=2006):
     if path is None:
         path = os.path.join('output', 'ResIRF')
     if not os.path.isdir(path):
-        os.mkdir(path)
+        try:
+            os.mkdir(path)
+        except:
+            pass
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
@@ -327,22 +330,22 @@ def test_design_subsidies():
                                 cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater, p_insulation, financing_cost,
                                 sub_design=sub_design)
 
-        variables = ['Consumption saving insulation (TWh)',
-                     'Investment insulation (euro/year)',
-                     'Investment insulation / saving (euro/kWh)',
+        variables = ['Consumption saving insulation (TWh/year)',
+                     'Annuities insulation (Billion euro/year)',
+                     'Efficiency insulation (euro/kWh)'
                      ]
         result_diff = result.loc[variables, :].diff(axis=1).dropna(axis=1, how='all')
-        result_diff.loc['Investment insulation / saving (euro/kWh)'] = result_diff.loc['Investment insulation (euro/year)'] / \
-                                                                        result_diff.loc['Consumption saving insulation (TWh)']
+        result_diff.loc['Efficiency insulation (euro/kWh)'] = result_diff.loc['Annuities insulation (Billion euro/year)'] / \
+                                                                        result_diff.loc['Consumption saving insulation (TWh/year)']
 
-        concat_result.update({k: result.loc['Investment insulation / saving (euro/kWh)', :]})
-        concat_result_marginal.update({k: result_diff.loc['Investment insulation / saving (euro/kWh)', :]})
+        concat_result.update({k: result.loc['Efficiency insulation (euro/kWh)', :]})
+        concat_result_marginal.update({k: result_diff.loc['Efficiency insulation (euro/kWh)', :]})
 
-    make_plots(concat_result, 'Investment insulation / saving (euro/kWh)',
+    make_plots(concat_result, 'Efficiency insulation (euro/kWh)',
                save=os.path.join(path, 'cost_efficiency_insulation_comparison.png'),
                format_y=lambda y, _: '{:.2f}'.format(y)
                )
-    make_plots(concat_result_marginal, 'Investment insulation / saving (euro/kWh)',
+    make_plots(concat_result_marginal, 'Marginal efficiency insulation (euro/kWh)',
                save=os.path.join(path, 'marginal_cost_efficiency_insulation_comparison.png'),
                format_y=lambda y, _: '{:.2f}'.format(y)
                )
@@ -368,7 +371,6 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2025,
                                        technical_progress=technical_progress)
 
     concat_output = concat((concat_output, output), axis=1)
-
     concat_output.to_csv(os.path.join(buildings.path, 'output.csv'))
 
 
