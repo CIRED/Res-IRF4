@@ -51,11 +51,6 @@ def ini_res_irf(path=None, config=None, climate=2006):
     buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
 
-    """output, stock = pd.DataFrame(), pd.DataFrame()
-    buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
-    buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
-    s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
-    output = pd.concat((output, o), axis=1)"""
 
     # calibration
     if config.get('calibration'):
@@ -356,7 +351,7 @@ def test_design_subsidies():
                )
 
 
-def run_simu(output_consumption=False, rebound=True, start=2020, end=2025,
+def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
              sub_design='global_renovation'):
 
     path = os.path.join('project', 'output', 'ResIRF')
@@ -381,5 +376,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2025,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=False, rebound=False, start=2025, end=2030,
+    run_simu(output_consumption=False, rebound=False, start=2020, end=2020,
              sub_design='efficiency_100')

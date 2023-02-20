@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2020,
+    "end": 2031,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -42,7 +42,7 @@
       "cost_insulation": "project/input/technical/cost_insulation.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
-      "carbon_emission": "project/input/technical/carbon_emission.csv",
+      "carbon_emission": "project/input/technical/carbon_emission_sfec.csv",
       "technical_progress": {
         "insulation": {
           "activated": true,
@@ -92,14 +92,14 @@
         "heater": "project/input/policies/mpr_heater_sfec.csv",
         "growth_heater": "project/input/policies/growth_mpr_heater.csv",
         "insulation": "project/input/policies/mpr_insulation_sfec.csv",
-        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
+        "growth_insulation": null,
         "global_renovation": null,
         "bonus": "project/input/policies/mpr_bonus.csv"
       },
       "mpr_serenite": {
         "start": 2019,
         "end": 2051,
-        "insulation": "project/input/policies/mpr_serenite.csv",
+        "insulation": "project/input/policies/mpr_serenite_sfec.csv",
         "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
         "target": "mpr_serenite"
@@ -161,11 +161,22 @@
         "policy": "restriction_heater",
         "target": "Single-family"
       },
-      "obligation": {
+      "obligation_po": {
         "start": 2020,
         "end": 2051,
-        "value": "project/input/policies/agenda_obligation_law.csv",
-        "frequency": {"value": [0.54, 0.33, 0.33],
+        "value": "project/input/policies/agenda_obligation_po_sfec.csv",
+        "frequency": {"value": [0.07, 0, 0],
+                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
+                    "name": "Occupancy status"},
+        "intensive": "market_share",
+        "minimum_performance": "C",
+        "policy": "obligation"
+      },
+      "obligation_pb": {
+        "start": 2020,
+        "end": 2051,
+        "value": "project/input/policies/agenda_obligation_pb_sfec.csv",
+        "frequency": {"value": [0, 0.33, 0.33],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},
         "intensive": "market_share",
@@ -174,25 +185,14 @@
       }
     },
     "simple": {
-      "quintiles": true,
+      "quintiles": false,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "policies": false,
       "income": false,
       "prices_constant": false,
-      "taxes_constant": false,
-      "heating_system": {
-        "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
-        "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
-        "Wood fuel-Standard boiler":  "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air":  "Electricity-Heat pump water",
-        "Heating-District heating": null,
-        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
-      },
-      "insulation": true
-    },
-    "calibration": "project/input/calibration/calibration_simple.pkl"
+      "taxes_constant": false
+    }
   }
 }

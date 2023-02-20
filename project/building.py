@@ -967,6 +967,7 @@ class AgentBuildings(ThermalBuildings):
     def add_tenant(self, df):
         pass
 
+    @profile
     def frame_to_flow(self, replaced_by):
         """Transform insulation transition Dataframe to flow.
 
@@ -979,7 +980,7 @@ class AgentBuildings(ThermalBuildings):
         replaced_by: Series
             Flow Series.
         """
-
+        print(replaced_by.memory_usage().sum() / 10**6)
         replaced_by_sum = replaced_by.sum().sum()
 
         if 'Income tenant' not in replaced_by.index.names:
@@ -1001,7 +1002,12 @@ class AgentBuildings(ThermalBuildings):
         replaced_by.columns.set_names(
             {'Wall': 'Wall after', 'Roof': 'Roof after', 'Floor': 'Floor after', 'Windows': 'Windows after'},
             inplace=True)
+        print(replaced_by.memory_usage().sum() / 10**6)
+
         replaced_by = replaced_by.stack(replaced_by.columns.names).rename('Data')
+        replaced_by.memory_usage() / 10 ** 6
+        replaced_by.memory_usage() / 10 ** 6
+        print(replaced_by.memory_usage() / 10**6)
 
         replaced_by = replaced_by[replaced_by > 0]
 
@@ -1017,6 +1023,7 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by = replaced_by.set_index(self.stock.index.names).loc[:, 'Data']
         replaced_by = replaced_by.groupby(replaced_by.index.names).sum()
+        print(replaced_by.memory_usage() / 10**6)
 
         assert replaced_by.sum().round(0) == replaced_by_sum.round(0), 'Sum problem'
 
@@ -3001,6 +3008,7 @@ class AgentBuildings(ThermalBuildings):
         self.rebound = c_rebound_energy - c_no_rebound_energy
         self.cost_rebound = (prices * self.rebound).sum()
 
+    @profile
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
@@ -3119,8 +3127,10 @@ class AgentBuildings(ThermalBuildings):
         assert round(to_replace.sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
         self.logger.debug('Start frame to flow')
+        print(replaced_by.memory_usage().sum() / 10**6)
         replaced_by = self.frame_to_flow(replaced_by)
         self.logger.debug('End frame to flow')
+        print(replaced_by.memory_usage() / 10**6)
 
         self.logger.debug('Concatenate all flows')
         to_replace = to_replace.reorder_levels(replaced_by.index.names)
