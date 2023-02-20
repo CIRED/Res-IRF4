@@ -3052,6 +3052,7 @@ class AgentBuildings(ThermalBuildings):
                                                                   calib_intensive=calib_intensive,
                                                                   policies_insulation=policies_insulation,
                                                                   financing_cost=financing_cost)
+
         self.logger.info('Formatting and storing replacement')
         # step
         s = sum([(1 - retrofit_rate)**k for k in range(step)])

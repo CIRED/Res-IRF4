@@ -51,26 +51,31 @@ def ini_res_irf(path=None, config=None, climate=2006):
     buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
 
-    output, stock = pd.DataFrame(), pd.DataFrame()
+    """output, stock = pd.DataFrame(), pd.DataFrame()
     buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
     buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
     s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
-    output = pd.concat((output, o), axis=1)
+    output = pd.concat((output, o), axis=1)"""
 
     # calibration
     if config.get('calibration'):
         with open(config['calibration'], "rb") as file:
             calibration = load(file)
-            buildings.calibration_exogenous(**calibration)
+    else:
+        calibration = calibration_res_irf(path, config=config)
 
-    # run second year
+    buildings.calibration_exogenous(**calibration)
+
+    output = pd.DataFrame()
+    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
+    output = pd.concat((output, o), axis=1)
     year = 2019
     prices = energy_prices.loc[year, :]
     p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
     p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
     f_built = flow_built.loc[:, year]
 
-    buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
+    buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
                                      cost_insulation, p_heater,
                                      p_insulation, f_built, year, post_inputs,
                                      ms_heater=ms_heater, financing_cost=financing_cost,
@@ -375,6 +380,6 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2025,
 
 
 if __name__ == '__main__':
-    test_design_subsidies()
-    """run_simu(output_consumption=False, rebound=False, start=2025, end=2030,
-             sub_design='efficiency_100')"""
+    # test_design_subsidies()
+    run_simu(output_consumption=False, rebound=False, start=2025, end=2030,
+             sub_design='efficiency_100')
