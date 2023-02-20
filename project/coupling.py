@@ -48,15 +48,17 @@ def ini_res_irf(path=None, config=None, climate=2006):
     buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
 
+    output, stock = pd.DataFrame(), pd.DataFrame()
+    buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
+    buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
+    s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
+    output = pd.concat((output, o), axis=1)
+
     # calibration
     if config.get('calibration'):
         with open(config['calibration'], "rb") as file:
             calibration = load(file)
             buildings.calibration_exogenous(**calibration)
-
-    # calibration_consumption ?
-
-    output = pd.DataFrame()
 
     # run second year
     year = 2019
@@ -269,9 +271,9 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 
 
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                   flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=None):
+                   lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=None):
 
-    sub_insulation = [i / 10 for i in range(0, 11)]
+    sub_insulation = [i / 10 for i in range(0, 11, 5)]
     _len = len(sub_insulation)
     sub_heater = [sub_heater] * _len
     start = [start] * _len
@@ -280,6 +282,7 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     taxes = [taxes] * _len
     cost_heater = [cost_heater] * _len
     cost_insulation = [cost_insulation] * _len
+    lifetime_heater = [lifetime_heater] * _len
     flow_built = [flow_built] * _len
     post_inputs = [post_inputs] * _len
     policies_heater = [policies_heater] * _len
@@ -289,7 +292,7 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     financing_cost = [financing_cost] * _len
 
     list_argument = list(zip(deepcopy(buildings), deepcopy(sub_heater), deepcopy(sub_insulation), start, end, energy_prices, taxes,
-                             cost_heater, cost_insulation, flow_built, post_inputs, policies_heater,
+                             cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, policies_heater,
                              policies_insulation, sub_design, financing_cost))
 
     with Pool() as pool:
@@ -310,31 +313,27 @@ def test_design_subsidies():
                        'Uniform': None
                        }
 
-    config = CONFIG_TEST
-
     path = os.path.join('project', 'output', 'ResIRF')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost = ini_res_irf(
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
-        config=config)
+        config=CONFIG_TEST)
 
     concat_result, concat_result_marginal = dict(), dict()
-
     for k, sub_design in sub_design_list.items():
         print(sub_design)
 
         sub_heater = 0
         result = run_multi_simu(buildings, sub_heater, 2020, 2021, energy_prices, taxes, cost_heater,
-                                cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=sub_design)
+                                cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater, p_insulation, financing_cost,
+                                sub_design=sub_design)
 
         variables = ['Consumption saving insulation (TWh)',
                      'Investment insulation (euro/year)',
                      'Investment insulation / saving (euro/kWh)',
                      ]
         result_diff = result.loc[variables, :].diff(axis=1).dropna(axis=1, how='all')
-        result_diff.loc['Investment insulation / saving (euro/kWh)'] = result_diff.loc[
-                                                                            'Investment insulation (euro/year)'] / \
-                                                                        result_diff.loc[
-                                                                            'Consumption saving insulation (TWh)']
+        result_diff.loc['Investment insulation / saving (euro/kWh)'] = result_diff.loc['Investment insulation (euro/year)'] / \
+                                                                        result_diff.loc['Consumption saving insulation (TWh)']
 
         concat_result.update({k: result.loc['Investment insulation / saving (euro/kWh)', :]})
         concat_result_marginal.update({k: result_diff.loc['Investment insulation / saving (euro/kWh)', :]})
@@ -374,6 +373,6 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2025,
 
 
 if __name__ == '__main__':
-    # test_design_subsidies(import_calibration=None)
-    run_simu(output_consumption=False, rebound=False, start=2025, end=2030,
-             sub_design='efficiency_100')
+    test_design_subsidies()
+    """run_simu(output_consumption=False, rebound=False, start=2025, end=2030,
+             sub_design='efficiency_100')"""
