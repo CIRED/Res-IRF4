@@ -32,7 +32,7 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict
 import project.thermal as thermal
-
+from memory_profiler import profile
 
 ACCURACY = 10**-5
 EPC2INT = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
@@ -849,8 +849,6 @@ class AgentBuildings(ThermalBuildings):
         self._list_condition_subsidies = []
         self._condition_store = None
 
-        self._renovation_store['market_share'], self._renovation_store['renovation_rate'] = None, None
-
         self._replaced_by = None
         self._only_heater = None
 
@@ -1586,9 +1584,6 @@ class AgentBuildings(ThermalBuildings):
         if self.full_output:
             self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, vta_heater,
                                           cost_financing, amount_debt, amount_saving, discount)
-        else:
-            self._heater_store['cost_households'] = cost_heater
-
         return stock
 
     def prepare_cost_insulation(self, cost_insulation):
@@ -1898,7 +1893,6 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_details[policy.name] = temp.copy()
 
             elif policy.policy == 'subsidy_ad_valorem':
-
                 cost = policy.cost_targeted(reindex_mi(cost_insulation, index), target_subsidies=condition.get(policy.target))
 
                 if isinstance(policy.value, (Series, float, int)):
@@ -2803,9 +2797,6 @@ class AgentBuildings(ThermalBuildings):
                                                   vta_insulation, subsidies_details, subsidies_total, consumption_saved,
                                                   consumption_saved_actual, amount_debt, amount_saving, discount)
 
-            else:
-                self._renovation_store['subsidies_details_households'] = subsidies_details
-
         if self._endogenous:
 
             if calib_renovation is not None:
@@ -3230,10 +3221,7 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        replaced_by: DataFrame
-            Retrofit flow for each dwelling (index) and each insulation gesture (columns).
-            Dwelling must be defined with 'Heating system final' and 'Heater replacement'.
-        only_heater
+        prices: Series
         """
 
         replaced_by = self._replaced_by
@@ -3355,8 +3343,7 @@ class AgentBuildings(ThermalBuildings):
         """
 
         def make_cost_curve(_consumption_saved, _cost_insulation, _stock, lifetime=lifetime, discount_rate=discount_rate):
-            cost_annualized = calculate_annuities(_cost_insulation, lifetime=lifetime,
-                                                  discount_rate=discount_rate)
+            cost_annualized = calculate_annuities(_cost_insulation, lifetime=lifetime, discount_rate=discount_rate)
 
             insulation = pd.MultiIndex.from_frame(pd.DataFrame(INSULATION))
 
@@ -3577,11 +3564,6 @@ class AgentBuildings(ThermalBuildings):
 
             for condition in [c for c in self._condition_store.keys() if c not in self._list_condition_subsidies]:
                 output['{} (Thousand households)'.format(condition.capitalize().replace('_', ' '))] = self._renovation_store[condition] / 10 ** 3 / step
-
-            """output['Global renovation high income (Thousand households)'] = self._renovation_store['global_renovation_high_income'] / 10 ** 3 / step
-            output['Global renovation low income (Thousand households)'] = self._renovation_store['global_renovation_low_income'] / 10 ** 3 / step
-            output['Bonus best renovation (Thousand households)'] = self._renovation_store['bonus_best'] / 10 ** 3 / step
-            output['Bonus worst renovation (Thousand households)'] = self._renovation_store['bonus_worst'] / 10 ** 3 / step"""
 
             # switch heater
             temp = self._heater_store['replacement'].sum()

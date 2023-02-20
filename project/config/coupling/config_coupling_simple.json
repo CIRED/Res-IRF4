@@ -27,8 +27,7 @@
       "exogenous": {
         "number": 700000,
         "target": "worst"
-      },
-      "threshold": true
+      }
     },
     "ms_insulation": {
         "endogenous": true,
@@ -135,15 +134,24 @@
       }
     },
     "simple": {
-      "quintiles": false,
+      "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "policies": false,
       "income": false,
       "prices_constant": false,
-      "taxes_constant": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+      "taxes_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler":  "Wood fuel-Performance boiler",
+        "Electricity-Heat pump air":  "Electricity-Heat pump water",
+        "Heating-District heating": null,
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
+      },
+      "insulation": true
+    }
   }
 }

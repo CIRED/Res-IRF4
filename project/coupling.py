@@ -17,18 +17,17 @@ from copy import deepcopy
 
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
+CONFIG_TEST = 'project/config/coupling/config_coupling_test.json'
+CONFIG_THRESHOLD_TEST = 'project/config/coupling/config_coupling_simple_threshold.json'
 
-def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, import_calibration=None, cost_factor=1,
-                climate=2006):
+
+def ini_res_irf(path=None, config=None, climate=2006):
     """Initialize and calibrate Res-IRF.
 
     Parameters
     ----------
     path
-    logger
-    config
-    export_calibration
-    import_calibration
+    config: str
 
     Returns
     -------
@@ -45,27 +44,17 @@ def ini_res_irf(path=None, logger=None, config=None, export_calibration=None, im
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    if import_calibration is not None and os.path.isfile(import_calibration):
-        with open(import_calibration, "rb") as file:
-            calibration = load(file)
-    else:
-        calibration = calibration_res_irf(os.path.join(path, 'calibration'), config=config, cost_factor=cost_factor)
-
-    if export_calibration is not None:
-        export_calibration = Path(export_calibration)
-        parent = export_calibration.parent.absolute()
-        if not os.path.isdir(parent):
-            print('Creation of calibration folder here: {}'.format(parent))
-            os.mkdir(parent)
-        with open(export_calibration, "wb") as file:
-            dump(calibration, file)
-
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
 
     # calibration
-    buildings.calibration_exogenous(**calibration)
+    if config.get('calibration'):
+        with open(config['calibration'], "rb") as file:
+            calibration = load(file)
+            buildings.calibration_exogenous(**calibration)
+
+    # calibration_consumption ?
 
     output = pd.DataFrame()
 
@@ -212,7 +201,7 @@ def create_subsidies(sub_insulation, sub_design, start, end):
     if sub_design == 'efficiency_100':
         target = 'efficiency_100'
 
-    policy = PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_volarem',
+    policy = PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_valorem',
                           gest='insulation', target=target)
 
     return policy
@@ -311,7 +300,7 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     return result
 
 
-def test_design_subsidies(import_calibration=None):
+def test_design_subsidies():
     sub_design_list = {'Efficiency measure': 'best_efficiency',
                        'Efficiency measure FG': 'best_efficiency_fg',
                        'Global renovation': 'global_renovation',
@@ -321,17 +310,12 @@ def test_design_subsidies(import_calibration=None):
                        'Uniform': None
                        }
 
-    config = 'project/input/config/test/config_celia.json'
+    config = CONFIG_TEST
 
-    if import_calibration is None:
-        import_calibration = 'project/output/calibration/calibration.pkl'
     path = os.path.join('project', 'output', 'ResIRF')
     buildings, energy_prices, taxes, cost_heater, cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
-        logger=None,
-        config=config,
-        import_calibration=import_calibration,
-        export_calibration=None)
+        config=config)
 
     concat_result, concat_result_marginal = dict(), dict()
 
@@ -341,10 +325,6 @@ def test_design_subsidies(import_calibration=None):
         sub_heater = 0
         result = run_multi_simu(buildings, sub_heater, 2020, 2021, energy_prices, taxes, cost_heater,
                                 cost_insulation, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=sub_design)
-        name = 'cost_efficiency_insulation_{}.png'.format(sub_design)
-        """make_plot(result.loc['Investment insulation / saving (euro/kWh)', :],
-                  'Investment insulation / saving (euro/kWh)',
-                  integer=False, save=os.path.join(path, name))"""
 
         variables = ['Consumption saving insulation (TWh)',
                      'Investment insulation (euro/year)',
@@ -355,10 +335,6 @@ def test_design_subsidies(import_calibration=None):
                                                                             'Investment insulation (euro/year)'] / \
                                                                         result_diff.loc[
                                                                             'Consumption saving insulation (TWh)']
-        name = 'marginal_cost_efficiency_insulation_{}.png'.format(sub_design)
-        """make_plot(result_diff.loc['Investment insulation / saving (euro/kWh)', :],
-                  'Marginal investment insulation / saving (euro/kWh)',
-                  integer=False, save=os.path.join(path, name))"""
 
         concat_result.update({k: result.loc['Investment insulation / saving (euro/kWh)', :]})
         concat_result_marginal.update({k: result_diff.loc['Investment insulation / saving (euro/kWh)', :]})
@@ -373,25 +349,13 @@ def test_design_subsidies(import_calibration=None):
                )
 
 
-def run_simu(calibration_threshold=False, output_consumption=False, rebound=True, start=2020, end=2025,
+def run_simu(output_consumption=False, rebound=True, start=2020, end=2025,
              sub_design='global_renovation'):
-    # first time
-    name = 'calibration'
 
-    config = 'project/config/coupling_energy/config_coupling.json'
-    if calibration_threshold is True:
-        name = '{}_threshold'.format(name)
-        config = 'project/input/config/test/config_threshold.json'
-
-    export_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
-    import_calibration = os.path.join('project', 'output', 'calibration', '{}.pkl'.format(name))
     path = os.path.join('project', 'output', 'ResIRF')
     buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
-        logger=None,
-        config=config,
-        import_calibration=import_calibration,
-        export_calibration=None)
+        config=CONFIG_TEST)
 
     sub_heater = 0.5
     sub_insulation = 1
@@ -411,5 +375,5 @@ def run_simu(calibration_threshold=False, output_consumption=False, rebound=True
 
 if __name__ == '__main__':
     # test_design_subsidies(import_calibration=None)
-    run_simu(calibration_threshold=False, output_consumption=False, rebound=False, start=2025, end=2030,
+    run_simu(output_consumption=False, rebound=False, start=2025, end=2030,
              sub_design='efficiency_100')

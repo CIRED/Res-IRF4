@@ -153,6 +153,6 @@
       },
       "insulation": true
     },
-    "calibration": "project/input/calibration/calibration.pkl"
+    "calibration": "project/input/calibration/calibration_simple.pkl"
   }
 }

@@ -11,6 +11,7 @@ from project.read_input import read_stock, read_policies, read_inputs, parse_inp
 from project.write_output import plot_scenario, compare_results
 from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict
 from project.input.resources import resources_data
+from memory_profiler import profile
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -108,7 +109,7 @@ def config2inputs(config=None, building_stock=None, end=None):
         inputs['ms_heater'].drop([i for i in replace.keys() if i in inputs['ms_heater'].columns], axis=1, inplace=True)
 
     if config['simple'].get('insulation'):
-        print('break')
+        pass
 
     if config['simple']['surface']:
         surface = (reindex_mi(inputs['surface'], stock.index) * stock).sum() / stock.sum()
@@ -405,7 +406,6 @@ def res_irf(config, path):
                 yrs = [year]
             else:
                 yrs = range(years[k - 1] + 1, year + 1)
-
             step = len(yrs)
 
             prices = energy_prices.loc[year, :]
@@ -423,8 +423,7 @@ def res_irf(config, path):
                     cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
-                                             cost_insulation, p_heater,
-                                             p_insulation, f_built, year, post_inputs,
+                                             cost_insulation, p_heater, p_insulation, f_built, year, post_inputs,
                                              calib_intensive=inputs['calibration_intensive'],
                                              calib_renovation=inputs['calibration_renovation'],
                                              ms_heater=ms_heater, financing_cost=financing_cost,

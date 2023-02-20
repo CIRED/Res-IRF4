@@ -27,7 +27,8 @@
       "exogenous": {
         "number": 700000,
         "target": "worst"
-      }
+      },
+      "threshold": true
     },
     "ms_insulation": {
         "endogenous": true,
@@ -142,7 +143,6 @@
       "income": false,
       "prices_constant": false,
       "taxes_constant": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }
