@@ -5,12 +5,12 @@ from pandas import read_csv, concat, Series, Index, DataFrame
 # imports from ResIRF
 from project.model import config2inputs, initialize, stock_turnover, calibration_res_irf
 from project.read_input import PublicPolicy
-from project.utils import make_plot, make_plots
+from project.utils import make_plot, make_plots, get_size, size_locals
 from multiprocessing import Pool
 import os
 from pickle import dump, load
 import json
-
+import psutil
 from pathlib import Path
 
 from copy import deepcopy
@@ -217,6 +217,9 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                  climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
                  ):
+    print('Memory: {}'.format(psutil.Process().memory_info().rss / (1024 * 1024)))
+    print('AgentBuilding: {:.0f} MiB'.format(get_size(buildings) / 10 ** 6))
+    print(size_locals(locals(), n=10))
 
     # initialize policies
     if sub_heater is not None:
@@ -249,6 +252,11 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                          p_insulation, f_built, year, post_inputs,
                                          financing_cost=financing_cost,
                                          climate=climate, demolition_rate=demolition_rate)
+        print('Memory: {:.0f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)))
+        print(size_locals(locals(), n=10))
+
+        print('AgentBuilding: {:.0f} MiB'.format(get_size(buildings) / 10**6))
+        print(size_locals(buildings.__dict__, n=30))
 
         if full_output is False:
             output.update({year: select_output(o)})
@@ -376,5 +384,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=False, rebound=False, start=2020, end=2020,
+    run_simu(output_consumption=False, rebound=False, start=2020, end=2021,
              sub_design='efficiency_100')

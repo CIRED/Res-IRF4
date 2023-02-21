@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2020,
+    "end": 2021,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -99,10 +99,20 @@
       "mpr_serenite": {
         "start": 2019,
         "end": 2051,
-        "insulation": "project/input/policies/mpr_serenite.csv",
+        "insulation": "project/input/policies/mpr_serenite_sfec.csv",
         "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite"
+        "target": "mpr_serenite",
+        "policy": "subsidy_ad_valorem"
+      },
+      "mpr_multifamily": {
+        "start": 2019,
+        "end": 2051,
+        "insulation": "project/input/policies/mpr_multifamily_sfec.csv",
+        "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
+        "non_cumulative": ["cite", "mpr"],
+        "target": "mpr_serenite",
+        "policy": "subsidy_ad_valorem"
       },
       "cee": {
         "start": 2018,
@@ -115,7 +125,8 @@
       "cap": {
         "start": 2019,
         "end": 2051,
-        "insulation": "project/input/policies/subsidies_cap.csv"
+        "insulation": "project/input/policies/subsidies_cap.csv",
+        "target": ["mpr_serenite", "mpr_multifamily","mpr"]
       },
       "carbon_tax": {
         "start": 2018,
@@ -128,7 +139,8 @@
         "end": 2021,
         "heater": "project/input/policies/cite_heater.csv",
         "insulation": "project/input/policies/cite_insulation.csv",
-        "cap": 4800
+        "cap": 4800,
+        "policy": "subsidy_ad_valorem"
       },
       "reduced_vta": {
         "start": 2019,

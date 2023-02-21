@@ -154,6 +154,7 @@ colors = {
     "Over cap": "grey",
     "Carbon tax": "rebeccapurple",
     "Mpr": "darkmagenta",
+    "Mpr multifamily": "pink",
     "Mpr serenite": "violet",
     'Sub ad volarem': "darkorange",
     "Sub merit": "slategrey",

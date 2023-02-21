@@ -523,7 +523,7 @@ def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False,
     return df
 
 
-def calibration_res_irf(path, config=None, cost_factor=1):
+def calibration_res_irf(path, config=None):
     """Calibrate Res-IRF and returns calibrated parameters.
     Function is useful for running multiple scenarios with the same calibration.
     Typical example is for sensitivity analysis or elasticity calculation.

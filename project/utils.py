@@ -26,6 +26,8 @@ from functools import wraps
 from time import time
 from importlib import resources
 from pathlib import Path, PosixPath, WindowsPath
+import sys
+
 
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
@@ -50,6 +52,41 @@ plt.rc('lines', lw=3.5)
 plt.rc('axes', lw=3.5, edgecolor=COLOR)
 
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
+
+
+def size_locals(dict_vars, n=30):
+    def sizeof_fmt(num, suffix='B'):
+        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+            if abs(num) < 1024.0:
+                return "%3.1f %s%s" % (num, unit, suffix)
+            num /= 1024.0
+        return "%.1f %s%s" % (num, 'Yi', suffix)
+
+    for name, size in sorted(((name, get_size(value)) for name, value in list(
+                              dict_vars.items())), key=lambda x: -x[1])[:n]:
+        print("{:>30}: {:>8}".format(name, sizeof_fmt(size)))
+
+
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+    return size
+
 
 
 def get_pandas(path, func=lambda x: pd.read_csv(x)):

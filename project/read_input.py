@@ -39,6 +39,7 @@ class PublicPolicy:
         Year policy starts.
     end : int
         Year policy ends.
+    value: float
     policy : {'energy_taxes', 'subsidies'}
 
     """
@@ -209,10 +210,12 @@ def read_policies(config):
         list
         """
         l = list()
-        mpr_serenite = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        l.append(PublicPolicy('mpr_serenite', data['start'], data['end'], mpr_serenite, 'subsidy_non_cumulative',
+        mpr_serenite = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+        cap = get_pandas(data['cap'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+
+        l.append(PublicPolicy(data['name'], data['start'], data['end'], mpr_serenite, data['policy'],
                               target=data.get('target'), gest='insulation', non_cumulative=data.get('non_cumulative'),
-                              cap=data['cap']))
+                              cap=cap))
         return l
 
     def read_cee(data):
@@ -228,7 +231,8 @@ def read_policies(config):
 
     def read_cap(data):
         cap = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        return [PublicPolicy('subsidies_cap', data['start'], data['end'], cap, 'subsidies_cap', gest='insulation')]
+        return [PublicPolicy('subsidies_cap', data['start'], data['end'], cap, 'subsidies_cap', gest='insulation',
+                             target=data.get('target'))]
 
     def read_carbon_tax(data):
         tax = get_pandas(data['tax'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
@@ -365,8 +369,8 @@ def read_policies(config):
     def read_multi_family(data):
         return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
 
-    read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'cee': read_cee, 'cap': read_cap,
-            'carbon_tax': read_carbon_tax,
+    read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'mpr_multifamily': read_mpr_serenite,
+            'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil,
             'landlord': read_landlord, 'multi_family': read_multi_family}
 
