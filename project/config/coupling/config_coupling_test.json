@@ -1,4 +1,7 @@
-{
+{"sensitivity": {
+  "activated": true,
+  "step": [2, 5]
+},
   "Reference": {
     "end": 2051,
     "step": 1,
@@ -88,10 +91,21 @@
       "mpr_serenite": {
         "start": 2019,
         "end": 2020,
-        "insulation": "project/input/policies/mpr_serenite.csv",
+        "insulation": "project/input/policies/mpr_serenite_sfec.csv",
+        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
         "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite"
+        "target": "mpr_serenite",
+        "policy": "subsidy_ad_valorem"
+      },
+      "mpr_multifamily": {
+        "start": 2019,
+        "end": 2020,
+        "insulation": "project/input/policies/mpr_multifamily_sfec.csv",
+        "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
+        "non_cumulative": ["cite", "mpr"],
+        "target": "mpr_serenite",
+        "policy": "subsidy_ad_valorem"
       },
       "cee": {
         "start": 2018,
@@ -104,7 +118,8 @@
       "cap": {
         "start": 2019,
         "end": 2020,
-        "insulation": "project/input/policies/subsidies_cap.csv"
+        "insulation": "project/input/policies/subsidies_cap.csv",
+        "target": ["mpr_serenite", "mpr_multifamily", "mpr"]
       },
       "carbon_tax": {
         "start": 2018,
@@ -131,6 +146,15 @@
       "multi_family": {
         "start": 2020,
         "end": 2020
+      },
+      "valorem_insulation": {
+        "start": 2020,
+        "end": 2051,
+        "value": 0.1,
+        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
+        "target": "global_renovation",
+        "policy": "subsidy_ad_valorem",
+        "gest": "insulation"
       }
     },
     "simple": {

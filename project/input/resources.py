@@ -66,7 +66,7 @@ resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6',
                            'Housing type': ['Single-family', 'Multi-family'],
                            'Performance': ['G', 'F', 'E', 'D', 'C', 'B', 'A'],
                            'Energy': ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel', 'Heating'],
-                           'Heater': ['Electricity', 'Heat pump', 'Natural gas', 'Oil fuel', 'Wood fuel', 'District heating'],
+                           'Heater': ['Direct electric', 'Heat pump', 'Natural gas', 'Oil fuel', 'Wood fuel', 'District heating'],
                            'Decision maker': ['Single-family - Owner-occupied', 'Multi-family - Owner-occupied',
                                               'Single-family - Privately rented', 'Multi-family - Privately rented',
                                               'Single-family - Social-housing', 'Multi-family - Social-housing'
@@ -80,6 +80,17 @@ resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6',
                            'Count': [1, 2, 3, 4, 5]
                            }
 
+resources_data['heating2heater'] = {
+    'Electricity-Heat pump water': 'Heat pump',
+    'Electricity-Heat pump air': 'Heat pump',
+    'Electricity-Performance boiler': 'Direct electric',
+    'Natural gas-Performance boiler': 'Natural gas',
+    'Natural gas-Collective boiler': 'Natural gas',
+    'Oil fuel-Performance boiler': 'Oil fuel',
+    'Oil fuel-Collective boiler': 'Oil fuel',
+    'Wood fuel-Performance boiler': 'Wood fuel',
+    'Heating-District heating': 'District heating'
+}
 resources_data['quintiles'] = ['C1', 'C2', 'C3', 'C4', 'C5']
 
 colors = {
@@ -131,6 +142,7 @@ colors = {
     "Electricity-Heat pump water": "sandybrown",
     "Electricity-Heat pump air": "gold",
     "Electricity-Performance boiler": "darkorange",
+    "Direct electric": "darkorange",
     "Natural gas-Performance boiler": "slategrey",
     "Natural gas-Standard boiler": "grey",
     "Natural gas-Collective boiler": "lightgrey",
@@ -156,6 +168,7 @@ colors = {
     "Mpr": "darkmagenta",
     "Mpr multifamily": "pink",
     "Mpr serenite": "violet",
+    "Valorem insulation": "darkorange",
     'Sub ad volarem': "darkorange",
     "Sub merit": "slategrey",
     "Sub obligation": "darkorange",

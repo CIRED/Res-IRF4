@@ -226,7 +226,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         sub_heater = Series([sub_heater, sub_heater],
                             index=Index(['Electricity-Heat pump water', 'Electricity-Heat pump air'],
                                         name='Heating system final'))
-        policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_volarem',
+        policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_valorem',
                                             gest='heater', by='columns'))  # heating policy during considered years
 
     if sub_insulation is not None:

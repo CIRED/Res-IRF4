@@ -27,7 +27,7 @@ from time import time
 from importlib import resources
 from pathlib import Path, PosixPath, WindowsPath
 import sys
-
+import json
 
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
@@ -88,7 +88,6 @@ def get_size(obj, seen=None):
     return size
 
 
-
 def get_pandas(path, func=lambda x: pd.read_csv(x)):
     path = Path(path)
     if isinstance(path, WindowsPath):
@@ -97,6 +96,18 @@ def get_pandas(path, func=lambda x: pd.read_csv(x)):
     else:
         with resources.path(str(path.parent).replace('/', '.'), path.name) as df:
             return func(df)
+
+
+def get_json(path):
+    path = Path(path)
+    if isinstance(path, WindowsPath):
+        with resources.path(str(path.parent).replace('\\', '.'), path.name) as f:
+            with open(f) as file:
+                return json.load(file)
+    else:
+        with resources.path(str(path.parent).replace('/', '.'), path.name) as f:
+            with open(f) as file:
+                return json.load(file)
 
 
 def timing(f):

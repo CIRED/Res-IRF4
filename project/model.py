@@ -9,9 +9,8 @@ from pickle import load, dump
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json
 from project.input.resources import resources_data
-from memory_profiler import profile
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -82,6 +81,9 @@ def config2inputs(config=None, building_stock=None, end=None):
     year = config['start']
     stock = read_stock(config)
     inputs = read_inputs(config)
+
+    if isinstance(config['policies'], str):
+        config['policies'] = get_json(config['policies'])['policies']
 
     if config['simple'].get('heating_system'):
         replace = config['simple']['heating_system']

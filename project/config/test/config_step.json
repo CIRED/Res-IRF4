@@ -103,6 +103,7 @@
         "start": 2019,
         "end": 2051,
         "insulation": "project/input/policies/mpr_serenite_sfec.csv",
+        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
         "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
         "target": "mpr_serenite",

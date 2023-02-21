@@ -210,10 +210,16 @@ def read_policies(config):
         list
         """
         l = list()
-        mpr_serenite = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
-        cap = get_pandas(data['cap'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
 
-        l.append(PublicPolicy(data['name'], data['start'], data['end'], mpr_serenite, data['policy'],
+        value = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+        cap = get_pandas(data['cap'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+
+        if data.get('growth_insulation'):
+            growth_insulation = get_pandas(data['growth_insulation'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            value = {k: i * value for k, i in growth_insulation.items()}
+            cap = {k: i * cap for k, i in growth_insulation.items()}
+
+        l.append(PublicPolicy(data['name'], data['start'], data['end'], value, data['policy'],
                               target=data.get('target'), gest='insulation', non_cumulative=data.get('non_cumulative'),
                               cap=cap))
         return l
@@ -369,7 +375,10 @@ def read_policies(config):
     def read_multi_family(data):
         return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
 
-    read = {'mpr': read_mpr, 'mpr_serenite': read_mpr_serenite, 'mpr_multifamily': read_mpr_serenite,
+    read = {'mpr': read_mpr,
+            'mpr_serenite_high_income': read_mpr_serenite,
+            'mpr_serenite_low_income': read_mpr_serenite,
+            'mpr_multifamily': read_mpr_serenite,
             'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil,
             'landlord': read_landlord, 'multi_family': read_multi_family}
@@ -380,7 +389,7 @@ def read_policies(config):
         if key in read.keys():
             list_policies += read[key](item)
         else:
-            if item.get('policy') == 'sub_ad_valorem':
+            if item.get('policy') == 'subsidy_ad_valorem':
                 list_policies += read_ad_valorem(item)
             elif item.get('policy') == 'premature_heater':
                 list_policies += premature_heater(item)

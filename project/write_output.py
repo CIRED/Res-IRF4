@@ -37,6 +37,14 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
                    total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
+
+    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
+    df.columns = resources_data['index']['Energy']
+    make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   save=os.path.join(buildings.path, 'consumption_energy.png'),
+                   total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
+
     # consumption existing vs new
     if detailed_graph:
         t = output.loc[['Embodied energy renovation (TWh PE)', 'Embodied energy construction (TWh PE)'], :]
@@ -132,37 +140,40 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                        colors=resources_data['colors'], loc='left', left=1.25)
 
     # graph subsidies
-    non_subsidies = ['subsidies_cap', 'obligation']
-    subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies], :]
-    taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
+    try:
+        non_subsidies = ['subsidies_cap', 'obligation']
+        subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies], :]
+        taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
 
-    subset = pd.concat((subsidies, -taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax']],:]), axis=0)
-    subset.fillna(0, inplace=True)
-    subset = subset.loc[:, (subset != 0).any(axis=0)].T
-    subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
-    if not subset.empty:
-        scatter = resources_data['public_policies_2019']
-        if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan', 'Mpr serenite']:
-            fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
-            subset.index = subset.index.astype(int)
-            subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'])
-            scatter.T.plot.bar(ax=ax[0], stacked=True, color=resources_data['colors'], legend=False, width=1.5, rot=0)
-            ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
-            ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
-            subset.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
-            format_legend(ax[1], loc='left', left=1.2)
-            ax[0].set_title('Realized')
-            ax[1].set_title('Model results')
-            save_fig(fig, save=os.path.join(buildings.path, 'policies_validation.png'))
+        subset = pd.concat((subsidies, -taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax']],:]), axis=0)
+        subset.fillna(0, inplace=True)
+        subset = subset.loc[:, (subset != 0).any(axis=0)].T
+        subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
+        if not subset.empty:
+            scatter = resources_data['public_policies_2019']
+            if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan', 'Mpr serenite']:
+                fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
+                subset.index = subset.index.astype(int)
+                subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'])
+                scatter.T.plot.bar(ax=ax[0], stacked=True, color=resources_data['colors'], legend=False, width=1.5, rot=0)
+                ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
+                ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
+                subset.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
+                format_legend(ax[1], loc='left', left=1.2)
+                ax[0].set_title('Realized')
+                ax[1].set_title('Model results')
+                save_fig(fig, save=os.path.join(buildings.path, 'policies_validation.png'))
 
-            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
-                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                           loc='left', left=1.2)
+                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
+                               colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                               loc='left', left=1.2)
 
-        else:
-            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
-                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                           scatter=resources_data['public_policies_2019'], loc='left', left=1.2)
+            else:
+                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
+                               colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                               scatter=resources_data['public_policies_2019'], loc='left', left=1.2)
+    except KeyError:
+        print('Policies graphic impossible because lack of subsidy color')
 
     # graph public finance
     subset = output.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',

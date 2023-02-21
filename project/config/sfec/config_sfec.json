@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2051,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -85,105 +85,7 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": {
-      "mpr": {
-        "start": 2021,
-        "end": 2051,
-        "heater": "project/input/policies/mpr_heater_sfec.csv",
-        "growth_heater": "project/input/policies/growth_mpr_heater.csv",
-        "insulation": "project/input/policies/mpr_insulation_sfec.csv",
-        "growth_insulation": "project/input/policies/growth_mpr_insulation.csv",
-        "global_renovation": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
-      "mpr_serenite": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/mpr_serenite.csv",
-        "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
-        "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite"
-      },
-      "cee": {
-        "start": 2018,
-        "end": 2051,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/subsidies_cap.csv"
-      },
-      "carbon_tax": {
-        "start": 2018,
-        "end": 2051,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2021,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": "project/input/policies/cite_insulation.csv",
-        "cap": 4800
-      },
-      "reduced_vta": {
-        "start": 2019,
-        "end": 2051,
-        "value": 0.055
-      },
-      "restriction_oil": {
-        "start": 2022,
-        "end": 2051,
-        "value": "Oil fuel",
-        "policy": "restriction_energy"
-      },
-      "premature_replacement_oil": {
-        "start": 2023,
-        "end": 2051,
-        "value": 0.18,
-        "target": "Oil fuel",
-        "policy": "premature_heater"
-      },
-      "restriction_collective_gas": {
-        "start": 2027,
-        "end": 2051,
-        "value": "Natural gas-Collective boiler",
-        "policy": "restriction_heater"
-      },
-      "restriction_indiv_gas": {
-        "start": 2024,
-        "end": 2051,
-        "value": ["Natural gas-Standard boiler", "Natural gas-Performance boiler"],
-        "policy": "restriction_heater",
-        "target": "Single-family"
-      },
-      "obligation_po": {
-        "start": 2020,
-        "end": 2051,
-        "value": "project/input/policies/agenda_obligation_po_sfec.csv",
-        "frequency": {"value": [0.1, 0, 0],
-                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
-                    "name": "Occupancy status"},
-        "intensive": "market_share",
-        "minimum_performance": "C",
-        "policy": "obligation"
-      },
-      "obligation_pb": {
-        "start": 2020,
-        "end": 2051,
-        "value": "project/input/policies/agenda_obligation_pb_sfec.csv",
-        "frequency": {"value": [0, 0.33, 0.33],
-                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
-                    "name": "Occupancy status"},
-        "intensive": "market_share",
-        "minimum_performance": "C",
-        "policy": "obligation"
-      }
-    },
+    "policies":  "project/input/policies/sfec/policies_sfec.json",
     "simple": {
       "quintiles": false,
       "surface": false,
