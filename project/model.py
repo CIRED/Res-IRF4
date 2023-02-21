@@ -81,12 +81,7 @@ def config2inputs(config=None, building_stock=None, end=None):
 
     year = config['start']
     stock = read_stock(config)
-    policies_heater, policies_insulation, taxes = read_policies(config)
     inputs = read_inputs(config)
-
-    if config['simple']['quintiles']:
-        stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
-                                                                                policies_insulation, inputs)
 
     if config['simple'].get('heating_system'):
         replace = config['simple']['heating_system']
@@ -118,13 +113,27 @@ def config2inputs(config=None, building_stock=None, end=None):
         ratio_surface = (reindex_mi(inputs['ratio_surface'], stock.index).T * stock).T.sum() / stock.sum()
         for idx in inputs['ratio_surface'].index:
             inputs['ratio_surface'].loc[idx, :] = ratio_surface.round(1)
-    if config['simple']['policies']:
-        p = create_simple_policy(config['start'], config['end'], gest='insulation', value=0.3)
-        policies_insulation = [p]
 
-        p = create_simple_policy(config['start'], config['end'], gest='heater',
-                                 value=pd.Series([0.3, 0.3], index=pd.Index(['Electricity-Heat pump air', 'Electricity-Heat pump water'], name='Heating system')))
-        policies_heater = [p]
+    if config['simple'].get('no_policies'):
+        for name, policy in config['policies'].items():
+            if policy['end'] > policy['start']:
+                policy['end'] = config['start'] + 2
+                config['policies'][name] = policy
+
+    if config['simple'].get('policies'):
+        for name, policy in config['policies'].items():
+            if policy['start'] > config['start'] + 1:
+                policy['end'] = policy['start']
+
+            if policy['end'] > policy['start']:
+                policy['end'] = config['end']
+            config['policies'][name] = policy
+
+    policies_heater, policies_insulation, taxes = read_policies(config)
+
+    if config['simple']['quintiles']:
+        stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
+                                                                                policies_insulation, inputs)
 
     return inputs, stock, year, policies_heater, policies_insulation, taxes
 

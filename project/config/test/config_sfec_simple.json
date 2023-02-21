@@ -1,7 +1,7 @@
 {
   "Reference": {
-    "end": 2021,
-    "step": 1,
+    "end": 2025,
+    "step": 5,
     "debug_mode": false,
     "full_output": true,
     "start": 2018,
@@ -191,6 +191,7 @@
       "ratio_surface": false,
       "stock": false,
       "policies": false,
+      "no_policies": true,
       "income": false,
       "prices_constant": false,
       "taxes_constant": false,

@@ -3046,7 +3046,7 @@ class AgentBuildings(ThermalBuildings):
         # accounts for heater replacement - depends on energy prices, cost and policies heater
         self.logger.info('Calculation heater replacement')
         stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
-                                        ms_heater=ms_heater, step=step, financing_cost=financing_cost,
+                                        ms_heater=ms_heater, step=1, financing_cost=financing_cost,
                                         district_heating=district_heating)
 
         self.logger.info('Number of agents that can insulate: {:,.0f}'.format(stock.shape[0]))
@@ -3060,11 +3060,17 @@ class AgentBuildings(ThermalBuildings):
 
         self.logger.info('Formatting and storing replacement')
         # step
-        s = sum([(1 - retrofit_rate)**k for k in range(step)])
-        flow_insulation = retrofit_rate.reindex(stock.index).fillna(0) * stock * s.reindex(stock.index).fillna(0)
+        flow_insulation = retrofit_rate.reindex(stock.index).fillna(0) * stock * step
+
+        if step > 1:
+            stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
+                                            ms_heater=ms_heater, step=step, financing_cost=financing_cost,
+                                            district_heating=district_heating)
 
         # heater replacement without insulation upgrade
         flow_only_heater = stock - flow_insulation
+        assert (flow_only_heater >= 0).all().all(), 'Remaining stock is not positive'
+
         flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack(
             'Heating system final')
         flow_only_heater_sum = flow_only_heater.sum().sum()
