@@ -29,7 +29,6 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_locals, get_size
 import project.thermal as thermal
-from memory_profiler import profile
 import psutil
 
 ACCURACY = 10**-5
