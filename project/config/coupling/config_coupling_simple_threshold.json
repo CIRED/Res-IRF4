@@ -85,60 +85,13 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": {
-      "mpr_serenite": {
-        "start": 2019,
-        "end": 2020,
-        "insulation": "project/input/policies/mpr_serenite.csv",
-        "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
-        "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite"
-      },
-      "cee": {
-        "start": 2018,
-        "end": 2020,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2020,
-        "insulation": "project/input/policies/subsidies_cap.csv"
-      },
-      "carbon_tax": {
-        "start": 2018,
-        "end": 2020,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2020,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": "project/input/policies/cite_insulation.csv",
-        "cap": 4800
-      },
-      "reduced_vta": {
-        "start": 2019,
-        "end": 2020,
-        "value": 0.055
-      },
-      "landlord": {
-        "start": 2020,
-        "end": 2020
-      },
-      "multi_family": {
-        "start": 2020,
-        "end": 2020
-      }
-    },
+    "policies": "project/input/policies/sfec/policies_sfec.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
+      "no_policies": true,
       "policies": false,
       "income": false,
       "prices_constant": false,

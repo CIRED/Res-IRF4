@@ -5,12 +5,14 @@ from time import time
 import json
 from importlib import resources
 from pickle import load, dump
+import psutil
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict
 from project.input.resources import resources_data
+
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -340,6 +342,22 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             climate=climate,
                                             step=step)
 
+    """memory_dict = dict()
+    memory_dict.update({'general': psutil.Process().memory_info().rss / (1024 * 1024),
+                      'agentbuildings': })
+    print('Memory: {:.0f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)))
+    print('AgentBuilding: {:.0f} MiB'.format(get_size(buildings) / 10 ** 6))
+
+    temp = {}
+    for k, item in buildings.__dict__.items():
+        if isinstance(item, dict):
+            temp.update(item)
+        else:
+            temp.update({k: item})
+
+    print(size_dict(temp, n=30))
+    print(size_dict(buildings.__dict__, n=30))"""
+
     buildings.add_flows([flow_retrofit])
 
     flows_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
@@ -608,8 +626,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     aggregation_archetype
     climate
     smooth
-    building_stock: optional, {'medium_1', 'medium_3', 'medium_5', 'simple_1', 'simple_3', 'simple_5'}
-        Numbers of clusters + heterogeneity of u values.
+    building_stock: optional
     freq: optional, {'hour', 'day', 'month', 'year'}
     percent: bool, default True
     marginal: bool, default

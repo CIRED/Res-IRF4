@@ -27,7 +27,7 @@ from copy import deepcopy
 from itertools import product
 
 
-from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_locals, get_size
+from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, get_size
 import project.thermal as thermal
 import psutil
 

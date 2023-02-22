@@ -54,7 +54,7 @@ plt.rc('axes', lw=3.5, edgecolor=COLOR)
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
 
 
-def size_locals(dict_vars, n=30):
+def size_dict(dict_vars, n=30, display=True):
     def sizeof_fmt(num, suffix='B'):
         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
             if abs(num) < 1024.0:
@@ -62,9 +62,13 @@ def size_locals(dict_vars, n=30):
             num /= 1024.0
         return "%.1f %s%s" % (num, 'Yi', suffix)
 
+    temp = dict()
     for name, size in sorted(((name, get_size(value)) for name, value in list(
                               dict_vars.items())), key=lambda x: -x[1])[:n]:
-        print("{:>30}: {:>8}".format(name, sizeof_fmt(size)))
+        if display:
+            print("{:>30}: {:>8}".format(name, sizeof_fmt(size)))
+        temp.update({name: sizeof_fmt(size)})
+    return temp
 
 
 def get_size(obj, seen=None):
