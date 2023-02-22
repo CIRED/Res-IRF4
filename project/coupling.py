@@ -217,10 +217,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                  climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
                  ):
-    print('Memory: {}'.format(psutil.Process().memory_info().rss / (1024 * 1024)))
-    print('AgentBuilding: {:.0f} MiB'.format(get_size(buildings) / 10 ** 6))
-    print(size_locals(locals(), n=10))
-
     # initialize policies
     if sub_heater is not None:
         sub_heater = Series([sub_heater, sub_heater],
@@ -252,11 +248,6 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                          p_insulation, f_built, year, post_inputs,
                                          financing_cost=financing_cost,
                                          climate=climate, demolition_rate=demolition_rate)
-        print('Memory: {:.0f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)))
-        print(size_locals(locals(), n=10))
-
-        print('AgentBuilding: {:.0f} MiB'.format(get_size(buildings) / 10**6))
-        print(size_locals(buildings.__dict__, n=30))
 
         if full_output is False:
             output.update({year: select_output(o)})

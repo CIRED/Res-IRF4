@@ -775,7 +775,7 @@ class AgentBuildings(ThermalBuildings):
         if logger is None:
             logger = logging.getLogger()
         self.logger = logger
-
+        self.memory = {}
         self.quintiles = quintiles
         if self.quintiles:
             self._resources_data = deciles2quintiles_dict(self._resources_data)

@@ -174,6 +174,17 @@ def deciles2quintiles(stock, policies_heater, policies_insulation, inputs):
     return stock, policies_heater, policies_insulation, inputs
 
 
+def memory_object(buildings):
+    temp = {}
+    for k, item in buildings.__dict__.items():
+        if isinstance(item, dict):
+            temp.update(item)
+        else:
+            temp.update({k: item})
+
+    return temp
+
+
 def select_post_inputs(parsed_inputs):
     """Inputs used during post-treatment but not used during the iteration.
 
@@ -290,7 +301,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
-                   prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None):
+                   prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=True):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -342,21 +353,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             climate=climate,
                                             step=step)
 
-    """memory_dict = dict()
-    memory_dict.update({'general': psutil.Process().memory_info().rss / (1024 * 1024),
-                      'agentbuildings': })
-    print('Memory: {:.0f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)))
-    print('AgentBuilding: {:.0f} MiB'.format(get_size(buildings) / 10 ** 6))
-
-    temp = {}
-    for k, item in buildings.__dict__.items():
-        if isinstance(item, dict):
-            temp.update(item)
-        else:
-            temp.update({k: item})
-
-    print(size_dict(temp, n=30))
-    print(size_dict(buildings.__dict__, n=30))"""
+    if memory:
+        memory_dict = {'Memory': psutil.Process().memory_info().rss / (1024 * 1024),
+                       'AgentBuildings': get_size(buildings) / 10 ** 6}
+        memory_dict.update(size_dict(memory_object(buildings), n=50, display=False))
+        buildings.memory.update({year: memory_dict})
 
     buildings.add_flows([flow_retrofit])
 
@@ -478,6 +479,8 @@ def res_irf(config, path):
 
         if path is not None:
             buildings.logger.info('Dumping output in {}'.format(path))
+            if buildings.memory:
+                pd.DataFrame(buildings.memory).to_csv(os.path.join(path, 'memory.csv'))
             if not buildings.full_output:
                 # for price elasticity calculation
                 temp = energy_prices.T
