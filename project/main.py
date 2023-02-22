@@ -27,7 +27,6 @@ import argparse
 
 from project.write_output import grouped_output
 from project.model import res_irf
-from project.read_input import generate_price_scenarios, read_prices
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 

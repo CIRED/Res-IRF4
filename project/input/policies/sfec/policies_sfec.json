@@ -16,7 +16,7 @@
         "cap": "project/input/policies/sfec/mpr_serenite_cap_sfec.csv",
         "growth_insulation": "project/input/policies/sfec/growth_mpr_serenite_high_income.csv",
         "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite",
+        "target": "mpr_serenite_nb",
         "policy": "subsidy_ad_valorem"
       },
       "mpr_serenite_low_income": {
@@ -26,7 +26,7 @@
         "cap": "project/input/policies/sfec/mpr_serenite_cap_sfec.csv",
         "growth_insulation": "project/input/policies/sfec/growth_mpr_serenite_low_income.csv",
         "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite",
+        "target": "mpr_serenite_nb",
         "policy": "subsidy_ad_valorem"
       },
       "mpr_multifamily": {
@@ -35,7 +35,7 @@
         "insulation": "project/input/policies/sfec/mpr_multifamily_sfec.csv",
         "cap": "project/input/policies/sfec/mpr_multifamily_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite",
+        "target": "mpr_serenite_nb",
         "policy": "subsidy_ad_valorem"
       },
       "cee": {
@@ -101,7 +101,7 @@
         "start": 2020,
         "end": 2051,
         "value": "project/input/policies/sfec/agenda_obligation_po_sfec.csv",
-        "frequency": {"value": [0.07, 0, 0],
+        "frequency": {"value": [0.1, 0, 0],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},
         "intensive": "market_share",

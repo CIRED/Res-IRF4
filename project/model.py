@@ -354,8 +354,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             step=step)
 
     if memory:
-        memory_dict = {'Memory': psutil.Process().memory_info().rss / (1024 * 1024),
-                       'AgentBuildings': get_size(buildings) / 10 ** 6}
+        memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
+                       'AgentBuildings': '{:.1f} MiB'.format(get_size(buildings) / 10 ** 6)}
         memory_dict.update(size_dict(memory_object(buildings), n=50, display=False))
         buildings.memory.update({year: memory_dict})
 

@@ -409,13 +409,6 @@ def read_policies(config):
     return policies_heater, policies_insulation, taxes
 
 
-def read_prices(config):
-    energy_prices = get_pandas(config['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
-    energy_prices = energy_prices.loc[:config['end']]
-
-    return energy_prices
-
-
 def read_inputs(config, other_inputs=generic_input):
     """Read all inputs in Python object and concatenate in one dict.
 
