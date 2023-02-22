@@ -10,7 +10,7 @@
         "bonus": "project/input/policies/sfec/mpr_bonus.csv"
       },
       "mpr_serenite_high_income": {
-        "start": 2019,
+        "start": 2020,
         "end": 2051,
         "insulation": "project/input/policies/sfec/mpr_serenite_high_income_sfec.csv",
         "cap": "project/input/policies/sfec/mpr_serenite_cap_sfec.csv",
@@ -119,6 +119,5 @@
         "minimum_performance": "C",
         "policy": "obligation"
       }
-    },
-  "calibration": "project/input/calibration/calibration_sfec.pkl"
+    }
 }

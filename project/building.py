@@ -1922,7 +1922,8 @@ class AgentBuildings(ThermalBuildings):
                     else:
                         cap = policy.cap
 
-                    cap = reindex_mi(cap, value.index)
+                    # if cap is nan then it is 0
+                    cap = reindex_mi(cap, value.index).fillna(float('inf'))
                     cap = concat([cap] * value.shape[1], keys=value.columns, axis=1)
                     value = value.where(value < cap, cap)
 
@@ -1966,6 +1967,9 @@ class AgentBuildings(ThermalBuildings):
 
             for policy_name in policies_target:
                 if policy_name in subsidies_details.keys():
+                    self.logger.debug('Capping amount for {}'.format(policy_name))
+                    # print(policy_name)
+                    # print('{:.1%}'.format(remaining[remaining > 0].count().sum() / (remaining.shape[0] * remaining.shape[1])))
                     temp = remaining.where(remaining <= subsidies_details[policy_name], subsidies_details[policy_name])
                     subsidies_details[policy_name] -= temp
                     assert (subsidies_details[policy_name].values >= 0).all(), '{} got negative values'.format(policy_name)
@@ -1975,6 +1979,8 @@ class AgentBuildings(ThermalBuildings):
 
             assert allclose(remaining, 0, rtol=10**-1)
             subsidies_total -= subsidies_details['over_cap']
+
+        # subsidies_total = sum(subsidies_details[k] for k subsidies_total_list)
 
         regulation = [p for p in policies_insulation if p.policy == 'regulation']
         if 'landlord' in [p.name for p in regulation]:
