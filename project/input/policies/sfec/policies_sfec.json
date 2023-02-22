@@ -32,8 +32,8 @@
       "mpr_multifamily": {
         "start": 2019,
         "end": 2051,
-        "insulation": "project/input/policies/mpr_multifamily_sfec.csv",
-        "cap": "project/input/policies/mpr_serenite_cap_sfec.csv",
+        "insulation": "project/input/policies/sfec/mpr_multifamily_sfec.csv",
+        "cap": "project/input/policies/sfec/mpr_serenite_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
         "target": "mpr_serenite",
         "policy": "subsidy_ad_valorem"
