@@ -168,6 +168,8 @@ colors = {
     "Mpr": "darkmagenta",
     "Mpr multifamily": "pink",
     "Mpr serenite": "violet",
+    "Mpr serenite low income": "violet",
+    "Mpr serenite high income": "rebeccapurple",
     "Valorem insulation": "darkorange",
     'Sub ad volarem': "darkorange",
     "Sub merit": "slategrey",

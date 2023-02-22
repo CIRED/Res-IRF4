@@ -1,7 +1,7 @@
 {
   "Reference": {
-    "end": 2020,
-    "step": 5,
+    "end": 2031,
+    "step": 1,
     "debug_mode": false,
     "full_output": true,
     "start": 2018,
@@ -42,7 +42,7 @@
       "cost_insulation": "project/input/technical/cost_insulation.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
-      "carbon_emission": "project/input/technical/carbon_emission.csv",
+      "carbon_emission": "project/input/technical/carbon_emission_sfec.csv",
       "technical_progress": {
         "insulation": {
           "activated": true,
@@ -85,14 +85,13 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/policies_sfec.json",
+    "policies": "project/input/policies/sfec/policies_sfec.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "policies": false,
-      "no_policies": false,
       "income": false,
       "prices_constant": false,
       "taxes_constant": false,

@@ -1,10 +1,10 @@
-{  "sensitivity": {
+{ "sensitivity": {
     "activated": false,
     "prices_constant": true,
     "ZP": true
   },
   "Reference": {
-    "end": 2051,
+    "end": 2021,
     "step": 5,
     "debug_mode": false,
     "full_output": true,

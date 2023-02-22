@@ -1824,7 +1824,8 @@ class AgentBuildings(ThermalBuildings):
 
             if 'mpr_serenite' in _list_conditions:
                 energy_condition = _energy_saved_3uses >= energy_condition
-                _condition.update({'mpr_serenite': (reindex_mi(energy_condition, _index).T & low_income_condition).T})
+                # _condition.update({'mpr_serenite': (reindex_mi(energy_condition, _index).T & low_income_condition).T})
+                _condition.update({'mpr_serenite': reindex_mi(energy_condition, _index)})
 
             if 'zero_interest_loan' in _list_conditions:
                 _condition.update({'zero_interest_loan': define_zil_target(_certificate, _certificate_before, _energy_saved_3uses)})
@@ -1877,7 +1878,8 @@ class AgentBuildings(ThermalBuildings):
 
         sub_non_cumulative = {}
         for policy in policies_insulation:
-            if policy.name not in self.policies and policy.policy in ['subsidy_target', 'subsidy_non_cumulative', 'subsidy_ad_valorem', 'subsidies_cap']:
+            if policy.name not in self.policies and policy.policy in ['subsidy_target', 'subsidy_non_cumulative',
+                                                                      'subsidy_ad_valorem', 'subsidies_cap']:
                 self.policies += [policy.name]
 
             value = None
