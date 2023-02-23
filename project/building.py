@@ -1622,7 +1622,7 @@ class AgentBuildings(ThermalBuildings):
             index = subsidies_insulation.index
             if 'Housing type' in subsidies_insulation.index.names:
                 index = subsidies_insulation[subsidies_insulation.index.get_level_values('Housing type') == i].index
-            # TODO: finish to implement
+
             subsidy = DataFrame(0, index=index, columns=self._choice_insulation)
             subsidy.loc[index, idx[True, :, :, :]] = subsidy.loc[index, idx[True, :, :, :]].add(
                 subsidies_insulation['Wall'] * self.surface_insulation.loc[i, 'Wall'], axis=0)
@@ -1633,8 +1633,12 @@ class AgentBuildings(ThermalBuildings):
             subsidy.loc[index, idx[:, :, :, True]] = subsidy.loc[index, idx[:, :, :, True]].add(
                 subsidies_insulation['Windows'] * self.surface_insulation.loc[i, 'Windows'], axis=0)
             subsidies[i] = subsidy.copy()
-        subsidies = concat(list(subsidies.values()), axis=0, keys=self.surface_insulation.index,
-                           names=self.surface_insulation.index.names)
+
+        if 'Housing type' in subsidies_insulation.index.names:
+            subsidies = concat(list(subsidies.values()), axis=0)
+        else:
+            subsidies = concat(list(subsidies.values()), axis=0, keys=self.surface_insulation.index,
+                               names=self.surface_insulation.index.names)
 
         if policy == 'subsidy_ad_valorem':
             # NotImplemented: ad_valorem with different subsididies rate
@@ -1837,7 +1841,7 @@ class AgentBuildings(ThermalBuildings):
                 _temp[_temp.index.get_level_values('Heater replacement')] += 1
                 _temp = concat([_temp] * nb_measures.shape[0], axis=1).set_axis(nb_measures.index, axis=1)
                 nb_measures = _temp + nb_measures
-                _condition.update({'mpr_serenite': nb_measures >= 3})
+                _condition.update({'mpr_serenite_nb': nb_measures >= 3})
 
             return _condition
 
@@ -1915,6 +1919,9 @@ class AgentBuildings(ThermalBuildings):
                     value = reindex_mi(temp, cost.index) * cost
 
             if value is not None:
+                if not policy.social_housing:
+                    value.loc[value.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
+
                 value.fillna(0, inplace=True)
                 if policy.cap is not None:
                     if isinstance(policy.cap, dict):
@@ -1922,7 +1929,6 @@ class AgentBuildings(ThermalBuildings):
                     else:
                         cap = policy.cap
 
-                    # if cap is nan then it is 0
                     cap = reindex_mi(cap, value.index).fillna(float('inf'))
                     cap = concat([cap] * value.shape[1], keys=value.columns, axis=1)
                     value = value.where(value < cap, cap)

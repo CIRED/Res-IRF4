@@ -1,5 +1,27 @@
 {
   "policies": {
+      "carbon_tax": {
+        "start": 2018,
+        "end": 2051,
+        "tax": "project/input/policies/carbon_tax.csv",
+        "emission": "project/input/policies/carbon_tax_emission.csv"
+      },
+      "cite": {
+        "start": 2019,
+        "end": 2021,
+        "heater": "project/input/policies/cite_heater.csv",
+        "insulation": "project/input/policies/cite_insulation.csv",
+        "cap": 4800,
+        "policy": "subsidy_ad_valorem"
+      },
+      "cee": {
+        "start": 2018,
+        "end": 2051,
+        "heater": "project/input/policies/cee_heater.csv",
+        "insulation": "project/input/policies/cee_insulation.csv",
+        "policy": "subsidy_targeted",
+        "tax": "project/input/policies/cee_tax.csv"
+      },
       "mpr": {
         "start": 2021,
         "end": 2051,
@@ -38,33 +60,11 @@
         "target": "mpr_serenite_nb",
         "policy": "subsidy_ad_valorem"
       },
-      "cee": {
-        "start": 2018,
-        "end": 2051,
-        "heater": "project/input/policies/cee_heater.csv",
-        "insulation": "project/input/policies/cee_insulation.csv",
-        "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
-      },
       "cap": {
         "start": 2019,
         "end": 2051,
         "insulation": "project/input/policies/subsidies_cap.csv",
         "target": ["mpr_serenite_high_income", "mpr_serenite_low_income", "mpr_multifamily", "mpr", "cee"]
-      },
-      "carbon_tax": {
-        "start": 2018,
-        "end": 2051,
-        "tax": "project/input/policies/carbon_tax.csv",
-        "emission": "project/input/policies/carbon_tax_emission.csv"
-      },
-      "cite": {
-        "start": 2019,
-        "end": 2021,
-        "heater": "project/input/policies/cite_heater.csv",
-        "insulation": "project/input/policies/cite_insulation.csv",
-        "cap": 4800,
-        "policy": "subsidy_ad_valorem"
       },
       "reduced_vta": {
         "start": 2019,

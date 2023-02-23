@@ -1,11 +1,11 @@
-﻿Income owner,Wall,Roof,Floor,Windows
-D1,75,25,0,100
-D2,75,25,0,100
-D3,60,20,0,80
-D4,60,20,0,80
-D5,40,15,0,40
-D6,40,15,0,40
-D7,40,15,0,40
-D8,15,7,0,0
-D9,15,7,0,0
-D10,15,7,0,0
+﻿Housing type,Income owner,Wall,Roof,Floor,Windows
+Single-family,D1,75,25,0,100
+Single-family,D2,75,25,0,100
+Single-family,D3,60,20,0,80
+Single-family,D4,60,20,0,80
+Single-family,D5,40,15,0,40
+Single-family,D6,40,15,0,40
+Single-family,D7,40,15,0,40
+Single-family,D8,15,7,0,0
+Single-family,D9,15,7,0,0
+Single-family,D10,15,7,0,0

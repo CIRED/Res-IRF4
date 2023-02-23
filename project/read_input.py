@@ -45,7 +45,7 @@ class PublicPolicy:
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
                  new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None,
-                 bonus=False):
+                 bonus=False, social_housing=False):
         self.name = name
         self.start = start
         self.end = end
@@ -63,6 +63,7 @@ class PublicPolicy:
         self.intensive = intensive
         self.min_performance = min_performance
         self.bonus = bonus
+        self.social_housing = social_housing
 
     def cost_targeted(self, cost_insulation, target_subsidies=None):
         """
@@ -169,7 +170,7 @@ def read_policies(config):
             growth_heater = get_pandas(data['growth_heater'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
             heater = {k: i * heater for k, i in growth_heater.items()}
 
-        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
+        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0, 1]))
         if data.get('growth_insulation'):
             growth_insulation = get_pandas(data['growth_insulation'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
             insulation = {k: i * insulation for k, i in growth_insulation.items()}
@@ -309,9 +310,11 @@ def read_policies(config):
 
     def read_reduced_vta(data):
         l = list()
-        l.append(PublicPolicy('reduced_vta', data['start'], data['end'], data['value'], 'reduced_vta', gest='heater'))
+        l.append(PublicPolicy('reduced_vta', data['start'], data['end'], data['value'], 'reduced_vta', gest='heater',
+                              social_housing=True))
         l.append(
-            PublicPolicy('reduced_vta', data['start'], data['end'], data['value'], 'reduced_vta', gest='insulation'))
+            PublicPolicy('reduced_vta', data['start'], data['end'], data['value'], 'reduced_vta', gest='insulation',
+                         social_housing=True))
         return l
 
     def read_ad_valorem(data):
