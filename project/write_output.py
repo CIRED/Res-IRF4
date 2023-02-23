@@ -38,11 +38,11 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    save=os.path.join(buildings.path, 'consumption_energy.png'),
                    total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
 
-    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
-    df.columns = resources_data['index']['Energy']
+    df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Heater']], :].T
+    df.columns = resources_data['index']['Heater']
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   save=os.path.join(buildings.path, 'consumption_energy.png'),
+                   save=os.path.join(buildings.path, 'consumption_heater.png'),
                    total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
 
     # consumption existing vs new

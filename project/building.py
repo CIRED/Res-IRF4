@@ -1341,6 +1341,7 @@ class AgentBuildings(ThermalBuildings):
                              axis=1, keys=['constant', 'calcul ini', 'calcul', 'observed', 'thousand', 'wtp']).round(decimals=3)
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
+                # assert allclose(market_share_agg.stack(), _ms_heater.fillna(0).stack(), rtol=10**-1)
 
             return constant
 
@@ -2459,12 +2460,13 @@ class AgentBuildings(ThermalBuildings):
                                        axis=1).round(3)
 
                 compare = concat((compare_rate, compare_share), ignore_index=True)
-                if (compare['Calculated'] == compare['Observed']).all():
+                if allclose(compare['Calculated'], compare['Observed'], rtol=10**-3):
                     self.logger.debug('Coupled optim worked')
                     break
 
             if self.path is not None:
                 compare.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
+                assert allclose(compare['Calculated'], compare['Observed'], rtol=10**-2), 'Calibration insulation did not work'
 
         def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total, path):
 
