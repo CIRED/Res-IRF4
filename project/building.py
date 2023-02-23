@@ -1869,7 +1869,6 @@ class AgentBuildings(ThermalBuildings):
             _temp = concat((_temp, t)).loc[self.constant_insulation_extensive.index]
             self.constant_insulation_extensive = _temp.copy()
 
-        subsidies_total = DataFrame(0, index=index, columns=cost_insulation.columns)
         subsidies_details = {}
 
         tax = VTA
@@ -1939,29 +1938,30 @@ class AgentBuildings(ThermalBuildings):
                         subsidies_details[policy.name] = subsidies_details[policy.name] + value
                     else:
                         subsidies_details[policy.name] = value.copy()
-                    subsidies_total += subsidies_details[policy.name]
                 else:
                     sub_non_cumulative.update({policy: value.copy()})
 
         for policy, value in sub_non_cumulative.items():
             for policy_compare in policy.non_cumulative:
                 if policy_compare in subsidies_details.keys():
-                    subsidies_total -= subsidies_details[policy_compare]
                     comp = reindex_mi(subsidies_details[policy_compare], value.index)
                     subsidies_details[policy_compare] = comp.where(comp > value, 0)
                     subsidies_details[policy.name] = value.where(value > comp, 0)
-                    subsidies_total += subsidies_details[policy.name] + subsidies_details[policy_compare]
 
         subsidies_bonus = [p for p in policies_insulation if p.policy == 'bonus']
         for policy in subsidies_bonus:
             temp = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T
-            subsidies_total += temp
+            temp.fillna(0, inplace=True)
+            if not policy.social_housing:
+                temp.loc[temp.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
+
             if policy.name in subsidies_details.keys():
                 subsidies_details[policy.name] = subsidies_details[policy.name] + temp
             else:
                 subsidies_details[policy.name] = temp.copy()
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
+        subsidies_total = sum([subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']])
         if subsidies_cap:
             # only one subsidy cap
             subsidies_cap = subsidies_cap[0]
@@ -1975,8 +1975,6 @@ class AgentBuildings(ThermalBuildings):
             for policy_name in policies_target:
                 if policy_name in subsidies_details.keys():
                     self.logger.debug('Capping amount for {}'.format(policy_name))
-                    # print(policy_name)
-                    # print('{:.1%}'.format(remaining[remaining > 0].count().sum() / (remaining.shape[0] * remaining.shape[1])))
                     temp = remaining.where(remaining <= subsidies_details[policy_name], subsidies_details[policy_name])
                     subsidies_details[policy_name] -= temp
                     assert (subsidies_details[policy_name].values >= 0).all(), '{} got negative values'.format(policy_name)
@@ -1984,10 +1982,8 @@ class AgentBuildings(ThermalBuildings):
                     if allclose(remaining, 0, rtol=10**-1):
                         break
 
-            assert allclose(remaining, 0, rtol=10**-1)
+            assert allclose(remaining, 0, rtol=10**-1), 'Over cap'
             subsidies_total -= subsidies_details['over_cap']
-
-        # subsidies_total = sum(subsidies_details[k] for k subsidies_total_list)
 
         regulation = [p for p in policies_insulation if p.policy == 'regulation']
         if 'landlord' in [p.name for p in regulation]:
@@ -2608,6 +2604,8 @@ class AgentBuildings(ThermalBuildings):
         energy_prices = prices.reindex(energy).set_axis(index)
         energy_bill_sd = (consumption_after.T * energy_prices).T
         bill_saved = - energy_bill_sd.sub(energy_bill_before, axis=0).dropna()
+
+        # TODO reindex subsidies_total with stock.index
 
         if self.constant_insulation_intensive is None and self._threshold is False:
             calibration_coupled(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive)

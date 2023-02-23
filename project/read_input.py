@@ -182,8 +182,8 @@ def read_policies(config):
                                   gest='insulation', target='global_renovation'))
 
         if data['bonus']:
-            bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            bonus_worst = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+            bonus_worst = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
 
             l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus', gest='insulation',
                                   target='bonus_best'))
