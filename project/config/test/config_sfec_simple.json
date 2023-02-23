@@ -1,6 +1,10 @@
 {
+  "sensitivity": {
+    "activated": true,
+    "step": [2, 5]
+  },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -30,9 +34,9 @@
       }
     },
     "ms_insulation": {
-        "endogenous": true,
-        "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
-        "minimum_performance": null
+      "endogenous": true,
+      "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
+      "minimum_performance": null
     },
     "district_heating": "project/input/revealed_data/district_heating_transition2050.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
@@ -96,16 +100,15 @@
       "prices_constant": false,
       "taxes_constant": false,
       "heating_system": {
-        "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
-        "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
-        "Wood fuel-Standard boiler":  "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air":  "Electricity-Heat pump water",
+        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water",
         "Heating-District heating": null,
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": true
-    },
-    "calibration": "project/input/calibration/calibration_simple.pkl"
+    }
   }
 }

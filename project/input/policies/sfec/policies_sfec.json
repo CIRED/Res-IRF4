@@ -23,7 +23,7 @@
         "tax": "project/input/policies/cee_tax.csv"
       },
       "mpr": {
-        "start": 2019,
+        "start": 2021,
         "end": 2051,
         "heater": "project/input/policies/sfec/mpr_heater_sfec.csv",
         "growth_heater": "project/input/policies/sfec/growth_mpr_heater.csv",

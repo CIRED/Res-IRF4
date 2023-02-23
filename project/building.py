@@ -3089,8 +3089,9 @@ class AgentBuildings(ThermalBuildings):
                                                                   financing_cost=financing_cost)
 
         self.logger.info('Formatting and storing replacement')
-        # step
-        flow_insulation = retrofit_rate.reindex(stock.index).fillna(0) * stock * step
+        retrofit_rate = retrofit_rate.reindex(stock.index).fillna(0)
+        factor = sum([(1 - retrofit_rate) ** i for i in range(step)])
+        flow_insulation = retrofit_rate * stock * factor
 
         if step > 1:
             stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
@@ -3473,6 +3474,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_hp = consumption_calib[consumption_calib.index.get_level_values('Heating system').isin(heat_pump)]
         output.update({'Consumption Heat pump (TWh)': consumption_hp.sum() / 10**9})
         output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity (TWh)'] - output['Consumption Heat pump (TWh)']})
+        output.update({'Consumption District heating (TWh)': output['Consumption Heating (TWh)']})
 
         consumption_energy_climate = None
         if climate is not None:
