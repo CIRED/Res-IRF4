@@ -14,7 +14,7 @@ from copy import deepcopy
 
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
-CONFIG_TEST = 'project/config/coupling/config_coupling_test.json'
+CONFIG_TEST = 'project/config/coupling/config_coupling_simple_test.json'
 CONFIG_THRESHOLD_TEST = 'project/config/coupling/config_coupling_simple_threshold.json'
 
 
@@ -372,5 +372,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=False, rebound=False, start=2020, end=2021,
+    run_simu(output_consumption=True, rebound=False, start=2020, end=2021,
              sub_design='efficiency_100')
