@@ -32,7 +32,7 @@
         "bonus": "project/input/policies/sfec/mpr_bonus.csv"
       },
       "mpr_serenite_high_income": {
-        "start": 2023,
+        "start": 2020,
         "end": 2051,
         "insulation": "project/input/policies/sfec/mpr_serenite_high_income_sfec.csv",
         "cap": "project/input/policies/sfec/mpr_serenite_cap_sfec.csv",
@@ -99,7 +99,7 @@
       },
       "obligation_po": {
         "start": 2020,
-        "end": 2051,
+        "end": 2020,
         "value": "project/input/policies/sfec/agenda_obligation_po_sfec.csv",
         "frequency": {"value": [0.1, 0, 0],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
@@ -110,7 +110,7 @@
       },
       "obligation_pb": {
         "start": 2020,
-        "end": 2051,
+        "end": 2020,
         "value": "project/input/policies/sfec/agenda_obligation_pb_sfec.csv",
         "frequency": {"value": [0, 0.33, 0.33],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],

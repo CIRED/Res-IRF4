@@ -65,6 +65,12 @@ class PublicPolicy:
         self.bonus = bonus
         self.social_housing = social_housing
 
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
     def cost_targeted(self, cost_insulation, target_subsidies=None):
         """
         Gives the amount of the cost of a gesture for a segment over which the subvention applies.
@@ -329,6 +335,12 @@ def read_policies(config):
             mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
             value *= mask
             by = 'columns'
+
+        if data.get('columns') is not None:
+            mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            value *= mask
+            by = 'columns'
+
 
         name = 'sub_ad_valorem'
         if data.get('name') is not None:

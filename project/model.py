@@ -118,7 +118,7 @@ def config2inputs(config=None, building_stock=None, end=None):
         for idx in inputs['ratio_surface'].index:
             inputs['ratio_surface'].loc[idx, :] = ratio_surface.round(1)
 
-    if config['simple'].get('no_policies'):
+    if config['simple'].get('no_policy'):
         for name, policy in config['policies'].items():
             if policy['end'] > policy['start']:
                 policy['end'] = config['start'] + 2
@@ -131,6 +131,9 @@ def config2inputs(config=None, building_stock=None, end=None):
 
             if policy['end'] > policy['start']:
                 policy['end'] = config['end']
+
+            if policy.get('growth_insulation'):
+                policy['growth_insulation'] = None
             config['policies'][name] = policy
 
     policies_heater, policies_insulation, taxes = read_policies(config)

@@ -18,6 +18,7 @@
 import os
 import sys
 
+import pandas as pd
 from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique
 from numpy import exp, log, append, array, allclose
 from numpy.testing import assert_almost_equal
@@ -1961,7 +1962,10 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = temp.copy()
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
-        subsidies_total = sum([subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']])
+        if subsidies_details:
+            subsidies_total = sum([subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']])
+        else:
+            subsidies_total = pd.DataFrame(0, index=consumption_saved.index, columns=consumption_saved.columns)
         if subsidies_cap:
             # only one subsidy cap
             subsidies_cap = subsidies_cap[0]
