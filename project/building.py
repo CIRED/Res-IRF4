@@ -527,7 +527,7 @@ class ThermalBuildings:
 
             return _consumption_energy
             
-    def calibration_consumption(self, prices, consumption_ini, climate=None, temp_indoor=None, store=True):
+    def calibration_consumption(self, prices, consumption_ini, climate=None):
         """Calculate energy indicators.
 
         Parameters
@@ -545,10 +545,10 @@ class ThermalBuildings:
         """
 
         if self.coefficient_global is None:
-            consumption = self.consumption_heating(climate=climate, temp_indoor=temp_indoor)
+            consumption = self.consumption_heating(climate=climate)
             consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
-            _consumption_actual = self.consumption_actual(prices, consumption=consumption, store=store) * self.stock
+            _consumption_actual = self.consumption_actual(prices, consumption=consumption) * self.stock
 
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
             if 'Heating' in consumption_energy.index:
@@ -3279,13 +3279,8 @@ class AgentBuildings(ThermalBuildings):
         names = self._condition_store['certificate_jump_all'].index.names
         replaced_by.index = replaced_by.index.reorder_levels(names)
 
-        for condition in [c for c in self._condition_store.keys() if c not in self._list_condition_subsidies]:
-            self._renovation_store[condition] = (replaced_by * self._condition_store[condition]).sum().sum()
 
-        if True in replaced_by.index.get_level_values('Heater replacement'):
-            self._renovation_store['renovation_with_heater'] = replaced_by.xs(True, level='Heater replacement').sum().sum()
 
-        self._renovation_store['vta'] = (replaced_by * self._renovation_store['vta_households']).sum().sum()
 
         # replaced_by
         levels = [i for i in replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
@@ -3557,6 +3552,8 @@ class AgentBuildings(ThermalBuildings):
 
         if self.year > self.first_year:
 
+            levels = [i for i in self._replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
+
             # consumption saving
             if self.consumption_before_retrofit is not None:
                 # do not consider coefficient
@@ -3586,7 +3583,9 @@ class AgentBuildings(ThermalBuildings):
             renovation = self._renovation_store['replacement'].sum().sum()
             output['Retrofit (Thousand households)'] = (renovation + self._renovation_store['only_heater']) / 10 ** 3 / step
             output['Renovation (Thousand households)'] = renovation / 10 ** 3 / step
-            output['Renovation with heater replacement (Thousand households)'] = self._renovation_store['renovation_with_heater'] / 10 ** 3 / step
+            if True in self._replaced_by.index.get_level_values('Heater replacement'):
+                temp = self._replaced_by.xs(True, level='Heater replacement').sum().sum()
+            output['Renovation with heater replacement (Thousand households)'] = temp / 10 ** 3 / step
             output['Switch heater only (Thousand households)'] = self._renovation_store['only_heater'] / 10 ** 3 / step
 
             temp = self._renovation_store['nb_measures'].copy()
@@ -3615,7 +3614,8 @@ class AgentBuildings(ThermalBuildings):
             output.update(o.T / step)
 
             for condition in [c for c in self._condition_store.keys() if c not in self._list_condition_subsidies]:
-                output['{} (Thousand households)'.format(condition.capitalize().replace('_', ' '))] = self._renovation_store[condition] / 10 ** 3 / step
+                temp = (self._replaced_by * self._condition_store[condition]).sum().sum()
+                output['{} (Thousand households)'.format(condition.capitalize().replace('_', ' '))] = temp / 10 ** 3 / step
 
             # switch heater
             temp = self._heater_store['replacement'].sum()
@@ -3825,7 +3825,9 @@ class AgentBuildings(ThermalBuildings):
 
             # economic state impact
             output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
-            output['VTA insulation (Billion euro)'] = self._renovation_store['vta'] / 10 ** 9 / step
+
+            temp = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
+            output['VTA insulation (Billion euro)'] = temp / 10 ** 9 / step
             output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
 
             output['Investment total WT (Billion euro)'] = output['Investment total (Billion euro)'] - output['VTA (Billion euro)']
