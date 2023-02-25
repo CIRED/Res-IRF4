@@ -271,7 +271,6 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
             gain_utilization_factor = 1
 
         heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
-
         heat_need = heat_need.stack(heat_need.columns.names)
 
         if freq == 'hour':

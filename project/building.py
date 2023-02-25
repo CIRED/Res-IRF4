@@ -254,7 +254,7 @@ class ThermalBuildings:
 
             return heating_need
 
-    def consumption_heating(self, index=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='kWh/m2.y',
+    def consumption_heating(self, index=None, freq='year', climate=None, smooth=False,
                             full_output=False, efficiency_hour=False, level_heater='Heating system'):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
 
@@ -265,7 +265,6 @@ class ThermalBuildings:
         climate
         smooth
         temp_indoor
-        unit
         full_output: bool, default False
         efficiency_hour
         level_heater: {'Heating system', 'Heating system final'}
@@ -293,7 +292,7 @@ class ThermalBuildings:
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
-                                                         temp_indoor=temp_indoor, efficiency_hour=efficiency_hour)
+                                                         efficiency_hour=efficiency_hour)
 
         consumption = reindex_mi(consumption, index)
 
@@ -401,7 +400,7 @@ class ThermalBuildings:
 
         return heating_intensity
 
-    def consumption_actual(self, prices, consumption=None, store=False, full_output=False):
+    def consumption_actual(self, prices, consumption=None, full_output=False):
         """Space heating consumption based on standard space heating consumption and heating intensity (kWh/building.a).
 
 
@@ -425,7 +424,6 @@ class ThermalBuildings:
             index = self.stock.index
             consumption = self.consumption_heating_store(index, full_output=False)
             consumption = reindex_mi(consumption, index) * reindex_mi(self._surface, index)
-            # consumption = self.consumption_heat_sd.copy() * self.surface
         else:
             consumption = consumption.copy()
             index = consumption.index
@@ -446,7 +444,7 @@ class ThermalBuildings:
         else:
             return consumption, heating_intensity, budget_share
 
-    def consumption_total(self, prices=None, freq='year', climate=None, smooth=False, temp_indoor=None, unit='TWh/y',
+    def consumption_agg(self, prices=None, freq='year', climate=None, smooth=False, unit='TWh/y',
                           standard=False, efficiency_hour=False, existing=False, energy=False):
         """Aggregated final energy consumption (TWh final energy).
 
@@ -457,7 +455,6 @@ class ThermalBuildings:
         freq
         climate
         smooth
-        temp_indoor
         unit
         standard: bool, default False
             If yes, consumption standard (conventional). Otherwise, consumption actual.
@@ -487,8 +484,7 @@ class ThermalBuildings:
 
         if standard is False:
             if freq == 'year':
-                consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth,
-                                                       temp_indoor=temp_indoor)
+                consumption = self.consumption_heating(freq=freq, climate=climate)
                 consumption = reindex_mi(consumption, self.stock.index) * self.surface
                 if existing is True:
                     consumption = consumption[consumption.index.get_level_values('Existing')]
@@ -501,14 +497,12 @@ class ThermalBuildings:
                     return consumption
 
             if freq == 'hour':
-                temp = self.consumption_heating(freq=freq, climate=climate, smooth=smooth, efficiency_hour=efficiency_hour)
-                temp = reindex_mi(temp, self.stock.index)
-                t = (temp.T * self.stock * self.surface).T
-                # adding heating intensity
-                _, heating_intensity, _ = self.consumption_actual(prices, full_output=True)
-                t = (t.T * heating_intensity).T
-                t = self.apply_calibration(t)
-                return t
+                consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth, efficiency_hour=efficiency_hour)
+                consumption = (reindex_mi(consumption, self.stock.index).T * self.surface).T
+                heating_intensity = self.to_heating_intensity(consumption.index, prices, consumption=consumption.sum(axis=1))
+                consumption = (consumption.T * heating_intensity * self.stock).T
+                consumption = self.apply_calibration(consumption)
+                return consumption
 
     def apply_calibration(self, consumption):
         if self.coefficient_global is None:
@@ -713,12 +707,12 @@ class ThermalBuildings:
         prices
         """
         output = dict()
-        temp = self.consumption_total(freq='year', standard=True, existing=True, energy=True)
+        temp = self.consumption_agg(freq='year', standard=True, existing=True, energy=True)
         output.update({'Consumption standard (TWh)': temp.sum()})
         temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
         output.update(temp)
 
-        temp = self.consumption_total(prices=prices, freq='year', standard=False, climate=None, smooth=False,
+        temp = self.consumption_agg(prices=prices, freq='year', standard=False, climate=None, smooth=False,
                                       existing=True, energy=True)
         output.update({'Consumption (TWh)': temp.sum()})
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -3451,12 +3445,12 @@ class AgentBuildings(ThermalBuildings):
         output['Surface (m2/person)'] = (
                     output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
-        output['Consumption standard (TWh)'] = self.consumption_total(prices=prices, freq='year', climate=climate,
+        output['Consumption standard (TWh)'] = self.consumption_agg(prices=prices, freq='year', climate=climate,
                                                                       standard=True, energy=False)
         output['Consumption standard (kWh/m2)'] = (output['Consumption standard (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
 
-        consumption_energy = self.consumption_total(prices=prices, freq='year', climate=None, standard=False, energy=True)
+        consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True)
         output['Consumption (TWh)'] = consumption_energy.sum()
         output['Consumption (kWh/m2)'] = (output['Consumption (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
@@ -3482,7 +3476,7 @@ class AgentBuildings(ThermalBuildings):
 
         consumption_energy_climate = None
         if climate is not None:
-            consumption_energy_climate = self.consumption_total(prices=prices, freq='year', climate=climate,
+            consumption_energy_climate = self.consumption_agg(prices=prices, freq='year', climate=climate,
                                                                 standard=False, energy=True)
             output['Consumption climate (TWh)'] = consumption_energy_climate.sum()
             temp = consumption_energy_climate.copy()

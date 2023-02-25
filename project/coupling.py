@@ -14,7 +14,7 @@ from copy import deepcopy
 
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
-CONFIG_TEST = 'project/config/coupling/config_coupling_simple_test.json'
+CONFIG_TEST = 'project/config/coupling/config_coupling_simple.json'
 CONFIG_THRESHOLD_TEST = 'project/config/coupling/config_coupling_simple_threshold.json'
 
 
@@ -255,8 +255,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
 
-        consumption = buildings.consumption_total(prices=prices, freq='hour', standard=False, climate=climate,
-                                                  smooth=smooth, efficiency_hour=efficiency_hour)
+        consumption = buildings.consumption_agg(prices=prices, freq='hour', standard=False, climate=climate,
+                                                smooth=smooth, efficiency_hour=efficiency_hour)
         if rebound is False:
             # TODO: only work if there at least two years
             consumption_energy = output.loc[['Consumption {} climate (TWh)'.format(i) for i in ENERGY], :].sum(axis=1).set_axis(ENERGY)
@@ -362,7 +362,7 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
     output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
                                        cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater,
                                        p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
-                                       efficiency_hour=True, demolition_rate=demolition_rate,
+                                       efficiency_hour=False, demolition_rate=demolition_rate,
                                        output_consumption=output_consumption, full_output=True, rebound=rebound,
                                        technical_progress=technical_progress)
 
@@ -372,5 +372,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=True, rebound=False, start=2020, end=2021,
+    run_simu(output_consumption=True, rebound=True, start=2020, end=2021,
              sub_design='efficiency_100')

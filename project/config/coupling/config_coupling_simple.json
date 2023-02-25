@@ -105,6 +105,7 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": true
-    }
+    },
+    "calibration": "project/input/calibration/calibration_simple.pkl"
   }
 }
