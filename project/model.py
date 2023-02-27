@@ -124,7 +124,7 @@ def config2inputs(config=None, building_stock=None, end=None):
                 policy['end'] = config['start'] + 2
                 config['policies'][name] = policy
 
-    if config['simple'].get('policies'):
+    if config['simple'].get('current_policies'):
         for name, policy in config['policies'].items():
             if policy['start'] > config['start'] + 1:
                 policy['end'] = policy['start']
@@ -344,7 +344,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
-    buildings.consumption_before_retrofit = buildings.store_consumption(prices)
+    if buildings.full_output:
+        buildings.consumption_before_retrofit = buildings.store_consumption(prices)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,
