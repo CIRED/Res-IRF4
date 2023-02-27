@@ -229,6 +229,10 @@ def read_policies(config):
         l.append(PublicPolicy(data['name'], data['start'], data['end'], value, data['policy'],
                               target=data.get('target'), gest='insulation', non_cumulative=data.get('non_cumulative'),
                               cap=cap))
+
+        if data.get('bonus') is not None:
+            bonus = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+            l.append(PublicPolicy(data['name'], data['start'], data['end'], bonus, 'bonus', gest='insulation'))
         return l
 
     def read_cee(data):
@@ -571,6 +575,11 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'traditional_material': config['technical']['footprint']['Traditional material']})
     inputs.update({'bio_material': config['technical']['footprint']['Bio material']})
+
+    if config.get('exogenous_social'):
+        exogenous_social = get_pandas(config['exogenous_social'],
+                                      lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+        inputs.update({'exogenous_social': exogenous_social})
 
     return inputs
 

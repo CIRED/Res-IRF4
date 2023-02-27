@@ -58,7 +58,8 @@
         "cap": "project/input/policies/sfec/mpr_multifamily_cap_sfec.csv",
         "non_cumulative": ["cite", "mpr"],
         "target": "mpr_serenite_nb",
-        "policy": "subsidy_ad_valorem"
+        "policy": "subsidy_ad_valorem",
+        "bonus": "project/input/policies/sfec/mpr_multifamily_bonus_sfec.csv"
       },
       "cap": {
         "start": 2019,
@@ -116,7 +117,7 @@
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},
         "intensive": "market_share",
-        "minimum_performance": "C",
+        "minimum_performance": "D",
         "policy": "obligation"
       }
     }

@@ -1974,15 +1974,22 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_bonus = [p for p in policies_insulation if p.policy == 'bonus']
         for policy in subsidies_bonus:
-            temp = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T
-            temp.fillna(0, inplace=True)
+            if policy.target is not None:
+                value = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T
+            else:
+                value = reindex_mi(policy.value, subsidies_details[policy.name].index)
+            value.fillna(0, inplace=True)
+
             if not policy.social_housing:
-                temp.loc[temp.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
+                value.loc[value.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
 
             if policy.name in subsidies_details.keys():
-                subsidies_details[policy.name] = subsidies_details[policy.name] + temp
+                if isinstance(value, (DataFrame, float, int)):
+                    subsidies_details[policy.name] = subsidies_details[policy.name] + value
+                elif isinstance(value, Series):
+                    subsidies_details[policy.name] = (subsidies_details[policy.name].T + value).T
             else:
-                subsidies_details[policy.name] = temp.copy()
+                subsidies_details[policy.name] = value.copy()
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         if subsidies_details:
@@ -2435,7 +2442,6 @@ class AgentBuildings(ThermalBuildings):
             ms_insulation_ini = _calib_intensive['ms_insulation_ini']
 
             # initialization of first renovation rate and then market-share
-            # better conversion when
             _market_share = concat([ms_insulation_ini] * _cost_total.shape[0], axis=1).T
             _market_share.index = _cost_total.index
             investment_insulation, bill_saved_insulation, subsidies_insulation = to_utility_extensive(_cost_total,
@@ -2755,7 +2761,8 @@ class AgentBuildings(ThermalBuildings):
         })
 
     def insulation_replacement(self, stock, prices, cost_insulation_raw, policies_insulation=None, financing_cost=None,
-                               calib_renovation=None, calib_intensive=None, min_performance=None):
+                               calib_renovation=None, calib_intensive=None, min_performance=None,
+                               exogenous_social=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -2876,21 +2883,27 @@ class AgentBuildings(ThermalBuildings):
                         delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
                     calib_renovation['scale']['delta_subsidies'] = delta_subsidies
 
-            retrofit_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total, cost_total,
-                                                                   calib_intensive=calib_intensive,
-                                                                   calib_renovation=calib_renovation,
-                                                                   min_performance=min_performance,
-                                                                   subsidies_details=subsidies_details)
+            renovation_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total, cost_total,
+                                                                     calib_intensive=calib_intensive,
+                                                                     calib_renovation=calib_renovation,
+                                                                     min_performance=min_performance,
+                                                                     subsidies_details=subsidies_details)
+            if exogenous_social is not None:
+                index = renovation_rate[renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
+                stock = self.add_certificate(stock[index])
+                renovation_rate_social = reindex_mi(exogenous_social, stock.index).droplevel('Performance')
+                renovation_rate.drop(index, inplace=True)
+                renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
 
         else:
-            retrofit_rate, market_share = self.exogenous_retrofit(stock, condition)
+            renovation_rate, market_share = self.exogenous_retrofit(stock, condition)
 
-        return retrofit_rate, market_share
+        return renovation_rate, market_share
 
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
-                      step=1):
+                      step=1, exogenous_social=None):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -2937,7 +2950,8 @@ class AgentBuildings(ThermalBuildings):
                                                                   calib_renovation=calib_renovation,
                                                                   calib_intensive=calib_intensive,
                                                                   policies_insulation=policies_insulation,
-                                                                  financing_cost=financing_cost)
+                                                                  financing_cost=financing_cost,
+                                                                  exogenous_social=exogenous_social)
 
         self.logger.info('Formatting and storing replacement')
         retrofit_rate = retrofit_rate.reindex(stock.index).fillna(0)
