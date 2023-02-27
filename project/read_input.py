@@ -580,6 +580,8 @@ def read_inputs(config, other_inputs=generic_input):
     if config.get('exogenous_social'):
         exogenous_social = get_pandas(config['exogenous_social'],
                                       lambda x: pd.read_csv(x, index_col=[0, 1]))
+        exogenous_social.columns = exogenous_social.columns.astype(int)
+
         inputs.update({'exogenous_social': exogenous_social})
 
     return inputs
@@ -813,11 +815,10 @@ def dump_inputs(parsed_inputs, path):
     t = parsed_inputs['total_taxes'].copy()
     t.columns = t.columns.map(lambda x: 'Taxes {} (euro/kWh)'.format(x))
     temp = parsed_inputs['energy_prices'].copy()
+    make_plot(temp.dropna(), 'Prices (euro/kWh)', format_y=lambda y, _: '{:.2f}'.format(y),
+              colors=resources_data['colors'], save=os.path.join(path, 'energy_prices.png'))
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
     pd.concat((summary_input, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
-
-    make_plot(temp.dropna(), 'Prices (euro/kWh)', format_y=lambda y, _: '{:.2f}'.format(y),
-              colors=resources_data['colors'])
 
     return summary_input
 
