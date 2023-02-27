@@ -3251,13 +3251,6 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
         output.update(temp.T / 10 ** 12)
 
-        output['Rebound (TWh)'], output['Cost rebound (Billion euro)'] = None, None
-        if self.rebound is not None:
-            temp = self.rebound / 10**9
-            output['Rebound (TWh)'] = temp.sum()
-            temp.index = temp.index.map(lambda x: 'Rebound {} (TWh)'.format(x))
-            output.update(temp.T)
-            output['Cost rebound (Billion euro)'] = self.cost_rebound.sum() / 10**9
 
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
@@ -3334,15 +3327,13 @@ class AgentBuildings(ThermalBuildings):
             temp = self.add_level(self._replaced_by.fillna(0), self._stock_ref, 'Income tenant')
             consumption_saved_actual_insulation = (temp * reindex_mi(self._renovation_store['consumption_saved_actual_households'], temp.index)).groupby(levels + ['Income tenant']).sum()
             consumption_saved_no_rebound_insulation = (temp * reindex_mi(self._renovation_store['consumption_saved_no_rebound_households'], temp.index)).groupby(levels + ['Income tenant']).sum()
+            rebound_insulation = (consumption_saved_no_rebound_insulation - consumption_saved_actual_insulation).sum(axis=1)
+            rebound_insulation = rebound_insulation.groupby(self.to_energy(rebound_insulation)).sum()
 
-            rebound = (consumption_saved_no_rebound_insulation - consumption_saved_actual_insulation).sum(axis=1)
-            rebound = rebound.groupby(self.to_energy(rebound)).sum()
             output.update({'Consumption standard saving insulation (TWh/year)': consumption_saved_insulation.sum().sum() / 10**9})
             output.update({'Consumption saving insulation (TWh/year)': consumption_saved_actual_insulation.sum().sum() / 10**9})
             output.update({'Consumption saving no rebound insulation (TWh/year)': consumption_saved_no_rebound_insulation.sum().sum() / 10**9})
-            output['Rebound insulation (TWh/year)'] = rebound.sum() / 10**9
-            rebound.index = rebound.index.map(lambda x: 'Rebound {} (TWh/year)'.format(x))
-            output.update(rebound.T  / 10**9)
+            output['Rebound insulation (TWh/year)'] = rebound_insulation.sum() / 10**9
 
             output['Performance gap (% standard)'] = output['Consumption saving insulation (TWh/year)'] / output['Consumption standard saving insulation (TWh/year)']
 
@@ -3372,10 +3363,14 @@ class AgentBuildings(ThermalBuildings):
             output.update({'Consumption standard saving heater (TWh/year)': self._heater_store['consumption_saved'] / 10**9})
             output.update({'Consumption saving heater (TWh/year)': self._heater_store['consumption_saved_actual'] / 10**9})
             output.update({'Consumption saving no rebound heater (TWh/year)': self._heater_store['consumption_saved_no_rebound'] / 10**9})
-            rebound = self._heater_store['rebound']
-            output['Rebound heater (TWh/year)'] = rebound.sum() / 10**9
-            rebound.index = rebound.index.map(lambda x: 'Rebound {} (TWh/year)'.format(x))
-            output.update(rebound.T / 10**9)
+            rebound_heater = self._heater_store['rebound']
+            output['Rebound heater (TWh/year)'] = rebound_heater.sum() / 10**9
+
+            rebound_insulation.index = rebound_insulation.index.map(lambda x: 'Rebound insulation {} (TWh/year)'.format(x))
+            output.update(rebound_insulation.T / 10**9)
+
+            rebound_heater.index = rebound_heater.index.map(lambda x: 'Rebound heater {} (TWh/year)'.format(x))
+            output.update(rebound_heater.T / 10**9)
 
             # retrofit and renovation
             renovation = replaced_by_grouped.sum().sum()
