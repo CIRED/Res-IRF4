@@ -1030,3 +1030,19 @@ def cumulated_plots(dict_df, y_label, legend=True, format_y=lambda y, _: y, save
     if ylim:
         ax.set_ylim(top=ylim)
     save_fig(fig, save=save)
+
+
+def compare_bar_plot(df, y_label, legend=True, format_y=lambda y, _: y, save=None):
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+
+    df.plot(ax=ax, kind='bar')
+
+    ax = format_ax(ax, title=y_label, format_y=format_y)
+    if legend:
+        format_legend(ax)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+
+    # plt.ticklabel_format(style='plain', axis='x')
+
+    save_fig(fig, save=save)

@@ -471,7 +471,7 @@ def res_irf(config, path):
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
-            if year == 2019 and buildings.full_output:
+            if year == 2019 and config.get('full_output'):
                 compare_results(o, buildings.path)
                 with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
                     dump({
@@ -487,7 +487,7 @@ def res_irf(config, path):
             buildings.logger.info('Dumping output in {}'.format(path))
             if buildings.memory:
                 pd.DataFrame(buildings.memory).to_csv(os.path.join(path, 'memory.csv'))
-            if not buildings.full_output:
+            if not config.get('full_output'):
                 # for price elasticity calculation
                 temp = energy_prices.T
                 temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
@@ -495,7 +495,7 @@ def res_irf(config, path):
                 output = output.sort_index(axis=1)
 
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
-            if buildings.full_output:
+            if config.get('full_output'):
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 plot_scenario(output, stock, buildings)
 
@@ -605,7 +605,7 @@ def calibration_res_irf(path, config=None):
         output = pd.concat((output, o), axis=1)
         output.to_csv(os.path.join(buildings.path, 'output_calibration.csv'))
 
-        if year == 2019 and buildings.full_output:
+        if year == 2019:
             compare_results(o, buildings.path)
 
         calibration = {

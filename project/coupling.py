@@ -48,7 +48,6 @@ def ini_res_irf(path=None, config=None, climate=2006):
     buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
         inputs, stock, year, taxes, path=path, config=config)
 
-
     # calibration
     if config.get('calibration'):
         with open(config['calibration'], "rb") as file:

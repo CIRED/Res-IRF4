@@ -578,7 +578,7 @@ def read_inputs(config, other_inputs=generic_input):
 
     if config.get('exogenous_social'):
         exogenous_social = get_pandas(config['exogenous_social'],
-                                      lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+                                      lambda x: pd.read_csv(x, index_col=[0, 1]))
         inputs.update({'exogenous_social': exogenous_social})
 
     return inputs

@@ -28,7 +28,7 @@ from copy import deepcopy
 from itertools import product
 
 
-from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, get_size
+from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, get_size, compare_bar_plot
 import project.thermal as thermal
 import psutil
 
@@ -126,6 +126,10 @@ class ThermalBuildings:
 
         self.stock = stock
 
+        stock = self.add_certificate(stock).groupby('Performance').sum() / 10**6
+        compare_performance = concat((stock, self._resources_data['performance_stock']), axis=1, keys=['Model', 'SDES-2018'])
+        compare_bar_plot(compare_performance, 'Stock by performance (Million dwelling)', save=os.path.join(self.path, 'stock_performance.png'))
+
     @property
     def year(self):
         return self._year
@@ -164,6 +168,8 @@ class ThermalBuildings:
         self.energy = self.to_energy(stock).astype('category')
         consumption_sd, _, certificate = self.consumption_heating_store(stock.index)
         self.certificate = reindex_mi(certificate, stock.index).astype('category')
+
+
 
     def simplified_stock(self, energy_level=False):
         """Return simplified stock.
@@ -545,7 +551,10 @@ class ThermalBuildings:
         """
 
         if self.coefficient_global is None:
-            consumption = self.consumption_heating(climate=climate)
+            consumption, certificate, consumption_3uses = self.consumption_heating(climate=climate, full_output=True)
+            s = self.stock.groupby(consumption.index.names).sum()
+
+            # plt.hist(consumption_3uses, weights=s, density=False)
             consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
             _consumption_actual = self.consumption_actual(prices, consumption=consumption) * self.stock
@@ -2885,7 +2894,7 @@ class AgentBuildings(ThermalBuildings):
             if exogenous_social is not None:
                 index = renovation_rate[renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
                 stock = self.add_certificate(stock[index])
-                renovation_rate_social = reindex_mi(exogenous_social, stock.index).droplevel('Performance')
+                renovation_rate_social = reindex_mi(exogenous_social.loc[:, self.year], stock.index).droplevel('Performance')
                 renovation_rate.drop(index, inplace=True)
                 renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
 
@@ -3051,6 +3060,7 @@ class AgentBuildings(ThermalBuildings):
         # only work if there is one obligation
         flows_obligation = []
         for obligation in list_obligation:
+            self.logger.info('Flow obligation: {}'.format(obligation.name))
             banned_performance = obligation.value.loc[self.year]
             if not isinstance(banned_performance, str):
                 return None
