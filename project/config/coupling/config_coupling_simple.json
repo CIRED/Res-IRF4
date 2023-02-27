@@ -69,7 +69,7 @@
       "construction": true,
       "population": "project/input/macro/population.csv",
       "income": "project/input/macro/income.csv",
-      "energy_prices": "project/input/macro/energy_prices_ht.csv",
+      "energy_prices": "project/input/macro/energy_prices_ht_sfec.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
       "flow_construction": "project/input/macro/flow_construction_sfec.csv",
       "pop_housing": null,

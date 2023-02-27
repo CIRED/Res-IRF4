@@ -552,13 +552,28 @@ class ThermalBuildings:
 
         if self.coefficient_global is None:
             consumption, certificate, consumption_3uses = self.consumption_heating(climate=climate, full_output=True)
-            s = self.stock.groupby(consumption.index.names).sum()
-
+            """s = self.stock.groupby(consumption.index.names).sum()
+            import seaborn as sns
+            import matplotlib.pyplot as plt
+            df = concat((consumption_3uses, s), axis=1, keys=['Consumption', 'Stock'])
+            df = self.add_certificate(df).reset_index('Performance')
+            sns.histplot(data=df, x='Consumption', kde=False, weights='Stock', hue='Performance', bins=20)
+            """
             # plt.hist(consumption_3uses, weights=s, density=False)
             consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
-            _consumption_actual = self.consumption_actual(prices, consumption=consumption) * self.stock
+            _consumption_actual, heating_intensity, budget_share = self.consumption_actual(prices, consumption=consumption, full_output=True)
+            """
+            df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
+            df = df.reset_index('Income tenant')
+            sns.histplot(data=df, x='Heating intensity', kde=True, weights='Stock', hue='Income tenant', bins=20)
 
+            df = pd.concat((budget_share, self.stock), axis=1, keys=['Budget share', 'Stock'])
+            df = df.reset_index('Income tenant')
+            sns.histplot(data=df, x='Budget share', kde=False, weights='Stock', hue='Income tenant', bins=20)
+            """
+
+            _consumption_actual *= self.stock
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
             if 'Heating' in consumption_energy.index:
                 consumption_energy = consumption_energy.drop('Heating')
@@ -3665,7 +3680,8 @@ class AgentBuildings(ThermalBuildings):
             temp = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
             output['VTA insulation (Billion euro)'] = temp / 10 ** 9 / step
             output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
-
+            output['Investment heater WT (Billion euro)'] = output['Investment heater (Billion euro)'] - output['VTA heater (Billion euro)']
+            output['Investment insulation WT (Billion euro)'] = output['Investment insulation (Billion euro)'] - output['VTA insulation (Billion euro)']
             output['Investment total WT (Billion euro)'] = output['Investment total (Billion euro)'] - output['VTA (Billion euro)']
             output['Investment total WT / households (Thousand euro)'] = output['Investment total WT (Billion euro)'] * 10**6 / (output['Retrofit (Thousand households)'] * 10**3)
 

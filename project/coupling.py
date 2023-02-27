@@ -302,7 +302,7 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
                                        cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater,
                                        p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
                                        efficiency_hour=False, demolition_rate=demolition_rate,
-                                       output_consumption=output_consumption, full_output=False, rebound=rebound,
+                                       output_consumption=output_consumption, full_output=True, rebound=rebound,
                                        technical_progress=technical_progress)
 
     concat_output = concat((concat_output, output), axis=1)
@@ -311,5 +311,4 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=True, rebound=True, start=2020, end=2025,
-             sub_design='efficiency_100')
+    run_simu(output_consumption=True, rebound=True, start=2020, end=2021, sub_design='efficiency_100')
