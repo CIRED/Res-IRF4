@@ -2848,31 +2848,30 @@ class AgentBuildings(ThermalBuildings):
         assert allclose(amount_debt + amount_saving + subsidies_total, reindex_mi(cost_insulation, subsidies_total.index)), 'Sum problem'
 
         if self._condition_store is None:
-            if self.full_output:
 
-                surface = self._surface.xs(True, level='Existing')
-                consumption_before = self.add_attribute(consumption_before, [i for i in surface.index.names if i not in consumption_before.index.names])
-                consumption_before *= reindex_mi(surface, consumption_before.index)
-                consumption_before = self.add_attribute(consumption_before, 'Income tenant')
-                heating_intensity = self.to_heating_intensity(consumption_before.index, prices,
-                                                              consumption=consumption_before,
-                                                              level_heater='Heating system final')
-                consumption_before *= heating_intensity
+            surface = self._surface.xs(True, level='Existing')
+            consumption_before = self.add_attribute(consumption_before, [i for i in surface.index.names if i not in consumption_before.index.names])
+            consumption_before *= reindex_mi(surface, consumption_before.index)
+            consumption_before = self.add_attribute(consumption_before, 'Income tenant')
+            heating_intensity = self.to_heating_intensity(consumption_before.index, prices,
+                                                          consumption=consumption_before,
+                                                          level_heater='Heating system final')
+            consumption_before *= heating_intensity
 
-                consumption_after = self.add_attribute(consumption_after, [i for i in surface.index.names if i not in consumption_after.index.names])
-                consumption_after = (consumption_after.T * reindex_mi(surface, consumption_after.index)).T
-                consumption_after = self.add_attribute(consumption_after, 'Income tenant')
-                heating_intensity_after = self.to_heating_intensity(consumption_after.index, prices,
-                                                                    consumption=consumption_after,
-                                                                    level_heater='Heating system final')
+            consumption_after = self.add_attribute(consumption_after, [i for i in surface.index.names if i not in consumption_after.index.names])
+            consumption_after = (consumption_after.T * reindex_mi(surface, consumption_after.index)).T
+            consumption_after = self.add_attribute(consumption_after, 'Income tenant')
+            heating_intensity_after = self.to_heating_intensity(consumption_after.index, prices,
+                                                                consumption=consumption_after,
+                                                                level_heater='Heating system final')
 
-                consumption_saved_actual = (consumption_before - (consumption_after * heating_intensity_after).T).T
-                consumption_saved_no_rebound = (consumption_before - consumption_after.T * heating_intensity).T
+            consumption_saved_actual = (consumption_before - (consumption_after * heating_intensity_after).T).T
+            consumption_saved_no_rebound = (consumption_before - consumption_after.T * heating_intensity).T
 
-                self.store_information_insulation(condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
-                                                  vta_insulation, subsidies_details, subsidies_total, consumption_saved,
-                                                  consumption_saved_actual, consumption_saved_no_rebound,
-                                                  amount_debt, amount_saving, discount)
+            self.store_information_insulation(condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
+                                              vta_insulation, subsidies_details, subsidies_total, consumption_saved,
+                                              consumption_saved_actual, consumption_saved_no_rebound,
+                                              amount_debt, amount_saving, discount)
 
         if self._endogenous:
 
@@ -3808,23 +3807,18 @@ class AgentBuildings(ThermalBuildings):
         output = dict()
 
         # investment
-        output['Investment heater (Billion euro)'] = self._heater_store['cost'].sum().sum() / 10 ** 9 / step
         investment_cost = (self._replaced_by * self._renovation_store['cost_households']).sum().sum()
-        output['Investment insulation (Billion euro)'] = investment_cost.sum() / 10 ** 9 / step
+        investment_cost = investment_cost.sum() / 10 ** 9 / step
+        vta = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
+        vta = vta / 10 ** 9 / step
+        output['Investment insulation WT (Billion euro)'] = investment_cost - vta
 
-        output['Investment total (Billion euro)'] = output['Investment heater (Billion euro)'] + output['Investment insulation (Billion euro)'] / 10 ** 9 / step
+        # vta
+        investment_heater = self._heater_store['cost'].sum().sum() / 10 ** 9 / step
+        vta = self._heater_store['vta'] / 10 ** 9 / step
+        output['Investment heater WT (Billion euro)'] = investment_heater - vta
 
-        # economic state impact
-        output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
-
-        temp = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
-        output['VTA insulation (Billion euro)'] = temp / 10 ** 9 / step
-        output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
-
-        output['Investment total WT (Billion euro)'] = output['Investment total (Billion euro)'] - output['VTA (Billion euro)']
-
-        output['Health cost (Billion euro)'], o = self.health_cost(inputs)
-        output.update(o)
+        output['Health cost (Billion euro)'], _ = self.health_cost(inputs)
 
         output = Series(output).rename(self.year)
 

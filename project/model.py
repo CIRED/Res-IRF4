@@ -305,7 +305,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=True,
-                   exogenous_social=None):
+                   exogenous_social=None, full_output=True):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -372,13 +372,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if flows_obligation is not None:
         buildings.add_flows(flows_obligation)
 
-    # buildings.store_information_retrofit(prices)
-
     if flow_built is not None:
         buildings.add_flows([flow_built])
 
     buildings.logger.info('Writing output')
-    if buildings.full_output:
+    if full_output:
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
     else:
         stock = buildings.simplified_stock().rename(year)
@@ -467,7 +465,8 @@ def res_irf(config, path):
                                              climate=config.get('climate'),
                                              district_heating=inputs.get('district_heating'),
                                              step=step, demolition_rate=demolition_rate,
-                                             exogenous_social=inputs.get('exogenous_social'))
+                                             exogenous_social=inputs.get('exogenous_social'),
+                                             full_output=config.get('full_output'))
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

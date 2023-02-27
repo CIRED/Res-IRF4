@@ -79,63 +79,6 @@ def ini_res_irf(path=None, config=None, climate=2006):
     return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
 
 
-def select_output(output):
-    """Select output
-
-    Parameters
-    ----------
-    output: DataFrame
-        Res-IRF  output.
-
-    Returns
-    -------
-    DataFrame
-        Selected rows
-    """
-
-    energy = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
-    heater_replacement = ['Electricity-Heat pump water',
-                          'Electricity-Heat pump air',
-                          'Electricity-Performance boiler',
-                          'Natural gas-Performance boiler',
-                          'Wood fuel-Performance boiler'
-                          ]
-    heater_stock = heater_replacement + ['Natural gas-Standard boiler',
-                                         'Wood fuel-Standard boiler',
-                                         'Oil fuel-Standard boiler',
-                                         'Oil fuel-Performance boiler',
-                                         ]
-    consumption_energy = ['Consumption {} climate (TWh)'.format(i) for i in energy]
-    rebound_energy = ['Rebound {} (TWh)'.format(i) for i in energy]
-
-    variables = list()
-    variables += consumption_energy
-    variables += rebound_energy
-
-    variables += [
-        'Investment heater (Billion euro)',
-        'Investment insulation (Billion euro)',
-        'Investment total (Billion euro)',
-        'Subsidies heater (Billion euro)',
-        'Subsidies insulation (Billion euro)',
-        'Subsidies total (Billion euro)',
-        'Health cost (Billion euro)',
-        'Energy poverty (Million)',
-        'Heating intensity (%)',
-        'Emission (MtCO2)',
-        'Cost rebound (Billion euro)',
-        'Consumption saving insulation (TWh)',
-        'Consumption saving heater (TWh)',
-        'Investment insulation / saving (euro/kWh)',
-        'Investment heater / saving (euro/kWh)'
-    ]
-    variables += ['Replacement heater {} (Thousand households)'.format(i) for i in heater_replacement]
-    variables += ['Stock {} (Thousand households)'.format(i) for i in heater_stock]
-
-    variables = [v for v in variables if v in output.index]
-    return output.loc[variables]
-
-
 def create_subsidies(sub_insulation, sub_design, start, end):
     """
 
@@ -244,12 +187,9 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                          cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs,
                                          financing_cost=financing_cost,
-                                         climate=climate, demolition_rate=demolition_rate)
+                                         climate=climate, demolition_rate=demolition_rate, full_output=full_output)
 
-        if full_output is False:
-            output.update({year: select_output(o)})
-        else:
-            output.update({year: o})
+        output.update({year: o})
 
     output = DataFrame(output)
     if output_consumption is True:
@@ -363,7 +303,7 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
                                        cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater,
                                        p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
                                        efficiency_hour=False, demolition_rate=demolition_rate,
-                                       output_consumption=output_consumption, full_output=True, rebound=rebound,
+                                       output_consumption=output_consumption, full_output=False, rebound=rebound,
                                        technical_progress=technical_progress)
 
     concat_output = concat((concat_output, output), axis=1)
