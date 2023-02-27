@@ -535,9 +535,6 @@ class ThermalBuildings:
         prices: Series
         consumption_ini: Series
         climate
-        temp_indoor
-        store: bool, default True
-            If True, store results in object attribute.
 
         Returns
         -------
@@ -553,7 +550,7 @@ class ThermalBuildings:
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
             if 'Heating' in consumption_energy.index:
                 consumption_energy = consumption_energy.drop('Heating')
-                consumption_ini = consumption_ini.drop('District heating')
+            consumption_ini = consumption_ini.drop('District heating')
 
             # 1. consumption total
             coefficient_global = consumption_ini.sum() * 10**9 / consumption_energy.sum()
@@ -3557,9 +3554,9 @@ class AgentBuildings(ThermalBuildings):
                     o['Retrofit {} EPC (Thousand households)'.format(i)] = (t_renovation + t_heater) / 10 ** 3 / step
             o = Series(o).sort_index(ascending=False)
 
-            output['Retrofit at least 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >= 1]) / step
-            output['Retrofit at least 2 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >= 2]) / step
-            output.update(o.T / step)
+            output['Retrofit at least 1 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >= 1])
+            output['Retrofit at least 2 EPC (Thousand households)'] = sum([o['Retrofit {} EPC (Thousand households)'.format(i)] for i in temp.index.unique() if i >= 2])
+            output.update(o.T)
 
             for condition in [c for c in self._condition_store.keys() if c not in self._list_condition_subsidies]:
                 temp = (self._replaced_by * self._condition_store[condition]).sum().sum()

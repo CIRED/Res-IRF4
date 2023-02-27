@@ -20,6 +20,7 @@ from project.utils import get_pandas
 
 resources_data = dict()
 
+# TODO: consumption hist to not include district heating
 consumption_hist = get_pandas('project/input/resources_dir/hist_consumption.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
 resources_data['consumption_hist'] = {k: Series(item, name='Historic') for k, item in consumption_hist.to_dict().items()}
 
