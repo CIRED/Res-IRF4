@@ -287,7 +287,6 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                exogenous=config['renovation']['exogenous'],
                                logger=logger,
                                quintiles=config['simple']['quintiles'],
-                               full_output=config.get('full_output'),
                                financing_cost=config.get('financing_cost'),
                                debug_mode=config.get('debug_mode'),
                                threshold=config['renovation'].get('threshold'),
@@ -345,7 +344,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
-    if buildings.full_output:
+    if full_output:
         buildings.consumption_before_retrofit = buildings.store_consumption(prices)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation,
                                             policies_heater=p_heater,

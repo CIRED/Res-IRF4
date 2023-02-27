@@ -295,8 +295,8 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
         path=path,
         config=CONFIG_TEST)
 
-    sub_heater = 0.5
-    sub_insulation = 1
+    sub_heater = 0
+    sub_insulation = 0
 
     concat_output = DataFrame()
     output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
@@ -312,5 +312,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=True, rebound=True, start=2020, end=2021,
+    run_simu(output_consumption=True, rebound=True, start=2020, end=2025,
              sub_design='efficiency_100')

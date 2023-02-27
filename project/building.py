@@ -760,7 +760,7 @@ class AgentBuildings(ThermalBuildings):
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
                  performance_insulation, path=None, year=2018,
                  endogenous=True, exogenous=None, insulation_representative='market_share',
-                 logger=None, debug_mode=False, calib_scale=True, full_output=None,
+                 logger=None, debug_mode=False, calib_scale=True,
                  quintiles=None, financing_cost=True, threshold=None, resources_data=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
@@ -773,10 +773,6 @@ class AgentBuildings(ThermalBuildings):
         self.quintiles = quintiles
         if self.quintiles:
             self._resources_data = deciles2quintiles_dict(self._resources_data)
-
-        if full_output is None:
-            full_output = True
-        self.full_output = full_output
 
         self.policies = []
 
@@ -1602,9 +1598,8 @@ class AgentBuildings(ThermalBuildings):
                        axis=0, keys=[False, True], names=['Heater replacement'])
         assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(), 0) == 0, 'Sum problem'
 
-        if self.full_output:
-            self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, vta_heater,
-                                          cost_financing, amount_debt, amount_saving, discount)
+        self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, vta_heater,
+                                      cost_financing, amount_debt, amount_saving, discount)
         return stock
 
     def prepare_cost_insulation(self, cost_insulation):
@@ -2982,10 +2977,9 @@ class AgentBuildings(ThermalBuildings):
         only_heater = (stock - flow_insulation.reindex(stock.index, fill_value=0)).xs(True, level='Heater replacement')
 
         # storing information (flow, investment, subsidies)
-        if self.full_output:
-            self.logger.debug('Store information retrofit')
-            self._replaced_by = replaced_by.copy()
-            self._only_heater = only_heater.copy()
+        self.logger.debug('Store information retrofit')
+        self._replaced_by = replaced_by.copy()
+        self._only_heater = only_heater.copy()
 
         # removing heater replacement level
         replaced_by = replaced_by.groupby(
@@ -3108,8 +3102,7 @@ class AgentBuildings(ThermalBuildings):
             replaced_by = (replaced_by.rename(None) * market_share.T).T
             replaced_by = replaced_by.fillna(0)
 
-            if self.full_output:
-                self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
+            self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
 
             replaced_by = self.frame_to_flow(replaced_by)
 
