@@ -84,14 +84,14 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/sfec/policies_sfec.json",
+    "policies": "project/input/policies/coupling/policies_coupling.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "no_policy": true,
-      "policies": false,
+      "current_policies": false,
       "income": false,
       "prices_constant": false,
       "taxes_constant": false,
@@ -105,7 +105,6 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": true
-    },
-    "calibration": "project/input/calibration/calibration_simple.pkl"
+    }
   }
 }
