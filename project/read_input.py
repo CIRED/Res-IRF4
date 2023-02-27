@@ -23,9 +23,10 @@ from numpy.testing import assert_almost_equal
 import copy
 import os
 
-from project.utils import reindex_mi, get_pandas
+from project.utils import reindex_mi, get_pandas, make_plot
 from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 from project.input.param import generic_input
+from project.input.resources import resources_data
 
 
 class PublicPolicy:
@@ -814,6 +815,9 @@ def dump_inputs(parsed_inputs, path):
     temp = parsed_inputs['energy_prices'].copy()
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
     pd.concat((summary_input, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+
+    make_plot(temp.dropna(), 'Prices (euro/kWh)', format_y=lambda y, _: '{:.2f}'.format(y),
+              colors=resources_data['colors'])
 
     return summary_input
 
