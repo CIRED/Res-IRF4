@@ -199,27 +199,27 @@ def select(df, dict_levels):
 
 
 def deciles2quintiles_pandas(data, func='mean'):
+    if isinstance(data, (pd.DataFrame, pd.Series)):
+        level_income = []
+        for key in ['Income owner', 'Income tenant', 'Income']:
+            if key in data.index.names:
+                level_income += [key]
 
-    level_income = []
-    for key in ['Income owner', 'Income tenant', 'Income']:
-        if key in data.index.names:
-            level_income += [key]
+        for level in level_income:
+            names = None
+            if isinstance(data.index, pd.MultiIndex):
+                names = data.index.names
 
-    for level in level_income:
-        names = None
-        if isinstance(data.index, pd.MultiIndex):
-            names = data.index.names
+            data = data.rename(index=DECILES2QUINTILES, level=level)
 
-        data = data.rename(index=DECILES2QUINTILES, level=level)
+            if func == 'mean':
+                data = data.groupby(data.index).mean()
+            elif func == 'sum':
+                data = data.groupby(data.index).sum()
 
-        if func == 'mean':
-            data = data.groupby(data.index).mean()
-        elif func == 'sum':
-            data = data.groupby(data.index).sum()
-
-        if names:
-            data.index = pd.MultiIndex.from_tuples(data.index)
-            data.index.names = names
+            if names:
+                data.index = pd.MultiIndex.from_tuples(data.index)
+                data.index.names = names
 
     return data
 

@@ -1,6 +1,10 @@
 {
+  "sensitivity": {
+    "activated": true,
+    "step": [2, 5]
+  },
   "Reference": {
-    "end": 2025,
+    "end": 2051,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -84,13 +88,13 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/sfec/policies_sfec.json",
+    "policies": "project/input/policies/coupling/policies_coupling.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "no_policy": true,
+      "no_policy": false,
       "policies": false,
       "income": false,
       "prices_constant": false,
@@ -105,6 +109,7 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": true
-    }
+    },
+    "calibration": "project/input/calibration/calibration_simple.pkl"
   }
 }

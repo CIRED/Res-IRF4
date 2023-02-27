@@ -379,8 +379,9 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
     else:
         stock = buildings.simplified_stock().rename(year)
-        output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
-        output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+        # output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
+        # output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+        output = buildings.parse_output_run_simple(post_inputs, step)
 
     return buildings, stock, output
 
@@ -435,10 +436,10 @@ def res_irf(config, path):
         for k, year in enumerate(years):
             start = time()
 
-            if year == config['start'] + 1:
+            if year == config['end'] - 1:
                 yrs = [year]
             else:
-                yrs = range(years[k - 1] + 1, year + 1)
+                yrs = range(year, years[k + 1])
             step = len(yrs)
 
             prices = energy_prices.loc[year, :]

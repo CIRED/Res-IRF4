@@ -3092,9 +3092,11 @@ class AgentBuildings(ThermalBuildings):
         flow_insulation = retrofit_rate * stock * factor
 
         if step > 1:
+            # approximation
             stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
                                             ms_heater=ms_heater, step=step, financing_cost=financing_cost,
                                             district_heating=district_heating)
+            flow_insulation = flow_insulation.where(flow_insulation < stock, stock)
 
         flow_only_heater = stock - flow_insulation
         assert (flow_only_heater >= 0).all().all(), 'Remaining stock is not positive'
@@ -3257,7 +3259,6 @@ class AgentBuildings(ThermalBuildings):
             flows_obligation.append(flow_obligation)
         return flows_obligation
 
-
     def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None, detailed_output=True,
                          lifetime=50, discount_rate=0.032):
         """Parse output.
@@ -3284,6 +3285,7 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
+        import gc
 
         def make_cost_curve(_consumption_saved, _cost_insulation, _stock, lifetime=lifetime, discount_rate=discount_rate):
             cost_annualized = calculate_annuities(_cost_insulation, lifetime=lifetime, discount_rate=discount_rate)
@@ -3459,6 +3461,8 @@ class AgentBuildings(ThermalBuildings):
 
                 _, _, certificate = self.prepare_consumption()
                 certificate = reindex_mi(certificate, self.stock.index)
+                del certificate
+                gc.collect()
 
             levels_owner = ['Occupancy status', 'Income owner']
 
@@ -3475,8 +3479,7 @@ class AgentBuildings(ThermalBuildings):
             consumption_saved_insulation = (self._replaced_by * self._renovation_store['consumption_saved_households']).groupby(levels).sum()
 
             temp = self.add_level(self._replaced_by.fillna(0), self._stock_ref, 'Income tenant')
-            save = reindex_mi(self._renovation_store['consumption_saved_actual_households'], temp.index)
-            consumption_saved_actual_insulation = (temp * save).groupby(levels + ['Income tenant']).sum()
+            consumption_saved_actual_insulation = (temp * reindex_mi(self._renovation_store['consumption_saved_actual_households'], temp.index)).groupby(levels + ['Income tenant']).sum()
 
             output.update({'Consumption standard saving insulation (TWh/year)': consumption_saved_insulation.sum().sum() / 10**9})
             output.update({'Consumption saving insulation (TWh/year)': consumption_saved_actual_insulation.sum().sum() / 10**9})
@@ -3818,12 +3821,12 @@ class AgentBuildings(ThermalBuildings):
 
             # TODO: NOT IMPLEMENTED YET
 
-            prices_reindex = prices.reindex(
+            """prices_reindex = prices.reindex(
                 self.to_energy(self._renovation_store['consumption_saved_households'])).set_axis(
                 self._renovation_store['consumption_saved_households'].index, axis=0)
             bill_saved = (self._renovation_store['consumption_saved_households'].T * prices_reindex).T
             bill_saved = (self._replaced_by * bill_saved).groupby(levels).sum().sum(axis=1)
-            bill_saved_mean = bill_saved.sum() / self._replaced_by.sum().sum()
+            bill_saved_mean = bill_saved.sum() / self._replaced_by.sum().sum()"""
 
             if self.consumption_saving_insulation is not None:
                 output['Consumption saving insulation (TWh)'] = self.consumption_saving_insulation / 10**9 / step
@@ -3899,6 +3902,7 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_average_renovation[key] = sub.sum().sum() / self._replaced_by.fillna(
                         0).sum().sum()
             del self._renovation_store['subsidies_details_households']
+            gc.collect()
 
             subsidies, subsidies_count, sub_count = None, None, None
             for gest, subsidies_details in {'heater': self._heater_store['subsidies_details'],
@@ -3954,6 +3958,32 @@ class AgentBuildings(ThermalBuildings):
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)
         return stock, output
+
+    def parse_output_run_simple(self, inputs, step):
+        output = dict()
+
+        # investment
+        output['Investment heater (Billion euro)'] = self._heater_store['cost'].sum().sum() / 10 ** 9 / step
+        investment_cost = (self._replaced_by * self._renovation_store['cost_households']).sum().sum()
+        output['Investment insulation (Billion euro)'] = investment_cost.sum() / 10 ** 9 / step
+
+        output['Investment total (Billion euro)'] = output['Investment heater (Billion euro)'] + output['Investment insulation (Billion euro)'] / 10 ** 9 / step
+
+        # economic state impact
+        output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
+
+        temp = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
+        output['VTA insulation (Billion euro)'] = temp / 10 ** 9 / step
+        output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
+
+        output['Investment total WT (Billion euro)'] = output['Investment total (Billion euro)'] - output['VTA (Billion euro)']
+
+        output['Health cost (Billion euro)'], o = self.health_cost(inputs)
+        output.update(o)
+
+        output = Series(output).rename(self.year)
+
+        return output
 
     def apply_scale(self, scale):
 
