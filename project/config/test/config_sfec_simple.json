@@ -3,7 +3,7 @@
     "end": 2021,
     "step": 1,
     "debug_mode": false,
-    "full_output": false,
+    "full_output": true,
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
