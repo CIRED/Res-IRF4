@@ -29,6 +29,8 @@ from itertools import product
 
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, get_size, compare_bar_plot
+from project.utils import make_hist
+
 import project.thermal as thermal
 import psutil
 
@@ -90,6 +92,9 @@ class ThermalBuildings:
             self.path_calibration = os.path.join(path, 'calibration')
             if not os.path.isdir(self.path_calibration):
                 os.mkdir(self.path_calibration)
+            self.path_ini = os.path.join(path, 'ini')
+            if not os.path.isdir(self.path_calibration):
+                os.mkdir(self.path_ini)
 
         self.coefficient_global, self.coefficient_heater = None, None
 
@@ -168,8 +173,6 @@ class ThermalBuildings:
         self.energy = self.to_energy(stock).astype('category')
         consumption_sd, _, certificate = self.consumption_heating_store(stock.index)
         self.certificate = reindex_mi(certificate, stock.index).astype('category')
-
-
 
     def simplified_stock(self, energy_level=False):
         """Return simplified stock.
@@ -317,7 +320,6 @@ class ThermalBuildings:
 
     def consumption_heating_store(self, index, level_heater='Heating system', unit='kWh/m2.y', full_output=True):
         """Pre-calculate space energy consumption based only on relevant levels.
-
 
 
         Climate should be None. Consumption is stored for later use, so climate cannot change calculation.
@@ -552,26 +554,39 @@ class ThermalBuildings:
 
         if self.coefficient_global is None:
             consumption, certificate, consumption_3uses = self.consumption_heating(climate=climate, full_output=True)
-            """s = self.stock.groupby(consumption.index.names).sum()
-            import seaborn as sns
-            import matplotlib.pyplot as plt
+
+            s = self.stock.groupby(consumption.index.names).sum()
             df = concat((consumption_3uses, s), axis=1, keys=['Consumption', 'Stock'])
             df = self.add_certificate(df).reset_index('Performance')
-            sns.histplot(data=df, x='Consumption', kde=False, weights='Stock', hue='Performance', bins=20)
-            """
-            # plt.hist(consumption_3uses, weights=s, density=False)
+            make_hist(df, 'Consumption', 'Performance', 'Count (Million)',
+                      format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
+                      save=os.path.join(self.path_ini, 'consumption_primary_ini.png'), palette=self._resources_data['colors'],
+                      kde=True)
+
+            df = concat((consumption, s), axis=1, keys=['Consumption', 'Stock'])
+            df = self.add_certificate(df).reset_index('Performance')
+            make_hist(df, 'Consumption', 'Performance', 'Count (Million)',
+                      format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
+                      save=os.path.join(self.path_ini, 'consumption_final_ini.png'),
+                      palette=self._resources_data['colors'], kde=True)
+
             consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
             _consumption_actual, heating_intensity, budget_share = self.consumption_actual(prices, consumption=consumption, full_output=True)
-            """
+
             df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
             df = df.reset_index('Income tenant')
-            sns.histplot(data=df, x='Heating intensity', kde=True, weights='Stock', hue='Income tenant', bins=20)
+            make_hist(df, 'Heating intensity', 'Income tenant', 'Count (Million)',
+                      format_y=lambda y, _: '{:.1f}'.format(y / 10**6),
+                      save=os.path.join(self.path_ini, 'heating_intensity_ini.png'),
+                      palette=self._resources_data['colors'], kde=True)
 
             df = pd.concat((budget_share, self.stock), axis=1, keys=['Budget share', 'Stock'])
             df = df.reset_index('Income tenant')
-            sns.histplot(data=df, x='Budget share', kde=False, weights='Stock', hue='Income tenant', bins=20)
-            """
+            make_hist(df, 'Budget share', 'Income tenant', 'Count (Million)',
+                      format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
+                      save=os.path.join(self.path_ini, 'budget_share_ini.png'),
+                      palette=self._resources_data['colors'], kde=True)
 
             _consumption_actual *= self.stock
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
