@@ -554,7 +554,6 @@ class ThermalBuildings:
 
         if self.coefficient_global is None:
             consumption, certificate, consumption_3uses = self.consumption_heating(climate=climate, full_output=True)
-
             s = self.stock.groupby(consumption.index.names).sum()
             df = concat((consumption_3uses, s), axis=1, keys=['Consumption', 'Stock'])
             df = self.add_certificate(df).reset_index('Performance')
@@ -574,19 +573,22 @@ class ThermalBuildings:
 
             _consumption_actual, heating_intensity, budget_share = self.consumption_actual(prices, consumption=consumption, full_output=True)
 
-            df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
-            df = df.reset_index('Income tenant')
-            make_hist(df, 'Heating intensity', 'Income tenant', 'Count (Million)',
-                      format_y=lambda y, _: '{:.1f}'.format(y / 10**6),
-                      save=os.path.join(self.path_ini, 'heating_intensity_ini.png'),
-                      palette=self._resources_data['colors'], kde=True)
+            try:
+                df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
+                df = df.reset_index('Income tenant')
+                make_hist(df, 'Heating intensity', 'Income tenant', 'Count (Million)',
+                          format_y=lambda y, _: '{:.1f}'.format(y / 10**6),
+                          save=os.path.join(self.path_ini, 'heating_intensity_ini.png'),
+                          palette=self._resources_data['colors'], kde=True)
 
-            df = pd.concat((budget_share, self.stock), axis=1, keys=['Budget share', 'Stock'])
-            df = df.reset_index('Income tenant')
-            make_hist(df, 'Budget share', 'Income tenant', 'Count (Million)',
-                      format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
-                      save=os.path.join(self.path_ini, 'budget_share_ini.png'),
-                      palette=self._resources_data['colors'], kde=True)
+                df = pd.concat((budget_share, self.stock), axis=1, keys=['Budget share', 'Stock'])
+                df = df.reset_index('Income tenant')
+                make_hist(df, 'Budget share', 'Income tenant', 'Count (Million)',
+                          format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
+                          save=os.path.join(self.path_ini, 'budget_share_ini.png'),
+                          palette=self._resources_data['colors'], kde=True)
+            except:
+                pass
 
             _consumption_actual *= self.stock
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
