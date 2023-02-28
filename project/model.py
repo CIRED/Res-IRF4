@@ -114,6 +114,7 @@ def config2inputs(config=None, building_stock=None, end=None):
     if config['simple']['surface']:
         surface = (reindex_mi(inputs['surface'], stock.index) * stock).sum() / stock.sum()
         inputs['surface'] = pd.Series(round(surface, 0), index=inputs['surface'].index)
+
     if config['simple']['ratio_surface']:
         ratio_surface = (reindex_mi(inputs['ratio_surface'], stock.index).T * stock).T.sum() / stock.sum()
         for idx in inputs['ratio_surface'].index:
