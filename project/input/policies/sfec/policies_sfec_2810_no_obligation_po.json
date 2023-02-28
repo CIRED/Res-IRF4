@@ -101,7 +101,7 @@
       },
       "obligation_po": {
         "start": 2020,
-        "end": 2051,
+        "end": 2020,
         "value": "project/input/policies/sfec/agenda_obligation_po_sfec.csv",
         "frequency": {"value": [0.05, 0, 0],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],

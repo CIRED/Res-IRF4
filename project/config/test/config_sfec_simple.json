@@ -37,7 +37,7 @@
     "district_heating": "project/input/revealed_data/district_heating_transition2050.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-    "premature_replacement": null,
+    "premature_replacement": 3,
     "technical": {
       "cost_heater": "project/input/technical/cost_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",

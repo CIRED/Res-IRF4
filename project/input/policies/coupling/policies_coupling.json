@@ -82,6 +82,5 @@
       "columns": "project/input/policies/coupling/subsidies_heater.csv",
       "growth": "project/input/policies/coupling/growth_heater.csv"
     }
-
   }
 }
