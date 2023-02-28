@@ -115,9 +115,10 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    colors=resources_data['colors'], loc='left', left=1.25)
 
     # switch heating system
-    df = pd.DataFrame([output.loc['Switch {} (Thousand households)'.format(i), :] for i in
-                       resources_data['index']['Heating system']]).T.dropna()
-    df.columns = resources_data['index']['Heating system']
+    c = ['Switch {} (Thousand households)'.format(i) for i in resources_data['index']['Heating system']]
+    c = [i for i in c if i in output.index]
+    df = output.loc[c, :].T.dropna()
+    df.columns = df.columns.map(lambda x: x.split('Switch ')[1].split(' (Thousand households)')[0])
     make_area_plot(df, 'Switch (Thousand households)',
                    save=os.path.join(buildings.path, 'switch_heater.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
