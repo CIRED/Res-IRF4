@@ -3409,10 +3409,12 @@ class AgentBuildings(ThermalBuildings):
             rebound_heater = self._heater_store['rebound']
             output['Rebound heater (TWh/year)'] = rebound_heater.sum() / 10**9
 
-            rebound_insulation.index = rebound_insulation.index.map(lambda x: 'Rebound insulation {} (TWh/year)'.format(x))
             thermal_comfort = rebound_insulation * prices
+            rebound_insulation.index = rebound_insulation.index.map(lambda x: 'Rebound insulation {} (TWh/year)'.format(x))
             output.update(rebound_insulation.T / 10**9)
             thermal_comfort.index = thermal_comfort.index.map(lambda x: 'Thermal comfort {} (Billion euro/year)'.format(x))
+            output.update({'Thermal comfort (Billion euro/year)': thermal_comfort.sum() / 10**9})
+
             output.update(thermal_comfort.T / 10**9)
 
             rebound_heater.index = rebound_heater.index.map(lambda x: 'Rebound heater {} (TWh/year)'.format(x))
