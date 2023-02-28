@@ -1653,6 +1653,7 @@ class AgentBuildings(ThermalBuildings):
                 stock_replacement_premature = flow_replace.set_index('Heating system final', append=True).squeeze(axis=1)
                 stock = stock - to_replace.reindex(stock.index).fillna(0)
                 stock_replacement = concat((stock_replacement, stock_replacement_premature), axis=0)
+                stock_replacement = stock_replacement.groupby(stock_replacement.index.names).sum()
 
         stock = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
                                       name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()

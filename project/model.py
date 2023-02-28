@@ -106,6 +106,7 @@ def config2inputs(config=None, building_stock=None, end=None):
         if to_replace:
             raise NotImplemented
         inputs['ms_heater'].drop([i for i in replace.keys() if i in inputs['ms_heater'].columns], axis=1, inplace=True)
+        inputs['cost_heater'].drop([i for i in replace.keys() if i in inputs['cost_heater'].index], inplace=True)
 
     if config['simple'].get('insulation'):
         pass
@@ -454,7 +455,7 @@ def res_irf(config, path):
                 if technical_progress.get('insulation') is not None:
                     cost_insulation *= (1 + technical_progress['insulation'].loc[year])**step
                 if technical_progress.get('heater') is not None:
-                    heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
+                    heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in cost_heater.index]
                     cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
             buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
