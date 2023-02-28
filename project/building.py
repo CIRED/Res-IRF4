@@ -1891,10 +1891,12 @@ class AgentBuildings(ThermalBuildings):
                 _condition.update({'certificate_jump_min': _certificate_jump_all >= minimum_gest_condition})
 
             if 'global_renovation_fg' in _list_conditions:
-                _condition.update({'global_renovation_fg': (_condition['global_renovation'].T & _certificate_before.isin(['G', 'F'])).T})
+                condition_global_renovation = _certificate_jump_all >= global_condition
+                _condition.update({'global_renovation_fg': (condition_global_renovation.T & _certificate_before.isin(['G', 'F'])).T})
 
             if 'global_renovation_fge' in _list_conditions:
-                _condition.update({'global_renovation_fge': (_condition['global_renovation'].T & _certificate_before.isin(['G', 'F', 'E'])).T})
+                condition_global_renovation = _certificate_jump_all >= global_condition
+                _condition.update({'global_renovation_fge': (condition_global_renovation.T & _certificate_before.isin(['G', 'F', 'E'])).T})
 
             low_income_condition = ['D1', 'D2', 'D3', 'D4']
             if self.quintiles:
@@ -1903,15 +1905,17 @@ class AgentBuildings(ThermalBuildings):
             low_income_condition = Series(low_income_condition, index=_index)
 
             if 'global_renovation_low_income' in _list_conditions:
-                _condition.update({'global_renovation_low_income': (low_income_condition & _condition['global_renovation'].T).T})
+                condition_global_renovation = _certificate_jump_all >= global_condition
+                _condition.update({'global_renovation_low_income': (low_income_condition & condition_global_renovation.T).T})
 
             if 'global_renovation_high_income' in _list_conditions:
+                condition_global_renovation = _certificate_jump_all >= global_condition
                 high_income_condition = ['D5', 'D6', 'D7', 'D8', 'D9', 'D10']
                 if self.quintiles:
                     high_income_condition = ['C3', 'C4', 'C5']
                 high_income_condition = _index.get_level_values('Income owner').isin(high_income_condition)
                 high_income_condition = Series(high_income_condition, index=_index)
-                _condition.update({'global_renovation_high_income': (high_income_condition & _condition['global_renovation'].T).T})
+                _condition.update({'global_renovation_high_income': (high_income_condition & condition_global_renovation.T).T})
 
             if 'mpr_serenite_energy' in _list_conditions:
                 energy_condition = _energy_saved_3uses >= energy_condition

@@ -335,13 +335,10 @@ def read_policies(config):
         l = list()
 
         value = data['value']
+
         if data.get('index') is not None:
             mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
             value *= mask
-
-        if data.get('growth'):
-            growth = get_pandas(data['growth'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-            value = {k: i * value for k, i in growth.items()}
 
         by = 'index'
         if data.get('columns') is not None:
@@ -349,10 +346,9 @@ def read_policies(config):
             value *= mask
             by = 'columns'
 
-        if data.get('columns') is not None:
-            mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            value *= mask
-            by = 'columns'
+        if data.get('growth'):
+            growth = get_pandas(data['growth'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            value = {k: i * value for k, i in growth.items()}
 
         name = 'sub_ad_valorem'
         if data.get('name') is not None:

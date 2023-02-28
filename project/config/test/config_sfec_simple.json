@@ -86,7 +86,7 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/sfec/policies_sfec.json",
+    "policies":  "project/input/policies/sfec/policies_sfec_2810.json",
     "simple": {
       "quintiles": true,
       "surface": false,

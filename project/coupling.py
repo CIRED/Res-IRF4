@@ -218,7 +218,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                    lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=None):
 
-    sub_insulation = [i / 10 for i in range(0, 11, 5)]
+    sub_insulation = [i / 10 for i in range(0, 11, 2)]
     _len = len(sub_insulation)
     sub_heater = [sub_heater] * _len
     start = [start] * _len
@@ -249,16 +249,19 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
 
 
 def test_design_subsidies():
-    sub_design_list = {'Efficiency measure': 'best_efficiency',
-                       'Efficiency measure FG': 'best_efficiency_fg',
-                       'Global renovation': 'global_renovation',
-                       'Global renovation FG': 'global_renovation_fg',
+    sub_design_list = {'Global renovation FG': 'global_renovation_fg',
                        'Global renovation FGE': 'global_renovation_fge',
                        'Cost efficiency 100': 'efficiency_100',
-                       'Uniform': None
+                       'Uniform': None,
+
+                       'Efficiency measure': 'best_efficiency',
+                       'Efficiency measure FG': 'best_efficiency_fg',
+                       'Global renovation': 'global_renovation'
+
                        }
 
     path = os.path.join('project', 'output', 'ResIRF')
+
     buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
         path=path,
         config=CONFIG_TEST)
@@ -272,13 +275,13 @@ def test_design_subsidies():
                                 cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater, p_insulation, financing_cost,
                                 sub_design=sub_design)
 
-        variables = ['Consumption saving insulation (TWh/year)',
+        variables = ['Consumption standard saving insulation (TWh/year)',
                      'Annuities insulation (Billion euro/year)',
                      'Efficiency insulation (euro/kWh)'
                      ]
         result_diff = result.loc[variables, :].diff(axis=1).dropna(axis=1, how='all')
         result_diff.loc['Efficiency insulation (euro/kWh)'] = result_diff.loc['Annuities insulation (Billion euro/year)'] / \
-                                                                        result_diff.loc['Consumption saving insulation (TWh/year)']
+                                                                        result_diff.loc['Consumption standard saving insulation (TWh/year)']
 
         concat_result.update({k: result.loc['Efficiency insulation (euro/kWh)', :]})
         concat_result_marginal.update({k: result_diff.loc['Efficiency insulation (euro/kWh)', :]})
@@ -323,5 +326,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 
 if __name__ == '__main__':
-    # test_design_subsidies()
-    run_simu(output_consumption=True, rebound=True, start=2020, end=2021, sub_design='efficiency_100')
+    test_design_subsidies()
+    # run_simu(output_consumption=True, rebound=True, start=2020, end=2021, sub_design='efficiency_100')

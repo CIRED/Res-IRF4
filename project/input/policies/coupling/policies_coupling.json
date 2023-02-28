@@ -70,8 +70,18 @@
       "policy": "subsidy_ad_valorem",
       "target": "global_renovation",
       "gest": "insulation",
-      "value": 0.3,
-      "growth": "project/input/policies/coupling/growth_subsidies.csv"
+      "value": 1,
+      "growth": "project/input/policies/coupling/growth_global_renovation.csv"
+    },
+    "heat_pump": {
+      "start": 2020,
+      "end": 2051,
+      "policy": "subsidy_ad_valorem",
+      "gest": "heater",
+      "value": 1,
+      "columns": "project/input/policies/coupling/subsidies_heater.csv",
+      "growth": "project/input/policies/coupling/growth_heater.csv"
     }
+
   }
 }
