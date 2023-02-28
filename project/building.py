@@ -1309,7 +1309,7 @@ class AgentBuildings(ThermalBuildings):
 
         return cost_heater, vta_heater, subsidies_details, subsidies_total
 
-    def endogenous_market_share_heater(self, index, prices, bill_saved, subsidies_total, cost_heater, ms_heater=None):
+    def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, ms_heater=None):
 
         def calibration_constant_heater(_utility, _ms_heater):
             """Constant to match the observed market-share.
@@ -1395,13 +1395,13 @@ class AgentBuildings(ThermalBuildings):
 
         utility = utility_inertia + utility_cost + utility_bill_saving + utility_subsidies
 
-        # removing heat-pump for low-efficient buildings
-        hp_idx = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
+        """# removing heat-pump for low-efficient buildings
+        hp_idx = self._resources_data['index']['Heat pumps']
         utility = self.add_certificate(utility)
         utility.columns.names = ['Heating system final']
         idx = (utility.index.get_level_values('Performance').isin(['F', 'G'])) & (~utility.index.get_level_values('Heating system').isin(hp_idx))
         utility.loc[idx, hp_idx] = float('nan')
-        utility = utility.droplevel('Performance')
+        utility = utility.droplevel('Performance')"""
 
         if (self.constant_heater is None) and (ms_heater is not None):
             self.logger.info('Calibration market-share heating system')
@@ -1516,7 +1516,7 @@ class AgentBuildings(ThermalBuildings):
             self._heater_store['subsidies_average'].update({key: sub.sum().sum() / replacement.fillna(0).sum().sum()})
 
     def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, ms_heater=None,
-                           step=1, financing_cost=None, district_heating=None, premature_replacement=True):
+                           step=1, financing_cost=None, district_heating=None, premature_replacement=None):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -1532,7 +1532,6 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
 
-        global to_district_heating
         index = stock.index
 
         list_heater = list(stock.index.get_level_values('Heating system').unique().union(cost_heater.index))
@@ -1549,7 +1548,7 @@ class AgentBuildings(ThermalBuildings):
 
         cost_heater, vta_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(index, policies_heater,
                                                                                                   cost_heater.copy())
-
+        # policies restriction
         restriction = [p for p in policies_heater if p.policy in ['restriction_energy', 'restriction_heater']]
         for policy in restriction:
             if isinstance(policy.value, str):
@@ -1563,6 +1562,13 @@ class AgentBuildings(ThermalBuildings):
                 if policy.target is not None:
                     idx = subsidies_total.index.get_level_values('Housing type') == policy.target
                 subsidies_total.loc[idx, temp] = float('nan')
+
+        # technical restriction - removing heat-pump for low-efficient buildings
+        subsidies_total = self.add_certificate(subsidies_total)
+        subsidies_total.columns.names = ['Heating system final']
+        idx = (subsidies_total.index.get_level_values('Performance').isin(['F', 'G'])) & (~subsidies_total.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
+        subsidies_total.loc[idx, self._resources_data['index']['Heat pumps']] = float('nan')
+        subsidies_total = subsidies_total.droplevel('Performance')
 
         cost_total, cost_financing, amount_debt, amount_saving, discount = self.calculate_financing(
             cost_heater,
@@ -1611,7 +1617,7 @@ class AgentBuildings(ThermalBuildings):
             certificate_before.replace(EPC2INT), axis=0)
 
         if self._endogenous:
-            market_share = self.endogenous_market_share_heater(index, prices, bill_saved, subsidies_total, cost_total,
+            market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_total,
                                                                ms_heater=ms_heater)
         else:
             market_share = self.exogenous_market_share_heater(index, cost_heater.index)
@@ -1635,10 +1641,18 @@ class AgentBuildings(ThermalBuildings):
         stock = stock - to_replace
 
         # adding heating system final equal to heating system because no switch
-        if premature_replacement:
+        if premature_replacement is not None:
             bill_saved[bill_saved <= 0] = float('nan')
             time = (cost_total - subsidies_total) / bill_saved
-            time
+            time = time.loc[:, [i for i in time.columns if i in self._resources_data['index']['Heat pumps']]]
+            flow_replace = time[(time < premature_replacement)].dropna(how='all')
+            if not flow_replace.empty:
+                to_replace = stock[flow_replace.index]
+                flow_replace = flow_replace.idxmin(axis=1).rename('Heating system final')
+                flow_replace = concat((flow_replace, to_replace), axis=1)
+                stock_replacement_premature = flow_replace.set_index('Heating system final', append=True).squeeze(axis=1)
+                stock = stock - to_replace.reindex(stock.index).fillna(0)
+                stock_replacement = concat((stock_replacement, stock_replacement_premature), axis=0)
 
         stock = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
                                       name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
@@ -2946,7 +2960,7 @@ class AgentBuildings(ThermalBuildings):
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
-                      step=1, exogenous_social=None):
+                      step=1, exogenous_social=None, premature_replacement=None):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -2984,7 +2998,7 @@ class AgentBuildings(ThermalBuildings):
         self.logger.info('Calculation heater replacement')
         stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
                                         ms_heater=ms_heater, step=1, financing_cost=financing_cost,
-                                        district_heating=district_heating)
+                                        district_heating=district_heating, premature_replacement=premature_replacement)
 
         self.logger.info('Number of agents that can insulate: {:,.0f}'.format(stock.shape[0]))
         self.logger.info('Calculation insulation replacement')
