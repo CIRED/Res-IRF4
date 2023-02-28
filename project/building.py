@@ -1516,7 +1516,7 @@ class AgentBuildings(ThermalBuildings):
             self._heater_store['subsidies_average'].update({key: sub.sum().sum() / replacement.fillna(0).sum().sum()})
 
     def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, ms_heater=None,
-                           step=1, financing_cost=None, district_heating=None):
+                           step=1, financing_cost=None, district_heating=None, premature_replacement=True):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -1532,6 +1532,7 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
 
+        global to_district_heating
         index = stock.index
 
         list_heater = list(stock.index.get_level_values('Heating system').unique().union(cost_heater.index))
@@ -1578,13 +1579,13 @@ class AgentBuildings(ThermalBuildings):
         consumption, _, certificate = self.consumption_heating_store(index_final, level_heater='Heating system final')
         consumption = reindex_mi(consumption.unstack('Heating system final'), index)
         prices_re = prices.reindex(energy).set_axis(consumption.columns)
-        energy_bill_sd = ((consumption * prices_re).T * reindex_mi(self._surface, index)).T
+        bill = ((consumption * prices_re).T * reindex_mi(self._surface, index)).T
 
         consumption_before = self.consumption_heating_store(index, level_heater='Heating system')[0]
         consumption_before = reindex_mi(consumption_before, index) * reindex_mi(self._surface, index)
-        energy_bill_before = AgentBuildings.energy_bill(prices, consumption_before)
+        bill_before = AgentBuildings.energy_bill(prices, consumption_before)
 
-        bill_saved = - energy_bill_sd.sub(energy_bill_before, axis=0)
+        bill_saved = - bill.sub(bill_before, axis=0)
 
         certificate = reindex_mi(certificate.unstack('Heating system final'), index)
         certificate_before = self.consumption_heating_store(index)[2]
@@ -1634,6 +1635,11 @@ class AgentBuildings(ThermalBuildings):
         stock = stock - to_replace
 
         # adding heating system final equal to heating system because no switch
+        if premature_replacement:
+            bill_saved[bill_saved <= 0] = float('nan')
+            time = (cost_total - subsidies_total) / bill_saved
+            time
+
         stock = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
                                       name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
         stock = concat((stock.reorder_levels(stock_replacement.index.names), stock_replacement),
@@ -3246,10 +3252,10 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T)
 
-        heat_pump = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
+
         consumption = self.consumption_actual(prices) * self.stock
         consumption_calib = consumption * self.coefficient_global
-        consumption_hp = consumption_calib[consumption_calib.index.get_level_values('Heating system').isin(heat_pump)]
+        consumption_hp = consumption_calib[consumption_calib.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps'])]
         output.update({'Consumption Heat pump (TWh)': consumption_hp.sum() / 10**9})
         output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity (TWh)'] - output['Consumption Heat pump (TWh)']})
         output.update({'Consumption District heating (TWh)': output['Consumption Heating (TWh)']})
@@ -3480,8 +3486,7 @@ class AgentBuildings(ThermalBuildings):
             # switch heater
             temp = self._heater_store['replacement'].sum()
             output['Switch heater (Thousand households)'] = temp.sum() / 10 ** 3 / step
-            heat_pump = ['Electricity-Heat pump water', 'Electricity-Heat pump air']
-            output['Switch Heat pump (Thousand households)'] = temp[heat_pump].sum() / 10 ** 3 / step
+            output['Switch Heat pump (Thousand households)'] = temp[self._resources_data['index']['Heat pumps']].sum() / 10 ** 3 / step
             temp.index = temp.index.map(lambda x: 'Switch {} (Thousand households)'.format(x))
             output.update((temp / 10 ** 3 / step).T)
 
