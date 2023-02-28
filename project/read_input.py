@@ -240,6 +240,9 @@ def read_policies(config):
         l = list()
         heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system'))
         insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
+        if data.get('growth_insulation'):
+            growth_insulation = get_pandas(data['growth_insulation'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            insulation = {k: i * insulation for k, i in growth_insulation.items()}
         tax = get_pandas(data['tax'], lambda x: pd.read_csv(x, index_col=[0]))
 
         l.append(PublicPolicy('cee', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax'))

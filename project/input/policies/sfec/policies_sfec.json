@@ -20,7 +20,8 @@
         "heater": "project/input/policies/cee_heater.csv",
         "insulation": "project/input/policies/cee_insulation.csv",
         "policy": "subsidy_targeted",
-        "tax": "project/input/policies/cee_tax.csv"
+        "tax": "project/input/policies/cee_tax.csv",
+        "growth_insulation": "project/input/policies/sfec/growth_mpr_insulation.csv"
       },
       "mpr": {
         "start": 2021,
