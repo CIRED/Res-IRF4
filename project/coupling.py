@@ -8,7 +8,7 @@ from multiprocessing import Pool
 import os
 from pickle import dump, load
 import json
-
+from project.input.resources import resources_data
 
 from copy import deepcopy
 
@@ -168,7 +168,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         policy = create_subsidies(sub_insulation, sub_design, start, end)
         policies_insulation.append(policy)  # insulation policy during considered years
 
-    output, consumption, prices = dict(), None, None
+    output, stock, consumption, prices = dict(), dict(), None, None
+    s = None
     for year in range(start, end):
         prices = energy_prices.loc[year, :]
         f_built = flow_built.loc[:, year]
@@ -179,18 +180,24 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             if technical_progress.get('insulation') is not None:
                 cost_insulation *= (1 + technical_progress['insulation'].loc[year])
             if technical_progress.get('heater') is not None:
-                heat_pump = ['Electricity-Heat pump air', 'Electricity-Heat pump water']
+                heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in cost_heater.index]
                 cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])
 
         buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
                                          cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs,
                                          financing_cost=financing_cost,
-                                         climate=climate, demolition_rate=demolition_rate, full_output=full_output)
+                                         climate=climate, demolition_rate=demolition_rate,
+                                         full_output=full_output)
 
         output.update({year: o})
+        if full_output:
+            stock.update({year: s})
 
     output = DataFrame(output)
+    stock = DataFrame(stock)
+    stock.index.names = s.index.names
+
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
 
@@ -205,7 +212,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             consumption = (consumption.T * (1 - rebound_factor)).T
 
     buildings.logger.info('End of Res-IRF simulation')
-    return output, consumption
+    return output, stock, consumption
 
 
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
@@ -297,16 +304,22 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
     sub_heater = 0
     sub_insulation = 0
 
-    concat_output = DataFrame()
-    output, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
-                                       cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, p_heater,
-                                       p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
-                                       efficiency_hour=False, demolition_rate=demolition_rate,
-                                       output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                       technical_progress=technical_progress)
+    concat_output, concat_stock = DataFrame(), DataFrame()
+    output, stock, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
+                                              cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs,
+                                              p_heater,
+                                              p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
+                                              efficiency_hour=False, demolition_rate=demolition_rate,
+                                              output_consumption=output_consumption, full_output=True, rebound=rebound,
+                                              technical_progress=technical_progress)
 
     concat_output = concat((concat_output, output), axis=1)
+
     concat_output.to_csv(os.path.join(buildings.path, 'output.csv'))
+    from project.write_output import plot_scenario
+    concat_stock = concat((concat_stock, stock), axis=1)
+
+    plot_scenario(concat_output, concat_stock, buildings)
 
 
 if __name__ == '__main__':
