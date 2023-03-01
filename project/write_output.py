@@ -286,7 +286,7 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
         resources_data['index']['Income owner'] = resources_data['quintiles']
 
     folder_img = os.path.join(folder, 'img')
-    if os.path.isdir(folder_img):
+    if not os.path.isdir(folder_img):
         os.mkdir(folder_img)
 
     variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y),
