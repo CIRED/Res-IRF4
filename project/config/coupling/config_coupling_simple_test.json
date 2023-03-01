@@ -1,9 +1,4 @@
 {
-  "sensitivity": {
-    "activated": false,
-    "step": [2, 5]
-  },
-
   "Reference": {
     "end": 2031,
     "step": 1,
@@ -112,5 +107,4 @@
       "insulation": true
     }
   }
-
 }

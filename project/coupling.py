@@ -81,7 +81,7 @@ def ini_res_irf(path=None, config=None, climate=2006):
                                      cost_insulation, p_heater,
                                      p_insulation, f_built, year, post_inputs,
                                      ms_heater=ms_heater, financing_cost=financing_cost,
-                                     climate=climate)
+                                     climate=climate, demolition_rate=demolition_rate)
 
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
@@ -197,8 +197,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
         buildings, s, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
                                          cost_insulation, p_heater,
                                          p_insulation, f_built, year, post_inputs,
-                                         financing_cost=financing_cost,
-                                         climate=climate, demolition_rate=demolition_rate,
+                                         financing_cost=financing_cost, climate=climate,
+                                         demolition_rate=demolition_rate,
                                          full_output=full_output)
 
         output.update({year: o})

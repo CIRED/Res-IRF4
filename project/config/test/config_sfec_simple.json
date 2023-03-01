@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2022,
+    "end": 2021,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -107,6 +107,7 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": true
-    }
+    },
+    "calibration": "project/input/calibration/calibration_simple.pkl"
   }
 }
