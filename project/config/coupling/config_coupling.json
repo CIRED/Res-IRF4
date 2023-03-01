@@ -90,13 +90,14 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "no_policy": true,
+      "no_policy": false,
       "current_policies": false,
       "income": false,
       "prices_constant": false,
       "taxes_constant": false,
       "heating_system": false,
       "insulation": true
-    }
+    },
+    "calibration": "project/input/calibration/calibration_coupling.pkl"
   }
 }

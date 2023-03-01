@@ -106,6 +106,6 @@
       },
       "insulation": true
     },
-    "calibration": "project/input/calibration/calibration_simple.pkl"
+    "calibration": "project/input/calibration/calibration_simple_coupling.pkl"
   }
 }

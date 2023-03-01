@@ -195,8 +195,9 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
             stock.update({year: s})
 
     output = DataFrame(output)
-    stock = DataFrame(stock)
-    stock.index.names = s.index.names
+    if full_output:
+        stock = DataFrame(stock)
+        stock.index.names = s.index.names
 
     if output_consumption is True:
         buildings.logger.info('Calculating hourly consumption')
@@ -326,5 +327,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 
 if __name__ == '__main__':
-    test_design_subsidies()
-    # run_simu(output_consumption=True, rebound=True, start=2020, end=2021, sub_design='efficiency_100')
+    # test_design_subsidies()
+    run_simu(output_consumption=True, rebound=True, start=2020, end=2021, sub_design='efficiency_100')
