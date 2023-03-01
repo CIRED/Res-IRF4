@@ -57,6 +57,17 @@ def ini_res_irf(path=None, config=None, climate=2006):
 
     buildings.calibration_exogenous(**calibration)
 
+    # export calibration
+    with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
+        dump({
+            'coefficient_global': buildings.coefficient_global,
+            'coefficient_heater': buildings.coefficient_heater,
+            'constant_insulation_extensive': buildings.constant_insulation_extensive,
+            'constant_insulation_intensive': buildings.constant_insulation_intensive,
+            'constant_heater': buildings.constant_heater,
+            'scale': buildings.scale
+        }, file)
+
     output = pd.DataFrame()
     _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
     output = pd.concat((output, o), axis=1)

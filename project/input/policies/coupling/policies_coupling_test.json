@@ -71,7 +71,7 @@
       "target": "global_renovation",
       "gest": "insulation",
       "value": 1,
-      "growth": "project/input/policies/coupling/growth_global_renovation_simple.csv"
+      "growth": "project/input/policies/coupling/subsidies_insulation_global_renovation_simple.csv"
     },
     "heat_pump": {
       "start": 2020,
@@ -80,7 +80,7 @@
       "gest": "heater",
       "value": 1,
       "columns": "project/input/policies/coupling/subsidies_heater.csv",
-      "growth": "project/input/policies/coupling/growth_heater_simple.csv"
+      "growth": "project/input/policies/coupling/subsidies_heater_global_renovation_simple.csv"
     }
   }
 }
