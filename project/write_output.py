@@ -22,6 +22,8 @@ import os
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot
+from PIL import Image
+
 
 
 def plot_scenario(output, stock, buildings, detailed_graph=False):
@@ -39,14 +41,14 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    save=os.path.join(path, 'consumption_energy.png'),
-                   total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
+                   total=False, loc='left', left=1.2) # scatter=resources_data['consumption_total_objectives']
 
     df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Heater']], :].T
     df.columns = resources_data['index']['Heater']
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    save=os.path.join(path, 'consumption_heater.png'),
-                   total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
+                   total=False, loc='left', left=1.2) # scatter=resources_data['consumption_total_objectives']
 
     # consumption existing vs new
     if detailed_graph:
@@ -245,6 +247,25 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                   save=os.path.join(path, 'balance_owner.png'),
                   format_y=lambda y, _: '{:.0f}'.format(y),
                   colors=resources_data['colors'], ymin=None)
+
+    images_ini = ['energy_prices.png', 'stock_performance.png', 'cost_curve_insulation.png']
+    images_ini = [os.path.join(buildings.path, i) for i in images_ini]
+
+    images_to_save = ['stock_performance.png', 'consumption_heater.png', 'emission.png']
+    images_to_save = [os.path.join(path, i) for i in images_to_save]
+    images = [Image.open(img) for img in images_to_save + images_ini]
+    new_images = []
+    for png in images:
+        png.load()
+        background = Image.new('RGB', png.size, (255, 255, 255))
+        background.paste(png, mask=png.split()[3])  # 3 is the alpha channel
+        new_images.append(background)
+
+    pdf_path = os.path.join(buildings.path, 'summary_pdf.pdf')
+
+    new_images[0].save(
+        pdf_path, 'PDF', resolution=100.0, save_all=True, append_images=new_images[1:]
+    )
 
 
 def grouped_output(result, folder, config_runs=None, config_sensitivity=None, quintiles=None):
