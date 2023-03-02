@@ -1,0 +1,14 @@
+{
+
+
+
+
+"global_renovation": {
+      "start": 2020,
+      "end": 2051,
+      "policy": "subsidy_ad_valorem",
+      "target": "global_renovation",
+      "gest": "insulation",
+      "value": 1,
+      "growth": "project/input/policies/coupling/subsidies_insulation_global_renovation_simple.csv"
+    },

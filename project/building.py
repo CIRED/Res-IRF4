@@ -1604,7 +1604,10 @@ class AgentBuildings(ThermalBuildings):
         # (consumption_before * self.stock.groupby(consumption.index.names).sum()).sum() / 10**9
         consumption_saved = (consumption_before - consumption.T).T
         consumption_before = self.add_attribute(consumption_before, 'Income tenant')
-        consumption_before = consumption_before.reorder_levels(self.stock.index.names).loc[self.stock.index]
+        consumption_before = consumption_before.reorder_levels(self.stock.index.names)
+        index_consumption = consumption_before.index.intersection(self.stock.index)
+
+        consumption_before = consumption_before.loc[index_consumption]
         heating_intensity_before = self.to_heating_intensity(consumption_before.index, prices,
                                                              consumption=consumption_before,
                                                              level_heater='Heating system')
@@ -1612,7 +1615,7 @@ class AgentBuildings(ThermalBuildings):
         # (consumption_before * self.stock).sum() / 10**9
 
         consumption = self.add_attribute(consumption, 'Income tenant')
-        consumption = consumption.reorder_levels(self.stock.index.names).loc[self.stock.index, :]
+        consumption = consumption.reorder_levels(self.stock.index.names).loc[index_consumption, :]
         # (consumption.T * self.stock * heating_intensity_before).T.sum() / 10**9
 
         consumption = consumption.stack('Heating system final')
@@ -1677,7 +1680,8 @@ class AgentBuildings(ThermalBuildings):
                        axis=0, keys=[False, True], names=['Heater replacement'])
         assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(), 0) == 0, 'Sum problem'
 
-        self.store_information_heater(cost_heater, subsidies_total, subsidies_details, replacement, vta_heater,
+        self.store_information_heater(cost_heater, subsidies_total, subsidies_details, stock_replacement.unstack('Heating system final'),
+                                      vta_heater,
                                       cost_financing, amount_debt, amount_saving, discount, consumption_saved,
                                       consumption_saved_no_rebound, consumption_saved_actual, certificate_jump)
         return stock
@@ -3267,7 +3271,7 @@ class AgentBuildings(ThermalBuildings):
                     output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
         output['Consumption standard (TWh)'] = self.consumption_agg(prices=prices, freq='year', climate=climate,
-                                                                      standard=True, energy=False)
+                                                                    standard=True, energy=False)
         output['Consumption standard (kWh/m2)'] = (output['Consumption standard (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
 
