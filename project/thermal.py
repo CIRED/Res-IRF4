@@ -422,6 +422,7 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 def find_certificate(primary_consumption):
     """Returns energy performance certificate from A to G.
 
+
     Parameters
     ----------
     primary_consumption: float or pd.Series or pd.DataFrame

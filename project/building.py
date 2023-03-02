@@ -1600,21 +1600,35 @@ class AgentBuildings(ThermalBuildings):
         certificate_before = reindex_mi(certificate_before, index)
 
         consumption = (reindex_mi(self._surface, consumption.index) * consumption.T).T
+        # (consumption.T * self.stock.groupby(consumption.index.names).sum()).T.sum().sum() / 10**9
+        # (consumption_before * self.stock.groupby(consumption.index.names).sum()).sum() / 10**9
         consumption_saved = (consumption_before - consumption.T).T
         consumption_before = self.add_attribute(consumption_before, 'Income tenant')
+        consumption_before = consumption_before.reorder_levels(self.stock.index.names).loc[self.stock.index]
         heating_intensity_before = self.to_heating_intensity(consumption_before.index, prices,
                                                              consumption=consumption_before,
                                                              level_heater='Heating system')
         consumption_before *= heating_intensity_before
+        # (consumption_before * self.stock).sum() / 10**9
 
         consumption = self.add_attribute(consumption, 'Income tenant')
-        heating_intensity_after = self.to_heating_intensity(consumption.index, prices,
-                                                            consumption=consumption.stack('Heating system final'),
-                                                            level_heater='Heating system final')
-        consumption *= heating_intensity_after.unstack('Heating system final')
+        consumption = consumption.reorder_levels(self.stock.index.names).loc[self.stock.index, :]
+        # (consumption.T * self.stock * heating_intensity_before).T.sum() / 10**9
 
-        consumption_saved_no_rebound = (consumption_saved.T * heating_intensity_before).T
-        consumption_saved_actual = (consumption_before - consumption.T).T
+        consumption = consumption.stack('Heating system final')
+        heating_intensity_after = self.to_heating_intensity(consumption.index, prices,
+                                                            consumption=consumption,
+                                                            level_heater='Heating system final')
+        consumption_actual = (consumption * heating_intensity_after).unstack('Heating system final')
+        # (consumption.T * self.stock).T.sum() / 10**9
+
+        # (consumption_saved.T * self.stock.groupby(consumption_saved.index.names).sum()).T.sum() / 10**9
+
+        consumption_no_rebound = (consumption.unstack('Heating system final').T * heating_intensity_before).T
+        # (consumption_no_rebound.T * self.stock).T.sum() / 10**9
+
+        consumption_saved_no_rebound = (consumption_before - consumption_no_rebound.T).T
+        consumption_saved_actual = (consumption_before - consumption_actual.T).T
         certificate_jump = - certificate.replace(EPC2INT).sub(
             certificate_before.replace(EPC2INT), axis=0)
 
@@ -3272,7 +3286,6 @@ class AgentBuildings(ThermalBuildings):
         temp = consumption_energy.copy()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T)
-
 
         consumption = self.consumption_actual(prices) * self.stock
         consumption_calib = consumption * self.coefficient_global

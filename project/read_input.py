@@ -757,7 +757,7 @@ def parse_inputs(inputs, taxes, config, stock):
         total_taxes = total_taxes.add(energy_taxes, fill_value=0)
         taxes += [PublicPolicy('energy_taxes', energy_taxes.index[0], energy_taxes.index[-1], energy_taxes, 'tax')]
 
-    if config['simple']['taxes_constant']:
+    if config['simple']['prices_constant']:
         total_taxes = pd.concat([total_taxes.loc[config['start'], :]] * total_taxes.shape[0], keys=total_taxes.index,
                                 axis=1).T
 

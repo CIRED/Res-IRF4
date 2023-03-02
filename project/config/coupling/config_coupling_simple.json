@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2031,
+    "end": 2021,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -77,7 +77,7 @@
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
-      "demolition_rate": "project/input/macro/demolition_rate_sfec.csv",
+      "demolition_rate": 0,
       "stock_ini": 29037000,
       "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv"
@@ -91,10 +91,9 @@
       "ratio_surface": false,
       "stock": false,
       "no_policy": false,
-      "current_policies": false,
+      "current_policies": true,
       "income": false,
-      "prices_constant": false,
-      "taxes_constant": false,
+      "prices_constant": true,
       "heating_system": {
         "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
@@ -105,6 +104,7 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": true
-    }
+    },
+    "calibration": "project/input/calibration/calibration_simple_0301.pkl"
   }
 }
