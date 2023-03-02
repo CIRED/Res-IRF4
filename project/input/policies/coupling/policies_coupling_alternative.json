@@ -73,11 +73,11 @@
       "columns": "project/input/policies/coupling/subsidies_heater.csv",
       "growth": "project/input/policies/coupling/subsidies_heater_global_renovation_simple.csv"
     },
-    "global_renovation": {
+    "efficiency_100": {
       "start": 2020,
       "end": 2051,
       "policy": "subsidy_ad_valorem",
-      "target": "global_renovation",
+      "target": "efficiency_100",
       "gest": "insulation",
       "value": 1,
       "growth": "project/input/policies/coupling/subsidies_insulation_global_renovation_simple.csv"

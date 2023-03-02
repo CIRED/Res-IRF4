@@ -587,7 +587,6 @@ class ThermalBuildings:
                           format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
                           save=os.path.join(self.path_ini, 'budget_share_ini.png'),
                           palette=self._resources_data['colors'], kde=True)
-
             except:
                 pass
 
@@ -1878,19 +1877,22 @@ class AgentBuildings(ThermalBuildings):
 
                 _condition.update({'best_option': (best.T == best.min(axis=1)).T})
 
-            if 'best_efficiency' in _list_conditions or 'efficiency_100' in _list_conditions:
+            if [i for i in ['best_efficiency', 'best_efficiency_fg', 'efficiency_100', 'fg'] if i in _list_conditions]:
                 _cost_annualized = calculate_annuities(_cost_insulation)
                 cost_saving = reindex_mi(_cost_annualized, _consumption_saved.index) / _consumption_saved
                 best_efficiency = (cost_saving.T == cost_saving.min(axis=1)).T
-                _condition.update({'best_efficiency': best_efficiency.copy()})
-                best_efficiency_fg = (_condition['best_efficiency'].T & _certificate_before.isin(['G', 'F'])).T
-                _condition.update({'best_efficiency_fg': best_efficiency_fg})
-                _condition.update({'efficiency_100': cost_saving < 0.1})
-
-                fg = cost_saving.copy()
-                fg[fg > 0] = False
-                fg.loc[reindex_mi(_certificate_before, fg.index).isin(['G', 'F']), :] = True
-                _condition.update({'fg': fg})
+                if 'best_efficiency' in _list_conditions:
+                    _condition.update({'best_efficiency': best_efficiency.copy()})
+                if 'best_efficiency_fg' in _list_conditions:
+                    best_efficiency_fg = (best_efficiency.T & _certificate_before.isin(['G', 'F'])).T
+                    _condition.update({'best_efficiency_fg': best_efficiency_fg})
+                if 'efficiency_100' in _list_conditions:
+                    _condition.update({'efficiency_100': cost_saving < 0.1})
+                if 'fg' in _list_conditions:
+                    fg = cost_saving.copy()
+                    fg[fg > 0] = False
+                    fg.loc[reindex_mi(_certificate_before, fg.index).isin(['G', 'F']), :] = True
+                    _condition.update({'fg': fg})
 
             minimum_gest_condition, global_condition = 1, 2
             energy_condition = 0.35

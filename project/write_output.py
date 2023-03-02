@@ -25,6 +25,9 @@ from project.utils import make_plot, make_grouped_subplots, make_area_plot, wate
 
 
 def plot_scenario(output, stock, buildings, detailed_graph=False):
+    path = os.path.join(buildings.path, 'img')
+    if not os.path.isdir(path):
+        os.mkdir(path)
 
     if buildings.quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
@@ -35,14 +38,14 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     df.columns = resources_data['index']['Energy']
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   save=os.path.join(buildings.path, 'consumption_energy.png'),
+                   save=os.path.join(path, 'consumption_energy.png'),
                    total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
 
     df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Heater']], :].T
     df.columns = resources_data['index']['Heater']
     make_area_plot(df, 'Energy consumption (TWh)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   save=os.path.join(buildings.path, 'consumption_heater.png'),
+                   save=os.path.join(path, 'consumption_heater.png'),
                    total=False, loc='left', left=1.2, scatter=resources_data['consumption_total_objectives'])
 
     # consumption existing vs new
@@ -57,7 +60,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
         temp.index = l
         temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
         make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Consumption (TWh)', colors=resources_data['colors'],
-                       save=os.path.join(buildings.path, 'consumption.png'), total=False,
+                       save=os.path.join(path, 'consumption.png'), total=False,
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
     # emission
@@ -71,7 +74,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     temp.index = l
     temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
     make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Emission (MtCO2)', colors=resources_data['colors'],
-                   save=os.path.join(buildings.path, 'emission.png'), total=False,
+                   save=os.path.join(path, 'emission.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                    scatter=resources_data['emissions_total_objectives'])
 
@@ -79,7 +82,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)
     make_area_plot(df, 'Dwelling stock (Million)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                   save=os.path.join(buildings.path, 'stock_performance.png'), total=False,
+                   save=os.path.join(path, 'stock_performance.png'), total=False,
                    loc='left')
 
     # building stock heating system
@@ -87,7 +90,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     df.columns = resources_data['index']['Heater']
     make_area_plot(df, 'Dwelling stock (Million)', colors=resources_data['colors'],
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   save=os.path.join(buildings.path, 'stock_heater.png'), total=False,
+                   save=os.path.join(path, 'stock_heater.png'), total=False,
                    loc='left', left=1.1)
 
     # replacement insulation
@@ -95,14 +98,14 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
         [output.loc['Replacement {} (Thousand households)'.format(i), :] for i in resources_data['index']['Insulation']]).T.dropna()
     df.columns = resources_data['index']['Insulation']
     make_area_plot(df, 'Replacement (Thousand households)',
-                   save=os.path.join(buildings.path, 'replacement_insulation.png'), total=False,
+                   save=os.path.join(path, 'replacement_insulation.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), colors=resources_data['colors'], loc='left', left=1.1)
 
     df = output.loc[['Renovation {} (Thousand households)'.format(i) for i in resources_data['index']['Decision maker']], :].T
     df.dropna(inplace=True)
     df.columns = resources_data['index']['Decision maker']
     make_area_plot(df, 'Renovation (Thousand households)',
-                   save=os.path.join(buildings.path, 'renovation_decision_maker.png'), total=False,
+                   save=os.path.join(path, 'renovation_decision_maker.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
@@ -110,7 +113,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     df.dropna(inplace=True)
     df.columns = resources_data['index']['Count']
     make_area_plot(df, 'Retrofit measures (Thousand households)',
-                   save=os.path.join(buildings.path, 'retrofit_measures.png'), total=False,
+                   save=os.path.join(path, 'retrofit_measures.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
@@ -120,7 +123,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     df = output.loc[c, :].T.dropna()
     df.columns = df.columns.map(lambda x: x.split('Switch ')[1].split(' (Thousand households)')[0])
     make_area_plot(df, 'Switch (Thousand households)',
-                   save=os.path.join(buildings.path, 'switch_heater.png'), total=False,
+                   save=os.path.join(path, 'switch_heater.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
     if detailed_graph is True:
@@ -128,7 +131,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             [output.loc['Switch Multi-family {} (Thousand households)'.format(i), :] for i in resources_data['index']['Heating system']]).T.dropna()
         df.columns = resources_data['index']['Heating system']
         make_area_plot(df, 'Switch (Thousand households)',
-                       save=os.path.join(buildings.path, 'switch_heater_mf.png'), total=False,
+                       save=os.path.join(path, 'switch_heater_mf.png'), total=False,
                        format_y=lambda y, _: '{:.0f}'.format(y),
                        colors=resources_data['colors'], loc='left', left=1.25)
 
@@ -136,7 +139,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                            resources_data['index']['Heating system']]).T.dropna()
         df.columns = resources_data['index']['Heating system']
         make_area_plot(df, 'Switch (Thousand households)',
-                       save=os.path.join(buildings.path, 'switch_heater_sf.png'), total=False,
+                       save=os.path.join(path, 'switch_heater_sf.png'), total=False,
                        format_y=lambda y, _: '{:.0f}'.format(y),
                        colors=resources_data['colors'], loc='left', left=1.25)
 
@@ -163,14 +166,14 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                 format_legend(ax[1], loc='left', left=1.2)
                 ax[0].set_title('Realized')
                 ax[1].set_title('Model results')
-                save_fig(fig, save=os.path.join(buildings.path, 'policies_validation.png'))
+                save_fig(fig, save=os.path.join(path, 'policies_validation.png'))
 
-                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
+                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
                                colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
                                loc='left', left=1.2)
 
             else:
-                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(buildings.path, 'policies.png'),
+                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
                                colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
                                scatter=resources_data['public_policies_2019'], loc='left', left=1.2)
     except KeyError:
@@ -184,7 +187,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
     if not subset.empty:
-        make_area_plot(subset, 'Public finance (Billion euro)', save=os.path.join(buildings.path, 'public_finance.png'),
+        make_area_plot(subset, 'Public finance (Billion euro)', save=os.path.join(path, 'public_finance.png'),
                        colors=resources_data['colors'],
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.1)
 
@@ -194,7 +197,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
     if not subset.empty:
-        make_area_plot(subset, 'Investment (Billion euro)', save=os.path.join(buildings.path, 'investment.png'),
+        make_area_plot(subset, 'Investment (Billion euro)', save=os.path.join(path, 'investment.png'),
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['firebrick', 'royalblue', 'darksalmon', 'lightblue'])
 
@@ -203,7 +206,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Billion euro)')[0] for c in subset.columns]
     if not subset.empty:
-        make_area_plot(subset, 'Financing (Billion euro)', save=os.path.join(buildings.path, 'financing.png'),
+        make_area_plot(subset, 'Financing (Billion euro)', save=os.path.join(path, 'financing.png'),
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['darkred', 'darkgrey', 'darkgreen'])
 
@@ -212,7 +215,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.dropna(how='any', inplace=True)
     subset.columns = [c.split(' (Thousand euro/household)')[0] for c in subset.columns]
     if not subset.empty:
-        make_area_plot(subset, 'Financing (Thousand euro per household)', save=os.path.join(buildings.path, 'financing_households.png'),
+        make_area_plot(subset, 'Financing (Thousand euro per household)', save=os.path.join(path, 'financing_households.png'),
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['darkred', 'darkgrey', 'darkgreen'])
 
@@ -221,7 +224,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.columns = resources_data['index']['Income tenant']
     if not subset.empty:
         make_plot(subset, 'Balance Tenant private (euro per year)',
-                  save=os.path.join(buildings.path, 'balance_tenant.png'),
+                  save=os.path.join(path, 'balance_tenant.png'),
                   format_y=lambda y, _: '{:.0f}'.format(y),
                   colors=resources_data['colors'], ymin=None)
 
@@ -230,7 +233,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.columns = resources_data['index']['Income tenant']
     if not subset.empty:
         make_plot(subset, 'Balance Tenant private (euro per year)',
-                  save=os.path.join(buildings.path, 'balance_tenant.png'),
+                  save=os.path.join(path, 'balance_tenant.png'),
                   format_y=lambda y, _: '{:.0f}'.format(y),
                   colors=resources_data['colors'], ymin=None)
 
@@ -239,7 +242,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     subset.columns = resources_data['index']['Income tenant']
     if not subset.empty:
         make_plot(subset, 'Balance Owner occupied (euro per year)',
-                  save=os.path.join(buildings.path, 'balance_owner.png'),
+                  save=os.path.join(path, 'balance_owner.png'),
                   format_y=lambda y, _: '{:.0f}'.format(y),
                   colors=resources_data['colors'], ymin=None)
 
