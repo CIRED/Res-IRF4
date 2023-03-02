@@ -587,6 +587,7 @@ class ThermalBuildings:
                           format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
                           save=os.path.join(self.path_ini, 'budget_share_ini.png'),
                           palette=self._resources_data['colors'], kde=True)
+
             except:
                 pass
 
