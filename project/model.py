@@ -10,7 +10,7 @@ import psutil
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables
 from project.input.resources import resources_data
 
 
@@ -139,6 +139,9 @@ def config2inputs(config=None, building_stock=None, end=None):
             config['policies'][name] = policy
 
     policies_heater, policies_insulation, taxes = read_policies(config)
+
+    policies_insulation = [p for p in policies_insulation if p.end > p.start]
+    policies_heater = [p for p in policies_heater if p.end > p.start]
 
     if config['simple']['quintiles']:
         stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
@@ -413,6 +416,10 @@ def res_irf(config, path):
         logger.info('Reading input')
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+        policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
+        make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'))
+        make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'))
+
         buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
 

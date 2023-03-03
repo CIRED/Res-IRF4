@@ -77,8 +77,8 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     temp = pd.concat((temp.T, t.T), axis=1).fillna(0)
     make_area_plot(temp.loc[buildings.first_year + 1:, :], 'Emission (MtCO2)', colors=resources_data['colors'],
                    save=os.path.join(path, 'emission.png'), total=False,
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
-                   scatter=resources_data['emissions_total_objectives'])
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2
+                   ) # scatter=resources_data['emissions_total_objectives']
 
     # building stock performance
     df = stock.groupby('Performance').sum().T.sort_index(axis=1, ascending=False)

@@ -28,7 +28,7 @@ from importlib import resources
 from pathlib import Path, PosixPath, WindowsPath
 import sys
 import json
-
+import re
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
                      'D5': 'C3', 'D6': 'C3',
@@ -233,6 +233,7 @@ def deciles2quintiles_list(item):
 
     return list(set(new_item))
 
+
 def deciles2quintiles_dict(inputs):
 
     for key, item in inputs.items():
@@ -262,6 +263,99 @@ def deciles2quintiles_dict(inputs):
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+
+
+def make_policies_tables(policies, path):
+    sub_replace = {'subsidy_target': 'Subsidy, per unit',
+                   'subsidy_ad_valorem': 'Subsidy, ad valorem',
+                   'bonus': 'Subsidy, bonus',
+                   'obligation': 'Retrofitting obligation',
+                   'premature_heater': 'Premature replacement',
+                   'reduced_vta': 'Reduced VTA',
+                   'restriction_heater': 'Restriction heater',
+                   'restriction_energy': 'Restriction energy',
+                   'subsidies_cap': 'Subsidy, cap'
+                   }
+
+    heater_replace = {'Electricity-Heat pump air': 'HP-air',
+                      'Electricity-Heat pump water': 'HP-water',
+                      'Natural gas-Performance boiler': 'GasBoiler',
+                      'Natural gas-Standard boiler': 'GasBoiler',
+                      'Natural gas-Collective boiler': 'CollectiveGasBoiler',
+                      'Wood fuel-Performance boiler': 'WoodBoiler',
+                      }
+
+    tables_policies = list()
+    for p in policies:
+        temp = {'Name': '{} - {}'.format(p.name.capitalize().replace('_', ' '), p.gest.capitalize()),
+                'Date': '{} - {}'.format(p.start, p.end),
+                'Policy': '{}'.format(sub_replace[p.policy])
+                }
+
+        value = p.value
+        growth = False
+        if isinstance(value, dict):
+            value = value[list(value.keys())[0]]
+            growth = True
+
+        if isinstance(value, pd.DataFrame):
+            t = value.mean()
+        else:
+            t = value
+        if isinstance(t, pd.Series):
+            if p.policy == 'obligation':
+                t = t[t.ne(t.shift())] # only for retrofitting obligation
+            else:
+                t = t[t > 0]
+
+            if isinstance(t.index, pd.MultiIndex):
+                t.index = ['-'.join(col) for col in t.index.values]
+            t = t.rename_axis(None)
+            t = t.rename(None)
+            if p.policy in ['subsidy_ad_valorem', 'subsidies_cap']:
+                t = t.map('{:,.0%}'.format)
+            elif p.policy == 'subsidy_target':
+                t = t.map('{:,.0f}'.format)
+
+            if p.gest == 'heater':
+                t = t.rename(index=heater_replace)
+
+            t = t.to_string(name=None).replace('\n', ';')
+            t = re.sub(' +', ':', t)
+
+        elif isinstance(t, list):
+            t = ', '.join(t)
+        else:
+            t = value
+
+        details = 'Value: {}'.format(t)
+        if growth:
+            details = details + ',Growth: true'
+        if p.target is not None:
+            t = p.target
+            if isinstance(t, list):
+                t = ', '.join(t)
+            details = details + ',Target: {}'.format(t)
+        if p.cap is not None:
+            cap = p.cap
+            if isinstance(cap, dict):
+                cap = cap[list(cap.keys())[0]]
+            if isinstance(cap, pd.Series):
+                cap = cap[cap > 0]
+                if isinstance(cap.index, pd.MultiIndex):
+                    cap.index = ['-'.join(col) for col in cap.index.values]
+                cap = cap.rename_axis(None)
+                cap = cap.rename(None)
+                cap = cap.map('{:,.0f}'.format)
+                cap = cap.to_string(name=None).replace('\n', ';')
+                cap = re.sub(' +', ':', cap)
+
+            details = details + ',Cap: {}'.format(cap)
+
+        temp.update({'Details': details})
+        tables_policies.append(temp)
+    tables_policies = pd.DataFrame(tables_policies).set_index('Name').sort_index()
+    tables_policies.to_csv(path)
 
 
 def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
