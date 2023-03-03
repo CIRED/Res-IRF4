@@ -25,7 +25,6 @@ from project.utils import make_plot, make_grouped_subplots, make_area_plot, wate
 from PIL import Image
 
 
-
 def plot_scenario(output, stock, buildings, detailed_graph=False):
     path = os.path.join(buildings.path, 'img')
     if not os.path.isdir(path):
@@ -305,6 +304,46 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
     -------
 
     """
+    def grouped(result, variables):
+        """Group result.
+
+        Parameters
+        ----------
+        result: dict
+        variables: list
+        """
+        temp = {var: pd.DataFrame(
+            {scenario: output.loc[var, :] for scenario, output in result.items() if var in output.index}) for var in
+            variables}
+        return {k: i for k, i in temp.items() if not i.empty}
+
+    def details_graphs(data, v, inf, folder_img):
+        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
+        temp = grouped(data, [v.format(i) for i in resources_data['index'][inf[0]]])
+        replace = {v.format(i): i for i in resources_data['index'][inf[0]]}
+        temp = {replace[key]: item.astype(float).interpolate(limit_area='inside') for key, item in temp.items()}
+
+        try:
+            n_columns = inf[2]
+        except IndexError:
+            n_columns = len(temp.keys())
+
+        try:
+            if inf[3] is not None:
+                for key in temp.keys():
+                    temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
+                    temp[key].sort_index(inplace=True)
+        except IndexError:
+            pass
+
+        try:
+            scatter = inf[4]
+        except IndexError:
+            scatter = None
+
+        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
+                              order=resources_data['index'][inf[0]])
+
     if quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
         resources_data['index']['Income owner'] = resources_data['quintiles']
@@ -358,19 +397,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
 
         make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
 
-    def grouped(result, variables):
-        """Group result.
-
-        Parameters
-        ----------
-        result: dict
-        variables: list
-        """
-        temp = {var: pd.DataFrame(
-            {scenario: output.loc[var, :] for scenario, output in result.items() if var in output.index}) for var in
-            variables}
-        return {k: i for k, i in temp.items() if not i.empty}
-
     variables_output = {
         'Consumption {} (TWh)': [
             ('Energy', lambda y, _: '{:,.0f}'.format(y), 2, resources_data['consumption_hist'])],
@@ -382,33 +408,6 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
     }
     #         'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
 
-    def details_graphs(data, v, inf, folder_img):
-        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
-        temp = grouped(data, [v.format(i) for i in resources_data['index'][inf[0]]])
-        replace = {v.format(i): i for i in resources_data['index'][inf[0]]}
-        temp = {replace[key]: item.astype(float).interpolate(limit_area='inside') for key, item in temp.items()}
-
-        try:
-            n_columns = inf[2]
-        except IndexError:
-            n_columns = len(temp.keys())
-
-        try:
-            if inf[3] is not None:
-                for key in temp.keys():
-                    temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
-                    temp[key].sort_index(inplace=True)
-        except IndexError:
-            pass
-
-        try:
-            scatter = inf[4]
-        except IndexError:
-            scatter = None
-
-        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
-                              order=resources_data['index'][inf[0]])
-
     for var, infos in variables_output.items():
         for info in infos:
             details_graphs(result, var, info, folder_img)
@@ -416,32 +415,34 @@ def grouped_output(result, folder, config_runs=None, config_sensitivity=None, qu
     if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
         indicator_policies(result, folder, config_runs)
 
-    if 'Reference' in result.keys() and len(result.keys()) > 1 and config_sensitivity is not None:
-        variables = {'Consumption (TWh)': ('consumption_hist_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
-                                           resources_data['consumption_total_hist'],
-                                           resources_data['consumption_total_objectives']),
-                     'Emission (MtCO2)': ('emission_uncertainty.png', lambda y, _: '{:,.0f}'.format(y)),
-                     'Retrofit at least 1 EPC (Thousand households)': (
-                         'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
-                         resources_data['retrofit_comparison'])
-                     }
-        for variable, infos in variables.items():
-            temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
-            columns = temp.columns
-            try:
-                temp = pd.concat((temp, infos[2]), axis=1)
-                temp.sort_index(inplace=True)
-            except IndexError:
-                pass
+    # TODO: uncertainty plot to work on
+    if False:
+        if 'Reference' in result.keys() and len(result.keys()) > 1 and config_sensitivity is not None:
+            variables = {'Consumption (TWh)': ('consumption_hist_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
+                                               resources_data['consumption_total_hist'],
+                                               resources_data['consumption_total_objectives']),
+                         'Emission (MtCO2)': ('emission_uncertainty.png', lambda y, _: '{:,.0f}'.format(y)),
+                         'Retrofit at least 1 EPC (Thousand households)': (
+                             'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
+                             resources_data['retrofit_comparison'])
+                         }
+            for variable, infos in variables.items():
+                temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
+                columns = temp.columns
+                try:
+                    temp = pd.concat((temp, infos[2]), axis=1)
+                    temp.sort_index(inplace=True)
+                except IndexError:
+                    pass
 
-            try:
-                scatter = infos[3]
-            except IndexError:
-                scatter = None
-                pass
+                try:
+                    scatter = infos[3]
+                except IndexError:
+                    scatter = None
+                    pass
 
-            make_uncertainty_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1],
-                                  scatter=scatter, columns=columns)
+                make_uncertainty_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1],
+                                      scatter=scatter, columns=columns)
 
 
 def indicator_policies(result, folder, config, discount_rate=0.045, years=30):

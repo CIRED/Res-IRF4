@@ -124,17 +124,24 @@ def run(path=None):
         if configuration['sensitivity']['activated'] * args.sensitivity:
             name_policy = 'sensitivity_'
             config_sensitivity = configuration['sensitivity']
-            if 'ZP' in config_sensitivity.keys():
-                if config_sensitivity['ZP']:
-                    configuration['ZP'] = copy.deepcopy(configuration['Reference'])
-                    for name, policy in configuration['ZP']['policies'].items():
-                        policy['end'] = configuration['Reference']['start'] + 2
-                        configuration['ZP']['policies'][name] = policy
+            if 'no_policy' in config_sensitivity.keys():
+                if config_sensitivity['no_policy']:
+                    configuration['NoPolicy'] = copy.deepcopy(configuration['Reference'])
+                    configuration['NoPolicy']['simple']['no_policy'] = True
+            if 'current_policies' in config_sensitivity.keys():
+                if config_sensitivity['current_policies']:
+                    configuration['CurrentPolicies'] = copy.deepcopy(configuration['Reference'])
+                    configuration['CurrentPolicies']['simple']['current_policies'] = True
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:
                     configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
                     configuration['PriceConstant']['simple']['prices_constant'] = True
-                    configuration['PriceConstant']['simple']['taxes_constant'] = True
+            if 'constant' in config_sensitivity.keys():
+                if config_sensitivity['constant']:
+                    configuration['Constant'] = copy.deepcopy(configuration['Reference'])
+                    configuration['Constant']['simple']['prices_constant'] = True
+                    configuration['Constant']['simple']['current_policies'] = True
+
             if 'step' in config_sensitivity.keys():
                 values = config_sensitivity['step']
                 for v in values:
@@ -188,7 +195,6 @@ def run(path=None):
                         configuration['Exogenous{}'.format(v)]['renovation']['endogenous'] = False
                         configuration['Exogenous{}'.format(v)]['renovation']['exogenous']['number'] = v
 
-
         del configuration['sensitivity']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
@@ -219,7 +225,7 @@ def run(path=None):
         logger.debug('Parsing results')
         if configuration.get('Reference').get('full_output'):
             grouped_output(result, folder, config_policies, config_sensitivity,
-                           quintiles=configuration.get('Reference').get('quintiles'))
+                           quintiles=configuration.get('Reference').get('simple').get('quintiles'))
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

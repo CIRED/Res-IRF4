@@ -86,7 +86,7 @@ def ini_res_irf(path=None, config=None, climate=2006):
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost
+    return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost, config.get('premature_replacement')
 
 
 def create_subsidies(sub_insulation, sub_design, start, end):
@@ -166,6 +166,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                  lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
                  climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
+                 premature_replacement=None
                  ):
     # initialize policies
     if sub_heater is not None:
@@ -199,7 +200,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                          p_insulation, f_built, year, post_inputs,
                                          financing_cost=financing_cost, climate=climate,
                                          demolition_rate=demolition_rate,
-                                         full_output=full_output)
+                                         full_output=full_output,
+                                         premature_replacement=premature_replacement)
 
         output.update({year: o})
         if full_output:
@@ -312,9 +314,10 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
              sub_design='global_renovation'):
 
     path = os.path.join('project', 'output', 'ResIRF')
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost = ini_res_irf(
+    config = CONFIG_TEST
+    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost, premature_replacement = ini_res_irf(
         path=path,
-        config=CONFIG_TEST)
+        config=config)
 
     sub_heater = 0
     sub_insulation = 0
@@ -326,7 +329,8 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
                                               p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
                                               efficiency_hour=False, demolition_rate=demolition_rate,
                                               output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                              technical_progress=technical_progress)
+                                              technical_progress=technical_progress,
+                                              premature_replacement=premature_replacement)
 
     concat_output = concat((concat_output, output), axis=1)
 
