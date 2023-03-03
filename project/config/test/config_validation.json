@@ -1,9 +1,9 @@
 {"sensitivity": {
     "activated": true,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": true,
-      "prices_constant": true,
-      "constant": true
+      "prices_constant": false,
+      "constant": false
 },
   "Reference": {
     "end": 2022,

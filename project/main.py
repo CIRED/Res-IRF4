@@ -25,8 +25,9 @@ from datetime import datetime
 import re
 import argparse
 
-from project.write_output import grouped_output
+from project.write_output import plot_compare_scenarios, indicator_policies
 from project.model import res_irf
+from project.utils import get_json
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -220,12 +221,14 @@ def run(path=None):
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}
-        stocks = {i[0]: i[2] for i in results}
+        # stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
         if configuration.get('Reference').get('full_output'):
-            grouped_output(result, folder, config_policies, config_sensitivity,
-                           quintiles=configuration.get('Reference').get('simple').get('quintiles'))
+            plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
+            config_policies = get_json('project/input/policies/cba_inputs.json')
+            if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
+                indicator_policies(result, folder, config_policies)
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
