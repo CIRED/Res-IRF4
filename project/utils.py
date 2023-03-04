@@ -231,7 +231,8 @@ def deciles2quintiles_list(item):
             i = DECILES2QUINTILES[i]
         new_item.append(i)
 
-    return list(set(new_item))
+    # return list(set(new_item))
+    return list(dict.fromkeys(new_item))
 
 
 def deciles2quintiles_dict(inputs):

@@ -10,7 +10,7 @@ import psutil
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes
 from project.input.resources import resources_data
 
 
@@ -414,8 +414,8 @@ def res_irf(config, path):
     logger = create_logger(path)
     try:
         logger.info('Reading input')
-
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+
         policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
         make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
         make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
@@ -425,6 +425,15 @@ def res_irf(config, path):
 
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
+
+        if config.get('full_output'):
+            stock = buildings.simplified_stock(energy_level=True)
+            stock = stock.groupby(
+                ['Occupancy status', 'Income owner', 'Income tenant', 'Housing type', 'Energy', 'Performance']).sum()
+            subplots_attributes(stock, dict_order=resources_data['index'],
+                                dict_color=resources_data['colors'],
+                                sharey=True, save=os.path.join(buildings.path_ini, 'stock.png'))
+
         buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
         stock = pd.concat((stock, s), axis=1)
@@ -508,7 +517,7 @@ def res_irf(config, path):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             if config.get('full_output'):
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
-                plot_scenario(output, stock, buildings, summary=True)
+                plot_scenario(output, stock, buildings)
 
         return os.path.basename(os.path.normpath(path)), output, stock
 

@@ -171,6 +171,8 @@ class ThermalBuildings:
         self.stock_mobile = stock_mobile[stock_mobile > ACCURACY]
         self.surface = reindex_mi(self._surface, stock.index)
         self.energy = self.to_energy(stock).astype('category')
+        self._resources_data['index']['Energy'] = [i for i in self._resources_data['index']['Energy'] if i in self.energy.unique()]
+
         consumption_sd, _, certificate = self.consumption_heating_store(stock.index)
         self.certificate = reindex_mi(certificate, stock.index).astype('category')
 
@@ -814,6 +816,7 @@ class AgentBuildings(ThermalBuildings):
         self.quintiles = quintiles
         if self.quintiles:
             self._resources_data = deciles2quintiles_dict(self._resources_data)
+
 
         self.policies = []
 

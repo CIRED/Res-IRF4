@@ -801,10 +801,8 @@ def make_summary(path):
     # 1. reference - input
     path_reference = os.path.join(path, 'Reference')
     # TODO: add description stock
-    images_ini = ['energy_prices.png', 'cost_curve_insulation.png']
+    images_ini = ['energy_prices.png', 'cost_curve_insulation.png', 'policy_scenario.png']
     images_ini = [os.path.join(path_reference, i) for i in images_ini]
-
-    # TODO: add policies scenario reference
 
     # 2. result - reference
     path_reference_result = os.path.join(path_reference, 'img')

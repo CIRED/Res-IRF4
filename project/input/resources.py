@@ -83,7 +83,6 @@ resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6',
                                               'Wood fuel-Performance boiler', 'Heating-District heating'],
                            'Count': [1, 2, 3, 4, 5],
                            'Heat pumps': ['Electricity-Heat pump water', 'Electricity-Heat pump air']
-
                            }
 
 resources_data['heating2heater'] = {
