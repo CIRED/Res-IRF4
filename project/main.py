@@ -229,7 +229,7 @@ def run(path=None):
             config_policies = get_json('project/input/policies/cba_inputs.json')
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
                 indicator_policies(result, folder, config_policies)
-            make_summary(path)
+            make_summary(folder)
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

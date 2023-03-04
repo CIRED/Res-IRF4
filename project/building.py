@@ -133,7 +133,7 @@ class ThermalBuildings:
 
         stock = self.add_certificate(stock).groupby('Performance').sum() / 10**6
         compare_performance = concat((stock, self._resources_data['performance_stock']), axis=1, keys=['Model', 'SDES-2018'])
-        compare_bar_plot(compare_performance, 'Stock by performance (Million dwelling)', save=os.path.join(self.path, 'stock_performance.png'))
+        compare_bar_plot(compare_performance, 'Stock by performance (Million dwelling)', save=os.path.join(self.path_ini, 'stock_performance.png'))
 
     @property
     def year(self):

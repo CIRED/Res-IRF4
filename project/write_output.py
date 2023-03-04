@@ -800,20 +800,27 @@ def make_summary(path):
 
     # 1. reference - input
     path_reference = os.path.join(path, 'Reference')
-    # TODO: add description stock
-    images_ini = ['energy_prices.png', 'cost_curve_insulation.png', 'policy_scenario.png']
+    images_ini = ['ini/stock.png', 'ini/thermal_insulation.png', 'energy_prices.png', 'cost_curve_insulation.png', 'policy_scenario.png']
     images_ini = [os.path.join(path_reference, i) for i in images_ini]
 
     # 2. result - reference
     path_reference_result = os.path.join(path_reference, 'img')
-    images_to_save = ['stock_performance.png', 'consumption_heater.png', 'emission.png']
-    images_to_save = [os.path.join(path_reference_result, i) for i in images_to_save]
+    images_reference = ['stock_performance.png', 'consumption_heater.png', 'emission.png']
+    images_reference = [os.path.join(path_reference_result, i) for i in images_reference]
+
+    # 3. result - compare
+    path_compare = os.path.join(path, 'img')
+    images_compare = ['renovation.png', 'retrofit_measures_count.png', 'consumption_hist.png', 'consumption_energy.png',
+                      'investment_total.png'
+                      ]
+    images_compare = [os.path.join(path_compare, i) for i in images_compare]
 
 
     # Appendix
-    images_appendix = [os.path.join(path_reference, 'stock_performance.png')]
+    images_appendix = [os.path.join(path_reference, 'stock_performance.png'),
+                       os.path.join(path_reference, 'ini/heating_intensity.png')]
 
-    images = [Image.open(img) for img in images_to_save + images_ini]
+    images = [Image.open(img) for img in images_ini + images_reference + images_compare]
     new_images = []
     for png in images:
         png.load()

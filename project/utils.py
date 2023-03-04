@@ -1201,3 +1201,13 @@ def make_hist(df, x, hue, y_label, legend=True, format_y=lambda y, _: y, save=No
     # plt.ticklabel_format(style='plain', axis='x')
 
     save_fig(fig, save=save)
+
+
+def plot_thermal_insulation(stock, save=None):
+    temp = dict()
+    for i in ['Wall', 'Floor', 'Roof', 'Windows']:
+        y = pd.Series(stock.index.get_level_values(i), index=stock.index,
+                      name='{} insulation (W/m2.K)'.format(i)).astype('float')
+        x = stock / 10 ** 6
+        temp.update({i: cumulated_plot(x, y, plot=False)})
+    cumulated_plots(temp, 'Thermal transmittance U (W/m2.K)', ylim=3, save=save)

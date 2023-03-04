@@ -10,7 +10,7 @@ import psutil
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes, plot_thermal_insulation
 from project.input.resources import resources_data
 
 
@@ -427,10 +427,11 @@ def res_irf(config, path):
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
 
         if config.get('full_output'):
-            stock = buildings.simplified_stock(energy_level=True)
-            stock = stock.groupby(
+            plot_thermal_insulation(buildings.stock, save=os.path.join(buildings.path_ini, 'thermal_insulation.png'))
+            _stock = buildings.simplified_stock(energy_level=True)
+            _stock = _stock.groupby(
                 ['Occupancy status', 'Income owner', 'Income tenant', 'Housing type', 'Energy', 'Performance']).sum()
-            subplots_attributes(stock, dict_order=resources_data['index'],
+            subplots_attributes(_stock, dict_order=resources_data['index'],
                                 dict_color=resources_data['colors'],
                                 sharey=True, save=os.path.join(buildings.path_ini, 'stock.png'))
 
