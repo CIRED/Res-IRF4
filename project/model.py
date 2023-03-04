@@ -417,8 +417,8 @@ def res_irf(config, path):
 
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
         policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
-        make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'))
-        make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'))
+        make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
+        make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
 
         buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
             inputs, stock, year, taxes, path=path, config=config, logger=logger)
@@ -508,7 +508,7 @@ def res_irf(config, path):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             if config.get('full_output'):
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
-                plot_scenario(output, stock, buildings)
+                plot_scenario(output, stock, buildings, summary=True)
 
         return os.path.basename(os.path.normpath(path)), output, stock
 

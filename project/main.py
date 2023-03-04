@@ -25,7 +25,7 @@ from datetime import datetime
 import re
 import argparse
 
-from project.write_output import plot_compare_scenarios, indicator_policies
+from project.write_output import plot_compare_scenarios, indicator_policies, make_summary
 from project.model import res_irf
 from project.utils import get_json
 
@@ -229,6 +229,7 @@ def run(path=None):
             config_policies = get_json('project/input/policies/cba_inputs.json')
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
                 indicator_policies(result, folder, config_policies)
+            make_summary(path)
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

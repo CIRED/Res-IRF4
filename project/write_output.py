@@ -25,7 +25,7 @@ from project.utils import make_plot, make_grouped_subplots, make_area_plot, wate
 from PIL import Image
 
 
-def plot_scenario(output, stock, buildings, detailed_graph=False, summary=False):
+def plot_scenario(output, stock, buildings, detailed_graph=False):
     path = os.path.join(buildings.path, 'img')
     if not os.path.isdir(path):
         os.mkdir(path)
@@ -246,26 +246,6 @@ def plot_scenario(output, stock, buildings, detailed_graph=False, summary=False)
                   save=os.path.join(path, 'balance_owner.png'),
                   format_y=lambda y, _: '{:.0f}'.format(y),
                   colors=resources_data['colors'], ymin=None)
-
-    if summary:
-        images_ini = ['energy_prices.png', 'stock_performance.png', 'cost_curve_insulation.png']
-        images_ini = [os.path.join(buildings.path, i) for i in images_ini]
-
-        images_to_save = ['stock_performance.png', 'consumption_heater.png', 'emission.png']
-        images_to_save = [os.path.join(path, i) for i in images_to_save]
-        images = [Image.open(img) for img in images_to_save + images_ini]
-        new_images = []
-        for png in images:
-            png.load()
-            background = Image.new('RGB', png.size, (255, 255, 255))
-            background.paste(png, mask=png.split()[3])  # 3 is the alpha channel
-            new_images.append(background)
-
-        pdf_path = os.path.join(buildings.path, 'summary_pdf.pdf')
-
-        new_images[0].save(
-            pdf_path, 'PDF', resolution=100.0, save_all=True, append_images=new_images[1:]
-        )
 
 
 def plot_compare_scenarios(result, folder, quintiles=None):
@@ -490,7 +470,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                              index=result.index)
         return (result * discount).sum()
 
-    def cost_benefit_analysis(data, scenarios, pol_name, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
+    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
         """Calculate socioeconomic NPV.
 
         Double difference is calculated with : scenario - reference
@@ -519,7 +499,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         for s in scenarios:
             df = data.loc[:, s]
             temp = dict()
-            temp.update({'Investment': df['Investment total HT (Billion euro)']})
+            temp.update({'Investment': df['Investment total WT (Billion euro)']})
             if embodied_emission:
                 temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
             if cofp:
@@ -536,24 +516,27 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
             if 'AP' in s:
                 temp = pd.Series(temp)
-                title = pol_name + ' : AP - ({})'.format(s)
-            else:
+                title = policy_name + ' : AP - ({})'.format(s)
+            elif 'zP' in s:
                 temp = - pd.Series(temp)
-                title = pol_name + ' : ({})- ZP'.format(s)
+                title = policy_name + ' : ({})- ZP'.format(s)
+            else:
+                temp = pd.Series(temp)
+                title = 'Reference compare to {}'.format(s)
 
             if save:
                 if cofp:
                     waterfall_chart(temp, title=title,
-                                save=os.path.join(save, 'npv_{}_cofp.png'.format(s.lower().replace(' ', '_'))),
-                                colors=resources_data['colors'])
+                                    save=os.path.join(save, 'npv_{}_cofp.png'.format(s.lower().replace(' ', '_'))),
+                                    colors=resources_data['colors'])
 
                     waterfall_chart(temp.loc[temp.index != 'Cofp'], title=title,
-                                save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
-                                colors=resources_data['colors'])
+                                    save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
+                                    colors=resources_data['colors'])
                 else:
                     waterfall_chart(temp, title=title,
-                                save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
-                                colors=resources_data['colors'])
+                                    save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
+                                    colors=resources_data['colors'])
 
             npv[title] = temp
 
@@ -566,7 +549,6 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             else:
                 assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')),
                                      colors=resources_data['colors'])
-
 
         npv.loc['NPV', :] = npv.sum()
         return npv
@@ -589,147 +571,146 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     carbon_emission_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_emission_value.dropna(how='all', inplace=True)
 
-    scenarios = [s for s in result.keys() if s != 'Reference' and s != 'ZP']
-
     if policy_name is not None:
         policy_name = policy_name.replace('_', ' ').capitalize()
 
+
     # Calculating simple and double differences for needed variables, and storing them in agg
     # Double difference = Scenario - Reference
+    scenarios = [s for s in result.keys() if s != 'Reference' and s != 'ZP']
     comparison = {}
     for scenario in scenarios:
-
-        if 'AP' in scenario:
-            ref = result['Reference']
-        else:
+        data = result[scenario]
+        ref = result['Reference']
+        if 'ZP' in scenario:
             ref = result['ZP']
 
         rslt = {}
         for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
                     'Health expenditure (Billion euro)', 'Social cost of mortality (Billion euro)',
                     'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)']:
-            rslt[var] = double_difference(ref.loc[var, :], result[scenario].loc[var, :],
+            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
                                           values=None)
 
         for energy in resources_data['index']['Energy']:
             var = 'Consumption {} (TWh)'.format(energy)
-            rslt[var] = double_difference(ref.loc[var, :], result[scenario].loc[var, :],
+            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
                                           values=None)
             rslt['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(
                 ref.loc[var, :],
-                result[scenario].loc[var, :],
+                data.loc[var, :],
                 values=energy_prices[energy]) / (10 ** 9)
             # On a des euros
 
             rslt['Emission {} (tCO2)'.format(energy)] = double_difference(ref.loc[var, :],
-                                                                          result[scenario].loc[var, :],
+                                                                          data.loc[var, :],
                                                                           values=carbon_emission[energy])
 
             rslt['Carbon value {} (Billion euro)'.format(energy)] = double_difference(ref.loc[var, :],
-                                                                                      result[scenario].loc[var, :],
+                                                                                      data.loc[var, :],
                                                                                       values=carbon_emission_value[energy]) / (
                                                                             10 ** 9)
 
         # Simple diff = scenario - ref
-        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total HT (Billion euro)',
+        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total WT (Billion euro)',
                     'Health expenditure (Billion euro)']:
             discount = pd.Series(
                 [1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                 index=ref.loc[var, :].index)
             if var == 'Health expenditure (Billion euro)':
-                rslt['Simple difference ' + var] = ((result[scenario].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+                rslt['Simple difference ' + var] = ((data.loc[var, :] - ref.loc[var, :]) * discount.T).sum()
             else:
-                rslt[var] = ((result[s].loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+                rslt[var] = ((data.loc[var, :] - ref.loc[var, :]) * discount.T).sum()
 
         var = 'Carbon footprint (MtCO2)'
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                              index=ref.loc[var, :].index)
-        rslt['Carbon footprint (Billion euro)'] = ((result[scenario].loc[var,
+        rslt['Carbon footprint (Billion euro)'] = ((data.loc[var,
                                                     :] - ref.loc[var, :]) * discount.T * carbon_value).sum() / 10**3
 
         var = '{} (Billion euro)'.format(policy_name)
 
-        if var in result[scenario].index and var in ref.index:
+        if var in data.index and var in ref.index:
             discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                                  index=ref.loc[var, :].index)
-            rslt[var] = (((result[scenario].loc[var, :]).fillna(0) - ref.loc[var, :].fillna(0)) * discount.T).sum()
+            rslt[var] = (((data.loc[var, :]).fillna(0) - ref.loc[var, :].fillna(0)) * discount.T).sum()
             # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
         elif var in ref.index:
             discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                                  index=ref.loc[var, :].index)
             rslt[var] = (- ref.loc[var, :] * discount.T).sum()
-        elif var in result[scenario].index:
-            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(result[s].loc[var, :].shape[0])],
-                                 index=result[scenario].loc[var, :].index)
-            rslt[var] = (result[scenario].loc[var, :] * discount.T).sum()
+        elif var in data.index:
+            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(data.loc[var, :].shape[0])],
+                                 index=data.loc[var, :].index)
+            rslt[var] = (data.loc[var, :] * discount.T).sum()
         else:
             rslt[var] = 0
         comparison[scenario] = rslt
-
     comparison = pd.DataFrame(comparison)
 
-    # Efficiency: AP and AP-t scenarios
+    indicator = None
     efficiency_scenarios = list(set(comparison.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2051)]))
-    indicator = dict()
-    if efficiency_scenarios:
-        # We want efficiency only for concerned scenario policy (that is cut at t-1)
-        comp_efficiency = comparison.loc[:, efficiency_scenarios]
+    # cost-efficiency
+    if policy_name is not None:
+        # cost-efficiency: AP and AP-t scenarios
+        indicator = dict()
+        if efficiency_scenarios:
+            # We want efficiency only for concerned scenario policy (that is cut at t-1)
+            comp_efficiency = comparison.loc[:, efficiency_scenarios]
 
-        policy_cost = comp_efficiency.loc['{} (Billion euro)'.format(policy_name)]
-        indicator.update({'{} (Billion euro)'.format(policy_name): policy_cost})
-        indicator.update({'Investment total HT (Billion euro)': comp_efficiency.loc['Investment total HT (Billion euro)']})
+            policy_cost = comp_efficiency.loc['{} (Billion euro)'.format(policy_name)]
+            indicator.update({'{} (Billion euro)'.format(policy_name): policy_cost})
+            indicator.update({'Investment total WT (Billion euro)': comp_efficiency.loc['Investment total WT (Billion euro)']})
 
-        indicator.update({'Consumption (TWh)': comp_efficiency.loc['Consumption (TWh)']})
-        indicator.update({'Consumption standard (TWh)': comp_efficiency.loc['Consumption standard (TWh)']})
-        indicator.update({'Emission (MtCO2)': comp_efficiency.loc['Emission (MtCO2)']})
-        indicator.update({'Cost effectiveness (euro/kWh)': - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
-        indicator.update({'Cost effectiveness standard (euro/kWh)': - policy_cost / comp_efficiency.loc[
-            'Consumption standard (TWh)']})
-        indicator.update({'Cost effectiveness carbon (euro/tCO2)': - policy_cost / comp_efficiency.loc[
-            'Emission (MtCO2)'] * 10**3})
-        indicator.update({'Leverage (%)': comp_efficiency.loc['Investment total HT (Billion euro)'] / policy_cost})
-        indicator.update({'Investment / energy savings (euro/kWh)': comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
-        indicator.update({'Investment / energy savings standard (euro/kWh)': comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Consumption standard (TWh)']})
-        indicator.update({'Investment / emission (euro/tCO2)': comp_efficiency.loc['Investment total HT (Billion euro)'] / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
+            indicator.update({'Consumption (TWh)': comp_efficiency.loc['Consumption (TWh)']})
+            indicator.update({'Consumption standard (TWh)': comp_efficiency.loc['Consumption standard (TWh)']})
+            indicator.update({'Emission (MtCO2)': comp_efficiency.loc['Emission (MtCO2)']})
+            indicator.update({'Cost effectiveness (euro/kWh)': - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
+            indicator.update({'Cost effectiveness standard (euro/kWh)': - policy_cost / comp_efficiency.loc[
+                'Consumption standard (TWh)']})
+            indicator.update({'Cost effectiveness carbon (euro/tCO2)': - policy_cost / comp_efficiency.loc[
+                'Emission (MtCO2)'] * 10**3})
+            indicator.update({'Leverage (%)': comp_efficiency.loc['Investment total WT (Billion euro)'] / policy_cost})
+            indicator.update({'Investment / energy savings (euro/kWh)': comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
+            indicator.update({'Investment / energy savings standard (euro/kWh)': comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption standard (TWh)']})
+            indicator.update({'Investment / emission (euro/tCO2)': comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
 
-        indicator = pd.DataFrame(indicator).T
+            indicator = pd.DataFrame(indicator).T
 
-        # Retrofit ratio = freerider ratio
-        # And impact on retrofit rate : difference in retrofit rate / cost of subvention
-        for s in efficiency_scenarios:
-            year = int(s[-4:])
-            if year in result['Reference'].columns:
+            # Retrofit ratio = freerider ratio
+            # And impact on retrofit rate : difference in retrofit rate / cost of subvention
+            for s in efficiency_scenarios:
+                year = int(s[-4:])
+                if year in result['Reference'].columns:
 
-                indicator.loc['Intensive margin diff (Thousand euro / households)', s] = result['Reference'].loc['Investment insulation / households (Thousand euro)', year] - result[s].loc['Investment insulation / households (Thousand euro)', year]
-                indicator.loc['Intensive margin diff (%)', s] = indicator.loc['Intensive margin diff (Thousand euro / households)', s] / result['Reference'].loc['Investment insulation / households (Thousand euro)', year]
-                indicator.loc['Freeriding renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
-                indicator.loc['Non-freeriding renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - (
-                    result[s].loc['Renovation (Thousand households)', year])
-                indicator.loc['Freeriding investment diff (Billion euro)', s] = indicator.loc['Freeriding renovation (Thousand households)', s] * 10**3 * indicator.loc['Intensive margin diff (Thousand euro / households)', s] / 10**6
-                indicator.loc['Non-freeriding investment diff (Billion euro)', s] = indicator.loc['Non-freeriding renovation (Thousand households)', s] * 10**3 * result[s].loc['Investment insulation / households (Thousand euro)', year] / 10**6
-                indicator.loc['Freeriding renovation ratio (%)', s] = result[s].loc['Renovation (Thousand households)', year] / (
-                    result['Reference'].loc['Renovation (Thousand households)', year])
-                decile = ['D{}'.format(i) for i in range(1, 11)]
-                df = result[s].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year] / \
-                     result['Reference'].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year]
-                df.index = ['Freeriding renovation ratio {} (%)'.format(d) for d in decile]
-                df.name = s
-                df = pd.DataFrame(df)
-                # This part to be improved
-                if set(list(df.index)).issubset(list(indicator.index)):
-                    indicator.loc[list(df.index), s] = df[s]
-                else:
-                    indicator = pd.concat((indicator, df), axis=0)
+                    indicator.loc['Intensive margin diff (Thousand euro / households)', s] = result['Reference'].loc['Investment insulation / households (Thousand euro)', year] - result[s].loc['Investment insulation / households (Thousand euro)', year]
+                    indicator.loc['Intensive margin diff (%)', s] = indicator.loc['Intensive margin diff (Thousand euro / households)', s] / result['Reference'].loc['Investment insulation / households (Thousand euro)', year]
+                    indicator.loc['Freeriding renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
+                    indicator.loc['Non-freeriding renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - (
+                        result[s].loc['Renovation (Thousand households)', year])
+                    indicator.loc['Freeriding investment diff (Billion euro)', s] = indicator.loc['Freeriding renovation (Thousand households)', s] * 10**3 * indicator.loc['Intensive margin diff (Thousand euro / households)', s] / 10**6
+                    indicator.loc['Non-freeriding investment diff (Billion euro)', s] = indicator.loc['Non-freeriding renovation (Thousand households)', s] * 10**3 * result[s].loc['Investment insulation / households (Thousand euro)', year] / 10**6
+                    indicator.loc['Freeriding renovation ratio (%)', s] = result[s].loc['Renovation (Thousand households)', year] / (
+                        result['Reference'].loc['Renovation (Thousand households)', year])
+                    decile = ['D{}'.format(i) for i in range(1, 11)]
+                    df = result[s].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year] / \
+                         result['Reference'].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year]
+                    df.index = ['Freeriding renovation ratio {} (%)'.format(d) for d in decile]
+                    df.name = s
+                    df = pd.DataFrame(df)
+                    # This part to be improved
+                    if set(list(df.index)).issubset(list(indicator.index)):
+                        indicator.loc[list(df.index), s] = df[s]
+                    else:
+                        indicator = pd.concat((indicator, df), axis=0)
+        else:
+            indicator = pd.DataFrame(indicator).T
+        indicator.sort_index(axis=1, inplace=True)
 
-    else:
-        indicator = pd.DataFrame(indicator).T
-
-    indicator.sort_index(axis=1, inplace=True)
-
-    # Effectiveness : AP/AP-1 and ZP/ ZP+1 scenarios
+    # Effectiveness all scenarios except AP- and ZP-
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
-        cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name, save=folder_policies)
+        cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=folder_policies)
         if indicator is not None:
             if set(list(cba.index)).issubset(list(indicator.index)):
                 indicator.loc[list(cba.index), s] = cba[s]
@@ -813,4 +794,38 @@ def compare_results(output, path):
     data_validation = resources_data['data_validation']
     df = pd.concat((data_validation, output.reindex(data_validation.index).rename('Calculated')), axis=1)
     df.round(1).to_csv(os.path.join(path, 'validation.csv'))
+
+
+def make_summary(path):
+
+    # 1. reference - input
+    path_reference = os.path.join(path, 'Reference')
+    # TODO: add description stock
+    images_ini = ['energy_prices.png', 'cost_curve_insulation.png']
+    images_ini = [os.path.join(path_reference, i) for i in images_ini]
+
+    # TODO: add policies scenario reference
+
+    # 2. result - reference
+    path_reference_result = os.path.join(path_reference, 'img')
+    images_to_save = ['stock_performance.png', 'consumption_heater.png', 'emission.png']
+    images_to_save = [os.path.join(path_reference_result, i) for i in images_to_save]
+
+
+    # Appendix
+    images_appendix = [os.path.join(path_reference, 'stock_performance.png')]
+
+    images = [Image.open(img) for img in images_to_save + images_ini]
+    new_images = []
+    for png in images:
+        png.load()
+        background = Image.new('RGB', png.size, (255, 255, 255))
+        background.paste(png, mask=png.split()[3])  # 3 is the alpha channel
+        new_images.append(background)
+
+    pdf_path = os.path.join(path, 'summary_run.pdf')
+
+    new_images[0].save(
+        pdf_path, 'PDF', resolution=100.0, save_all=True, append_images=new_images[1:]
+    )
 

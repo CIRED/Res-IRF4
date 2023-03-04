@@ -265,7 +265,7 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 
 
-def make_policies_tables(policies, path):
+def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
                    'subsidy_ad_valorem': 'Subsidy, ad valorem',
                    'bonus': 'Subsidy, bonus',
@@ -287,7 +287,7 @@ def make_policies_tables(policies, path):
 
     tables_policies = list()
     for p in policies:
-        temp = {'Name': '{} - {}'.format(p.name.capitalize().replace('_', ' '), p.gest.capitalize()),
+        temp = {'Name': '{} \n {}'.format(p.name.capitalize().replace('_', ' '), p.gest.capitalize()),
                 'Date': '{} - {}'.format(p.start, p.end),
                 'Policy': '{}'.format(sub_replace[p.policy])
                 }
@@ -330,12 +330,12 @@ def make_policies_tables(policies, path):
 
         details = 'Value: {}'.format(t)
         if growth:
-            details = details + ',Growth: true'
+            details = details + ',\nGrowth: true'
         if p.target is not None:
             t = p.target
             if isinstance(t, list):
                 t = ', '.join(t)
-            details = details + ',Target: {}'.format(t)
+            details = details + ',\nTarget: {}'.format(t)
         if p.cap is not None:
             cap = p.cap
             if isinstance(cap, dict):
@@ -350,12 +350,50 @@ def make_policies_tables(policies, path):
                 cap = cap.to_string(name=None).replace('\n', ';')
                 cap = re.sub(' +', ':', cap)
 
-            details = details + ',Cap: {}'.format(cap)
+            details = details + ',\nCap: {}'.format(cap)
 
         temp.update({'Details': details})
         tables_policies.append(temp)
     tables_policies = pd.DataFrame(tables_policies).set_index('Name').sort_index()
     tables_policies.to_csv(path)
+    if plot:
+        plot_table(tables_policies, path)
+
+
+def plot_table(tables_policies, path):
+    ax = plt.subplot(111, frame_on=False)  # no visible frame
+    ax.axis('tight')  # turns off the axis lines and labels
+    ax.axis('off') # hide the y axis
+
+    cell_text = []
+    number_max = 50
+    for row in range(len(tables_policies)):
+        temp = tables_policies.iloc[row].copy()
+        t = temp.loc['Details'].split('\n')
+        if [i for i in t if len(i) > number_max]:
+            new = []
+            for i in temp.loc['Details'].split('\n'):
+                if len(i) > number_max:
+                    new.append(i[:number_max] + '\n' + i[number_max:])
+                else:
+                    new.append(i)
+            temp.loc['Details'] = '\n'.join(new)
+
+        cell_text.append(temp)
+
+    table = plt.table(cellText=cell_text, colLabels=tables_policies.columns,
+                      rowLabels=tables_policies.index,
+                      loc='center', colWidths=[0.15, 0.25, 0.65],
+                      cellLoc='left')
+    plt.axis('off')
+    table.auto_set_font_size(False)
+    table.set_fontsize(7)
+    table.scale(1, 4)
+    plt.savefig(path.replace('.csv', '.png'), dpi=200, bbox_inches='tight')
+    plt.close()
+
+
+
 
 
 def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
