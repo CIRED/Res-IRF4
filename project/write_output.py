@@ -18,7 +18,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-
+import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot
@@ -299,6 +299,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     def details_graphs(data, v, inf, folder_img):
         n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
         temp = grouped(data, [v.format(i) for i in resources_data['index'][inf[0]]])
+        temp = {k: i for k, i in temp.items() if not (i == 0).all().all()}
         replace = {v.format(i): i for i in resources_data['index'][inf[0]]}
         temp = {replace[key]: item.astype(float).interpolate(limit_area='inside') for key, item in temp.items()}
 
@@ -321,11 +322,15 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             scatter = None
 
         make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
-                              order=resources_data['index'][inf[0]])
+                              order=resources_data['index'][inf[0]], colors=colors)
 
     if quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
         resources_data['index']['Income owner'] = resources_data['quintiles']
+
+    colors = dict(zip(result.keys(), sns.color_palette(n_colors=len(result.keys()))))
+    colors.update({'Historic': (0, 0, 0)})
+    colors_add = sns.color_palette("husl", 10)
 
     folder_img = os.path.join(folder, 'img')
     if not os.path.isdir(folder_img):
@@ -374,7 +379,13 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             scatter = None
             pass
 
-        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1], scatter=scatter)
+        colors_temp = colors
+        t = [i for i in temp.columns if i not in colors_temp.keys()]
+        if t:
+            colors_temp.update({i: colors_add[k] for k, i in enumerate(t)})
+        
+        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1],
+                  scatter=scatter, colors=colors)
 
     variables_output = {
         'Consumption {} (TWh)': [
@@ -390,10 +401,6 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     for var, infos in variables_output.items():
         for info in infos:
             details_graphs(result, var, info, folder_img)
-
-    if False:
-        if 'Reference' in result.keys() and len(result.keys()) > 1 and config_runs is not None:
-            indicator_policies(result, folder, config_runs)
 
     # TODO: uncertainty plot to work on
     if False:
@@ -522,7 +529,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 title = policy_name + ' : ({})- ZP'.format(s)
             else:
                 temp = pd.Series(temp)
-                title = 'Reference compare to {}'.format(s)
+                title = '{}'.format(s)
 
             if save:
                 if cofp:
@@ -805,7 +812,8 @@ def make_summary(path):
 
     # 2. result - reference
     path_reference_result = os.path.join(path_reference, 'img')
-    images_reference = ['stock_performance.png', 'consumption_heater.png', 'emission.png']
+    images_reference = ['stock_performance.png', 'consumption_heater.png', 'emission.png', 'policies_validation.png',
+                        'investment.png', 'financing_households.png']
     images_reference = [os.path.join(path_reference_result, i) for i in images_reference]
 
     # 3. result - compare
@@ -815,12 +823,15 @@ def make_summary(path):
                       ]
     images_compare = [os.path.join(path_compare, i) for i in images_compare]
 
+    path_policies = os.path.join(path, 'policies')
+    image_policies = ['npv_cofp.png']
+    image_policies = [os.path.join(path_policies, i) for i in image_policies]
 
     # Appendix
     images_appendix = [os.path.join(path_reference, 'stock_performance.png'),
                        os.path.join(path_reference, 'ini/heating_intensity.png')]
 
-    images = [Image.open(img) for img in images_ini + images_reference + images_compare]
+    images = [Image.open(img) for img in images_ini + images_reference + images_compare + image_policies]
     new_images = []
     for png in images:
         png.load()

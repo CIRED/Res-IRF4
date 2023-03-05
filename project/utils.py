@@ -394,9 +394,6 @@ def plot_table(tables_policies, path):
     plt.close()
 
 
-
-
-
 def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
     """
 
@@ -540,7 +537,6 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
 
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
-
     for key, df in dict_df.items():
 
         df = df.rename(key)
@@ -562,7 +558,8 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     save_fig(fig, save=save)
 
 
-def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None):
+def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None,
+                          colors=None):
     """ Plot a line for each index in a subplot.
 
     Parameters
@@ -601,7 +598,10 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
             ax = axes[row, column]
         try:
             key = list_keys[k]
-            dict_df[key].sort_index().plot(ax=ax, style=STYLES, ms=3)
+            if colors is not None:
+                dict_df[key].sort_index().plot(ax=ax, style=STYLES, ms=3, color=colors)
+            else:
+                dict_df[key].sort_index().plot(ax=ax, style=STYLES, ms=3)
             if scatter is not None:
                 scatter[key].plot(ax=ax, style='.', ms=8, color=sns.color_palette('bright', scatter[key].shape[1]))
 

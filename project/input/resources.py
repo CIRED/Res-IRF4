@@ -169,7 +169,7 @@ colors = {
     "Cite": "blue",
     "Zero interest loan": "darkred",
     "Over cap": "grey",
-    "Carbon tax": "rebeccapurple",
+    "Carbon tax": "darkgreen",
     "Mpr": "darkmagenta",
     "Mpr multifamily": "pink",
     "Mpr serenite": "violet",
