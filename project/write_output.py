@@ -322,7 +322,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             scatter = None
 
         make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
-                              order=resources_data['index'][inf[0]], colors=colors)
+                              order=[i for i in resources_data['index'][inf[0]] if i in temp.keys()], colors=colors)
 
     if quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
