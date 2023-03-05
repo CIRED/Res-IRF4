@@ -819,7 +819,7 @@ def make_summary(path):
     # 3. result - compare
     path_compare = os.path.join(path, 'img')
     images_compare = ['renovation.png', 'retrofit_measures_count.png', 'consumption_hist.png', 'consumption_energy.png',
-                      'investment_total.png'
+                      'investment_total.png', 'energy_poverty.png'
                       ]
     images_compare = [os.path.join(path_compare, i) for i in images_compare]
 
@@ -830,8 +830,9 @@ def make_summary(path):
     # Appendix
     images_appendix = [os.path.join(path_reference, 'stock_performance.png'),
                        os.path.join(path_reference, 'ini/heating_intensity.png')]
+    images = [i for i in images_ini + images_reference + images_compare + image_policies if os.path.isfile(i)]
 
-    images = [Image.open(img) for img in images_ini + images_reference + images_compare + image_policies]
+    images = [Image.open(img) for img in images]
     new_images = []
     for png in images:
         png.load()

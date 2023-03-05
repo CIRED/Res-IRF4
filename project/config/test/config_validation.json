@@ -1,9 +1,9 @@
 {"sensitivity": {
-    "activated": true,
-      "current_policies": false,
-      "no_policy": true,
-      "prices_constant": false,
-      "constant": false
+    "activated": false,
+    "current_policies": true,
+    "no_policy": true,
+    "prices_constant": false,
+    "constant": false
 },
   "Reference": {
     "end": 2021,
@@ -79,13 +79,13 @@
       "income": "project/input/macro/income.csv",
       "energy_prices": "project/input/macro/energy_prices_ht.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
-      "flow_construction": "project/input/macro/flow_construction_sfec.csv",
+      "flow_construction": null,
       "pop_housing": null,
       "share_multi_family": null,
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
-      "demolition_rate": "project/input/macro/demolition_rate_sfec.csv",
+      "demolition_rate": 0,
       "stock_ini": 29037000,
       "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv"
@@ -98,10 +98,10 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": false,
+      "current_policies": true,
       "no_policy": false,
       "income": false,
-      "prices_constant": false,
+      "prices_constant": true,
       "taxes_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
