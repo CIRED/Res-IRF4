@@ -6,7 +6,7 @@
     "constant": false
 },
   "Reference": {
-    "end": 2021,
+    "end": 2025,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -31,7 +31,7 @@
         "deviation": 0.048
       },
       "exogenous": {
-        "number": 700000,
+        "number": 0,
         "target": "worst"
       }
     },
@@ -74,12 +74,12 @@
       "ratio_surface": "project/input/technical/ratio_surface.csv"
     },
     "macro": {
-      "construction": true,
+      "construction": false,
+      "flow_construction": "project/input/macro/flow_construction_sfec.csv",
       "population": "project/input/macro/population.csv",
       "income": "project/input/macro/income.csv",
-      "energy_prices": "project/input/macro/energy_prices_ht.csv",
+      "energy_prices": "project/input/macro/energy_prices_ht_sfec.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
-      "flow_construction": null,
       "pop_housing": null,
       "share_multi_family": null,
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
@@ -101,7 +101,7 @@
       "current_policies": true,
       "no_policy": false,
       "income": false,
-      "prices_constant": true,
+      "prices_constant": false,
       "taxes_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
@@ -112,8 +112,9 @@
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
-      "insulation": true
+      "insulation": false,
+      "no_heating_switch": false
     },
-    "calibration": "project/input/calibration/calibration_simple.pkl"
+    "calibration": "project/input/calibration/calibration_simple_0306.pkl"
   }
 }

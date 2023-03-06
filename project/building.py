@@ -1501,10 +1501,14 @@ class AgentBuildings(ThermalBuildings):
 
             }
         )
+
         self._heater_store['consumption_saved'] = (consumption_saved * replacement).sum().sum()
-        consumption_saved_actual = (consumption_saved_actual * replacement).sum(axis=1)
+
+        temp = self.add_level(replacement.fillna(0), self._stock_ref, 'Income tenant')
+
+        consumption_saved_actual = (consumption_saved_actual * temp).sum(axis=1)
         self._heater_store['consumption_saved_actual'] = consumption_saved_actual.sum()
-        consumption_saved_no_rebound = (consumption_saved_no_rebound * replacement).sum(axis=1)
+        consumption_saved_no_rebound = (consumption_saved_no_rebound * temp).sum(axis=1)
         self._heater_store['consumption_saved_no_rebound'] = consumption_saved_no_rebound.sum()
 
         rebound = consumption_saved_no_rebound - consumption_saved_actual
@@ -1994,6 +1998,8 @@ class AgentBuildings(ThermalBuildings):
 
         self._list_condition_subsidies = [i.target for i in policies_insulation if i.target is not None and i.policy != 'subsidies_cap']
         list_conditions = self._list_condition_subsidies
+        if not self._endogenous:
+            list_conditions += ['best_option']
 
         condition = defined_condition(index, certificate, certificate_before,
                                       certificate_before_heater,
@@ -2789,7 +2795,7 @@ class AgentBuildings(ThermalBuildings):
         else:
             raise NotImplemented
 
-        """market_share = DataFrame(0, index=stock.index, columns=choice_insulation)
+        """market_share = DataFrame(0, index=retrofit_rate.index, columns=choice_insulation)
         market_share.loc[:, (True, True, True, True)] = 1"""
         market_share = condition['best_option'].astype(int)
         market_share = reindex_mi(market_share, retrofit_rate.index).dropna()
@@ -2991,7 +2997,7 @@ class AgentBuildings(ThermalBuildings):
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
-                      step=1, exogenous_social=None, premature_replacement=None):
+                      step=1, exogenous_social=None, premature_replacement=None, renovation=True):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -3380,7 +3386,7 @@ class AgentBuildings(ThermalBuildings):
         if self.year > self.first_year:
             levels = [i for i in self._replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
 
-            names = self._condition_store['certificate_jump_all'].index.names
+            names = ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system', 'Heating system final']
             self._replaced_by.index = self._replaced_by.index.reorder_levels(names)
             self._renovation_store['discount'] = self._renovation_store['discount'].groupby(levels).mean()
 
@@ -3423,9 +3429,11 @@ class AgentBuildings(ThermalBuildings):
             rebound_insulation = (consumption_saved_no_rebound_insulation - consumption_saved_actual_insulation).sum(axis=1)
             rebound_insulation = rebound_insulation.groupby(self.to_energy(rebound_insulation)).sum()
 
+            # self.apply_calibration(consumption_saved_actual_insulation.sum(axis=1)).sum() / 10 ** 9
+
             output.update({'Consumption standard saving insulation (TWh/year)': consumption_saved_insulation.sum().sum() / 10**9})
-            output.update({'Consumption saving insulation (TWh/year)': consumption_saved_actual_insulation.sum().sum() / 10**9})
-            output.update({'Consumption saving no rebound insulation (TWh/year)': consumption_saved_no_rebound_insulation.sum().sum() / 10**9})
+            output.update({'Consumption saving insulation (TWh/year)': self.apply_calibration(consumption_saved_actual_insulation.sum(axis=1)).sum() / 10**9})
+            output.update({'Consumption saving no rebound insulation (TWh/year)': self.apply_calibration(consumption_saved_no_rebound_insulation.sum(axis=1)).sum() / 10**9})
             output['Rebound insulation (TWh/year)'] = rebound_insulation.sum() / 10**9
 
             output['Performance gap (% standard)'] = output['Consumption saving insulation (TWh/year)'] / output['Consumption standard saving insulation (TWh/year)']
@@ -3454,8 +3462,8 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T)
 
             output.update({'Consumption standard saving heater (TWh/year)': self._heater_store['consumption_saved'] / 10**9})
-            output.update({'Consumption saving heater (TWh/year)': self._heater_store['consumption_saved_actual'] / 10**9})
-            output.update({'Consumption saving no rebound heater (TWh/year)': self._heater_store['consumption_saved_no_rebound'] / 10**9})
+            output.update({'Consumption saving heater (TWh/year)': self._heater_store['consumption_saved_actual'] * self.coefficient_global / 10**9})
+            output.update({'Consumption saving no rebound heater (TWh/year)': self._heater_store['consumption_saved_no_rebound'] * self.coefficient_global / 10**9})
             rebound_heater = self._heater_store['rebound']
             output['Rebound heater (TWh/year)'] = rebound_heater.sum() / 10**9
 
@@ -3481,7 +3489,8 @@ class AgentBuildings(ThermalBuildings):
 
             temp = {i: 0 for i in range(1, 6)}
             for n, g in NB_MEASURES.items():
-                temp[n] += self._replaced_by.loc[:, g].xs(False, level='Heater replacement').sum().sum()
+                if False in self._replaced_by.index.get_level_values('Heater replacement'):
+                    temp[n] += self._replaced_by.loc[:, g].xs(False, level='Heater replacement').sum().sum()
                 temp[n + 1] += self._replaced_by.loc[:, g].xs(True, level='Heater replacement').sum().sum()
             if self._only_heater is not None:
                 temp[1] += self._only_heater.sum()
@@ -3664,75 +3673,76 @@ class AgentBuildings(ThermalBuildings):
             # specific about insulation
             # levels_owner = ['Occupancy status', 'Income owner']
             levels_owner = debt.index.names
+            if self._replaced_by.sum().sum().round(0) > 0:
+                owner = replaced_by_grouped.sum(axis=1).groupby(levels_owner).sum()
+                temp = annuities_hh.sum(axis=1).groupby(levels_owner).sum() / owner
+                temp.index = temp.index.map(lambda x: 'Annuities insulation {} - {} (euro/year.household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
-            owner = replaced_by_grouped.sum(axis=1).groupby(levels_owner).sum()
-            temp = annuities_hh.sum(axis=1).groupby(levels_owner).sum() / owner
-            temp.index = temp.index.map(lambda x: 'Annuities insulation {} - {} (euro/year.household)'.format(x[0], x[1]))
-            output.update(temp.T)
+                temp = debt / owner
+                temp.index = temp.index.map(lambda x: 'Debt insulation {} - {} (euro/household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
-            temp = debt / owner
-            temp.index = temp.index.map(lambda x: 'Debt insulation {} - {} (euro/household)'.format(x[0], x[1]))
-            output.update(temp.T)
+                temp = saving / owner
+                temp.index = temp.index.map(lambda x: 'Saving insulation {} - {} (euro/household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
-            temp = saving / owner
-            temp.index = temp.index.map(lambda x: 'Saving insulation {} - {} (euro/household)'.format(x[0], x[1]))
-            output.update(temp.T)
+                temp = annuities_hh.sum(axis=1).xs('Privately rented', level='Occupancy status', drop_level=False)
+                temp = self.add_level(temp, self._stock_ref, 'Income tenant')
+                owner_tenant = replaced_by_grouped.sum(axis=1)
+                owner_tenant = self.add_level(owner_tenant, self._stock_ref, 'Income tenant')
+                if 'Privately rented' in owner_tenant.index.get_level_values('Occupancy status'):
+                    owner_private = owner_tenant.xs('Privately rented', level='Occupancy status', drop_level=False)
+                    temp = temp.groupby('Income tenant').sum() / owner_private.groupby('Income tenant').sum()
+                    temp = temp.loc[self._resources_data['index']['Income tenant']]
+                    temp.index = temp.index.map(lambda x: 'Rent {} (euro/year.household)'.format(x))
+                    output.update(temp.T)
 
-            temp = annuities_hh.sum(axis=1).xs('Privately rented', level='Occupancy status', drop_level=False)
-            temp = self.add_level(temp, self._stock_ref, 'Income tenant')
-            owner_tenant = replaced_by_grouped.sum(axis=1)
-            owner_tenant = self.add_level(owner_tenant, self._stock_ref, 'Income tenant')
-            owner_private = owner_tenant.xs('Privately rented', level='Occupancy status', drop_level=False)
-            temp = temp.groupby('Income tenant').sum() / owner_private.groupby('Income tenant').sum()
-            temp = temp.loc[self._resources_data['index']['Income tenant']]
-            temp.index = temp.index.map(lambda x: 'Rent {} (euro/year.household)'.format(x))
-            output.update(temp.T)
+                # economic private impact - distributive indicator
+                temp = consumption_saved_insulation.sum(axis=1)
+                del consumption_saved_insulation
+                temp = self.add_level(temp, self._stock_ref, 'Income tenant')
+                bill_saving = self.to_emission(temp, prices)
+                temp = bill_saving.groupby(['Occupancy status', 'Income tenant']).sum() / owner_tenant.groupby(['Occupancy status', 'Income tenant']).sum()
+                temp.index = temp.index.map(lambda x: 'Bill saving standard {} - {} (euro/year.household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
-            # economic private impact - distributive indicator
-            temp = consumption_saved_insulation.sum(axis=1)
-            del consumption_saved_insulation
-            temp = self.add_level(temp, self._stock_ref, 'Income tenant')
-            bill_saving = self.to_emission(temp, prices)
-            temp = bill_saving.groupby(['Occupancy status', 'Income tenant']).sum() / owner_tenant.groupby(['Occupancy status', 'Income tenant']).sum()
-            temp.index = temp.index.map(lambda x: 'Bill saving standard {} - {} (euro/year.household)'.format(x[0], x[1]))
-            output.update(temp.T)
+                temp = consumption_saved_actual_insulation.sum(axis=1)
+                del consumption_saved_actual_insulation
+                bill_saving = self.to_emission(temp, prices)
+                temp = bill_saving.groupby(['Occupancy status', 'Income tenant']).sum() / owner_tenant.groupby(['Occupancy status', 'Income tenant']).sum()
+                temp.index = temp.index.map(lambda x: 'Bill saving {} - {} (euro/year.household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
-            temp = consumption_saved_actual_insulation.sum(axis=1)
-            del consumption_saved_actual_insulation
-            bill_saving = self.to_emission(temp, prices)
-            temp = bill_saving.groupby(['Occupancy status', 'Income tenant']).sum() / owner_tenant.groupby(['Occupancy status', 'Income tenant']).sum()
-            temp.index = temp.index.map(lambda x: 'Bill saving {} - {} (euro/year.household)'.format(x[0], x[1]))
-            output.update(temp.T)
+                # private balance
+                temp = [- output['Annuities insulation Owner-occupied - {} (euro/year.household)'.format(i)] + output[
+                    'Bill saving Owner-occupied - {} (euro/year.household)'.format(i)] for i in
+                        self._resources_data['index']['Income owner']]
+                temp = Series(temp, index=self._resources_data['index']['Income owner'])
+                temp.index = temp.index.map(lambda x: 'Balance Owner-occupied - {} (euro/year.household)'.format(x))
+                output.update(temp.T)
 
-            # private balance
-            temp = [- output['Annuities insulation Owner-occupied - {} (euro/year.household)'.format(i)] + output[
-                'Bill saving Owner-occupied - {} (euro/year.household)'.format(i)] for i in
-                    self._resources_data['index']['Income owner']]
-            temp = Series(temp, index=self._resources_data['index']['Income owner'])
-            temp.index = temp.index.map(lambda x: 'Balance Owner-occupied - {} (euro/year.household)'.format(x))
-            output.update(temp.T)
+                temp = [- output['Rent {} (euro/year.household)'.format(i)] + output[
+                    'Bill saving Privately rented - {} (euro/year.household)'.format(i)] for i in
+                        self._resources_data['index']['Income tenant']]
+                temp = Series(temp, index=self._resources_data['index']['Income tenant'])
+                temp.index = temp.index.map(lambda x: 'Balance Tenant private - {} (euro/year.household)'.format(x))
+                output.update(temp.T)
 
-            temp = [- output['Rent {} (euro/year.household)'.format(i)] + output[
-                'Bill saving Privately rented - {} (euro/year.household)'.format(i)] for i in
-                    self._resources_data['index']['Income tenant']]
-            temp = Series(temp, index=self._resources_data['index']['Income tenant'])
-            temp.index = temp.index.map(lambda x: 'Balance Tenant private - {} (euro/year.household)'.format(x))
-            output.update(temp.T)
+                # private balance standard
+                temp = [- output['Annuities insulation Owner-occupied - {} (euro/year.household)'.format(i)] + output[
+                    'Bill saving standard Owner-occupied - {} (euro/year.household)'.format(i)] for i in
+                        self._resources_data['index']['Income owner']]
+                temp = Series(temp, index=self._resources_data['index']['Income owner'])
+                temp.index = temp.index.map(lambda x: 'Balance standard Owner-occupied - {} (euro/year.household)'.format(x))
+                output.update(temp.T)
 
-            # private balance standard
-            temp = [- output['Annuities insulation Owner-occupied - {} (euro/year.household)'.format(i)] + output[
-                'Bill saving standard Owner-occupied - {} (euro/year.household)'.format(i)] for i in
-                    self._resources_data['index']['Income owner']]
-            temp = Series(temp, index=self._resources_data['index']['Income owner'])
-            temp.index = temp.index.map(lambda x: 'Balance standard Owner-occupied - {} (euro/year.household)'.format(x))
-            output.update(temp.T)
-
-            temp = [- output['Rent {} (euro/year.household)'.format(i)] + output[
-                'Bill saving standard Privately rented - {} (euro/year.household)'.format(i)] for i in
-                    self._resources_data['index']['Income tenant']]
-            temp = Series(temp, index=self._resources_data['index']['Income tenant'])
-            temp.index = temp.index.map(lambda x: 'Balance standard Tenant private - {} (euro/year.household)'.format(x))
-            output.update(temp.T)
+                temp = [- output['Rent {} (euro/year.household)'.format(i)] + output[
+                    'Bill saving standard Privately rented - {} (euro/year.household)'.format(i)] for i in
+                        self._resources_data['index']['Income tenant']]
+                temp = Series(temp, index=self._resources_data['index']['Income tenant'])
+                temp.index = temp.index.map(lambda x: 'Balance standard Tenant private - {} (euro/year.household)'.format(x))
+                output.update(temp.T)
 
             # energy expenditures : do we really need it ?
             prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)

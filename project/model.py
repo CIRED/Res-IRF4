@@ -111,6 +111,9 @@ def config2inputs(config=None, building_stock=None, end=None):
     if config['simple'].get('insulation'):
         pass
 
+    if config['simple'].get('no_heating_switch'):
+        inputs['lifetime_heater'].loc[:] = float('inf')
+
     if config['simple']['surface']:
         surface = (reindex_mi(inputs['surface'], stock.index) * stock).sum() / stock.sum()
         inputs['surface'] = pd.Series(round(surface, 0), index=inputs['surface'].index)
