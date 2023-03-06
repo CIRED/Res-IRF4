@@ -1,12 +1,12 @@
 {"sensitivity": {
     "activated": false,
     "current_policies": true,
-    "no_policy": true,
+    "no_policy": false,
     "prices_constant": false,
     "constant": false
 },
   "Reference": {
-    "end": 2021,
+    "end": 2025,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -101,8 +101,7 @@
       "current_policies": true,
       "no_policy": false,
       "income": false,
-      "prices_constant": true,
-      "taxes_constant": false,
+      "prices_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
