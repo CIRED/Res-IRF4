@@ -1525,7 +1525,8 @@ class AgentBuildings(ThermalBuildings):
             self._heater_store['subsidies_average'].update({key: sub.sum().sum() / replacement.fillna(0).sum().sum()})
 
     def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, ms_heater=None,
-                           step=1, financing_cost=None, district_heating=None, premature_replacement=None):
+                           step=1, financing_cost=None, district_heating=None, premature_replacement=None,
+                           prices_before=None):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -1615,7 +1616,11 @@ class AgentBuildings(ThermalBuildings):
         index_consumption = consumption_before.index.intersection(self.stock.index)
 
         consumption_before = consumption_before.loc[index_consumption]
-        heating_intensity_before = self.to_heating_intensity(consumption_before.index, prices,
+
+        if prices_before is None:
+            prices_before = prices
+
+        heating_intensity_before = self.to_heating_intensity(consumption_before.index, prices_before,
                                                              consumption=consumption_before,
                                                              level_heater='Heating system')
         consumption_before *= heating_intensity_before
@@ -1626,7 +1631,7 @@ class AgentBuildings(ThermalBuildings):
         # (consumption.T * self.stock * heating_intensity_before).T.sum() / 10**9
 
         consumption = consumption.stack('Heating system final')
-        heating_intensity_after = self.to_heating_intensity(consumption.index, prices,
+        heating_intensity_after = self.to_heating_intensity(consumption.index, prices_before,
                                                             consumption=consumption,
                                                             level_heater='Heating system final')
         consumption_actual = (consumption * heating_intensity_after).unstack('Heating system final')
@@ -2857,7 +2862,7 @@ class AgentBuildings(ThermalBuildings):
 
     def insulation_replacement(self, stock, prices, cost_insulation_raw, policies_insulation=None, financing_cost=None,
                                calib_renovation=None, calib_intensive=None, min_performance=None,
-                               exogenous_social=None):
+                               exogenous_social=None, prices_before=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -2944,11 +2949,14 @@ class AgentBuildings(ThermalBuildings):
 
         if self._condition_store is None:
 
+            if prices_before is None:
+                prices_before = prices
+
             surface = self._surface.xs(True, level='Existing')
             consumption_before = self.add_attribute(consumption_before, [i for i in surface.index.names if i not in consumption_before.index.names])
             consumption_before *= reindex_mi(surface, consumption_before.index)
             consumption_before = self.add_attribute(consumption_before, 'Income tenant')
-            heating_intensity = self.to_heating_intensity(consumption_before.index, prices,
+            heating_intensity = self.to_heating_intensity(consumption_before.index, prices_before,
                                                           consumption=consumption_before,
                                                           level_heater='Heating system final')
             consumption_before *= heating_intensity
@@ -2956,7 +2964,7 @@ class AgentBuildings(ThermalBuildings):
             consumption_after = self.add_attribute(consumption_after, [i for i in surface.index.names if i not in consumption_after.index.names])
             consumption_after = (consumption_after.T * reindex_mi(surface, consumption_after.index)).T
             consumption_after = self.add_attribute(consumption_after, 'Income tenant')
-            heating_intensity_after = self.to_heating_intensity(consumption_after.index, prices,
+            heating_intensity_after = self.to_heating_intensity(consumption_after.index, prices_before,
                                                                 consumption=consumption_after,
                                                                 level_heater='Heating system final')
 
@@ -2996,8 +3004,8 @@ class AgentBuildings(ThermalBuildings):
 
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
-                      financing_cost=None, calib_renovation=None, calib_intensive=None, climate=None,
-                      step=1, exogenous_social=None, premature_replacement=None, renovation=True):
+                      financing_cost=None, calib_renovation=None, calib_intensive=None,
+                      step=1, exogenous_social=None, premature_replacement=None, prices_before=None):
         """Compute heater replacement and insulation retrofit.
 
 

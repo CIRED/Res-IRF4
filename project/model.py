@@ -362,7 +362,6 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             ms_heater=ms_heater,
                                             district_heating=district_heating,
                                             financing_cost=financing_cost,
-                                            climate=climate,
                                             step=step,
                                             exogenous_social=exogenous_social,
                                             premature_replacement=premature_replacement)
