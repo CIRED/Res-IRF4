@@ -435,15 +435,16 @@ def res_irf(config, path):
                                 dict_color=resources_data['colors'],
                                 sharey=True, save=os.path.join(buildings.path_ini, 'stock.png'))
 
-        buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
-        s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
-        stock = pd.concat((stock, s), axis=1)
-        output = pd.concat((output, o), axis=1)
-
         if config.get('calibration'):
             with open(config['calibration'], "rb") as file:
                 calibration = load(file)
                 buildings.calibration_exogenous(**calibration)
+        else:
+            buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], consumption_ini)
+
+        s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
+        stock = pd.concat((stock, s), axis=1)
+        output = pd.concat((output, o), axis=1)
 
         timestep = 1
         if config.get('step'):

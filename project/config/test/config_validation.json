@@ -85,7 +85,7 @@
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
-      "demolition_rate": 0,
+      "demolition_rate": null,
       "stock_ini": 29037000,
       "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv"

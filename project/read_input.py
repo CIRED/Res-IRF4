@@ -526,9 +526,11 @@ def read_inputs(config, other_inputs=generic_input):
 
     if isinstance(config['macro']['demolition_rate'], (float, int)):
         demolition_rate = config['macro']['demolition_rate']
-    else:
+    elif config['macro'].get('demolition_rate') is not None:
         demolition_rate = get_pandas(config['macro']['demolition_rate'],
                                      lambda x: pd.read_csv(x, index_col=[0], header=None)).squeeze().rename(None)
+    else:
+        demolition_rate = None
 
     inputs.update({'demolition_rate': demolition_rate})
     rotation_rate = get_pandas(config['macro']['rotation_rate'], lambda x: pd.read_csv(x, index_col=[0])).squeeze().rename(None)
@@ -642,8 +644,10 @@ def parse_inputs(inputs, taxes, config, stock):
 
     if isinstance(inputs['demolition_rate'], (float, int)):
         inputs['demolition_rate'] = pd.Series(inputs['demolition_rate'], index=idx[1:])
-
-    parsed_inputs['flow_demolition'] = inputs['demolition_rate'] * stock.sum()
+    if inputs['demolition_rate'] is None:
+        parsed_inputs['flow_demolition'] = 0
+    else:
+        parsed_inputs['flow_demolition'] = inputs['demolition_rate'] * stock.sum()
 
     parsed_inputs['population_total'] = inputs['population']
     parsed_inputs['sizing_factor'] = stock.sum() / inputs['stock_ini']
