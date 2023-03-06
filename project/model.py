@@ -353,7 +353,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
     if full_output:
-        buildings.consumption_before_retrofit = buildings.store_consumption(prices)
+        buildings.consumption_before_retrofit = buildings.store_consumption(prices_before)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,
@@ -466,6 +466,11 @@ def res_irf(config, path):
             step = len(yrs)
 
             prices = energy_prices.loc[year, :]
+            if year > config['start']:
+                prices_before = energy_prices.loc[year - 1, :]
+            else:
+                prices_before = prices
+
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
             f_built = flow_built.loc[:, yrs]
@@ -489,7 +494,8 @@ def res_irf(config, path):
                                              step=step, demolition_rate=demolition_rate,
                                              exogenous_social=inputs.get('exogenous_social'),
                                              full_output=config.get('full_output'),
-                                             premature_replacement=config.get('premature_replacement'))
+                                             premature_replacement=config.get('premature_replacement'),
+                                             prices_before=prices_before)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
