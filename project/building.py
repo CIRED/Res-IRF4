@@ -87,7 +87,7 @@ class ThermalBuildings:
 
         self._efficiency = efficiency
         self._ratio_surface = ratio_surface
-        self.path = path
+        self.path, self.path_ini, self.path_calibration = path, None, None
         if path is not None:
             self.path_calibration = os.path.join(path, 'calibration')
             if not os.path.isdir(self.path_calibration):
@@ -130,10 +130,10 @@ class ThermalBuildings:
         }
 
         self.stock = stock
-
-        stock = self.add_certificate(stock).groupby('Performance').sum() / 10**6
-        compare_performance = concat((stock, self._resources_data['performance_stock']), axis=1, keys=['Model', 'SDES-2018'])
-        compare_bar_plot(compare_performance, 'Stock by performance (Million dwelling)', save=os.path.join(self.path_ini, 'stock_performance.png'))
+        if self.path_ini is not None:
+            stock = self.add_certificate(stock).groupby('Performance').sum() / 10**6
+            compare_performance = concat((stock, self._resources_data['performance_stock']), axis=1, keys=['Model', 'SDES-2018'])
+            compare_bar_plot(compare_performance, 'Stock by performance (Million dwelling)', save=os.path.join(self.path_ini, 'stock_performance.png'))
 
     @property
     def year(self):
