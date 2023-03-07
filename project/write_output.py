@@ -487,7 +487,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             result = result.sum(axis=1)
 
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(result.shape[0])],
-                             index=result.index)
+                              index=result.index)
         return (result * discount).sum()
 
     def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True,
@@ -531,9 +531,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
 
-            temp.update({'Comfort EE': df['Thermal comfort EE (Billion euro)']})
+            temp.update({'Comfort EE': - df['Thermal comfort EE (Billion euro)']})
 
-            temp.update({'Comfort prices': - df['Thermal loss prices (Billion euro)']})
+            temp.update({'Comfort prices': + df['Thermal loss prices (Billion euro)']})
 
             temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
                                                 for i in resources_data['index']['Energy'])})
@@ -618,8 +618,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         rslt = {}
         for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
                     'Health expenditure (Billion euro)', 'Social cost of mortality (Billion euro)',
-                    'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)',
-                    'Thermal loss prices (Billion euro)', 'Thermal comfort EE (Billion euro)']:
+                    'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)']:
             rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
                                           values=None)
 
@@ -641,6 +640,15 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                                                       data.loc[var, :],
                                                                                       values=carbon_emission_value[energy]) / (
                                                                             10 ** 9)
+
+        for var in ['Thermal comfort EE (Billion euro)', 'Thermal loss prices (Billion euro)', ]:
+            simple_diff = data.loc[var, :] - ref.loc[var, :]
+            simple_diff.rename(None, inplace=True)
+            _discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(years)])
+            _result = simple_diff * _discount.sum()
+            _discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(_result.shape[0])],
+                                  index=_result.index)
+            rslt[var] = (_result * _discount).sum()
 
         # Simple diff = scenario - ref
         for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total WT (Billion euro)',
@@ -836,7 +844,7 @@ def make_summary(path):
 
     # 2. result - reference
     path_reference_result = os.path.join(path_reference, 'img')
-    images_reference = ['stock_performance.png', 'consumption_heater.png', 'emission.png', 'policies_validation.png',
+    images_reference = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png', 'policies_validation.png',
                         'investment.png', 'financing_households.png']
     images_reference = [os.path.join(path_reference_result, i) for i in images_reference]
 

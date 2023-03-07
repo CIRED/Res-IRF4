@@ -2,7 +2,7 @@
   "Discount rate": 0.032,
   "Lifetime": 30,
   "Factor COFP": 0.2,
-  "energy_prices": "project/input/macro/energy_prices_ht.csv",
+  "energy_prices": "project/input/macro/energy_prices_ht_sfec.csv",
   "carbon_value": "project/input/policies/carbon_value.csv",
   "carbon_emission": "project/input/technical/carbon_emission.csv"
 }

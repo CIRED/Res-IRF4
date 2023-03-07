@@ -129,6 +129,8 @@ def run(path=None):
                 if config_sensitivity['no_policy']:
                     configuration['NoPolicy'] = copy.deepcopy(configuration['Reference'])
                     configuration['NoPolicy']['simple']['no_policy'] = True
+                    configuration['NoPolicy']['simple']['current_policies'] = False
+
             if 'current_policies' in config_sensitivity.keys():
                 if config_sensitivity['current_policies']:
                     configuration['CurrentPolicies'] = copy.deepcopy(configuration['Reference'])

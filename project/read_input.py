@@ -506,13 +506,13 @@ def read_inputs(config, other_inputs=generic_input):
                                           lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'pop_housing': pop_housing.loc[:config['end']]})
 
-    if config['macro']['share_single_family_construction'] is not None:
+    if config['macro'].get('share_single_family_construction') is not None:
         temp = get_pandas(config['macro']['share_single_family_construction'],
                           lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'share_single_family_construction': temp})
 
     else:
-        if config['macro']['share_multi_family'] is None:
+        if config['macro'].get('share_multi_family') is None:
             inputs.update({'factor_multi_family': other_inputs['factor_multi_family']})
         else:
             _share_multi_family = get_pandas(config['macro']['share_multi_family'],
