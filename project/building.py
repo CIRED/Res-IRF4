@@ -3493,7 +3493,7 @@ class AgentBuildings(ThermalBuildings):
             rebound_insulation.index = rebound_insulation.index.map(lambda x: 'Rebound insulation {} (TWh/year)'.format(x))
             output.update(rebound_insulation.T / 10**9)
             thermal_comfort.index = thermal_comfort.index.map(lambda x: 'Thermal comfort {} (Billion euro/year)'.format(x))
-            output.update({'Thermal comfort EE (Billion euro/year)': thermal_comfort.sum() / 10**9})
+            output.update({'Thermal comfort EE (Billion euro)': thermal_comfort.sum() / 10**9})
 
             output.update(thermal_comfort.T / 10**9)
 
@@ -3506,7 +3506,7 @@ class AgentBuildings(ThermalBuildings):
 
             prices_effect = pd.Series({i: output['Consumption {} saving (TWh/year)'.format(i)] - consumption_saved_price_constant.loc[i] / 10**9 for i in consumption_saved_price_constant.index})
             thermal_loss = prices_effect * prices
-            output.update({'Thermal loss EE (Billion euro/year)': round(thermal_loss.sum(), 3)})
+            output.update({'Thermal loss prices (Billion euro)': round(thermal_loss.sum(), 3)})
 
             # retrofit and renovation
             renovation = replaced_by_grouped.sum().sum()

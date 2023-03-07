@@ -490,7 +490,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                              index=result.index)
         return (result * discount).sum()
 
-    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True, cofp=True):
+    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True,
+                              cofp=True, details_health=False):
         """Calculate socioeconomic NPV.
 
         Double difference is calculated with : scenario - reference
@@ -523,21 +524,31 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             if embodied_emission:
                 temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
             if cofp:
-                temp.update({'Cofp': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
+                temp.update({'COFP': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
                                       df['Simple difference Health expenditure (Billion euro)']
                                       ) * factor_cofp})
 
             temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
+
+            temp.update({'Comfort EE': df['Thermal comfort EE (Billion euro)']})
+
+            temp.update({'Comfort prices': - df['Thermal loss prices (Billion euro)']})
+
             temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
                                                 for i in resources_data['index']['Energy'])})
-            temp.update({'Well-being benefit': df['Loss of well-being (Billion euro)']})
-            temp.update({'Health savings': df['Health expenditure (Billion euro)']})
-            temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
+
+            if details_health:
+                temp.update({'Well-being benefit': df['Loss of well-being (Billion euro)']})
+                temp.update({'Health savings': df['Health expenditure (Billion euro)']})
+                temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
+            else:
+                temp.update({'Health cost': df['Health cost (Billion euro)']})
+
             if 'AP' in s:
                 temp = pd.Series(temp)
                 title = policy_name + ' : AP - ({})'.format(s)
-            elif 'zP' in s:
+            elif 'ZP' in s:
                 temp = - pd.Series(temp)
                 title = policy_name + ' : ({})- ZP'.format(s)
             else:
@@ -550,9 +561,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                     save=os.path.join(save, 'npv_{}_cofp.png'.format(s.lower().replace(' ', '_'))),
                                     colors=resources_data['colors'])
 
-                    waterfall_chart(temp.loc[temp.index != 'Cofp'], title=title,
+                    """waterfall_chart(temp.loc[temp.index != 'Cofp'], title=title,
                                     save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
-                                    colors=resources_data['colors'])
+                                    colors=resources_data['colors'])"""
                 else:
                     waterfall_chart(temp, title=title,
                                     save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
@@ -564,8 +575,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         if save:
             if cofp:
                 assessment_scenarios(npv.T, save=os.path.join(save, 'npv_cofp.png'.lower().replace(' ', '_')), colors=resources_data['colors'])
-                assessment_scenarios(npv.loc[npv.index != 'Cofp'].T, save=os.path.join(save, 'npv_no_cofp.png'.lower().replace(' ', '_')),
-                                     colors=resources_data['colors'])
+                """assessment_scenarios(npv.loc[npv.index != 'Cofp'].T, save=os.path.join(save, 'npv_no_cofp.png'.lower().replace(' ', '_')),
+                                     colors=resources_data['colors'])"""
             else:
                 assessment_scenarios(npv.T, save=os.path.join(save, 'npv.png'.lower().replace(' ', '_')),
                                      colors=resources_data['colors'])
@@ -594,7 +605,6 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     if policy_name is not None:
         policy_name = policy_name.replace('_', ' ').capitalize()
 
-
     # Calculating simple and double differences for needed variables, and storing them in agg
     # Double difference = Scenario - Reference
     scenarios = [s for s in result.keys() if s != 'Reference' and s != 'ZP']
@@ -608,7 +618,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         rslt = {}
         for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
                     'Health expenditure (Billion euro)', 'Social cost of mortality (Billion euro)',
-                    'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)']:
+                    'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)',
+                    'Thermal loss prices (Billion euro)', 'Thermal comfort EE (Billion euro)']:
             rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
                                           values=None)
 
