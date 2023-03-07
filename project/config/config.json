@@ -88,7 +88,7 @@
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies":  "project/input/policies/sfec/policies_sfec_2810.json",
     "simple": {
-      "quintiles": true,
+      "quintiles": false,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
@@ -96,17 +96,10 @@
       "no_policy": false,
       "income": false,
       "prices_constant": false,
-      "heating_system": {
-        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
-        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
-        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water",
-        "Heating-District heating": null,
-        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
-      },
+      "heating_system": false,
       "insulation": false,
-      "no_heating_switch": false
+      "no_heating_switch": false,
+      "collective_boiler": false
     },
     "calibration": "project/input/calibration/calibration_simple_0306.pkl"
   }

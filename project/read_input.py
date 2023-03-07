@@ -137,24 +137,25 @@ def read_stock(config):
     hp_air = stock.loc[idx, :].copy()
     hp_air['Stock buildings'] *= (1 - repartition)
     hp_air['Heating system'] = hp_air['Heating system'].str.replace('Electricity-Heat pump', 'Electricity-Heat pump air')
-
     stock = stock.loc[~idx, :]
     stock = pd.concat((stock, hp_water, hp_air), axis=0)
 
-    multi_family = stock.index.get_level_values('Housing type') == 'Multi-family'
-    oil_fuel = stock['Heating system'].isin(['Oil fuel-Performance boiler', 'Oil fuel-Standard boiler'])
-    stock.loc[multi_family & oil_fuel, 'Heating system'] = 'Oil fuel-Collective boiler'
+    if config['simple'].get('collective_boiler'):
 
-    repartition = 0.5
-    idx_gas = stock['Heating system'].isin(['Natural gas-Performance boiler', 'Natural gas-Standard boiler']) & multi_family
-    collective_gas = stock.loc[idx_gas, :].copy()
-    collective_gas['Stock buildings'] *= repartition
-    collective_gas['Heating system'] = collective_gas['Heating system'].str.replace('Natural gas-Performance boiler', 'Natural gas-Collective boiler')
-    collective_gas['Heating system'] = collective_gas['Heating system'].str.replace('Natural gas-Standard boiler', 'Natural gas-Collective boiler')
-    individual_gas = stock.loc[idx_gas, :].copy()
-    individual_gas['Stock buildings'] *= (1 - repartition)
-    stock = stock.loc[~idx_gas, :]
-    stock = pd.concat((stock, collective_gas, individual_gas), axis=0)
+        multi_family = stock.index.get_level_values('Housing type') == 'Multi-family'
+        oil_fuel = stock['Heating system'].isin(['Oil fuel-Performance boiler', 'Oil fuel-Standard boiler'])
+        stock.loc[multi_family & oil_fuel, 'Heating system'] = 'Oil fuel-Collective boiler'
+
+        repartition = 0.5
+        idx_gas = stock['Heating system'].isin(['Natural gas-Performance boiler', 'Natural gas-Standard boiler']) & multi_family
+        collective_gas = stock.loc[idx_gas, :].copy()
+        collective_gas['Stock buildings'] *= repartition
+        collective_gas['Heating system'] = collective_gas['Heating system'].str.replace('Natural gas-Performance boiler', 'Natural gas-Collective boiler')
+        collective_gas['Heating system'] = collective_gas['Heating system'].str.replace('Natural gas-Standard boiler', 'Natural gas-Collective boiler')
+        individual_gas = stock.loc[idx_gas, :].copy()
+        individual_gas['Stock buildings'] *= (1 - repartition)
+        stock = stock.loc[~idx_gas, :]
+        stock = pd.concat((stock, collective_gas, individual_gas), axis=0)
 
     stock = stock.set_index('Heating system', append=True).squeeze()
     stock = stock.groupby(stock.index.names).sum()
