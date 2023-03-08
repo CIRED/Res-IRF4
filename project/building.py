@@ -2308,7 +2308,7 @@ class AgentBuildings(ThermalBuildings):
 
             return retrofit_proba, utility_renovate
 
-        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _stock=None, supply=True):
+        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _stock=None, supply=False):
 
             _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
 
