@@ -1,16 +1,18 @@
 import pandas as pd
 from pandas import read_csv, concat, Series, Index, DataFrame
-# imports from ResIRF
-from project.model import config2inputs, initialize, stock_turnover, calibration_res_irf
-from project.read_input import PublicPolicy
-from project.utils import make_plot, make_plots
 from multiprocessing import Pool
 import os
 from pickle import dump, load
 import json
+from datetime import datetime
+from copy import deepcopy
+
+# imports from ResIRF
+from project.model import config2inputs, initialize, stock_turnover, calibration_res_irf
+from project.read_input import PublicPolicy
+from project.utils import make_plot, make_plots
 from project.input.resources import resources_data
 
-from copy import deepcopy
 
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
@@ -57,8 +59,10 @@ def ini_res_irf(path=None, config=None, climate=2006):
 
     buildings.calibration_exogenous(**calibration)
 
+    t = datetime.today().strftime('%Y%m%d')
+
     # export calibration
-    with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
+    with open(os.path.join(buildings.path_calibration, 'calibration_{}.pkl'.format(t)), 'wb') as file:
         dump({
             'coefficient_global': buildings.coefficient_global,
             'coefficient_heater': buildings.coefficient_heater,
