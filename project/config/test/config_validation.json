@@ -1,8 +1,8 @@
 {"sensitivity": {
     "activated": true,
-    "current_policies": false,
+    "current_policies": true,
     "no_policy": false,
-    "prices_constant": true,
+    "prices_constant": false,
     "constant": false
 },
   "Reference": {
@@ -73,12 +73,13 @@
       "surface": "project/input/technical/surface.csv",
       "ratio_surface": "project/input/technical/ratio_surface.csv"
     },
+    "exogenous_social": "project/input/revealed_data/renovation_rate_social.csv",
     "macro": {
       "construction": false,
       "flow_construction": "project/input/macro/flow_construction_sfec.csv",
       "population": "project/input/macro/population.csv",
       "income": "project/input/macro/income.csv",
-      "energy_prices": "project/input/macro/energy_prices_ht_sfec.csv",
+      "energy_prices": "project/input/macro/energy_prices_ht.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
       "pop_housing": null,
       "share_multi_family": null,
@@ -98,7 +99,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": false,
@@ -114,6 +115,6 @@
       "insulation": false,
       "no_heating_switch": false
     },
-    "calibration": "project/input/calibration/calibration_simple_0306.pkl"
+    "calibration": "project/input/calibration/calibration_simple_0307.pkl"
   }
 }

@@ -51,8 +51,8 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    total=False, loc='left', left=1.2) # scatter=resources_data['consumption_total_objectives']
 
     saving = {'Consumption saving insulation (TWh/year)': 'Saving insulation',
-              'Consumption saving heater (TWh/year)': 'Saving heater',
-              'Consumption saving prices effect (TWh/year)': 'Saving prices'}
+              'Consumption saving heater (TWh/year)': 'Saving heater'}
+    # impossible because negative value: 'Consumption saving prices effect (TWh/year)': 'Saving prices'
 
     temp = output.loc[saving.keys(), :].fillna(0).cumsum(axis=1)
     temp.index = saving.values()
@@ -844,8 +844,8 @@ def make_summary(path):
 
     # 2. result - reference
     path_reference_result = os.path.join(path_reference, 'img')
-    images_reference = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png', 'policies_validation.png',
-                        'investment.png', 'financing_households.png']
+    images_reference = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png',
+                        'investment.png', 'financing_households.png', 'policies_validation.png']
     images_reference = [os.path.join(path_reference_result, i) for i in images_reference]
 
     # 3. result - compare

@@ -825,7 +825,7 @@ class AgentBuildings(ThermalBuildings):
         if self.quintiles:
             self._resources_data = deciles2quintiles_dict(self._resources_data)
 
-
+        self._flow_obligation = {}
         self.policies = []
 
         self.financing_cost = financing_cost
@@ -892,6 +892,7 @@ class AgentBuildings(ThermalBuildings):
 
         self._replaced_by = None
         self._only_heater = None
+        self._flow_obligation = {}
 
         index = self.stock.droplevel('Income tenant').index
         index = index[~index.duplicated()]
@@ -1476,7 +1477,8 @@ class AgentBuildings(ThermalBuildings):
 
     def store_information_heater(self, cost_heater, subsidies_total, subsidies_details, replacement, vta_heater,
                                  cost_financing, amount_debt, amount_saving, discount, consumption_saved,
-                                 consumption_before, consumption_no_rebound, consumption_actual, certificate_jump):
+                                 consumption_before, consumption_no_rebound, consumption_actual, certificate_jump,
+                                 flow_premature_replacement):
         """Store information yearly heater replacement.
 
         Parameters
@@ -1491,6 +1493,7 @@ class AgentBuildings(ThermalBuildings):
             Dwelling updated with a new heating system.
         vta_heater: Series
             VTA tax of each heating system (€).
+        flow_premature_replacement: int
         """
         # information stored during
         self._heater_store.update(
@@ -1505,8 +1508,8 @@ class AgentBuildings(ThermalBuildings):
                 'debt': (replacement * amount_debt).sum(axis=1).groupby('Income owner').sum(),
                 'saving': (replacement * amount_saving).sum(axis=1).groupby('Income owner').sum(),
                 'discount': discount,
-                'certificate_jump': certificate_jump
-
+                'certificate_jump': certificate_jump,
+                'flow_premature_replacement': flow_premature_replacement
             }
         )
 
@@ -1683,6 +1686,7 @@ class AgentBuildings(ThermalBuildings):
         stock = stock - to_replace
 
         # adding heating system final equal to heating system because no switch
+        flow_premature_replacement = 0
         if premature_replacement is not None:
             bill_saved[bill_saved <= 0] = float('nan')
             time = (cost_total - subsidies_total) / bill_saved
@@ -1690,6 +1694,7 @@ class AgentBuildings(ThermalBuildings):
             flow_replace = time[(time < premature_replacement)].dropna(how='all')
             if not flow_replace.empty:
                 to_replace = stock[flow_replace.index]
+                flow_premature_replacement = to_replace.sum()
                 flow_replace = flow_replace.idxmin(axis=1).rename('Heating system final')
                 flow_replace = concat((flow_replace, to_replace), axis=1)
                 stock_replacement_premature = flow_replace.set_index('Heating system final', append=True).squeeze(axis=1)
@@ -1705,7 +1710,8 @@ class AgentBuildings(ThermalBuildings):
 
         self.store_information_heater(cost_heater, subsidies_total, subsidies_details, stock_replacement.unstack('Heating system final'),
                                       vta_heater, cost_financing, amount_debt, amount_saving, discount, consumption_saved,
-                                      consumption_before, consumption_no_rebound, consumption_actual, certificate_jump)
+                                      consumption_before, consumption_no_rebound, consumption_actual, certificate_jump,
+                                      flow_premature_replacement)
         return stock
 
     def prepare_cost_insulation(self, cost_insulation):
@@ -3228,6 +3234,9 @@ class AgentBuildings(ThermalBuildings):
             replaced_by = self.frame_to_flow(replaced_by)
 
             assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
+
+            self._flow_obligation.update({obligation.name.replace('_', ' ').capitalize(): to_replace.sum()})
+
             flow_obligation = concat((- to_replace, replaced_by), axis=0)
             flow_obligation = flow_obligation.groupby(flow_obligation.index.names).sum()
             flows_obligation.append(flow_obligation)
@@ -3512,6 +3521,12 @@ class AgentBuildings(ThermalBuildings):
             renovation = replaced_by_grouped.sum().sum()
             output['Retrofit (Thousand households)'] = (renovation + self._only_heater.sum()) / 10 ** 3 / step
             output['Renovation (Thousand households)'] = renovation / 10 ** 3 / step
+
+            if self._flow_obligation:
+                temp = pd.Series(self._flow_obligation)
+                temp.index = temp.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
+                output.update(temp.T / 10**3)
+
             if True in self._replaced_by.index.get_level_values('Heater replacement'):
                 temp = self._replaced_by.xs(True, level='Heater replacement').sum().sum()
             output['Renovation with heater replacement (Thousand households)'] = temp / 10 ** 3 / step
@@ -3569,6 +3584,7 @@ class AgentBuildings(ThermalBuildings):
             # switch heater
             temp = self._heater_store['replacement'].sum()
             output['Switch heater (Thousand households)'] = temp.sum() / 10 ** 3 / step
+            output['Switch premature heater (Thousand households)'] = self._heater_store['flow_premature_replacement'] / 10 ** 3 / step
             output['Switch Heat pump (Thousand households)'] = temp[self._resources_data['index']['Heat pumps']].sum() / 10 ** 3 / step
             temp.index = temp.index.map(lambda x: 'Switch {} (Thousand households)'.format(x))
             output.update((temp / 10 ** 3 / step).T)
