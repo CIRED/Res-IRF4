@@ -373,7 +373,9 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                  'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Replacement total (Thousand)': ('replacement_total.png', lambda y, _: '{:,.0f}'.format(y)),
                  'Replacement insulation (Thousand)': ('replacement_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Switch heater (Thousand households)': ('switch_heater.png', lambda y, _: '{:,.0f}'.format(y))
+                 'Switch heater (Thousand households)': ('switch_heater.png', lambda y, _: '{:,.0f}'.format(y)),
+                 'Efficiency heater (euro/kWh)': ('efficiency_heater.png', lambda y, _: '{:,.2f}'.format(y)),
+                 'Efficiency insulation (euro/kWh)': ('efficiency_insulation.png', lambda y, _: '{:,.2f}'.format(y))
                  }
 
     for variable, infos in variables.items():

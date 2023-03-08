@@ -1,12 +1,12 @@
 {"sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
-    "no_policy": false,
+    "no_policy": true,
     "prices_constant": false,
     "constant": false
 },
   "Reference": {
-    "end": 2031,
+    "end": 2020,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -113,8 +113,9 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": false,
-      "no_heating_switch": false
+      "no_heating_switch": false,
+      "collective_boiler": false
     },
-    "calibration": "project/input/calibration/calibration_simple_0307.pkl"
+    "calibration": "project/input/calibration/calibration_simple_0308.pkl"
   }
 }

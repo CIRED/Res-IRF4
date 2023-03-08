@@ -1495,6 +1495,8 @@ class AgentBuildings(ThermalBuildings):
             VTA tax of each heating system (€).
         flow_premature_replacement: int
         """
+
+
         # information stored during
         self._heater_store.update(
             {
@@ -1527,7 +1529,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_saved_no_rebound = (consumption_before - consumption_no_rebound.T).T
         self._heater_store['consumption_saved_no_rebound'] = consumption_saved_no_rebound
 
-        self._heater_store['rebound']  = consumption_saved_no_rebound - consumption_saved_actual
+        self._heater_store['rebound'] = consumption_saved_no_rebound - consumption_saved_actual
 
         for key, item in subsidies_details.items():
             self._heater_store['subsidies_details'][key] = replacement * item
@@ -1684,6 +1686,24 @@ class AgentBuildings(ThermalBuildings):
         to_replace = replacement.sum(axis=1)
 
         stock = stock - to_replace
+
+        if self.year == 2019 and self.path_calibration is not None:
+            bill_saved[bill_saved <= 0] = float('nan')
+            temp = {}
+            for threshold in [3, 5, 10]:
+                rslt = {}
+                for sub in range(0, 105, 5):
+                    sub /= 100
+                    subsidies = sub * cost_total
+                    time = (cost_total - subsidies) / bill_saved
+                    time = time.loc[:, 'Electricity-Heat pump water']
+                    to_replace = stock[time[(time < threshold)].dropna(how='all').index].sum()
+                    rslt.update({sub: to_replace})
+                rslt = pd.Series(rslt)
+                temp.update({threshold: rslt})
+            make_plots(temp, 'Premature replacement (Million households)', integer=False,
+                       format_y=lambda y, _: '{:.0f}'.format(y/10**6),
+                       save=os.path.join(self.path_calibration, 'premature_replacement.png'))
 
         # adding heating system final equal to heating system because no switch
         flow_premature_replacement = 0
@@ -2278,6 +2298,7 @@ class AgentBuildings(ThermalBuildings):
             utility_renovate = utility_investment + utility_bill_saving + utility_subsidies
 
             if self.constant_insulation_extensive is not None:
+                # TODO no need to add certificate and droplevel
                 _utility = self.add_certificate(utility_renovate.copy())
                 utility_constant = reindex_mi(self.constant_insulation_extensive, _utility.index)
                 _utility += utility_constant
@@ -2287,12 +2308,45 @@ class AgentBuildings(ThermalBuildings):
 
             return retrofit_proba, utility_renovate
 
-        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total):
+        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _stock=None, supply=True):
 
             _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
 
             _cost, _bill, _subsidies = to_utility_extensive(_cost_total, _bill_saved, _subsidies_total, _market_share,
                                                             _utility_intensive)
+
+            if supply and _stock is not None:
+                price = 0
+                utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'],
+                                                 _bill.index) * _bill / 1000
+
+                pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
+                utility_subsidies = (pref_sub * _subsidies) / 1000
+
+                pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost.index).rename(None)
+
+                utility_constant = reindex_mi(self.constant_insulation_extensive, utility_bill_saving.index)
+
+                utility = utility_subsidies + utility_bill_saving + utility_constant
+                weight = stock / stock.sum()
+
+                utility_investment = (pref_investment * price) / 1000
+
+                def func(price):
+                    price /= 1000
+                    u = utility + pref_investment * price
+                    proba = 1 / (1 + exp(-u))
+                    elasticity = pref_investment * price * (1 - proba)
+                    elasticity_global = (elasticity * weight).sum()
+                    return _cost.median() / (1 + 1 / elasticity_global)
+
+                price_median = _cost.median()
+                rslt = {}
+                for p in [0, 0.05, 0.1, 0.15, 0.2, 0.5]:
+                    price = price_median * (1 + p)
+                    print(price)
+                    rslt.update({price: func(price)})
+                rslt = pd.Series(rslt)
 
             _renovation_rate, _utility = to_retrofit_rate(_bill, _subsidies, _cost)
 
@@ -2765,7 +2819,7 @@ class AgentBuildings(ThermalBuildings):
             assess_sensitivity(stock, cost_total, bill_saved, subsidies_total, self.path_calibration)
 
         if self._threshold is False:
-            market_share, renovation_rate = apply_endogenous_retrofit(bill_saved, subsidies_total, cost_total)
+            market_share, renovation_rate = apply_endogenous_retrofit(bill_saved, subsidies_total, cost_total, stock)
         else:
             market_share, renovation_rate = apply_rational_choice(consumption_saved, subsidies_total, cost_total)
 
@@ -3654,6 +3708,11 @@ class AgentBuildings(ThermalBuildings):
             output['Efficiency insulation (euro/kWh standard)'] = output['Annuities insulation (Billion euro/year)'] / output['Consumption standard saving insulation (TWh/year)']
             output['Efficiency insulation (euro/kWh)'] = output['Annuities insulation (Billion euro/year)'] / output['Consumption saving insulation (TWh/year)']
             output['Efficiency insulation (euro/tCO2 standard)'] = output['Annuities insulation (Billion euro/year)'] * 10**3 / output['Emission standard saving insulation (MtCO2/year)']
+
+            annuities_heater = calculate_annuities(investment_heater, lifetime=20, discount_rate=discount_rate)
+            output['Annuities heater (Billion euro/year)'] = annuities_heater.sum().sum() / 10 ** 9 / step
+            output['Efficiency heater (euro/kWh standard)'] = output['Annuities heater (Billion euro/year)'] / output['Consumption standard saving heater (TWh/year)']
+            output['Efficiency heater (euro/kWh)'] = output['Annuities heater (Billion euro/year)'] / output['Consumption saving heater (TWh/year)']
 
             index = investment_heater.index.union(investment_insulation.index)
             investment_total = investment_heater.reindex(index, fill_value=0) + investment_insulation.reindex(index,

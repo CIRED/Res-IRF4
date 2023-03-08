@@ -95,7 +95,8 @@
       "current_policies": false,
       "income": false,
       "prices_constant": false,
-      "taxes_constant": false
+      "taxes_constant": false,
+      "collective_boiler": true
     }
   }
 }
