@@ -2197,7 +2197,7 @@ class AgentBuildings(ThermalBuildings):
         def market_share_func(u):
             return (exp(u).T / exp(u).sum(axis=1)).T
 
-        def to_market_share(_bill_saved, _subsidies_total, _cost_total):
+        def to_market_share(_bill_saved, _subsidies_total, _cost_total, full_output=False):
             """Calculate market-share between insulation options.
 
 
@@ -2225,13 +2225,19 @@ class AgentBuildings(ThermalBuildings):
 
             utility_bill_saving = (_bill_saved.T * reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved.index)).T / 1000
 
-            util_intensive = utility_bill_saving + utility_investment + utility_subsidies
+            utility_intensive = utility_bill_saving + utility_investment + utility_subsidies
 
             if self.constant_insulation_intensive is not None:
-                util_intensive += self.constant_insulation_intensive
+                utility_intensive += self.constant_insulation_intensive
 
-            ms_intensive = market_share_func(util_intensive)
-            return ms_intensive, util_intensive
+            ms_intensive = market_share_func(utility_intensive)
+
+            expected_utility = log(exp(utility_intensive).sum(axis=1))
+
+            if full_output:
+                return ms_intensive, utility_intensive, expected_utility
+            else:
+                return ms_intensive, utility_intensive
 
         def to_utility_extensive(_cost_total, _bill_saved, _subsidies_total, _market_share, _utility_intensive=None):
             # extensive margin
@@ -2270,7 +2276,7 @@ class AgentBuildings(ThermalBuildings):
         def retrofit_func(u):
             return 1 / (1 + exp(- u))
 
-        def to_retrofit_rate(_bill_saved, _subsidies_total, _cost_total):
+        def to_retrofit_rate(_bill_saved, _subsidies_total, _cost_total, expected_utility=None):
             """Calculate retrofit rate based on binomial logit model.
 
             Parameters
@@ -2286,23 +2292,24 @@ class AgentBuildings(ThermalBuildings):
             utility: Series
                 Utility to renovate for each household.
             """
+            if expected_utility is None:
+                utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved.index) * _bill_saved / 1000
 
-            utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved.index) * _bill_saved / 1000
+                pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
+                utility_subsidies = (pref_sub * _subsidies_total) / 1000
 
-            pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
-            utility_subsidies = (pref_sub * _subsidies_total) / 1000
+                pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
+                utility_investment = (pref_investment * _cost_total) / 1000
 
-            pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
-            utility_investment = (pref_investment * _cost_total) / 1000
+                utility_renovate = utility_investment + utility_bill_saving + utility_subsidies
 
-            utility_renovate = utility_investment + utility_bill_saving + utility_subsidies
-
-            if self.constant_insulation_extensive is not None:
-                # TODO no need to add certificate and droplevel
-                _utility = self.add_certificate(utility_renovate.copy())
-                utility_constant = reindex_mi(self.constant_insulation_extensive, _utility.index)
-                _utility += utility_constant
-                utility_renovate = _utility.droplevel('Performance')
+                if self.constant_insulation_extensive is not None:
+                    # _utility = self.add_certificate(utility_renovate.copy())
+                    utility_constant = reindex_mi(self.constant_insulation_extensive, utility_renovate.index)
+                    utility_renovate += utility_constant
+                    # utility_renovate = _utility.droplevel('Performance')
+            else:
+                utility_renovate = expected_utility
 
             retrofit_proba = retrofit_func(utility_renovate)
 
@@ -2314,9 +2321,10 @@ class AgentBuildings(ThermalBuildings):
 
             _cost, _bill, _subsidies = to_utility_extensive(_cost_total, _bill_saved, _subsidies_total, _market_share,
                                                             _utility_intensive)
+            _renovation_rate, _utility = to_retrofit_rate(_bill, _subsidies, _cost)
 
-            if supply and _stock is not None:
-                price = 0
+            if supply:
+
                 utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'],
                                                  _bill.index) * _bill / 1000
 
@@ -2330,25 +2338,31 @@ class AgentBuildings(ThermalBuildings):
                 utility = utility_subsidies + utility_bill_saving + utility_constant
                 weight = stock / stock.sum()
 
-                utility_investment = (pref_investment * price) / 1000
+                cost_renovation = (_renovation_rate * _cost).sum() / _renovation_rate.sum()
 
-                def func(price):
-                    price /= 1000
-                    u = utility + pref_investment * price
+                def marginal_revenue(price):
+                    u = utility + pref_investment * price / 1000
                     proba = 1 / (1 + exp(-u))
-                    elasticity = pref_investment * price * (1 - proba)
+                    elasticity = pref_investment * price / 1000 * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
-                    return _cost.median() / (1 + 1 / elasticity_global)
+                    return price * (1 + 1 / elasticity_global)
 
-                price_median = _cost.median()
-                rslt = {}
-                for p in [0, 0.05, 0.1, 0.15, 0.2, 0.5]:
-                    price = price_median * (1 + p)
-                    print(price)
-                    rslt.update({price: func(price)})
-                rslt = pd.Series(rslt)
+                def foc(price, cost_renovation=0):
+                    return marginal_revenue(price) - cost_renovation
 
-            _renovation_rate, _utility = to_retrofit_rate(_bill, _subsidies, _cost)
+                print('Cost renovation before: {:,.0f}'.format(cost_renovation))
+                print('Renovation before: {:,.0f}'.format((_renovation_rate * stock).sum()))
+                root, info_dict, ier, mess = fsolve(foc, cost_renovation, args=(cost_renovation), full_output=True)
+                print(mess)
+                print('Equilibrium price: {:,.0f} euro'.format(root[0]))
+                margin = (root[0] - cost_renovation) / cost_renovation
+                print('Margin: {:,.1%}'.format(margin))
+
+                _renovation_rate_after, _utility_after = to_retrofit_rate(_bill, _subsidies, _cost * (1 + margin))
+                print('Renovation after: {:,.0f}'.format((_renovation_rate_after * stock).sum()))
+
+                cost_renovation_after = (_renovation_rate_after * _cost).sum() / _renovation_rate_after.sum()
+                print('Cost renovation after: {:,.0f}'.format(cost_renovation_after))
 
             return _market_share, _renovation_rate
 

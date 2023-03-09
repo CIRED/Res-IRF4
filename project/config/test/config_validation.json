@@ -115,7 +115,6 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false
-    },
-    "calibration": "project/input/calibration/calibration_simple_0308.pkl"
+    }
   }
 }
