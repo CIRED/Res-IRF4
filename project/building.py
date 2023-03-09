@@ -795,7 +795,7 @@ class AgentBuildings(ThermalBuildings):
     demolition_rate: float, default 0.0
     endogenous: bool, default True
     number_exogenous: float or int, default 300000
-    insulation_representative: {'market_share', 'max}
+    expected_utility: {'market_share', 'max}
     logger: default
     debug_mode: bool, default False
         Detailed output.
@@ -810,7 +810,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
                  performance_insulation, path=None, year=2018,
-                 endogenous=True, exogenous=None, insulation_representative='market_share',
+                 endogenous=True, exogenous=None, expected_utility='market_share',
                  logger=None, debug_mode=False, calib_scale=True,
                  quintiles=None, financing_cost=True, threshold=None, resources_data=None
                  ):
@@ -847,7 +847,7 @@ class AgentBuildings(ThermalBuildings):
 
         self.preferences_heater = deepcopy(preferences['heater'])
         self.preferences_insulation = deepcopy(preferences['insulation'])
-        self._insulation_representative = insulation_representative
+        self._expected_utility = expected_utility
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
         self.scale = 1.0
@@ -2239,51 +2239,72 @@ class AgentBuildings(ThermalBuildings):
             else:
                 return ms_intensive, utility_intensive
 
-        def to_utility_extensive(_cost_total, _bill_saved, _subsidies_total, _market_share, _utility_intensive=None):
+        def to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share, _utility_intensive=None,
+                                _log_sum=None, option=None):
+
+            if option is None:
+                option = self._expected_utility
+
             # extensive margin
-            _bill_saved_insulation, _subsidies_insulation, _investment_insulation = None, None, None
-            if self._insulation_representative == 'market_share':
-                _investment_insulation = (_cost_total.reindex(_market_share.index) * _market_share).sum(axis=1)
-                _bill_saved_insulation = (_bill_saved.reindex(_market_share.index) * _market_share).sum(axis=1)
-                _subsidies_insulation = (_subsidies_total.reindex(_market_share.index) * _market_share).sum(axis=1)
+            if option == 'log_sum':
+                return _log_sum
 
-            elif self._insulation_representative == 'max':
-                _utility_intensive = _utility_intensive.dropna(how='all')
-                dict_df = {'investment': _cost_total, 'bill_saved': _bill_saved, 'subsidies': _subsidies_total}
-                dict_int = self.find_best_option(_utility_intensive, dict_df, func='max')
+            else:
+                _bill_saved_insulation, _subsidies_insulation, _investment_insulation = None, None, None
+                if option == 'market_share':
+                    _investment_insulation = (_cost_total.reindex(_market_share.index) * _market_share).sum(axis=1)
+                    _bill_saved_insulation = (_bill_saved.reindex(_market_share.index) * _market_share).sum(axis=1)
+                    _subsidies_insulation = (_subsidies_total.reindex(_market_share.index) * _market_share).sum(axis=1)
+    
+                elif option == 'max':
+                    _utility_intensive = _utility_intensive.dropna(how='all')
+                    dict_df = {'investment': _cost_total, 'bill_saved': _bill_saved, 'subsidies': _subsidies_total}
+                    dict_int = self.find_best_option(_utility_intensive, dict_df, func='max')
+    
+                    def rename_tuple(tuple, names):
+                        idx = tuple.index
+                        tuple = DataFrame([[a, b, c, d] for a, b, c, d in tuple.values])
+                        tuple.columns = names
+                        for i in names:
+                            tuple.loc[tuple[i] == True, i] = i
+                            tuple.loc[tuple[i] == False, i] = ''
+                        return Series(list(zip(*(tuple[i] for i in names))), index=idx)
+    
+                    dict_int['representative'] = rename_tuple(dict_int['columns'], _utility_intensive.columns.names)
+                    _bill_saved_insulation = dict_int['bill_saved']
+                    _subsidies_insulation = dict_int['subsidies']
+                    _investment_insulation = dict_int['investment']
 
-                def rename_tuple(tuple, names):
-                    idx = tuple.index
-                    tuple = DataFrame([[a, b, c, d] for a, b, c, d in tuple.values])
-                    tuple.columns = names
-                    for i in names:
-                        tuple.loc[tuple[i] == True, i] = i
-                        tuple.loc[tuple[i] == False, i] = ''
-                    return Series(list(zip(*(tuple[i] for i in names))), index=idx)
+                else:
+                    raise NotImplemented
 
-                dict_int['representative'] = rename_tuple(dict_int['columns'], _utility_intensive.columns.names)
-                _bill_saved_insulation = dict_int['bill_saved']
-                _subsidies_insulation = dict_int['subsidies']
-                _investment_insulation = dict_int['investment']
+                # bill saved == 0 should have been removed in market_share calculation
+                idx = _bill_saved_insulation[_bill_saved_insulation <= 0].index
+                _investment_insulation.drop(idx, inplace=True)
+                _bill_saved_insulation.drop(idx, inplace=True)
+                _subsidies_insulation.drop(idx, inplace=True)
 
-            # bill saved == 0 should have been removed in market_share calculation
-            idx = _bill_saved_insulation[_bill_saved_insulation <= 0].index
-            _bill_saved_insulation.drop(idx, inplace=True)
-            _subsidies_insulation.drop(idx, inplace=True)
-            _investment_insulation.drop(idx, inplace=True)
-            return _investment_insulation, _bill_saved_insulation, _subsidies_insulation
+                utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved_insulation.index) * _bill_saved_insulation / 1000
+
+                pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_insulation.index).rename(None)
+                utility_subsidies = (pref_sub * _subsidies_insulation) / 1000
+
+                pref_investment = reindex_mi(self.preferences_insulation['cost'], _investment_insulation.index).rename(None)
+                utility_investment = (pref_investment * _investment_insulation) / 1000
+
+                expected_utility = utility_investment + utility_bill_saving + utility_subsidies
+
+                return expected_utility
 
         def retrofit_func(u):
             return 1 / (1 + exp(- u))
 
-        def to_retrofit_rate(_bill_saved, _subsidies_total, _cost_total, expected_utility=None):
+        def to_retrofit_rate(expected_utility):
             """Calculate retrofit rate based on binomial logit model.
 
             Parameters
             ----------
-            _bill_saved
-            _subsidies_total
-            _cost_total
+
 
             Returns
             -------
@@ -2292,36 +2313,25 @@ class AgentBuildings(ThermalBuildings):
             utility: Series
                 Utility to renovate for each household.
             """
-            if expected_utility is None:
-                utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved.index) * _bill_saved / 1000
+            if self.constant_insulation_extensive is not None:
+                # _utility = self.add_certificate(utility_renovate.copy())
+                utility_constant = reindex_mi(self.constant_insulation_extensive, expected_utility.index)
+                expected_utility += utility_constant
+                # utility_renovate = _utility.droplevel('Performance')
 
-                pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
-                utility_subsidies = (pref_sub * _subsidies_total) / 1000
+            retrofit_proba = retrofit_func(expected_utility)
 
-                pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
-                utility_investment = (pref_investment * _cost_total) / 1000
-
-                utility_renovate = utility_investment + utility_bill_saving + utility_subsidies
-
-                if self.constant_insulation_extensive is not None:
-                    # _utility = self.add_certificate(utility_renovate.copy())
-                    utility_constant = reindex_mi(self.constant_insulation_extensive, utility_renovate.index)
-                    utility_renovate += utility_constant
-                    # utility_renovate = _utility.droplevel('Performance')
-            else:
-                utility_renovate = expected_utility
-
-            retrofit_proba = retrofit_func(utility_renovate)
-
-            return retrofit_proba, utility_renovate
+            return retrofit_proba, expected_utility
 
         def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _stock=None, supply=False):
 
-            _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
+            _market_share, _utility_intensive, log_sum = to_market_share(_bill_saved, _subsidies_total, _cost_total, full_output=True)
 
-            _cost, _bill, _subsidies = to_utility_extensive(_cost_total, _bill_saved, _subsidies_total, _market_share,
-                                                            _utility_intensive)
-            _renovation_rate, _utility = to_retrofit_rate(_bill, _subsidies, _cost)
+            _bill, _subsidies, _cost = None, None, None
+            expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                                   _utility_intensive=_utility_intensive, _log_sum=log_sum)
+            _renovation_rate, _utility = to_retrofit_rate(expected_utility)
+            # _renovation_rate, _utility = to_retrofit_rate(_bill, _subsidies, _cost, expected_utility=expected_utility)
 
             if supply:
 
@@ -2628,21 +2638,20 @@ class AgentBuildings(ThermalBuildings):
             # initialization of first renovation rate and then market-share
             _market_share = concat([ms_insulation_ini] * _cost_total.shape[0], axis=1).T
             _market_share.index = _cost_total.index
-            investment_insulation, bill_saved_insulation, subsidies_insulation = to_utility_extensive(_cost_total,
-                                                                                                      _bill_saved,
-                                                                                                      _subsidies_total,
-                                                                                                      _market_share)
 
             compare = None
             for k in range(10):
                 # calibration of renovation rate
-                self.constant_insulation_extensive = None
-                _, utility = to_retrofit_rate(bill_saved_insulation, subsidies_insulation, investment_insulation)
-                constant, scale = calibration_extensive(utility, _stock, _calib_renovation)
+                # _, renovation_utility = to_retrofit_rate(expected_utility)
+                expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                       option='market_share')
+                # self.constant_insulation_extensive = None
+                constant, scale = calibration_extensive(expected_utility, _stock, _calib_renovation)
                 self.constant_insulation_extensive = constant
                 self.apply_scale(scale)
-                _renovation_rate, _ = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
-                                                       investment_insulation)
+                expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share)
+                # _, utility = to_retrofit_rate(expected_utility)
+                _renovation_rate, _ = to_retrofit_rate(expected_utility)
 
                 # recalibration of market_share with new scale and renovation rate
                 self.constant_insulation_intensive = None
@@ -2650,17 +2659,12 @@ class AgentBuildings(ThermalBuildings):
                 self.constant_insulation_intensive = calibration_intensive(utility_intensive, _stock, ms_insulation_ini,
                                                                            _renovation_rate)
                 # test market-share (test with other renovation rate so can differ)
-                _market_share, utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
+                _market_share, utility_intensive, log_sum = to_market_share(_bill_saved, _subsidies_total, _cost_total, full_output=True)
 
                 # test renovation_rate (test with other utility extensive so can differ)
-                investment_insulation, bill_saved_insulation, subsidies_insulation = to_utility_extensive(_cost_total,
-                                                                                                          _bill_saved,
-                                                                                                          _subsidies_total,
-                                                                                                          _market_share,
-                                                                                                          utility_intensive)
-
-                _renovation_rate, _ = to_retrofit_rate(bill_saved_insulation, subsidies_insulation,
-                                                       investment_insulation)
+                expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                                       _utility_intensive=utility_intensive, _log_sum=log_sum)
+                _renovation_rate, _ = to_retrofit_rate(expected_utility)
 
                 flow = _renovation_rate * _stock
                 rate = flow.groupby(renovation_rate_ini.index.names).sum() / _stock.groupby(
