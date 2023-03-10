@@ -2729,7 +2729,7 @@ class AgentBuildings(ThermalBuildings):
                 assert allclose(compare['Calculated'], compare['Observed'], rtol=10**-2), 'Calibration insulation did not work'
 
         def calibration_coupled_test(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
-                                    _calib_intensive):
+                                     _calib_intensive):
             self.logger.info('Calibration intensive and renovation rate')
 
             # input cleaning

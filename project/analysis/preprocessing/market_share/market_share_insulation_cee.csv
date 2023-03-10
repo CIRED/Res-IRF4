@@ -1,0 +1,16 @@
+Wall,Floor,Roof,Windows,0
+True,True,True,False,0.00019607284212493184
+False,True,True,False,0.0021266672446859356
+True,True,False,False,0.0022678900440190356
+True,False,True,False,0.000497976914235465
+True,False,False,False,0.12069523696666973
+False,False,True,False,0.49889245281582384
+False,True,False,False,0.27842370317244125
+True,True,True,True,1.00763760252982e-06
+False,True,True,True,0.00014992155806705057
+True,True,False,True,9.060550606898367e-05
+True,False,True,True,1.803136818171748e-07
+True,False,False,True,2.3654766942874444e-05
+False,False,True,True,3.159590544720017e-05
+False,True,False,True,0.055705123742777383
+False,False,False,True,0.040897910569412194

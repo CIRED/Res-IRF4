@@ -1,0 +1,280 @@
+Housing type,Energy,Heating system,DPE,Wall,Floor,Roof,Windows,Efficiency,clusters,Weight
+Multi-family,Electricity,Electricity-Heat pump,A,0.2,0.3,0.2,1.3,2.5,1,0.3090909090909091
+Multi-family,Electricity,Electricity-Heat pump,A,0.4,0.3,0.2,1.3,2.5,3,0.3090909090909091
+Multi-family,Electricity,Electricity-Heat pump,A,0.4,0.3,0.3,1.3,2.5,0,0.2909090909090909
+Multi-family,Electricity,Electricity-Heat pump,A,0.2,0.9,0.2,1.3,2.5,2,0.07272727272727272
+Multi-family,Electricity,Electricity-Heat pump,A,0.2,0.5,0.5,1.3,2.5,4,0.01818181818181818
+Multi-family,Electricity,Electricity-Heat pump,B,0.4,0.3,0.3,2.6,2.5,0,0.5088702147525677
+Multi-family,Electricity,Electricity-Heat pump,B,0.4,2.0,0.3,2.6,2.5,1,0.20821661998132587
+Multi-family,Electricity,Electricity-Heat pump,B,0.4,0.5,2.5,2.6,2.5,2,0.12978524743230627
+Multi-family,Electricity,Electricity-Heat pump,B,1.0,0.9,0.3,2.6,2.5,3,0.07936507936507936
+Multi-family,Electricity,Electricity-Heat pump,B,0.4,0.9,0.2,4.3,2.5,4,0.07376283846872082
+Multi-family,Electricity,Electricity-Performance boiler,C,0.4,0.3,0.2,1.3,0.95,0,0.8006923837784372
+Multi-family,Electricity,Electricity-Heat pump,C,2.5,2.0,0.3,2.6,2.5,1,0.06726013847675569
+Multi-family,Electricity,Electricity-Heat pump,C,2.5,0.5,0.3,3.0,2.5,3,0.056132542037586546
+Multi-family,Electricity,Electricity-Heat pump,C,0.5,2.0,2.5,3.0,2.5,2,0.05341246290801187
+Multi-family,Electricity,Electricity-Heat pump,C,0.5,0.5,2.5,3.0,2.5,4,0.022502472799208705
+Multi-family,Electricity,Electricity-Performance boiler,D,0.4,0.3,0.3,2.6,0.95,4,0.7073791841358676
+Multi-family,Electricity,Electricity-Performance boiler,D,0.4,2.0,0.3,2.6,0.95,1,0.22460954520367554
+Multi-family,Electricity,Electricity-Performance boiler,D,0.4,0.5,0.3,4.3,0.95,0,0.0542231087270157
+Multi-family,Electricity,Electricity-Performance boiler,D,0.4,0.3,2.5,1.3,0.95,3,0.007775206483534572
+Multi-family,Electricity,Electricity-Heat pump,D,2.5,2.0,2.5,3.0,2.5,2,0.006012955449906562
+Multi-family,Electricity,Electricity-Performance boiler,E,0.4,0.3,2.5,2.6,0.95,0,0.27863275795478176
+Multi-family,Electricity,Electricity-Performance boiler,E,1.0,0.5,0.5,2.6,0.95,4,0.23990611723461777
+Multi-family,Electricity,Electricity-Performance boiler,E,0.4,2.0,2.5,2.6,0.95,2,0.20868118482426692
+Multi-family,Electricity,Electricity-Performance boiler,E,0.5,0.9,0.5,4.3,0.95,3,0.16322528892718144
+Multi-family,Electricity,Electricity-Performance boiler,E,1.0,2.0,0.3,2.6,0.95,1,0.10955465105915209
+Multi-family,Electricity,Electricity-Performance boiler,F,2.5,2.0,0.3,2.6,0.95,1,0.3059311424100156
+Multi-family,Electricity,Electricity-Performance boiler,F,2.5,0.5,0.3,2.6,0.95,3,0.2955242566510172
+Multi-family,Electricity,Electricity-Performance boiler,F,2.5,0.5,2.5,2.6,0.95,0,0.15663536776212833
+Multi-family,Electricity,Electricity-Performance boiler,F,1.0,2.0,2.5,3.0,0.95,2,0.1271830985915493
+Multi-family,Electricity,Electricity-Performance boiler,F,2.5,0.9,0.3,4.3,0.95,4,0.11472613458528952
+Multi-family,Electricity,Electricity-Performance boiler,G,2.5,2.0,2.5,2.6,0.95,0,0.674115212322846
+Multi-family,Electricity,Electricity-Performance boiler,G,2.5,2.0,2.5,4.3,0.95,2,0.15104917087994132
+Multi-family,Electricity,Electricity-Performance boiler,G,2.5,0.5,2.5,4.3,0.95,1,0.0680585754328976
+Multi-family,Electricity,Electricity-Performance boiler,G,2.5,0.9,2.5,2.6,0.95,3,0.06530794016713384
+Multi-family,Electricity,Electricity-Performance boiler,G,2.5,0.3,2.5,3.0,0.95,4,0.04146910119718125
+Multi-family,Heating,Heating-District heating,A,0.2,0.3,0.2,2.6,2.55,0,0.34375
+Multi-family,Heating,Heating-District heating,A,0.2,0.3,0.2,1.3,1.78,4,0.203125
+Multi-family,Heating,Heating-District heating,A,0.4,0.3,0.3,2.6,3.64,1,0.1875
+Multi-family,Heating,Heating-District heating,A,0.4,0.3,0.2,1.3,2.32,2,0.1875
+Multi-family,Heating,Heating-District heating,A,0.2,2.0,0.3,3.0,3.64,3,0.078125
+Multi-family,Heating,Heating-District heating,B,0.4,0.3,0.3,2.6,0.98,0,0.8185040443515404
+Multi-family,Heating,Heating-District heating,B,0.4,0.3,0.3,1.3,0.84,1,0.08915750249931836
+Multi-family,Heating,Heating-District heating,B,0.4,2.0,0.2,2.6,0.98,4,0.06607288921203308
+Multi-family,Heating,Heating-District heating,B,0.4,0.9,2.5,2.6,2.09,2,0.02372080341724984
+Multi-family,Heating,Heating-District heating,B,2.5,0.9,0.5,2.6,3.64,3,0.0025447605198582204
+Multi-family,Heating,Heating-District heating,C,0.5,0.5,0.3,2.6,0.73,4,0.2960971827345567
+Multi-family,Heating,Heating-District heating,C,0.5,0.9,2.5,2.6,0.95,2,0.2891186353062807
+Multi-family,Heating,Heating-District heating,C,0.5,2.0,0.3,2.6,0.84,1,0.2607392090979581
+Multi-family,Heating,Heating-District heating,C,0.5,0.9,0.5,4.3,0.95,0,0.11760144740242957
+Multi-family,Heating,Heating-District heating,C,2.5,2.0,2.5,2.6,1.67,3,0.03644352545877488
+Multi-family,Heating,Heating-District heating,D,2.5,0.9,0.2,2.6,0.91,1,0.338135347081034
+Multi-family,Heating,Heating-District heating,D,2.5,2.0,2.5,2.6,0.95,3,0.274644205634621
+Multi-family,Heating,Heating-District heating,D,0.5,0.9,2.5,2.6,0.63,0,0.16392680801626489
+Multi-family,Heating,Heating-District heating,D,2.5,0.9,2.5,4.3,0.95,2,0.13168748184722626
+Multi-family,Heating,Heating-District heating,D,1.0,0.9,0.3,3.0,0.56,4,0.0916061574208539
+Multi-family,Heating,Heating-District heating,E,2.5,2.0,2.5,2.6,0.68,3,0.37099684258006316
+Multi-family,Heating,Heating-District heating,E,2.5,0.5,2.5,2.6,0.6,1,0.2140279657194407
+Multi-family,Heating,Heating-District heating,E,2.5,2.0,0.3,2.6,0.6,0,0.20635994587280107
+Multi-family,Heating,Heating-District heating,E,2.5,2.0,2.5,4.3,0.68,4,0.15550293188994135
+Multi-family,Heating,Heating-District heating,E,1.0,2.0,2.5,3.0,0.51,2,0.05311231393775372
+Multi-family,Heating,Heating-District heating,F,2.5,2.0,2.5,2.6,0.51,1,0.6029684601113172
+Multi-family,Heating,Heating-District heating,F,2.5,2.0,2.5,4.3,0.56,0,0.16264687693259122
+Multi-family,Heating,Heating-District heating,F,2.5,0.5,2.5,3.0,0.51,3,0.11564625850340136
+Multi-family,Heating,Heating-District heating,F,2.5,2.0,0.3,3.0,0.43,2,0.0878169449598021
+Multi-family,Heating,Heating-District heating,F,1.0,2.0,2.5,3.0,0.29,4,0.030921459492888066
+Multi-family,Heating,Heating-District heating,G,2.5,2.0,2.5,3.0,0.29,4,0.3803418803418803
+Multi-family,Heating,Heating-District heating,G,2.5,0.3,0.5,3.0,0.29,0,0.26495726495726496
+Multi-family,Heating,Heating-District heating,G,2.5,2.0,0.3,3.0,0.29,1,0.2094017094017094
+Multi-family,Heating,Heating-District heating,G,2.5,2.0,2.5,4.3,0.43,2,0.1282051282051282
+Multi-family,Heating,Heating-District heating,G,1.0,2.0,2.5,4.3,0.29,3,0.017094017094017096
+Multi-family,Natural gas,Natural gas-Performance boiler,B,0.2,0.3,0.3,2.6,0.76,1,0.4111977030352748
+Multi-family,Natural gas,Natural gas-Standard boiler,B,0.2,0.3,0.2,1.3,0.6,2,0.20334290401968827
+Multi-family,Natural gas,Natural gas-Performance boiler,B,0.2,0.3,0.2,1.3,0.76,0,0.18529532403609517
+Multi-family,Natural gas,Natural gas-Performance boiler,B,0.4,0.3,0.3,1.3,0.76,3,0.1582239540607055
+Multi-family,Natural gas,Natural gas-Performance boiler,B,0.2,2.0,0.3,1.3,0.76,4,0.04194011484823626
+Multi-family,Natural gas,Natural gas-Standard boiler,C,0.4,0.3,0.3,2.6,0.6,2,0.256494605969716
+Multi-family,Natural gas,Natural gas-Performance boiler,C,0.4,2.0,0.3,2.6,0.76,0,0.23785738474190896
+Multi-family,Natural gas,Natural gas-Performance boiler,C,0.4,0.5,0.3,2.6,0.76,4,0.22157853998355184
+Multi-family,Natural gas,Natural gas-Performance boiler,C,1.0,0.9,0.3,2.6,0.76,1,0.14721106864689662
+Multi-family,Natural gas,Natural gas-Performance boiler,C,0.4,0.9,2.5,2.6,0.76,3,0.13685840065792657
+Multi-family,Natural gas,Natural gas-Standard boiler,D,1.0,2.0,2.5,2.6,0.6,2,0.29686358099878196
+Multi-family,Natural gas,Natural gas-Performance boiler,D,2.5,2.0,0.3,2.6,0.76,4,0.2110688185140073
+Multi-family,Natural gas,Natural gas-Standard boiler,D,1.0,0.5,2.5,2.6,0.6,1,0.1950822168087698
+Multi-family,Natural gas,Natural gas-Performance boiler,D,2.5,0.5,0.5,2.6,0.76,0,0.1782886723507917
+Multi-family,Natural gas,Natural gas-Standard boiler,D,0.5,0.9,0.5,4.3,0.6,3,0.11869671132764921
+Multi-family,Natural gas,Natural gas-Performance boiler,E,2.5,2.0,2.5,3.0,0.76,1,0.29529646872313586
+Multi-family,Natural gas,Natural gas-Standard boiler,E,2.5,2.0,2.5,2.6,0.6,2,0.26078753167877994
+Multi-family,Natural gas,Natural gas-Standard boiler,E,2.5,0.9,0.3,3.0,0.6,0,0.2603521228969198
+Multi-family,Natural gas,Natural gas-Performance boiler,E,2.5,0.5,2.5,3.0,0.76,3,0.17186366122963906
+Multi-family,Natural gas,Natural gas-Standard boiler,E,1.0,2.0,2.5,4.3,0.6,4,0.011700215471525383
+Multi-family,Natural gas,Natural gas-Standard boiler,F,2.5,2.0,2.5,4.3,0.6,0,1.0
+Multi-family,Oil fuel,Oil fuel-Performance boiler,B,0.2,0.3,0.3,2.6,0.76,0,0.5180392156862745
+Multi-family,Oil fuel,Oil fuel-Performance boiler,B,0.2,0.3,0.3,1.3,0.76,1,0.26666666666666666
+Multi-family,Oil fuel,Oil fuel-Performance boiler,B,0.4,0.3,0.3,1.3,0.76,2,0.16470588235294117
+Multi-family,Oil fuel,Oil fuel-Performance boiler,B,0.2,2.0,0.3,1.3,0.76,4,0.032549019607843135
+Multi-family,Oil fuel,Oil fuel-Standard boiler,B,0.2,0.3,0.3,1.3,0.6,3,0.01803921568627451
+Multi-family,Oil fuel,Oil fuel-Performance boiler,C,0.4,0.9,0.3,2.6,0.76,1,0.45413481584433635
+Multi-family,Oil fuel,Oil fuel-Performance boiler,C,1.0,0.9,0.3,2.6,0.76,0,0.1840687977762335
+Multi-family,Oil fuel,Oil fuel-Performance boiler,C,0.4,0.9,2.5,2.6,0.76,2,0.15279708130646283
+Multi-family,Oil fuel,Oil fuel-Standard boiler,C,0.4,0.9,0.3,2.6,0.6,3,0.1341209173036831
+Multi-family,Oil fuel,Oil fuel-Performance boiler,C,0.5,0.9,0.3,4.3,0.76,4,0.07487838776928422
+Multi-family,Oil fuel,Oil fuel-Performance boiler,D,2.5,0.5,0.5,2.6,0.76,4,0.27735849056603773
+Multi-family,Oil fuel,Oil fuel-Performance boiler,D,2.5,2.0,0.3,2.6,0.76,1,0.27058823529411763
+Multi-family,Oil fuel,Oil fuel-Standard boiler,D,0.5,0.9,2.5,2.6,0.6,2,0.1879023307436182
+Multi-family,Oil fuel,Oil fuel-Performance boiler,D,1.0,2.0,2.5,3.0,0.76,0,0.1706992230854606
+Multi-family,Oil fuel,Oil fuel-Performance boiler,D,1.0,0.9,0.5,4.3,0.76,3,0.09345172031076582
+Multi-family,Oil fuel,Oil fuel-Performance boiler,E,2.5,2.0,2.5,2.6,0.76,2,0.4410261549253432
+Multi-family,Oil fuel,Oil fuel-Standard boiler,E,2.5,2.0,0.3,3.0,0.6,4,0.20643351037178073
+Multi-family,Oil fuel,Oil fuel-Standard boiler,E,2.5,2.0,2.5,2.6,0.6,3,0.18699268463773924
+Multi-family,Oil fuel,Oil fuel-Performance boiler,E,2.5,2.0,2.5,4.3,0.76,0,0.15793165647860508
+Multi-family,Oil fuel,Oil fuel-Standard boiler,E,1.0,2.0,2.5,4.3,0.6,1,0.007615993586531717
+Multi-family,Oil fuel,Oil fuel-Standard boiler,F,2.5,2.0,2.5,4.3,0.6,0,1.0
+Multi-family,Wood fuel,Wood fuel-Performance boiler,B,0.2,0.3,0.2,2.6,0.76,0,0.5424354243542435
+Multi-family,Wood fuel,Wood fuel-Performance boiler,B,0.2,0.3,0.2,1.3,0.76,2,0.15867158671586715
+Multi-family,Wood fuel,Wood fuel-Standard boiler,B,0.2,0.3,0.2,1.3,0.6,1,0.12915129151291513
+Multi-family,Wood fuel,Wood fuel-Performance boiler,B,0.4,0.3,0.3,1.3,0.76,4,0.12177121771217712
+Multi-family,Wood fuel,Wood fuel-Performance boiler,B,0.2,2.0,0.2,1.3,0.76,3,0.04797047970479705
+Multi-family,Wood fuel,Wood fuel-Standard boiler,C,0.4,0.3,0.3,2.6,0.6,1,0.2868663594470046
+Multi-family,Wood fuel,Wood fuel-Performance boiler,C,0.4,0.3,0.3,3.0,0.76,2,0.25
+Multi-family,Wood fuel,Wood fuel-Performance boiler,C,0.4,2.0,0.3,2.6,0.76,4,0.21947004608294932
+Multi-family,Wood fuel,Wood fuel-Performance boiler,C,1.0,0.9,0.3,2.6,0.76,0,0.13421658986175114
+Multi-family,Wood fuel,Wood fuel-Performance boiler,C,0.4,0.9,2.5,2.6,0.76,3,0.10944700460829493
+Multi-family,Wood fuel,Wood fuel-Performance boiler,D,2.5,2.0,0.3,2.6,0.76,3,0.22185430463576158
+Multi-family,Wood fuel,Wood fuel-Standard boiler,D,0.5,0.9,2.5,2.6,0.6,4,0.20860927152317882
+Multi-family,Wood fuel,Wood fuel-Performance boiler,D,2.5,0.5,0.2,3.0,0.76,2,0.20750551876379691
+Multi-family,Wood fuel,Wood fuel-Standard boiler,D,1.0,0.9,0.3,3.0,0.6,1,0.20088300220750552
+Multi-family,Wood fuel,Wood fuel-Performance boiler,D,1.0,2.0,2.5,3.0,0.76,0,0.16114790286975716
+Multi-family,Wood fuel,Wood fuel-Standard boiler,E,2.5,0.9,0.3,2.6,0.6,4,0.30510314875135724
+Multi-family,Wood fuel,Wood fuel-Performance boiler,E,2.5,2.0,2.5,2.6,0.76,3,0.25841476655808904
+Multi-family,Wood fuel,Wood fuel-Standard boiler,E,2.5,2.0,2.5,2.6,0.6,1,0.2301845819761129
+Multi-family,Wood fuel,Wood fuel-Performance boiler,E,2.5,2.0,0.5,4.3,0.76,0,0.18566775244299674
+Multi-family,Wood fuel,Wood fuel-Standard boiler,E,1.0,2.0,2.5,4.3,0.6,2,0.02062975027144408
+Multi-family,Wood fuel,Wood fuel-Standard boiler,F,2.5,2.0,2.5,4.3,0.6,0,1.0
+Single-family,Electricity,Electricity-Heat pump,B,0.4,0.3,0.2,2.6,2.5,3,0.429049344856426
+Single-family,Electricity,Electricity-Heat pump,B,0.2,0.3,0.2,2.6,2.5,1,0.24505157513242265
+Single-family,Electricity,Electricity-Heat pump,B,0.4,0.3,0.3,2.6,2.5,0,0.19765821020351268
+Single-family,Electricity,Electricity-Heat pump,B,0.4,0.3,0.2,1.3,2.5,2,0.11067744633398383
+Single-family,Electricity,Electricity-Heat pump,B,0.2,0.9,0.2,2.6,2.5,4,0.017563423473654863
+Single-family,Electricity,Electricity-Heat pump,C,1.0,0.5,0.3,2.6,2.5,0,0.38723776223776224
+Single-family,Electricity,Electricity-Heat pump,C,0.5,2.0,0.3,2.6,2.5,1,0.2840909090909091
+Single-family,Electricity,Electricity-Heat pump,C,0.5,0.5,0.3,4.3,2.5,2,0.19405594405594406
+Single-family,Electricity,Electricity-Heat pump,C,0.5,0.5,0.3,2.6,2.5,4,0.11625874125874126
+Single-family,Electricity,Electricity-Heat pump,C,0.2,0.3,2.5,2.6,2.5,3,0.018356643356643356
+Single-family,Electricity,Electricity-Performance boiler,D,0.4,0.3,0.2,2.6,0.95,0,0.8344542329179201
+Single-family,Electricity,Electricity-Performance boiler,D,0.4,0.5,0.2,2.6,0.95,4,0.08575418994413408
+Single-family,Electricity,Electricity-Performance boiler,D,0.4,0.3,0.2,1.3,0.95,3,0.07487107864202837
+Single-family,Electricity,Electricity-Heat pump,D,2.5,0.5,0.3,2.6,2.5,1,0.00365277180919639
+Single-family,Electricity,Electricity-Heat pump,D,0.4,0.9,2.5,2.6,2.5,2,0.0012677266867211002
+Single-family,Electricity,Electricity-Performance boiler,E,0.4,0.5,0.3,2.6,0.95,3,0.4470076210400478
+Single-family,Electricity,Electricity-Performance boiler,E,1.0,0.3,0.2,2.6,0.95,0,0.23494471010161386
+Single-family,Electricity,Electricity-Performance boiler,E,0.4,2.0,0.3,2.6,0.95,1,0.18396966527196654
+Single-family,Electricity,Electricity-Performance boiler,E,0.4,0.5,0.3,4.3,0.95,2,0.12888523610280933
+Single-family,Electricity,Electricity-Heat pump,E,2.5,2.0,0.5,3.0,2.5,4,0.005192767483562463
+Single-family,Electricity,Electricity-Performance boiler,F,1.0,0.5,0.3,2.6,0.95,1,0.4552063288432756
+Single-family,Electricity,Electricity-Performance boiler,F,1.0,2.0,0.3,2.6,0.95,3,0.23843631957807712
+Single-family,Electricity,Electricity-Performance boiler,F,1.0,0.9,0.3,4.3,0.95,4,0.22803078896728673
+Single-family,Electricity,Electricity-Performance boiler,F,0.4,0.3,2.5,2.6,0.95,0,0.07782766730810349
+Single-family,Electricity,Electricity-Heat pump,F,2.5,2.0,2.5,4.3,2.5,2,0.0004988953032570736
+Single-family,Electricity,Electricity-Performance boiler,G,2.5,0.3,0.3,2.6,0.95,0,0.3254776148205326
+Single-family,Electricity,Electricity-Performance boiler,G,2.5,2.0,0.3,2.6,0.95,3,0.20547086067155537
+Single-family,Electricity,Electricity-Performance boiler,G,2.5,0.9,0.5,4.3,0.95,4,0.1797327286761868
+Single-family,Electricity,Electricity-Performance boiler,G,2.5,0.9,2.5,2.6,0.95,1,0.16506657661134697
+Single-family,Electricity,Electricity-Performance boiler,G,1.0,0.9,2.5,3.0,0.95,2,0.12425221922037823
+Single-family,Heating,Heating-District heating,A,0.2,0.3,0.2,2.6,2.55,0,0.43486238532110094
+Single-family,Heating,Heating-District heating,A,0.4,0.3,0.2,2.6,3.64,1,0.25504587155963304
+Single-family,Heating,Heating-District heating,A,0.2,0.3,0.2,1.3,2.55,3,0.21467889908256882
+Single-family,Heating,Heating-District heating,A,0.4,0.3,0.3,2.6,3.64,4,0.09357798165137615
+Single-family,Heating,Heating-District heating,A,0.2,2.0,0.2,1.3,3.64,2,0.001834862385321101
+Single-family,Heating,Heating-District heating,B,0.2,0.3,0.2,2.6,0.98,4,0.4394094730367029
+Single-family,Heating,Heating-District heating,B,0.5,0.3,0.3,2.6,2.09,0,0.34242362107853186
+Single-family,Heating,Heating-District heating,B,0.4,0.3,0.2,1.3,0.98,1,0.17572278039778552
+Single-family,Heating,Heating-District heating,B,0.4,2.0,0.3,2.6,2.09,2,0.03998359647324175
+Single-family,Heating,Heating-District heating,B,0.4,0.3,2.5,2.6,2.55,3,0.002460529013737954
+Single-family,Heating,Heating-District heating,C,0.4,0.3,0.2,2.6,0.84,0,0.8875611486612645
+Single-family,Heating,Heating-District heating,C,0.4,2.0,0.3,2.6,0.97,2,0.05564061391388775
+Single-family,Heating,Heating-District heating,C,0.4,0.3,0.3,4.3,0.91,3,0.04589417080548191
+Single-family,Heating,Heating-District heating,C,2.5,0.9,0.2,2.6,2.32,1,0.00836476343403413
+Single-family,Heating,Heating-District heating,C,1.0,0.9,2.5,2.6,2.09,4,0.00253930318533179
+Single-family,Heating,Heating-District heating,D,1.0,0.5,0.3,2.6,0.73,0,0.4932559598494354
+Single-family,Heating,Heating-District heating,D,0.5,2.0,0.3,2.6,0.73,1,0.268271643663739
+Single-family,Heating,Heating-District heating,D,1.0,0.9,0.3,4.3,0.79,3,0.17205144291091592
+Single-family,Heating,Heating-District heating,D,0.4,0.9,2.5,2.6,0.95,2,0.045561480552070266
+Single-family,Heating,Heating-District heating,D,2.5,0.9,0.5,3.0,1.67,4,0.0208594730238394
+Single-family,Heating,Heating-District heating,E,2.5,0.3,0.3,2.6,0.84,3,0.3401934044135879
+Single-family,Heating,Heating-District heating,E,1.0,2.0,0.3,3.0,0.63,1,0.2622117530374411
+Single-family,Heating,Heating-District heating,E,1.0,0.9,2.5,3.0,0.79,4,0.16736920406645178
+Single-family,Heating,Heating-District heating,E,2.5,2.0,0.3,2.6,0.95,2,0.13786263327547732
+Single-family,Heating,Heating-District heating,E,2.5,0.9,0.3,4.3,0.95,0,0.09236300520704191
+Single-family,Heating,Heating-District heating,F,2.5,2.0,0.3,2.6,0.68,0,0.30962643678160917
+Single-family,Heating,Heating-District heating,F,2.5,0.5,0.3,2.6,0.68,4,0.2846024904214559
+Single-family,Heating,Heating-District heating,F,2.5,0.9,0.3,4.3,0.68,2,0.17504789272030652
+Single-family,Heating,Heating-District heating,F,2.5,0.9,2.5,3.0,0.91,1,0.15493295019157088
+Single-family,Heating,Heating-District heating,F,1.0,2.0,2.5,3.0,0.63,3,0.07579022988505747
+Single-family,Heating,Heating-District heating,G,2.5,2.0,2.5,2.6,0.68,1,0.3155216284987277
+Single-family,Heating,Heating-District heating,G,2.5,0.3,2.5,3.0,0.63,0,0.3011026293469042
+Single-family,Heating,Heating-District heating,G,2.5,2.0,0.3,3.0,0.51,2,0.20059372349448684
+Single-family,Heating,Heating-District heating,G,2.5,2.0,2.5,4.3,0.68,3,0.1645462256149279
+Single-family,Heating,Heating-District heating,G,1.0,2.0,2.5,3.0,0.51,4,0.01823579304495335
+Single-family,Natural gas,Natural gas-Performance boiler,B,0.2,0.3,0.2,1.3,0.76,0,0.9433032046014791
+Single-family,Natural gas,Natural gas-Performance boiler,B,0.2,0.5,0.2,1.3,0.76,1,0.056696795398520954
+Single-family,Natural gas,Natural gas-Performance boiler,C,0.4,0.3,0.2,2.6,0.76,1,0.6211360436575671
+Single-family,Natural gas,Natural gas-Standard boiler,C,0.4,0.3,0.2,2.6,0.6,3,0.1706183576083029
+Single-family,Natural gas,Natural gas-Performance boiler,C,0.2,0.3,0.2,2.6,0.76,2,0.1354829867557095
+Single-family,Natural gas,Natural gas-Performance boiler,C,0.4,0.3,0.5,2.6,0.76,0,0.046311409028046
+Single-family,Natural gas,Natural gas-Performance boiler,C,0.2,2.0,0.2,2.6,0.76,4,0.026451202950374404
+Single-family,Natural gas,Natural gas-Performance boiler,D,1.0,0.5,0.3,2.6,0.76,0,0.3426071892594197
+Single-family,Natural gas,Natural gas-Performance boiler,D,0.5,2.0,0.3,2.6,0.76,1,0.29727154612386314
+Single-family,Natural gas,Natural gas-Standard boiler,D,0.5,0.9,0.3,2.6,0.6,4,0.21411866608921612
+Single-family,Natural gas,Natural gas-Performance boiler,D,0.5,0.9,0.3,4.3,0.76,2,0.1188566478995236
+Single-family,Natural gas,Natural gas-Performance boiler,D,0.4,0.3,2.5,2.6,0.76,3,0.02714595062797748
+Single-family,Natural gas,Natural gas-Performance boiler,E,2.5,0.3,0.3,2.6,0.76,0,0.5658871566443949
+Single-family,Natural gas,Natural gas-Standard boiler,E,1.0,0.9,0.3,3.0,0.6,2,0.14275550606285572
+Single-family,Natural gas,Natural gas-Performance boiler,E,0.5,0.5,2.5,3.0,0.76,3,0.12552585993565948
+Single-family,Natural gas,Natural gas-Performance boiler,E,0.5,2.0,2.5,2.6,0.76,1,0.08370452858203414
+Single-family,Natural gas,Natural gas-Performance boiler,E,1.0,2.0,0.5,4.3,0.76,4,0.08212694877505568
+Single-family,Natural gas,Natural gas-Performance boiler,F,2.5,2.0,0.3,2.6,0.76,2,0.41787813176616145
+Single-family,Natural gas,Natural gas-Standard boiler,F,2.5,0.9,0.3,2.6,0.6,0,0.20867193431375305
+Single-family,Natural gas,Natural gas-Performance boiler,F,2.5,0.9,0.3,4.3,0.76,4,0.1839552343728032
+Single-family,Natural gas,Natural gas-Performance boiler,F,2.5,0.5,2.5,3.0,0.76,1,0.1462193853161994
+Single-family,Natural gas,Natural gas-Standard boiler,F,1.0,2.0,2.5,3.0,0.6,3,0.04327531423108287
+Single-family,Natural gas,Natural gas-Performance boiler,G,2.5,2.0,2.5,2.6,0.76,1,0.42546270330902974
+Single-family,Natural gas,Natural gas-Performance boiler,G,2.5,2.0,2.5,4.3,0.76,3,0.2057206954570948
+Single-family,Natural gas,Natural gas-Standard boiler,G,2.5,2.0,0.5,3.0,0.6,0,0.17128435221536736
+Single-family,Natural gas,Natural gas-Standard boiler,G,2.5,0.3,2.5,3.0,0.6,2,0.12361189007291082
+Single-family,Natural gas,Natural gas-Standard boiler,G,2.5,2.0,2.5,2.6,0.6,4,0.07392035894559731
+Single-family,Oil fuel,Oil fuel-Performance boiler,B,0.2,0.3,0.2,1.3,0.76,1,0.8979591836734694
+Single-family,Oil fuel,Oil fuel-Performance boiler,B,0.2,0.5,0.2,1.3,0.76,0,0.10204081632653061
+Single-family,Oil fuel,Oil fuel-Performance boiler,C,0.4,0.3,0.2,2.6,0.76,0,0.610645575032065
+Single-family,Oil fuel,Oil fuel-Performance boiler,C,0.2,0.5,0.2,2.6,0.76,2,0.1344164172723386
+Single-family,Oil fuel,Oil fuel-Standard boiler,C,0.4,0.3,0.2,2.6,0.6,3,0.13022659256092348
+Single-family,Oil fuel,Oil fuel-Performance boiler,C,0.4,0.5,0.5,2.6,0.76,4,0.07524583155194528
+Single-family,Oil fuel,Oil fuel-Performance boiler,C,0.2,2.0,0.2,2.6,0.76,1,0.04946558358272766
+Single-family,Oil fuel,Oil fuel-Performance boiler,D,0.5,2.0,0.3,2.6,0.76,0,0.3527330051796802
+Single-family,Oil fuel,Oil fuel-Performance boiler,D,1.0,0.5,0.3,2.6,0.76,1,0.3026734871151433
+Single-family,Oil fuel,Oil fuel-Standard boiler,D,0.5,0.9,0.3,2.6,0.6,2,0.18514943859987776
+Single-family,Oil fuel,Oil fuel-Performance boiler,D,0.5,0.9,0.3,4.3,0.76,4,0.14168516552456326
+Single-family,Oil fuel,Oil fuel-Performance boiler,D,0.4,0.3,2.5,2.6,0.76,3,0.01775890358073545
+Single-family,Oil fuel,Oil fuel-Performance boiler,E,2.5,0.3,0.3,2.6,0.76,1,0.4853963838664812
+Single-family,Oil fuel,Oil fuel-Standard boiler,E,1.0,2.0,0.3,3.0,0.6,2,0.19496324259884762
+Single-family,Oil fuel,Oil fuel-Performance boiler,E,1.0,0.5,2.5,3.0,0.76,0,0.10878203854559905
+Single-family,Oil fuel,Oil fuel-Performance boiler,E,0.5,2.0,2.5,2.6,0.76,3,0.10788793959864891
+Single-family,Oil fuel,Oil fuel-Performance boiler,E,1.0,2.0,0.3,4.3,0.76,4,0.1029703953904232
+Single-family,Oil fuel,Oil fuel-Performance boiler,F,2.5,2.0,0.3,2.6,0.76,2,0.4078462452942342
+Single-family,Oil fuel,Oil fuel-Standard boiler,F,2.5,0.9,0.3,3.0,0.6,1,0.20499306518723995
+Single-family,Oil fuel,Oil fuel-Performance boiler,F,2.5,0.9,0.3,4.3,0.76,0,0.2005151575193184
+Single-family,Oil fuel,Oil fuel-Performance boiler,F,2.5,0.5,2.5,3.0,0.76,3,0.1274816722805627
+Single-family,Oil fuel,Oil fuel-Standard boiler,F,1.0,2.0,2.5,3.0,0.6,4,0.05916385971864474
+Single-family,Oil fuel,Oil fuel-Performance boiler,G,2.5,2.0,2.5,2.6,0.76,1,0.34158999764095305
+Single-family,Oil fuel,Oil fuel-Standard boiler,G,2.5,2.0,0.5,3.0,0.6,0,0.21030903514979948
+Single-family,Oil fuel,Oil fuel-Performance boiler,G,2.5,2.0,2.5,4.3,0.76,4,0.17999528190610994
+Single-family,Oil fuel,Oil fuel-Standard boiler,G,2.5,2.0,2.5,3.0,0.6,3,0.1578202406227884
+Single-family,Oil fuel,Oil fuel-Standard boiler,G,2.5,0.3,2.5,3.0,0.6,2,0.11028544468034913
+Single-family,Wood fuel,Wood fuel-Performance boiler,B,0.2,0.3,0.2,1.3,0.76,0,0.9728453364817001
+Single-family,Wood fuel,Wood fuel-Performance boiler,B,0.2,0.5,0.2,1.3,0.76,1,0.02715466351829988
+Single-family,Wood fuel,Wood fuel-Performance boiler,C,0.4,0.3,0.2,2.6,0.76,1,0.43550009515265203
+Single-family,Wood fuel,Wood fuel-Standard boiler,C,0.4,0.3,0.2,2.6,0.6,0,0.26270287904738604
+Single-family,Wood fuel,Wood fuel-Performance boiler,C,0.2,0.3,0.2,2.6,0.76,4,0.2578908735013457
+Single-family,Wood fuel,Wood fuel-Performance boiler,C,0.4,0.3,0.5,2.6,0.76,3,0.02851860914009189
+Single-family,Wood fuel,Wood fuel-Performance boiler,C,0.2,2.0,0.2,2.6,0.76,2,0.015387543158524319
+Single-family,Wood fuel,Wood fuel-Standard boiler,D,0.5,0.5,0.3,2.6,0.6,1,0.4218018355497284
+Single-family,Wood fuel,Wood fuel-Performance boiler,D,1.0,0.9,0.3,2.6,0.76,0,0.2624555160142349
+Single-family,Wood fuel,Wood fuel-Standard boiler,D,0.4,2.0,0.3,2.6,0.6,2,0.18622401198726354
+Single-family,Wood fuel,Wood fuel-Standard boiler,D,0.5,0.9,0.3,4.3,0.6,4,0.1149091590185428
+Single-family,Wood fuel,Wood fuel-Performance boiler,D,0.4,0.3,2.5,2.6,0.76,3,0.01460947743023038
+Single-family,Wood fuel,Wood fuel-Performance boiler,E,2.5,0.3,0.3,2.6,0.76,1,0.3601226322128545
+Single-family,Wood fuel,Wood fuel-Standard boiler,E,1.0,2.0,0.3,2.6,0.6,0,0.2541333625314793
+Single-family,Wood fuel,Wood fuel-Performance boiler,E,0.5,0.9,2.5,2.6,0.76,3,0.17759772254461842
+Single-family,Wood fuel,Wood fuel-Standard boiler,E,1.0,0.5,0.5,4.3,0.6,2,0.12252271980729224
+Single-family,Wood fuel,Wood fuel-Standard boiler,E,1.0,2.0,0.3,4.3,0.6,4,0.08562356290375561
+Single-family,Wood fuel,Wood fuel-Standard boiler,F,2.5,0.9,0.3,2.6,0.6,1,0.45136569070544313
+Single-family,Wood fuel,Wood fuel-Performance boiler,F,2.5,2.0,0.3,3.0,0.76,0,0.2613480055020633
+Single-family,Wood fuel,Wood fuel-Standard boiler,F,2.5,0.5,0.3,4.3,0.6,2,0.11505207309884063
+Single-family,Wood fuel,Wood fuel-Standard boiler,F,1.0,0.9,2.5,3.0,0.6,3,0.09805462762821772
+Single-family,Wood fuel,Wood fuel-Performance boiler,F,2.5,0.5,2.5,3.0,0.76,4,0.07417960306543525
+Single-family,Wood fuel,Wood fuel-Standard boiler,G,2.5,0.3,2.5,3.0,0.6,3,0.27884900622960546
+Single-family,Wood fuel,Wood fuel-Standard boiler,G,2.5,2.0,2.5,3.0,0.6,2,0.22841886680510234
+Single-family,Wood fuel,Wood fuel-Performance boiler,G,2.5,2.0,2.5,3.0,0.76,0,0.17739543162266388
+Single-family,Wood fuel,Wood fuel-Standard boiler,G,2.5,2.0,0.3,4.3,0.6,1,0.17413230495401957
+Single-family,Wood fuel,Wood fuel-Standard boiler,G,2.5,2.0,0.5,2.6,0.6,4,0.1412043903886087
