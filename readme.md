@@ -35,6 +35,7 @@ specific functions. Use only with care and caution._**
    - Launch from Res-IRF root folder (not from `/project`):
    - `python -m project.main -c project/config/test/config.json`
    - `project/config/test/config.json` is the path to the configuration file
+   - It is possible that some new packages are not integrated in the yml file. In this case you have to install these additional packages manually in the environment. 
 
 ## Getting started
 
@@ -44,18 +45,55 @@ Project includes libraries, scripts and notebooks.
 The standard way to run Res-IRF:  
 
 **Launch Res-IRF main script.**  
-The model creates results in a folder in project/output.  
+
+### Inputs
+
+A configuration file must be declared.
+An example of configuration file is in the `config` folder under the name of `config.json`.
+The Res-IRF script use Multiprocessing tool to launch multiple scenarios in the same time.
+
+The configuration file contains the settings of the scenario. 
+The details of how the configuration file works are not yet available. Nevertheless, the file has been designed to be as user-friendly as possible.
+A configuration file can contain several scenarios, which makes it possible to get automatic comparisons between these scenarios.
+
+The model requires a significant amount of RAM (up to 2GB per scenario). 
+The RAM requirement depends on the scenario, and parameters allow to perform simplified simulations reducing this requirement. 
+Nevertheless, it is recommended not to run more than 3 scenarios in parallel on a laptop. 
+
+#### Policies setting
+
+Policies can be included directly in the configuration file or by making reference to an independent policy file (see `input/policies/policies_ref.json`).
+This feature ensures that different scenarios have the same policies setting.
+
+#### Automatic scenarios
+
+It is also possible to automatically create variants of a reference scenario by using the "Sensitivity" header. Among the possible variants that can be created automatically:
+- "Current Policies" keeps the same public policies used during calibration throughout the simulation.
+- "No policy" deletes all public policies in the year after calibration.
+- "Constant Prices" retains the same energy prices as used during calibration.
+
+An example of such header can be found in `test/config_validation.json`.
+
+#### Simplified run
+
+A feature allows to simplify some functionalities of the model. This is the "simple" part of the configuration file.  Among the possible parameters, some reduce the combinatoriality and thus allow to realize simulations with less computing time and especially less memory: 
+- the configuration parameter "quintiles" allows to pass quintiles or deciles,
+- the configuration parameter "heating_system" allows to restrict the number of heating systems.
+- 
+Other parameters, allow to launch simulations by keeping the public policies of the calibration or on the contrary to remove them to measure their effect.
+
+### Outputs
+
+The model creates results in a folder in `project/output`.  
 Folder name is by default `ddmmyyyy_hhmm` (launching date and hour).
 By default, only a  selection of the most important results are available and graphs.
 
-A configuration file must be declared.
-An example of configuration file is in the `input` folder under the name of `config.json`.
-The Res-IRF script use Multiprocessing tool to launch multiple scenarios in the same time. 
-
 In the `output/ddmmyyyy_hhmm` folder:
+- A summary file `summary_run.pdf` is automatically created in the output folder aggregating the most important results.
 - One folder for each scenario declared in the configuration file with detailed outputs:
     - `output.csv` detailed output readable directly with an Excel-like tool
-- `.png` graphs comparing scenarios launch in the same config file.
+    - `/img`folder
+- A folder `/img` at the root of the output folder contains graphs comparing scenarios launch in the same config file.
 
 ## API
 
@@ -66,14 +104,15 @@ It is also possible to get data and Python object directly (useful to create its
 Finally:  
 `buildings, energy_prices, taxes, post_inputs, cost_heater, ms_heater, cost_insulation, ms_intensive, renovation_rate_ini, policies_heater, policies_insulation, flow_built = initialize(inputs, stock, year, policies_heater, policies_insulation, taxes, config, path)`
 parse and create Python objects used by Res-IRF.  
-Moreover, the user can use all the methods of AgentBuildings object `buildings` defined in buildings.py.  
-
+Moreover, the user can use all the methods of AgentBuildings object `buildings` defined in buildings.py.
 
 ## About the authors
 
 The development of the Res-IRF model was initiated at CIRED in 2008. Coordinated by Louis-Gaëtan Giraudet, it involved
 over the years, in alphabetic order, Louise Asselin, Cyril Bourgeois, Frédéric Branger, François Chabrol, David Glotin, 
 Céline Guivarch, Philippe Quirion, and Lucas Vivier.
+
+We perform major improvements in version 4.0, and we rewrite the code entirely.
 
 ## Meta
 

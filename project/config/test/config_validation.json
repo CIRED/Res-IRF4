@@ -1,12 +1,13 @@
-{"sensitivity": {
-    "activated": false,
+{
+  "sensitivity": {
+    "activated": true,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
     "constant": false
 },
   "Reference": {
-    "end": 2020,
+    "end": 2031,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -40,7 +41,7 @@
       "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
       "minimum_performance": null
     },
-    "district_heating": "project/input/revealed_data/district_heating_transition2050.csv",
+    "district_heating": "project/input/policies/sfec/district_heating_transition2050.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "premature_replacement": 3,
@@ -48,8 +49,8 @@
       "cost_heater": "project/input/technical/cost_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
       "efficiency": "project/input/technical/efficiency.csv",
-      "lifetime_heater": "project/input/technical/lifetime_heater.csv",
-      "carbon_emission": "project/input/technical/carbon_emission_sfec.csv",
+      "lifetime_heater": "project/input/policies/sfec/lifetime_heater_sfec.csv",
+      "carbon_emission": "project/input/policies/sfec/carbon_emission_sfec.csv",
       "technical_progress": {
         "insulation": {
           "activated": true,
@@ -73,17 +74,16 @@
       "surface": "project/input/technical/surface.csv",
       "ratio_surface": "project/input/technical/ratio_surface.csv"
     },
-    "exogenous_social": "project/input/revealed_data/renovation_rate_social.csv",
     "macro": {
       "construction": false,
-      "flow_construction": "project/input/macro/flow_construction_sfec.csv",
+      "flow_construction": "project/input/policies/sfec/flow_construction_sfec.csv",
       "population": "project/input/macro/population.csv",
       "income": "project/input/macro/income.csv",
       "energy_prices": "project/input/macro/energy_prices_ht.csv",
       "energy_taxes": "project/input/macro/energy_taxes.csv",
       "pop_housing": null,
       "share_multi_family": null,
-      "share_single_family_construction": "project/input/macro/share_singlefamily_construction.csv",
+      "share_single_family_construction": "project/input/policies/sfec/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
       "demolition_rate": null,
@@ -99,10 +99,10 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": false,
+      "current_policies": true,
       "no_policy": false,
       "income": false,
-      "prices_constant": false,
+      "prices_constant": true,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",

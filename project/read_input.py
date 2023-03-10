@@ -400,6 +400,7 @@ def read_policies(config):
         return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
 
     read = {'mpr': read_mpr,
+            'mpr_serenite': read_mpr_serenite,
             'mpr_serenite_high_income': read_mpr_serenite,
             'mpr_serenite_low_income': read_mpr_serenite,
             'mpr_multifamily': read_mpr_serenite,
@@ -474,7 +475,7 @@ def read_inputs(config, other_inputs=generic_input):
     ms_heater.columns.set_names('Heating system final', inplace=True)
     inputs.update({'ms_heater': ms_heater})
 
-    if 'district_heating' in config.keys():
+    if config.get('district_heating') is not None:
         district_heating = get_pandas(config['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
         inputs.update({'district_heating': district_heating})
 
