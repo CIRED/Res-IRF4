@@ -5,9 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e14dde23-e7b0-4477-9084-c52edf5570a7" name="Changes" comment="cleaning code - no impact&#10;scenario without SFEC">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/building.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/config/test/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/config/test/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/config/test/config_.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/config/coupling/config_coupling_simple_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/config/coupling/config_coupling_simple_test.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/config/test/config_sfec.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/config/test/config_sfec.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_coupling.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/project/input/calibration/calibration_coupling.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_sfec.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_simple.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_simple_0301.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_simple_0306.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_simple_0307.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_simple_0308.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/calibration/calibration_simple_coupling.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_test.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/subsidies_insulation_global_renovation_simple.csv" beforeDir="false" afterPath="$PROJECT_DIR$/project/input/policies/coupling/subsidies_insulation_global_renovation_simple.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +68,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/Users/lucas/PycharmProjects/Res-IRF4/project/input/policies",
+    "last_opened_file_path": "/Users/lucas/PycharmProjects/Res-IRF4/project/config",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -68,21 +81,21 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/project/config" />
       <recent name="$PROJECT_DIR$/project/input/policies" />
       <recent name="$PROJECT_DIR$/project/config/test" />
       <recent name="$PROJECT_DIR$/project/input/stock" />
       <recent name="$PROJECT_DIR$/project/input/policies/coupling" />
-      <recent name="$PROJECT_DIR$/project/input/policies/sfec" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/project/input/policies/coupling" />
       <recent name="$PROJECT_DIR$/project/input/policies/sfec" />
       <recent name="$PROJECT_DIR$/project/config/sfec" />
-      <recent name="$PROJECT_DIR$/project/input/policies/coupling" />
       <recent name="$PROJECT_DIR$/project/input/technical" />
       <recent name="$PROJECT_DIR$/project/config/coupling_energy/old" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test/config_">
+  <component name="RunManager" selected="Python.test/config_sfec">
     <configuration name="coupling" type="PythonConfigurationType" factoryName="Python">
       <module name="Res-IRF4" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -237,7 +250,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test/config_" type="PythonConfigurationType" factoryName="Python">
+    <configuration name="test/config" type="PythonConfigurationType" factoryName="Python">
       <module name="Res-IRF4" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -251,7 +264,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/project/main.py" />
-      <option name="PARAMETERS" value="-c project/config/test/config_.json" />
+      <option name="PARAMETERS" value="-c project/config/test/config.json" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -259,7 +272,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test/config_validation" type="PythonConfigurationType" factoryName="Python">
+    <configuration name="test/config_sfec" type="PythonConfigurationType" factoryName="Python">
       <module name="Res-IRF4" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -273,7 +286,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/project/main.py" />
-      <option name="PARAMETERS" value="-c project/config/test/config_validation.json" />
+      <option name="PARAMETERS" value="-c project/config/test/config_sfec.json" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -285,8 +298,8 @@
       <item itemvalue="Python.coupling" />
       <item itemvalue="Python.sfec/config_sfec" />
       <item itemvalue="Python.sfec/config_compare_sfec" />
-      <item itemvalue="Python.test/config_" />
-      <item itemvalue="Python.test/config_validation" />
+      <item itemvalue="Python.test/config" />
+      <item itemvalue="Python.test/config_sfec" />
       <item itemvalue="Python.coupling/config_coupling_simple_test.json" />
       <item itemvalue="Python.coupling/config_coupling.json" />
       <item itemvalue="Python.coupling/config_coupling_simple.json" />
@@ -496,14 +509,7 @@
       <workItem from="1677825684215" duration="34687000" />
       <workItem from="1678088536888" duration="25632000" />
       <workItem from="1678177057737" duration="1999000" />
-      <workItem from="1678179072672" duration="71074000" />
-    </task>
-    <task id="LOCAL-00336" summary="add heat pumps in ressource data index">
-      <created>1677575712678</created>
-      <option name="number" value="00336" />
-      <option name="presentableId" value="LOCAL-00336" />
-      <option name="project" value="LOCAL" />
-      <updated>1677575712678</updated>
+      <workItem from="1678179072672" duration="94830000" />
     </task>
     <task id="LOCAL-00337" summary="add premature replacement">
       <created>1677578206191</created>
@@ -841,7 +847,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678444418805</updated>
     </task>
-    <option name="localTasksCounter" value="385" />
+    <task id="LOCAL-00385" summary="cleaning code - no impact&#10;scenario without SFEC">
+      <created>1678448747347</created>
+      <option name="number" value="00385" />
+      <option name="presentableId" value="LOCAL-00385" />
+      <option name="project" value="LOCAL" />
+      <updated>1678448747348</updated>
+    </task>
+    <option name="localTasksCounter" value="386" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -943,6 +956,7 @@
     <SUITE FILE_PATH="coverage/Res_IRF4$config_config_sfec.coverage" NAME="config/config_sfec_2030 Coverage Results" MODIFIED="1676890650861" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$obligation_designlaw.coverage" NAME="obligation/designlaw Coverage Results" MODIFIED="1674384342635" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$test_obligation.coverage" NAME="obligation/design Coverage Results" MODIFIED="1672340691552" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Res_IRF4$coupling_config_coupling_simple_test_json.coverage" NAME="coupling/config_coupling_simple_test.json Coverage Results" MODIFIED="1678464824029" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$a.coverage" NAME="a Coverage Results" MODIFIED="1659534803767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$mpr.coverage" NAME="mpr Coverage Results" MODIFIED="1659901839375" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$runs_test.coverage" NAME="runs/test Coverage Results" MODIFIED="1660123352389" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -973,7 +987,7 @@
     <SUITE FILE_PATH="coverage/Res_IRF4$config_config_sfec_simple.coverage" NAME="test/config_sfec_simple Coverage Results" MODIFIED="1676731608283" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$test_constant.coverage" NAME="test/constant Coverage Results" MODIFIED="1672245338043" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$obligation_ACBlaw.coverage" NAME="obligation/ACBlaw Coverage Results" MODIFIED="1674559621610" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Res_IRF4$test_config_validation.coverage" NAME="test/config_validation Coverage Results" MODIFIED="1678439529293" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Res_IRF4$test_config_validation.coverage" NAME="test/config_sfec Coverage Results" MODIFIED="1678552462821" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$sensi_ad_volarem.coverage" NAME="sensi/ad_volarem Coverage Results" MODIFIED="1660306426673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$runs_sensitivity.coverage" NAME="runs sensitivity Coverage Results" MODIFIED="1674562319462" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

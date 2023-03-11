@@ -492,7 +492,7 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
 
     Parameters
     ----------
-    df: pd.DataFrame
+    df: pd.DataFrame or pd.Series
     y_label: str
     colors: dict
     format_y: function

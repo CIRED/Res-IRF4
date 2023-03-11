@@ -851,6 +851,7 @@ class AgentBuildings(ThermalBuildings):
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
         self.scale = 1.0
+        self.number_firms = None
 
         self._list_condition_subsidies = []
         self._stock_ref = None
@@ -2165,7 +2166,7 @@ class AgentBuildings(ThermalBuildings):
 
     def endogenous_retrofit(self, stock, prices, subsidies_total, cost_insulation,
                             calib_renovation=None, calib_intensive=None, min_performance=None,
-                            subsidies_details=None):
+                            subsidies_details=None, cost_financing=None, supply=False):
         """Calculate endogenous retrofit based on discrete choice model.
 
 
@@ -2197,7 +2198,7 @@ class AgentBuildings(ThermalBuildings):
         def market_share_func(u):
             return (exp(u).T / exp(u).sum(axis=1)).T
 
-        def to_market_share(_bill_saved, _subsidies_total, _cost_total):
+        def to_market_share(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None):
             """Calculate market-share between insulation options.
 
 
@@ -2227,32 +2228,38 @@ class AgentBuildings(ThermalBuildings):
 
             utility_intensive = utility_bill_saving + utility_investment + utility_subsidies
 
+            if _cost_financing is not None:
+                pref_financing = reindex_mi(self.preferences_insulation['cost'], _cost_financing.index).rename(None)
+                utility_financing = (_cost_financing.T * pref_financing).T / 1000
+                utility_intensive += utility_financing
+
             if self.constant_insulation_intensive is not None:
                 utility_intensive += self.constant_insulation_intensive
 
             ms_intensive = market_share_func(utility_intensive)
 
-            # expected_utility = log(exp(utility_intensive).sum(axis=1))
-
             return ms_intensive, utility_intensive
 
         def to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share, _utility_intensive=None,
-                                _log_sum=None, option=None):
+                                _cost_financing=None, option=None):
 
             if option is None:
                 option = self._expected_utility
 
             # extensive margin
             if option == 'log_sum':
-                return _log_sum
+                return log(exp(_utility_intensive).sum(axis=1))
 
             else:
-                _bill_saved_insulation, _subsidies_insulation, _investment_insulation = None, None, None
+                _bill_saved_insulation, _subsidies_insulation, _investment_insulation, _financing_insulation = None, None, None, None
                 if option == 'market_share':
                     _investment_insulation = (_cost_total.reindex(_market_share.index) * _market_share).sum(axis=1)
                     _bill_saved_insulation = (_bill_saved.reindex(_market_share.index) * _market_share).sum(axis=1)
                     _subsidies_insulation = (_subsidies_total.reindex(_market_share.index) * _market_share).sum(axis=1)
-    
+                    if _cost_financing is not None:
+                        _financing_insulation = (_cost_financing.reindex(_market_share.index) * _market_share).sum(
+                            axis=1)
+
                 elif option == 'max':
                     _utility_intensive = _utility_intensive.dropna(how='all')
                     dict_df = {'investment': _cost_total, 'bill_saved': _bill_saved, 'subsidies': _subsidies_total}
@@ -2290,13 +2297,18 @@ class AgentBuildings(ThermalBuildings):
                 utility_investment = (pref_investment * _investment_insulation) / 1000
 
                 expected_utility = utility_investment + utility_bill_saving + utility_subsidies
+                if _financing_insulation is not None:
+                    _financing_insulation.drop(idx, inplace=True)
+                    pref_financing = reindex_mi(self.preferences_insulation['cost'], _financing_insulation.index).rename(None)
+                    utility_financing = (pref_financing * _financing_insulation) / 1000
+                    expected_utility += utility_financing
 
                 return expected_utility
 
         def retrofit_func(u):
             return 1 / (1 + exp(- u))
 
-        def to_retrofit_rate(_expected_utility):
+        def to_renovation_rate(_expected_utility):
             """Calculate retrofit rate based on binomial logit model.
 
             Parameters
@@ -2312,25 +2324,27 @@ class AgentBuildings(ThermalBuildings):
             """
             utility_renovate = _expected_utility.copy()
             if self.constant_insulation_extensive is not None:
-                # _utility = self.add_certificate(utility_renovate.copy())
                 utility_constant = reindex_mi(self.constant_insulation_extensive, _expected_utility.index)
                 utility_renovate = _expected_utility + utility_constant
-                # utility_renovate = _utility.droplevel('Performance')
 
             retrofit_proba = retrofit_func(utility_renovate)
 
             return retrofit_proba
 
-        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _stock=None, supply=False):
+        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _stock=None,
+                                      _supply=True):
 
-            _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
+            _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total,
+                                                                _cost_financing=_cost_financing)
 
-            _bill, _subsidies, _cost = None, None, None
+            # _bill, _subsidies, _cost = None, None, None
+
             expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
-                                                   _utility_intensive=_utility_intensive)
-            _renovation_rate = to_retrofit_rate(expected_utility)
+                                                   _utility_intensive=_utility_intensive,
+                                                   _cost_financing=_cost_financing)
+            _renovation_rate = to_renovation_rate(expected_utility)
 
-            if supply:
+            if _supply:
                 _investment_insulation = (_cost_total.reindex(_market_share.index) * _market_share).sum(axis=1)
                 _bill_saved_insulation = (_bill_saved.reindex(_market_share.index) * _market_share).sum(axis=1)
                 _subsidies_insulation = (_subsidies_total.reindex(_market_share.index) * _market_share).sum(axis=1)
@@ -2353,60 +2367,63 @@ class AgentBuildings(ThermalBuildings):
                 cost_renovation = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
                 pref_investment = reindex_mi(self.preferences_insulation['cost'], _investment_insulation.index).rename(None)
 
-                def demand_function(price):
-                    u = utility + pref_investment * price / 1000
-                    proba = 1 / (1 + exp(-u))
-                    demand = (proba * stock).sum()
-
-                    cost = (proba * _investment_insulation).sum() / proba.sum()
-
-                    elasticity = pref_investment * price / 1000 * (1 - proba)
-                    elasticity_global = (elasticity * weight).sum()
-
-                    _marginal_revenue = price * (1 + 1 / elasticity_global)
-                    return Series({'Demand': demand, 'Cost': cost, 'Elasticity global': elasticity_global, 'Marginal revenue': _marginal_revenue})
-
-                temp = {}
-                for price in range(10):
-                    price = cost_renovation * (1 + price/10)
-                    temp.update({price: demand_function(price)})
-
-                import matplotlib.pyplot as plt
-                result = DataFrame(temp).T
-                make_plot(result['Demand'], 'Demand ()', format_y=lambda y, _: '{:,.0f}'.format(y/10**3))
-                plt.show()
-
-                make_plot(result['Elasticity global'], 'Elasticity ()', format_y=lambda y, _: '{:,.2f}'.format(y),
-                          ymin=None)
-                plt.show()
-
-                make_plot(result['Cost'], 'Cost ()', format_y=lambda y, _: '{:,.2f}'.format(y),
-                          ymin=None)
-                plt.show()
-
-                def marginal_revenue(price):
-                    u = utility + pref_investment * price / 1000
+                def price_elasticity_demand(price, u=utility):
+                    u = u + pref_investment * price / 1000
                     proba = 1 / (1 + exp(-u))
                     elasticity = pref_investment * price / 1000 * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
-                    return price * (1 + 1 / elasticity_global)
+                    return elasticity_global
 
-                def foc(price, cost_renovation=0):
-                    return marginal_revenue(price) - cost_renovation
+                def cournot_equilibrium(price, n=1, cost_renovation=cost_renovation, u=utility):
+                    elasticity_global = price_elasticity_demand(price, u=u)
+                    return (price - cost_renovation) / price - (1 / n) * (1 / abs(elasticity_global))
 
-                print('Cost renovation before: {:,.0f}'.format(cost_renovation))
-                print('Renovation before: {:,.0f}'.format((_renovation_rate * stock).sum()))
-                root, info_dict, ier, mess = fsolve(foc, cost_renovation, args=(cost_renovation), full_output=True)
-                print(mess)
-                print('Equilibrium price: {:,.0f} euro'.format(root[0]))
+                temp_elasticity, temp_margin = dict(), dict()
+                for i in range(-5, 6, 1):
+                    u = utility + abs(utility) * i / 10
+                    renovation = (1 / (1 + exp(-u)) * _stock).sum() / 10**3
+                    temp_elasticity.update({renovation: price_elasticity_demand(cost_renovation, u=u)})
+                    temp_margin.update({renovation: fsolve(cournot_equilibrium, cost_renovation, args=(1, cost_renovation, u))[0]})
+
+                temp_elasticity = pd.Series(temp_elasticity)
+                temp_margin = pd.Series(temp_margin)
+
+                make_plot(pd.Series(temp_elasticity), 'Elasticity (Percent)', format_y=lambda y, _: '{:,.2f}'.format(y),
+                          save=os.path.join(self.path_calibration, 'elasticity.png'), integer=False)
+                make_plot(pd.Series(temp_margin), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
+                          save=os.path.join(self.path_calibration, 'price.png'), integer=False)
+
+                if self.number_firms is None:
+                    if False and self.path_calibration is not None:
+                        temp = {}
+                        for n in range(1, 10, 2):
+                            root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation,
+                                                                args=(n, cost_renovation),
+                                                                full_output=True)
+                            temp.update({n: root[0]})
+                        make_plot(pd.Series(temp), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
+                                  save=os.path.join(self.path_calibration, 'price_cournot'))
+
+                        # TODO: elasticity of demand function of u ?
+
+                    margin = 0.10
+                    price = cost_renovation * (1 + margin)
+                    elasticity_global = price_elasticity_demand(price)
+                    number_firms = price / (price - cost_renovation) * (1 / abs(elasticity_global))
+                    self.number_firms = number_firms
+                flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
+                cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
+
+                root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation,
+                                                    args=(self.number_firms, cost_renovation),
+                                                    full_output=True)
                 margin = (root[0] - cost_renovation) / cost_renovation
-                print('Margin: {:,.1%}'.format(margin))
-
-                _renovation_rate_after = to_retrofit_rate(_bill, _subsidies, _cost * (1 + margin))
-                print('Renovation after: {:,.0f}'.format((_renovation_rate_after * stock).sum()))
-
-                cost_renovation_after = (_renovation_rate_after * _cost).sum() / _renovation_rate_after.sum()
-                print('Cost renovation after: {:,.0f}'.format(cost_renovation_after))
+                expected_utility = to_expected_utility(_cost_total * (1 + margin), _bill_saved, _subsidies_total, _market_share,
+                                                       _utility_intensive=_utility_intensive,
+                                                       _cost_financing=_cost_financing)
+                _renovation_rate = to_renovation_rate(expected_utility)
+                flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
+                cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
             return _market_share, _renovation_rate
 
@@ -2519,7 +2536,7 @@ class AgentBuildings(ThermalBuildings):
 
             return const
 
-        def calibration_extensive(_utility, _stock, _calib_renovation, option='log_sum'):
+        def calibration_extensive(_utility, _stock, _calib_renovation, option='market_share'):
             """Simultaneously calibrate constant and scale to match freeriders and retrofit rate.
 
             Parameters
@@ -2576,6 +2593,29 @@ class AgentBuildings(ThermalBuildings):
 
                 return rslt
 
+            def solve_deviation_logsum(x, utility_ini, stock_ini, retrofit_rate_target, std_deviation):
+                scale = x[-1]
+                cst = x[:-1]
+
+                # calibration constant
+                cst = Series(cst, index=retrofit_rate_target.index)
+                utility_ref = utility_ini.copy()
+                stock_ref = stock_ini.copy()
+                utility_cst = reindex_mi(cst, utility_ref.index)
+                u = log(exp(utility_ref * scale).sum(axis=1))
+                u = (u + utility_cst * scale).copy()
+                retrofit_rate_calc = retrofit_func(u)
+                agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
+                retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
+                rslt = retrofit_rate_agg - retrofit_rate_target
+
+                # calibration scale
+                retrofit_mean = (retrofit_rate_calc * stock_ini).sum() / stock_ini.sum()
+                std_deviation_calc = (((retrofit_rate_calc - retrofit_mean)**2 * stock_ini).sum() / (stock_ini.sum() - 1))**(1/2)
+                rslt = append(rslt, std_deviation - std_deviation_calc)
+
+                return rslt
+
             def solve_noscale(x, utility_ini, stock_ini, retrofit_rate_target):
 
                 # calibration constant
@@ -2617,8 +2657,14 @@ class AgentBuildings(ThermalBuildings):
                     _constant = Series(root[:-1], index=retrofit_rate_ini.index) * _scale
 
                 elif calibration_scale['name'] == 'standard_deviation':
-                    root, info_dict, ier, mess = fsolve(solve_deviation, x, args=(
-                        _utility, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
+                    if option != 'log_sum':
+                        root, info_dict, ier, mess = fsolve(solve_deviation, x, args=(
+                            _utility, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
+                    else:
+                        root, info_dict, ier, mess = fsolve(solve_deviation_logsum, x, args=(
+                            _utility, stock_retrofit, retrofit_rate_ini, calibration_scale['deviation']), full_output=True)
+                        _utility = log(exp(_utility * root[-1]).sum(axis=1))
+
                     _scale = root[-1]
                     _constant = Series(root[:-1], index=retrofit_rate_ini.index) * _scale
 
@@ -2663,7 +2709,7 @@ class AgentBuildings(ThermalBuildings):
             return _constant, _scale
 
         def calibration_coupled(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
-                                _calib_intensive):
+                                _calib_intensive, _cost_financing=None):
             self.logger.info('Calibration intensive and renovation rate')
 
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
@@ -2673,42 +2719,48 @@ class AgentBuildings(ThermalBuildings):
             _market_share = concat([ms_insulation_ini] * _cost_total.shape[0], axis=1).T
             _market_share.index = _cost_total.index
             expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
-                                                   option='market_share')
-            compare = None
+                                                   option='market_share', _cost_financing=_cost_financing)
+            compare, utility_intensive = None, None
+            self._expected_utility = 'log_sum'
             for k in range(10):
                 # calibration of renovation rate
+                if self._expected_utility != 'log_sum' or utility_intensive is None:
+                    constant, scale = calibration_extensive(expected_utility, _stock, _calib_renovation, option='market_share')
+                else:
+                    constant, scale = calibration_extensive(utility_intensive, _stock, _calib_renovation, option='log_sum')
 
-                constant, scale = calibration_extensive(expected_utility, _stock, _calib_renovation)
                 self.constant_insulation_extensive = constant
                 self.apply_scale(scale)
 
-                expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share)
-                _renovation_rate = to_retrofit_rate(expected_utility)
+                if self._expected_utility != 'log_sum' or utility_intensive is None:
+                    expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                                           _cost_financing=_cost_financing, option='market_share')
+                else:
+                    expected_utility = log(exp(utility_intensive * scale).sum(axis=1))
+
+                _renovation_rate = to_renovation_rate(expected_utility)
 
                 # recalibration of market_share with new scale and renovation rate
                 self.constant_insulation_intensive = None
-                _, utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
+                _, utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total,
+                                                       _cost_financing=_cost_financing)
                 self.constant_insulation_intensive = calibration_intensive(utility_intensive, _stock, ms_insulation_ini,
                                                                            _renovation_rate)
                 # test market-share (test with other renovation rate so can differ)
-                _market_share, utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total)
+                _market_share, utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total,
+                                                                   _cost_financing=_cost_financing)
 
                 # test renovation_rate (test with other utility extensive so can differ)
-                expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
-                                                       _utility_intensive=utility_intensive)
+                if self._expected_utility != 'log_sum':
+                    expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                                           _utility_intensive=utility_intensive, _cost_financing=_cost_financing)
+                else:
+                    expected_utility = log(exp(utility_intensive).sum(axis=1))
 
-                _renovation_rate = to_retrofit_rate(expected_utility)
+                _renovation_rate = to_renovation_rate(expected_utility)
 
-                """
-                eu_ms = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
-                                       _utility_intensive=utility_intensive, _log_sum=log_sum, option='market_share')
-                
-                r_eu = to_retrofit_rate(eu_ms)
-                
-                compare_eu = pd.concat((expected_utility, eu_ms, _renovation_rate, r_eu), axis=1)
-                pd.concat((r_eu, _renovation_rate), axis=1, keys=['log_sum', 'ms']).plot(x='log_sum', y='ms', kind='scatter')
-                """
 
+                # checking value compare to target
                 flow = _renovation_rate * _stock
                 rate = flow.groupby(renovation_rate_ini.index.names).sum() / _stock.groupby(
                     renovation_rate_ini.index.names).sum()
@@ -2730,7 +2782,7 @@ class AgentBuildings(ThermalBuildings):
 
         def calibration_coupled_test(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
                                      _calib_intensive):
-            self.logger.info('Calibration intensive and renovation rate')
+            self.logger.info('Calibration renovation nested-logit function')
 
             # input cleaning
             _bill_saved[_bill_saved == 0] = float('nan')
@@ -2819,7 +2871,7 @@ class AgentBuildings(ThermalBuildings):
                 assert allclose(compare['Calculated'], compare['Observed'],
                                 rtol=10 ** -2), 'Calibration insulation did not work'"""
 
-        def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total, path):
+        def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total):
 
             # bill saved
             result_bill_saved = dict()
@@ -2829,7 +2881,8 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved * v, _subsidies_total, _cost_total)
+                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved * v, _subsidies_total,
+                                                                            _cost_total, _supply=False)
                 f_renovation = _renovation_rate * _stock
                 f_replace = (f_renovation * _market_share.T).T
                 result_bill_saved['Average cost (Thousand euro)'].update({v: (f_replace * _cost_total).sum().sum() / f_renovation.sum() / 10**3})
@@ -2845,7 +2898,8 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total * v, _cost_total)
+                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total * v,
+                                                                            _cost_total, _supply=False)
                 f_renovation = _renovation_rate * _stock
                 f_replace = (f_renovation * _market_share.T).T
                 result_subsidies['Average cost (Thousand euro)'].update({v: (f_replace * _cost_total).sum().sum() / f_renovation.sum() / 10**3})
@@ -2861,7 +2915,8 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total * v)
+                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total,
+                                                                            _cost_total * v, _supply=False)
                 f_renovation = _renovation_rate * _stock
                 f_replace = (f_renovation * _market_share.T).T
                 result_cost['Average cost (Thousand euro)'].update({v: (f_replace * _cost_total).sum().sum() / f_renovation.sum() / 10**3})
@@ -2874,12 +2929,12 @@ class AgentBuildings(ThermalBuildings):
                        'Cost': result_cost['Average cost (Thousand euro)'],
                        'Subsidies': result_subsidies['Average cost (Thousand euro)']
                        }
-            make_plots(dict_df, 'Average cost (Thousand euro)', save=os.path.join(path, 'sensi_average_cost.png'))
+            make_plots(dict_df, 'Average cost (Thousand euro)', save=os.path.join(self.path_calibration, 'sensi_average_cost.png'))
             dict_df = {'Bill saving': result_bill_saved['Flow renovation (Thousand)'],
                        'Cost': result_cost['Flow renovation (Thousand)'],
                        'Subsidies': result_subsidies['Flow renovation (Thousand)']
                        }
-            make_plots(dict_df, 'Flow renovation (Thousand)', save=os.path.join(path, 'sensi_flow_renovation.png'))
+            make_plots(dict_df, 'Flow renovation (Thousand)', save=os.path.join(self.path_calibration, 'sensi_flow_renovation.png'))
 
         def assess_policies(_stock, _subsidies_details, _cost_total, _bill_saved, _subsidies_total):
             """Test freeriders and intensive margin of subsidies
@@ -2897,7 +2952,8 @@ class AgentBuildings(ThermalBuildings):
 
             """
 
-            _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total)
+            _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total,
+                                                                        _supply=False)
 
             f_retrofit = _renovation_rate * _stock
             f_replace = (f_retrofit * _market_share.T).T
@@ -2916,7 +2972,7 @@ class AgentBuildings(ThermalBuildings):
                 assert (c_total >= _cost_total).all().all(), 'Cost issue'
                 sub_total = _subsidies_total - _sub
                 assert (sub_total <= _subsidies_total).all().all(), 'Subsidies issue'
-                ms_sub, retrofit_sub = apply_endogenous_retrofit(_bill_saved, sub_total, c_total)
+                ms_sub, retrofit_sub = apply_endogenous_retrofit(_bill_saved, sub_total, c_total, _supply=False)
                 f_retrofit_sub = retrofit_sub * stock
                 f_replace_sub = (f_retrofit_sub * ms_sub.T).T
                 avg_cost_global_sub = (f_replace_sub * _cost_total).sum().sum() / f_retrofit_sub.sum()
@@ -2939,6 +2995,9 @@ class AgentBuildings(ThermalBuildings):
                                             index=['Freeriders (%)', 'Intensive margin (%)', 'Intensive margin benef (%)', 'Average sub (euro)', 'Average cost benef (euro)', 'Share sub (%)'])})
 
             rslt = DataFrame(rslt)
+            if self.path_calibration is not None:
+                rslt.to_csv(os.path.join(self.path_calibration, 'result_policies_assessment.csv'))
+
             return rslt
 
         index = stock.index
@@ -2961,17 +3020,18 @@ class AgentBuildings(ThermalBuildings):
         bill_saved = - energy_bill_sd.sub(energy_bill_before, axis=0).dropna()
 
         # TODO reindex subsidies_total with stock.index
-
         if self.constant_insulation_intensive is None and self._threshold is False:
-            calibration_coupled(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive)
-
-            result = assess_policies(stock, subsidies_details, cost_total, bill_saved, subsidies_total)
-            if self.path is not None:
-                result.to_csv(os.path.join(self.path_calibration, 'result_policies_assessment.csv'))
-            assess_sensitivity(stock, cost_total, bill_saved, subsidies_total, self.path_calibration)
+            calibration_coupled(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive,
+                                _cost_financing=cost_financing)
+            if False:
+                if self.path_calibration is not None:
+                    assess_policies(stock, subsidies_details, cost_total, bill_saved, subsidies_total)
+                    assess_sensitivity(stock, cost_total, bill_saved, subsidies_total)
 
         if self._threshold is False:
-            market_share, renovation_rate = apply_endogenous_retrofit(bill_saved, subsidies_total, cost_total, stock)
+            market_share, renovation_rate = apply_endogenous_retrofit(bill_saved, subsidies_total, cost_total,
+                                                                      _stock=stock, _cost_financing=cost_financing,
+                                                                      _supply=supply)
         else:
             market_share, renovation_rate = apply_rational_choice(consumption_saved, subsidies_total, cost_total)
 
@@ -3084,7 +3144,7 @@ class AgentBuildings(ThermalBuildings):
 
     def insulation_replacement(self, stock, prices, cost_insulation_raw, policies_insulation=None, financing_cost=None,
                                calib_renovation=None, calib_intensive=None, min_performance=None,
-                               exogenous_social=None, prices_before=None):
+                               exogenous_social=None, prices_before=None, supply=False):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -3167,7 +3227,9 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total,
             financing_cost)
 
-        assert allclose(amount_debt + amount_saving + subsidies_total, reindex_mi(cost_insulation, subsidies_total.index)), 'Sum problem'
+        cost_insulation_reindex = reindex_mi(cost_insulation, index)
+
+        assert allclose(amount_debt + amount_saving + subsidies_total, cost_insulation_reindex), 'Sum problem'
 
         if self._condition_store is None:
 
@@ -3207,11 +3269,15 @@ class AgentBuildings(ThermalBuildings):
                         delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
                     calib_renovation['scale']['delta_subsidies'] = delta_subsidies
 
-            renovation_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total, cost_total,
+            renovation_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total,
+                                                                     cost_insulation_reindex,
                                                                      calib_intensive=calib_intensive,
                                                                      calib_renovation=calib_renovation,
                                                                      min_performance=min_performance,
-                                                                     subsidies_details=subsidies_details)
+                                                                     subsidies_details=subsidies_details,
+                                                                     cost_financing=cost_financing,
+                                                                     supply=supply
+                                                                     )
             if exogenous_social is not None:
                 index = renovation_rate[renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
                 stock = self.add_certificate(stock[index])
@@ -3227,7 +3293,7 @@ class AgentBuildings(ThermalBuildings):
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None, calib_intensive=None,
-                      step=1, exogenous_social=None, premature_replacement=None, prices_before=None):
+                      step=1, exogenous_social=None, premature_replacement=None, prices_before=None, supply=False):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -3277,7 +3343,8 @@ class AgentBuildings(ThermalBuildings):
                                                                   policies_insulation=policies_insulation,
                                                                   financing_cost=financing_cost,
                                                                   exogenous_social=exogenous_social,
-                                                                  prices_before=prices_before)
+                                                                  prices_before=prices_before,
+                                                                  supply=supply)
 
         self.logger.info('Formatting and storing replacement')
         retrofit_rate = retrofit_rate.reindex(stock.index).fillna(0)

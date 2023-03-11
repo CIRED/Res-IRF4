@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
@@ -36,6 +36,7 @@
         "target": "worst"
       }
     },
+    "supply": false,
     "ms_insulation": {
       "endogenous": true,
       "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
@@ -44,7 +45,7 @@
     "district_heating": "project/input/policies/sfec/district_heating_transition2050.csv",
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-    "premature_replacement": 3,
+    "premature_replacement": null,
     "technical": {
       "cost_heater": "project/input/technical/cost_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
@@ -116,5 +117,6 @@
       "no_heating_switch": false,
       "collective_boiler": false
     }
+
   }
 }

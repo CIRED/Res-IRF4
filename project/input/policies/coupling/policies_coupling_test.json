@@ -66,7 +66,7 @@
     },
     "heat_pump": {
       "start": 2020,
-      "end": 2051,
+      "end": 2020,
       "policy": "subsidy_ad_valorem",
       "gest": "heater",
       "value": 1,

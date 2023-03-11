@@ -312,7 +312,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=True,
-                   exogenous_social=None, full_output=True, premature_replacement=None):
+                   exogenous_social=None, full_output=True, premature_replacement=None, supply=False):
     """Update stock vintage due to renovation, demolition and construction.
     
     
@@ -364,7 +364,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             financing_cost=financing_cost,
                                             step=step,
                                             exogenous_social=exogenous_social,
-                                            premature_replacement=premature_replacement)
+                                            premature_replacement=premature_replacement,
+                                            supply=supply)
 
     if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
@@ -495,7 +496,7 @@ def res_irf(config, path):
                                              exogenous_social=inputs.get('exogenous_social'),
                                              full_output=config.get('full_output'),
                                              premature_replacement=config.get('premature_replacement'),
-                                             prices_before=prices_before)
+                                             prices_before=prices_before, supply=config.get('supply'))
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
@@ -630,7 +631,7 @@ def calibration_res_irf(path, config=None):
                                          calib_intensive=inputs['calibration_intensive'],
                                          calib_renovation=inputs['calibration_renovation'],
                                          ms_heater=ms_heater, financing_cost=financing_cost,
-                                         demolition_rate=demolition_rate)
+                                         demolition_rate=demolition_rate, supply=config.get('supply'))
 
         output = pd.concat((output, o), axis=1)
         output.to_csv(os.path.join(buildings.path, 'output_calibration.csv'))
