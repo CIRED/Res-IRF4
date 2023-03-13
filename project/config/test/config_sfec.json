@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
@@ -35,7 +35,7 @@
         "number": 0,
         "target": "worst"
       },
-      "expected_utility": "market_share"
+      "expected_utility": "log_sum"
     },
     "supply": false,
     "ms_insulation": {
@@ -106,7 +106,7 @@
       "current_policies": false,
       "no_policy": false,
       "income": false,
-      "prices_constant": true,
+      "prices_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
@@ -119,7 +119,6 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false
-    },
-    "calibration": "project/input/calibration/calibration_0313.pkl"
+    }
   }
 }

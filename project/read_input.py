@@ -596,6 +596,8 @@ def read_inputs(config, other_inputs=generic_input):
     if config['macro'].get('use_subsidies'):
         temp = get_pandas(config['macro']['use_subsidies'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         inputs.update({'use_subsidies': temp})
+    else:
+        inputs.update({'use_subsidies': pd.Series(dtype=float)})
 
     return inputs
 
