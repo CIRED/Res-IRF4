@@ -34,7 +34,8 @@
       "exogenous": {
         "number": 0,
         "target": "worst"
-      }
+      },
+      "expected_utility": "market_share"
     },
     "supply": false,
     "ms_insulation": {
@@ -117,6 +118,5 @@
       "no_heating_switch": false,
       "collective_boiler": false
     }
-
   }
 }

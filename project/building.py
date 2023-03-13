@@ -810,7 +810,7 @@ class AgentBuildings(ThermalBuildings):
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
                  performance_insulation, path=None, year=2018,
-                 endogenous=True, exogenous=None, expected_utility='market_share',
+                 endogenous=True, exogenous=None, expected_utility=None,
                  logger=None, debug_mode=False, calib_scale=True,
                  quintiles=None, financing_cost=True, threshold=None, resources_data=None
                  ):
@@ -845,9 +845,14 @@ class AgentBuildings(ThermalBuildings):
 
         self._endogenous, self.param_exogenous = endogenous, exogenous
 
+        # method to calculate expected utility
+        if expected_utility is not None:
+            self._expected_utility = expected_utility
+        else:
+            self._expected_utility = 'market_share'
+
         self.preferences_heater = deepcopy(preferences['heater'])
         self.preferences_insulation = deepcopy(preferences['insulation'])
-        self._expected_utility = expected_utility
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
         self.scale = 1.0
@@ -2721,7 +2726,6 @@ class AgentBuildings(ThermalBuildings):
             expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
                                                    option='market_share', _cost_financing=_cost_financing)
             compare, utility_intensive = None, None
-            self._expected_utility = 'log_sum'
             for k in range(10):
                 # calibration of renovation rate
                 if self._expected_utility != 'log_sum' or utility_intensive is None:
@@ -2781,19 +2785,21 @@ class AgentBuildings(ThermalBuildings):
                 assert allclose(compare['Calculated'], compare['Observed'], rtol=10**-2), 'Calibration insulation did not work'
 
         def calibration_coupled_test(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
-                                     _calib_intensive):
+                                     _calib_intensive, _cost_financing=None):
             self.logger.info('Calibration renovation nested-logit function')
 
             # input cleaning
             _bill_saved[_bill_saved == 0] = float('nan')
             _subsidies_total[_bill_saved == 0] = float('nan')
             _cost_total[_bill_saved == 0] = float('nan')
+            if _cost_financing is not None:
+                _cost_financing[_bill_saved == 0] = float('nan')
 
             def calibration(x, _stock, _cost_total, _bill_saved, _subsidies_total, ms_insulation_ini, renovation_rate_ini, std_deviation):
 
-                constant_insulation_intensive = x[:len(ms_insulation_ini)]
-                constant_renovation = x[len(ms_insulation_ini):len(renovation_rate_ini)]
-                scale = x[:-1]
+                constant_insulation_intensive = pd.Series(x[:len(ms_insulation_ini)], index=ms_insulation_ini.index)
+                constant_renovation = pd.Series(x[len(ms_insulation_ini):len(renovation_rate_ini) + len(ms_insulation_ini)], index=renovation_rate_ini.index)
+                scale = x[-1]
 
                 pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
                 utility_subsidies = (_subsidies_total.T * pref_sub).T / 1000
@@ -2810,9 +2816,7 @@ class AgentBuildings(ThermalBuildings):
 
                 expected_utility = log(exp(utility_intensive).sum(axis=1))
 
-                utility_renovate = expected_utility + constant_renovation
-
-                _renovation_rate = retrofit_func(utility_renovate)
+                _renovation_rate = retrofit_func(expected_utility + constant_renovation)
 
                 flow_renovation = _renovation_rate * _stock
                 f_replace = (_market_share.T * flow_renovation).T
@@ -2844,7 +2848,8 @@ class AgentBuildings(ThermalBuildings):
             _constant_renovation = renovation_rate_ini.copy()
             _constant_renovation[renovation_rate_ini > 0] = 0
 
-            x = append(_constant_insulation_intensive, _constant_renovation, 1)
+            x = append(_constant_insulation_intensive.to_numpy(), _constant_renovation.to_numpy())
+            x = append(x, 1)
 
             root, info_dict, ier, mess = fsolve(calibration, x, args=(
                 _stock, _cost_total, _bill_saved, _subsidies_total, ms_insulation_ini, renovation_rate_ini, std_deviation), full_output=True)
@@ -3021,6 +3026,10 @@ class AgentBuildings(ThermalBuildings):
 
         # TODO reindex subsidies_total with stock.index
         if self.constant_insulation_intensive is None and self._threshold is False:
+            # TODO: calibration coupled
+            """calibration_coupled_test(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive,
+                                    _cost_financing=cost_financing)"""
+
             calibration_coupled(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive,
                                 _cost_financing=cost_financing)
             if False:

@@ -298,7 +298,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                financing_cost=config.get('financing_cost'),
                                debug_mode=config.get('debug_mode'),
                                threshold=config['renovation'].get('threshold'),
-                               resources_data=resources_data)
+                               resources_data=resources_data,
+                               expected_utility=config['renovation'].get('expected_utility'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
