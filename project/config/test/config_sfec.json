@@ -43,7 +43,8 @@
       "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
       "minimum_performance": null
     },
-    "district_heating": "project/input/policies/sfec/district_heating_transition2050.csv",
+    "district_heating": "project/input/policies/sfec/district_heating_transition2050_sfec.csv",
+    "exogenous_social": null,
     "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
     "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
     "premature_replacement": null,
@@ -91,7 +92,8 @@
       "demolition_rate": null,
       "stock_ini": 29037000,
       "available_income": 1421000000000,
-      "rotation_rate": "project/input/macro/rotation_rate.csv"
+      "rotation_rate": "project/input/macro/rotation_rate.csv",
+      "use_subsidies": "project/input/policies/sfec/use_subsidies_sfec.csv"
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
@@ -101,7 +103,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": true,
@@ -117,6 +119,7 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration_0313.pkl"
   }
 }

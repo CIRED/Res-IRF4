@@ -2000,6 +2000,17 @@ class AgentBuildings(ThermalBuildings):
             if 'zero_interest_loan' in _list_conditions:
                 _condition.update({'zero_interest_loan': define_zil_target(_certificate, _certificate_before, _energy_saved_3uses)})
 
+            if 'mpr_no_fg' in _list_conditions:
+                _condition.update({'mpr_no_fg': ~_certificate_before.isin(['G', 'F'])})
+
+            if 'mpr_no_fg_heater_replacement' in _list_conditions:
+                _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)
+                _temp = _temp & reindex_mi(~_certificate_before.isin(['G', 'F']), _temp.index)
+                """_temp = _certificate.loc[_certificate.index.get_level_values('Heater replacement'), :]
+                _temp = ~_temp.isna()
+                temp = (_temp.T * reindex_mi(~_certificate_before.isin(['G', 'F']), _temp.index)).T"""
+                _condition.update({'mpr_no_fg_heater_replacement': _temp})
+
             if 'mpr_serenite_nb' in _list_conditions:
                 nb_measures = Series([sum(i) for i in _certificate.columns], index=_certificate.columns)
                 _temp = Series(0, index=_certificate.index)
@@ -2043,7 +2054,7 @@ class AgentBuildings(ThermalBuildings):
         vta_insulation = cost_insulation * tax
         cost_insulation += vta_insulation
 
-        self._list_condition_subsidies = [i.target for i in policies_insulation if i.target is not None and i.policy != 'subsidies_cap']
+        self._list_condition_subsidies = [i.target for i in policies_insulation if i.target is not None and i.policy != 'subsidies_cap' and isinstance(i.target, str)]
         list_conditions = self._list_condition_subsidies
         if not self._endogenous:
             list_conditions += ['best_option']
@@ -2067,6 +2078,11 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     value = policy.value
                 value = (reindex_mi(self.prepare_subsidy_insulation(value), index).T * surface).T
+                if policy.target is not None:
+                    if isinstance(condition[policy.target], Series):
+                        value = (value.T * reindex_mi(condition[policy.target], value.index)).T
+                    else:
+                        raise NotImplemented('Need to implement target for subsidy_target')
 
             elif policy.policy == 'subsidy_ad_valorem':
                 if isinstance(policy.value, dict):
@@ -3478,6 +3494,10 @@ class AgentBuildings(ThermalBuildings):
 
             to_replace = stock.loc[idx] * proba
 
+            if obligation.target is not None:
+                target = reindex_mi(obligation.target, to_replace.index).fillna(False)
+                to_replace = to_replace.loc[target]
+
             # formatting replace_by
             replaced_by = to_replace.copy()
             replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Income tenant']).sum()
@@ -3693,6 +3713,9 @@ class AgentBuildings(ThermalBuildings):
         }
         for key, item in heater.items():
             output['Stock {} (Million)'.format(key)] = temp[[i for i in item if i in temp.index]].sum() / 10**6
+
+        temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
+        output.update(temp.T / 10**6)
 
         if self.year > self.first_year:
             levels = [i for i in self._replaced_by.index.names if i not in ['Heater replacement', 'Heating system final']]
@@ -4187,13 +4210,22 @@ class AgentBuildings(ThermalBuildings):
 
                 subsidies_details = Series({k: i.sum().sum() for k, i in subsidies_details.items()}, dtype='float64')
 
+                # use subsidies in post-treatment
+
                 if detailed_output is True:
                     for i in subsidies_details.index:
+                        if '{} {}'.format(i, gest) in inputs['use_subsidies'].index:
+                            use_subsidies = inputs['use_subsidies'].loc['{} {}'.format(i, gest)]
+                            subsidies_details[i] *= use_subsidies
+                            sub_count[i] *= use_subsidies
+
                         temp = sub_count[i]
                         temp.index = temp.index.map(lambda x: '{} {} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), gest, x))
                         output.update(temp.T / 10 ** 3 / step)
+
                         output['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = \
                             subsidies_details.loc[i] / 10 ** 9 / step
+
                 if subsidies is None:
                     subsidies = subsidies_details.copy()
                     subsidies_count = sub_count.copy()
@@ -4201,6 +4233,7 @@ class AgentBuildings(ThermalBuildings):
                     subsidies = concat((subsidies, subsidies_details), axis=0)
                     subsidies_count = concat((subsidies_count, sub_count))
 
+            if subsidies is not None:
                 subsidies = subsidies.groupby(subsidies.index).sum()
                 subsidies_count = subsidies_count.groupby(subsidies_count.index).sum()
                 for i in subsidies.index:

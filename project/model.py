@@ -210,7 +210,8 @@ def select_post_inputs(parsed_inputs):
 
     vars = ['carbon_emission', 'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
-            'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh', 'carbon_value']
+            'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh', 'carbon_value',
+            'use_subsidies']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
@@ -312,7 +313,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
-                   prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=True,
+                   prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
                    exogenous_social=None, full_output=True, premature_replacement=None, supply=False):
     """Update stock vintage due to renovation, demolition and construction.
     

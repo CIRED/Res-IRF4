@@ -199,7 +199,8 @@ def read_policies(config):
                                   target='bonus_worst'))
 
         l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
-        l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
+        l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation',
+                              target=data.get('target')))
 
         return l
 
@@ -248,7 +249,8 @@ def read_policies(config):
 
         l.append(PublicPolicy('cee', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax'))
         l.append(PublicPolicy('cee', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
-        l.append(PublicPolicy('cee', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation'))
+        l.append(PublicPolicy('cee', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation',
+                              target=data.get('target')))
         return l
 
     def read_cap(data):
@@ -286,7 +288,7 @@ def read_policies(config):
         insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         l.append(
             PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_valorem', gest='insulation',
-                         cap=data['cap']))
+                         cap=data['cap'], target=data.get('target')))
         return l
 
     def read_zil(data):
@@ -381,11 +383,15 @@ def read_policies(config):
             start = data['start']
         frequency = data['frequency']
         if frequency is not None:
-            frequency = pd.Series(frequency["value"], index=pd.Index(frequency["index"], name=frequency["name"]))
+            frequency = pd.Series(frequency['value'], index=pd.Index(frequency['index'], name=frequency['name']))
+
+        target = None
+        if data.get('target') is not None:
+            target = pd.Series(True, index=pd.Index(data['target']['value'], name=data['target']['name']))
 
         l.append(PublicPolicy(data['name'], start, data['end'], banned_performance, 'obligation',
                               gest='insulation', frequency=frequency, intensive=data['intensive'],
-                              min_performance=data['minimum_performance']))
+                              min_performance=data['minimum_performance'], target=target))
 
         if data.get('sub_obligation') is not None:
             value = get_pandas(data['sub_obligation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
@@ -586,6 +592,10 @@ def read_inputs(config, other_inputs=generic_input):
         exogenous_social.columns = exogenous_social.columns.astype(int)
 
         inputs.update({'exogenous_social': exogenous_social})
+
+    if config['macro'].get('use_subsidies'):
+        temp = get_pandas(config['macro']['use_subsidies'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        inputs.update({'use_subsidies': temp})
 
     return inputs
 
