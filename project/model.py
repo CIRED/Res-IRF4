@@ -238,15 +238,15 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
                      'health_cost', 'income']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini, supply = initialize(
+    inputs_dynamics = initialize(
         inputs, stock, year, taxes, path=path, config=config)
-    output = {'buildings': buildings,
+    output = {'buildings': inputs_dynamics['buildings'],
               'income': inputs['income'],
-              'energy_prices': energy_prices,
-              'cost_insulation': cost_insulation,
-              'carbon_emission': post_inputs['carbon_emission'],
-              'carbon_value_kwh': post_inputs['carbon_value_kwh'],
-              'health_cost': post_inputs['health_expenditure'] + post_inputs['mortality_cost'] + post_inputs['loss_well_being'],
+              'energy_prices': inputs_dynamics['energy_prices'],
+              'cost_insulation': inputs_dynamics['cost_insulation'],
+              'carbon_emission': inputs_dynamics['post_inputs']['carbon_emission'],
+              'carbon_value_kwh': inputs_dynamics['post_inputs']['carbon_value_kwh'],
+              'health_cost': inputs_dynamics['post_inputs']['health_expenditure'] + inputs_dynamics['post_inputs']['mortality_cost'] + inputs_dynamics['post_inputs']['loss_well_being'],
               'efficiency': inputs['efficiency'],
               'performance_insulation': inputs['performance_insulation']
               }
@@ -477,6 +477,9 @@ def res_irf(config, path):
             if isinstance(f_built, pd.DataFrame):
                 f_built = f_built.sum(axis=1).rename(year)
 
+            if inputs_dynamics['supply'] is not None:
+                inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['markup']
+
             if technical_progress is not None:
                 if technical_progress.get('insulation') is not None:
                     inputs_dynamics['cost_insulation'] *= (1 + technical_progress['insulation'].loc[year])**step
@@ -484,13 +487,14 @@ def res_irf(config, path):
                     heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in inputs_dynamics['cost_heater'].index]
                     inputs_dynamics['cost_heater'].loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
-            buildings, s, o = stock_turnover(buildings, prices, taxes, inputs_dynamics['cost_heater'], inputs_dynamics['lifetime_heater'],
+            buildings, s, o = stock_turnover(buildings, prices, taxes, inputs_dynamics['cost_heater'],
+                                             inputs_dynamics['lifetime_heater'],
                                              inputs_dynamics['cost_insulation'], p_heater, p_insulation, f_built, year,
                                              inputs_dynamics['post_inputs'],
                                              calib_intensive=inputs_dynamics['calibration_intensive'],
                                              calib_renovation=inputs_dynamics['calibration_renovation'],
                                              ms_heater=inputs_dynamics['ms_heater'],
-                                             premature_replacement=config.get('premature_replacement'),
+                                             premature_replacement=config['switch_heater'].get('premature_replacement'),
                                              financing_cost=inputs_dynamics['financing_cost'],
                                              supply=inputs_dynamics['supply'],
                                              district_heating=inputs.get('district_heating'),

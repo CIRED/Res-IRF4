@@ -477,7 +477,7 @@ def read_inputs(config, other_inputs=generic_input):
     lifetime_heater = get_pandas(config['technical']['lifetime_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename(None)
     inputs.update({'lifetime_heater': lifetime_heater})
 
-    ms_heater = get_pandas(config['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
+    ms_heater = get_pandas(config['switch_heater']['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     ms_heater.columns.set_names('Heating system final', inplace=True)
     inputs.update({'ms_heater': ms_heater})
 
@@ -495,9 +495,9 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'calibration_renovation': calibration_renovation})
 
     calibration_intensive = None
-    if config['ms_insulation']['endogenous']:
-        ms_insulation_ini = get_pandas(config['ms_insulation']['ms_insulation_ini'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
-        minimum_performance = config['ms_insulation']['minimum_performance']
+    if config['renovation']['ms_insulation']['endogenous']:
+        ms_insulation_ini = get_pandas(config['renovation']['ms_insulation']['ms_insulation_ini'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
+        minimum_performance = config['renovation']['ms_insulation']['minimum_performance']
         calibration_intensive = {'ms_insulation_ini': ms_insulation_ini, 'minimum_performance': minimum_performance}
     inputs.update({'calibration_intensive': calibration_intensive})
 
@@ -562,7 +562,7 @@ def read_inputs(config, other_inputs=generic_input):
                                         lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'flow_construction': flow_construction})
 
-    ms_heater_built = get_pandas(config['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
+    ms_heater_built = get_pandas(config['switch_heater']['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
     ms_heater_built.columns.set_names(['Heating system'], inplace=True)
     ms_heater_built.index.set_names(['Housing type'], inplace=True)
     inputs.update({'ms_heater_built': ms_heater_built})

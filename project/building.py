@@ -1567,6 +1567,7 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
 
+
         index = stock.index
 
         list_heater = list(stock.index.get_level_values('Heating system').unique().union(cost_heater.index))
@@ -1715,12 +1716,30 @@ class AgentBuildings(ThermalBuildings):
                        save=os.path.join(self.path_calibration, 'premature_replacement.png'))
 
         # adding heating system final equal to heating system because no switch
+        information_rate = 1/3
         flow_premature_replacement = 0
         if premature_replacement is not None:
+
+            def premature_func(x, x0, alpha):
+                return 1 / (1 + exp(alpha * (x - x0)))
+
+            def calibration_premature(x, stock, time, mean=3, std=1):
+                proba = premature_func(time, x[0], x[1])
+                replace = proba * stock.reindex(proba.index)
+                mean_calc = (replace * time).sum() / replace.sum()
+                std_calc = (((time - mean) ** 2 * replace).sum() / (replace.sum() - 1)) ** (1 / 2)
+                return mean_calc - mean, std_calc - std
+
             bill_saved[bill_saved <= 0] = float('nan')
             time = (cost_total - subsidies_total) / bill_saved
             time = time.loc[:, [i for i in time.columns if i in self._resources_data['index']['Heat pumps']]]
-            flow_replace = time[(time < premature_replacement)].dropna(how='all')
+            time = time.dropna(axis=1, how='all').squeeze()
+            time = time[time < 10]
+            fsolve(calibration_premature, (3, 1), args=(stock, time))
+            calibration_premature((3, 0.5), stock, time)
+
+
+            flow_replace = time[(time < premature_replacement)]
             if not flow_replace.empty:
                 to_replace = stock[flow_replace.index]
                 flow_premature_replacement = to_replace.sum()
@@ -2397,7 +2416,13 @@ class AgentBuildings(ThermalBuildings):
                 cost_renovation = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
                 def price_elasticity_demand(price, u=utility):
-                    u = u + pref_investment * price / 1000
+                    u = u + pref_investment * (price/cost_renovation) / 1000
+                    proba = 1 / (1 + exp(-u))
+                    elasticity = pref_investment * price / 1000 * (1 - proba)
+                    elasticity_global = (elasticity * weight).sum()
+                    return elasticity_global
+
+                def price_elasticity_demand_bis(price, u=utility):
                     proba = 1 / (1 + exp(-u))
                     elasticity = pref_investment * price / 1000 * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
@@ -2446,7 +2471,6 @@ class AgentBuildings(ThermalBuildings):
                         make_plot(pd.Series(temp), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
                                   save=os.path.join(self.path_calibration, 'price_cournot'))
 
-
                     mark_up_target = _supply['markup']
                     number_firms = fsolve(lambda x: mark_up(cost_renovation * mark_up_target, u=utility, n=x) - mark_up_target, 1)[0]
                     self.number_firms = number_firms
@@ -2454,21 +2478,40 @@ class AgentBuildings(ThermalBuildings):
                 flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
                 cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
-                root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation,
+                root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation * _supply['markup'],
                                                     args=(self.number_firms, cost_renovation, utility),
                                                     full_output=True)
+                print(flow_renovation_before)
+                print(cost_renovation)
+                print(self.number_firms)
+                proba = 1 / (1 + exp(-utility))
+                elasticity = pref_investment * cost_renovation * _supply['markup'] / 1000 * (1 - proba)
+                elasticity_global = (elasticity * weight).sum()
+                print(elasticity_global)
+
+
                 mu = root[0] / cost_renovation
-                self._markup_store = mu
+                if mu != 0:
+                    self._markup_store = mu
+                    self.logger.info('Equilibrium found. Markup: {:.2f}'.format(mu))
 
-                pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
-                utility_investment = (_cost_total.T * pref_investment).T / 1000
+                    pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
+                    utility_investment = (_cost_total.T * pref_investment).T / 1000
 
-                expected_utility = log(exp(_utility_intensive + (mu - 1) * utility_investment).sum(axis=1))
+                    expected_utility = log(exp(_utility_intensive + (mu - 1) * utility_investment).sum(axis=1))
 
-                _renovation_rate = to_renovation_rate(expected_utility)
-                flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
-                cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
+                    _renovation_rate = to_renovation_rate(expected_utility)
+                    flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
+                    cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
+                else:
+                    self.logger.info('ERROR No Equilibrium')
+                    """
+                    for i in range(50):
+                        print((1 + i / 10))
+                        print(price_elasticity_demand_bis(cost_renovation * (1 + i / 10), u=utility))
+                        print(mark_up(cost_renovation * (1 + i / 10), u=utility, n=self.number_firms))
 
+                    """
             return _market_share, _renovation_rate
 
         def apply_rational_choice(_consumption_saved, _subsidies_total, _cost_total):
@@ -2753,8 +2796,11 @@ class AgentBuildings(ThermalBuildings):
             return _constant, _scale
 
         def calibration_coupled(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
-                                _calib_intensive, _cost_financing=None):
+                                _calib_intensive, _cost_financing=None, _supply=None):
             self.logger.info('Calibration intensive and renovation rate')
+
+            if _supply is not None:
+                _cost_total *= _supply['markup']
 
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
             ms_insulation_ini = _calib_intensive['ms_insulation_ini']
@@ -3068,8 +3114,9 @@ class AgentBuildings(ThermalBuildings):
             """calibration_coupled_test(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive,
                                     _cost_financing=cost_financing)"""
 
-            calibration_coupled(stock, cost_total, bill_saved, subsidies_total, calib_renovation, calib_intensive,
-                                _cost_financing=cost_financing)
+            calibration_coupled(stock, cost_total.copy(), bill_saved.copy(), subsidies_total.copy(),
+                                calib_renovation, calib_intensive,
+                                _cost_financing=cost_financing, _supply=supply)
             if False:
                 if self.path_calibration is not None:
                     assess_policies(stock, subsidies_details, cost_total, bill_saved, subsidies_total)
@@ -3077,8 +3124,8 @@ class AgentBuildings(ThermalBuildings):
 
         if self._threshold is False:
             market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total, cost_total,
-                                                                      _stock=stock, _cost_financing=cost_financing,
-                                                                      _supply=supply)
+                                                                        _stock=stock, _cost_financing=cost_financing,
+                                                                        _supply=supply)
         else:
             market_share, renovation_rate = apply_rational_choice(consumption_saved, subsidies_total, cost_total)
 
@@ -3175,15 +3222,15 @@ class AgentBuildings(ThermalBuildings):
         self._condition_store = {k: item for k, item in condition.items() if k in list_condition}
 
         self._renovation_store.update({
-            'cost_households': cost_insulation,
+            'consumption_saved_households': consumption_saved,
+            'consumption_saved_actual_households': consumption_saved_actual,
+            'consumption_saved_no_rebound_households': consumption_saved_no_rebound,
+            'cost_households': cost_insulation * self._markup_store,
             'cost_financing_households': cost_financing,
             'vta_households': vta_insulation,
             'subsidies_households': subsidies_total,
             'subsidies_details_households': subsidies_details,
-            'cost_component': cost_insulation_raw * self.surface_insulation * (1 + tax),
-            'consumption_saved_households': consumption_saved,
-            'consumption_saved_actual_households': consumption_saved_actual,
-            'consumption_saved_no_rebound_households': consumption_saved_no_rebound,
+            'cost_component': cost_insulation_raw * self.surface_insulation * (1 + tax) * self._markup_store,
             'debt_households': amount_debt,
             'saving_households': amount_saving,
             'discount': discount
@@ -3278,6 +3325,34 @@ class AgentBuildings(ThermalBuildings):
 
         assert allclose(amount_debt + amount_saving + subsidies_total, cost_insulation_reindex), 'Sum problem'
 
+        if self._endogenous:
+
+            if calib_renovation is not None:
+                if calib_renovation['scale']['name'] == 'freeriders':
+                    delta_subsidies = None
+                    if (self.year in [self.first_year + 1]) and (self.scale is None):
+                        delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
+                    calib_renovation['scale']['delta_subsidies'] = delta_subsidies
+
+            renovation_rate, market_share = self.endogenous_renovation(stock, prices, subsidies_total,
+                                                                       cost_insulation_reindex,
+                                                                       calib_intensive=calib_intensive,
+                                                                       calib_renovation=calib_renovation,
+                                                                       min_performance=min_performance,
+                                                                       subsidies_details=subsidies_details,
+                                                                       cost_financing=cost_financing,
+                                                                       supply=supply
+                                                                       )
+            if exogenous_social is not None:
+                index = renovation_rate[renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
+                stock = self.add_certificate(stock[index])
+                renovation_rate_social = reindex_mi(exogenous_social.loc[:, self.year], stock.index).droplevel('Performance')
+                renovation_rate.drop(index, inplace=True)
+                renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
+
+        else:
+            renovation_rate, market_share = self.exogenous_renovation(stock, condition)
+
         if self._condition_store is None:
 
             if prices_before is None:
@@ -3306,34 +3381,6 @@ class AgentBuildings(ThermalBuildings):
                                               vta_insulation, subsidies_details, subsidies_total, consumption_saved,
                                               consumption_saved_actual, consumption_saved_no_rebound,
                                               amount_debt, amount_saving, discount)
-
-        if self._endogenous:
-
-            if calib_renovation is not None:
-                if calib_renovation['scale']['name'] == 'freeriders':
-                    delta_subsidies = None
-                    if (self.year in [self.first_year + 1]) and (self.scale is None):
-                        delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
-                    calib_renovation['scale']['delta_subsidies'] = delta_subsidies
-
-            renovation_rate, market_share = self.endogenous_renovation(stock, prices, subsidies_total,
-                                                                     cost_insulation_reindex,
-                                                                     calib_intensive=calib_intensive,
-                                                                     calib_renovation=calib_renovation,
-                                                                     min_performance=min_performance,
-                                                                     subsidies_details=subsidies_details,
-                                                                     cost_financing=cost_financing,
-                                                                     supply=supply
-                                                                     )
-            if exogenous_social is not None:
-                index = renovation_rate[renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
-                stock = self.add_certificate(stock[index])
-                renovation_rate_social = reindex_mi(exogenous_social.loc[:, self.year], stock.index).droplevel('Performance')
-                renovation_rate.drop(index, inplace=True)
-                renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
-
-        else:
-            renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
         return renovation_rate, market_share
 
@@ -3848,6 +3895,7 @@ class AgentBuildings(ThermalBuildings):
             renovation = replaced_by_grouped.sum().sum()
             output['Retrofit (Thousand households)'] = (renovation + self._only_heater.sum()) / 10 ** 3 / step
             output['Renovation (Thousand households)'] = renovation / 10 ** 3 / step
+            output['Markup insulation'] = self._markup_store
 
             if self._flow_obligation:
                 temp = pd.Series(self._flow_obligation)
