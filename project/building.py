@@ -2359,10 +2359,13 @@ class AgentBuildings(ThermalBuildings):
                                                                 _cost_financing=_cost_financing)
 
             # _bill, _subsidies, _cost = None, None, None
+            if self._expected_utility != 'log_sum':
+                expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
+                                                       _utility_intensive=_utility_intensive,
+                                                       _cost_financing=_cost_financing)
+            else:
+                expected_utility = log(exp(_utility_intensive).sum(axis=1))
 
-            expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
-                                                   _utility_intensive=_utility_intensive,
-                                                   _cost_financing=_cost_financing)
             _renovation_rate = to_renovation_rate(expected_utility)
 
             if _supply:
@@ -2382,11 +2385,13 @@ class AgentBuildings(ThermalBuildings):
 
                 utility_constant = reindex_mi(self.constant_insulation_extensive, utility_bill_saving.index)
 
-                utility = utility_subsidies + utility_bill_saving + utility_constant
+                pref_investment = reindex_mi(self.preferences_insulation['cost'], _investment_insulation.index).rename(None)
+                utility_investment = (_investment_insulation * pref_investment) / 1000
+
+                utility = utility_subsidies + utility_bill_saving + utility_constant + utility_investment
                 weight = stock / stock.sum()
 
                 cost_renovation = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
-                pref_investment = reindex_mi(self.preferences_insulation['cost'], _investment_insulation.index).rename(None)
 
                 def price_elasticity_demand(price, u=utility):
                     u = u + pref_investment * price / 1000
@@ -2395,25 +2400,38 @@ class AgentBuildings(ThermalBuildings):
                     elasticity_global = (elasticity * weight).sum()
                     return elasticity_global
 
-                def cournot_equilibrium(price, n=1, cost_renovation=cost_renovation, u=utility):
-                    elasticity_global = price_elasticity_demand(price, u=u)
-                    return (price - cost_renovation) / price - (1 / n) * (1 / abs(elasticity_global))
+                def mark_up(price, u=utility, n=2):
+                    proba = 1 / (1 + exp(-u))
+                    elasticity = pref_investment * price / 1000 * (1 - proba)
+                    elasticity_global = (elasticity * weight).sum()
+                    return 1 / (1 + 1 / (elasticity_global * n))
 
-                temp_elasticity, temp_margin = dict(), dict()
-                for i in range(-5, 6, 1):
+                def cournot_equilibrium(price, n=1, cost_renovation=cost_renovation, u=utility):
+                    return price / cost_renovation - mark_up(price, u=u, n=n)
+
+                """temp_elasticity, temp_margin, temp_markup, temp_feedback = dict(), dict(), dict(), dict()
+                for i in range(-5, 5, 1):
                     u = utility + abs(utility) * i / 10
                     renovation = (1 / (1 + exp(-u)) * _stock).sum() / 10**3
                     temp_elasticity.update({renovation: price_elasticity_demand(cost_renovation, u=u)})
-                    temp_margin.update({renovation: fsolve(cournot_equilibrium, cost_renovation, args=(1, cost_renovation, u))[0]})
+                    mu = mark_up(cost_renovation, u=u, n=2)
+                    temp_markup.update({renovation: mu})
+                    feedback = (1 / (1 + exp(-(u+(mu-1)*utility_investment))) * _stock).sum() / 10**3
 
+                    temp_feedback.update({mu: feedback})
+
+                    # temp_margin.update({renovation: fsolve(cournot_equilibrium, cost_renovation, args=(1, cost_renovation, u))[0]})
+                temp_markup = pd.Series(temp_markup)
+                temp_feedback = pd.Series(temp_feedback)
                 temp_elasticity = pd.Series(temp_elasticity)
                 temp_margin = pd.Series(temp_margin)
 
                 make_plot(pd.Series(temp_elasticity), 'Elasticity (Percent)', format_y=lambda y, _: '{:,.2f}'.format(y),
                           save=os.path.join(self.path_calibration, 'elasticity.png'), integer=False)
                 make_plot(pd.Series(temp_margin), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
-                          save=os.path.join(self.path_calibration, 'price.png'), integer=False)
+                          save=os.path.join(self.path_calibration, 'price.png'), integer=False)"""
 
+                # self.number_firms = 2
                 if self.number_firms is None:
                     if False and self.path_calibration is not None:
                         temp = {}
@@ -2427,21 +2445,28 @@ class AgentBuildings(ThermalBuildings):
 
                         # TODO: elasticity of demand function of u ?
 
-                    margin = 0.10
-                    price = cost_renovation * (1 + margin)
+                    mark_up_target = 1.4
+                    number_firms = fsolve(lambda x: mark_up(cost_renovation * mark_up_target, u=utility, n=x) - mark_up_target, 1)[0]
+                    price = cost_renovation * mark_up_target
                     elasticity_global = price_elasticity_demand(price)
                     number_firms = price / (price - cost_renovation) * (1 / abs(elasticity_global))
                     self.number_firms = number_firms
                 flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
                 cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
+                if self.year == 2020:
+                    print('break')
+
                 root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation,
-                                                    args=(self.number_firms, cost_renovation),
+                                                    args=(self.number_firms, cost_renovation, utility),
                                                     full_output=True)
-                margin = (root[0] - cost_renovation) / cost_renovation
-                expected_utility = to_expected_utility(_cost_total * (1 + margin), _bill_saved, _subsidies_total, _market_share,
-                                                       _utility_intensive=_utility_intensive,
-                                                       _cost_financing=_cost_financing)
+                mu = root[0] / cost_renovation
+
+                pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
+                utility_investment = (_cost_total.T * pref_investment).T / 1000
+
+                expected_utility = log(exp(_utility_intensive + (mu - 1) * utility_investment).sum(axis=1))
+
                 _renovation_rate = to_renovation_rate(expected_utility)
                 flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
                 cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()

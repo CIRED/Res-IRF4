@@ -731,9 +731,8 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
     else:
         data.plot(kind='bar', stacked=True, bottom=blank, legend=None,
               title=title, ax=ax, color=color, edgecolor=None)
-    # my_plot.plot(step.index, step.values, 'k')
-
-    plt.axhline(y=0, color='black', linestyle='--', linewidth=0.3)
+    plt.plot(step.index, step.values, 'k', linewidth=0.5, linestyle='--')
+    plt.axhline(y=0, color='black', linewidth=0.3)
 
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)

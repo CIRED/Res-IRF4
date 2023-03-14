@@ -1,13 +1,13 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
     "constant": false
 },
   "Reference": {
-    "end": 2031,
+    "end": 2025,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -37,7 +37,7 @@
       },
       "expected_utility": "log_sum"
     },
-    "supply": false,
+    "supply": true,
     "ms_insulation": {
       "endogenous": true,
       "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
@@ -119,6 +119,7 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration_logsum.pkl"
   }
 }

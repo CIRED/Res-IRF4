@@ -1,6 +1,6 @@
 {
   "Reference": {
-    "end": 2022,
+    "end": 2021,
     "step": 1,
     "debug_mode": false,
     "full_output": true,
@@ -12,7 +12,10 @@
       "saving_rate": 0.025,
       "duration": 10
     },
-    "supply": true,
+    "supply": {
+      "activated": true,
+      "markup": 1.4
+    },
     "renovation": {
       "endogenous": true,
       "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
@@ -28,7 +31,8 @@
       "exogenous": {
         "number": 700000,
         "target": "worst"
-      }
+      },
+      "expected_utility": "log_sum"
     },
     "ms_insulation": {
         "endogenous": true,
@@ -107,6 +111,6 @@
       },
       "insulation": false
     },
-    "calibration": "project/input/calibration/calibration_coupling.pkl"
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }
