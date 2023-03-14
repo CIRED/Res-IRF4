@@ -322,13 +322,9 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         'financing_cost': parsed_inputs.get('input_financing'),
         'technical_progress': technical_progress,
         'consumption_ini': parsed_inputs['consumption_ini'],
-        'supply': None
+        'supply': parsed_inputs['supply']
     }
     return inputs_dynamic
-
-    """return buildings, parsed_inputs['energy_prices'], parsed_inputs['taxes'], post_inputs, parsed_inputs['cost_heater'], parsed_inputs['lifetime_heater'], parsed_inputs['ms_heater'], \
-           parsed_inputs['cost_insulation'], parsed_inputs['calibration_intensive'], parsed_inputs[
-               'calibration_renovation'], parsed_inputs['demolition_rate'], parsed_inputs['flow_built'], parsed_inputs.get('input_financing'), technical_progress, parsed_inputs['consumption_ini'], supply"""
 
 
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
@@ -336,27 +332,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
                    exogenous_social=None, full_output=True, premature_replacement=None, supply=False):
     """Update stock vintage due to renovation, demolition and construction.
-    
-    
-    Parameters
-    ----------
-    buildings
-    prices
-    taxes
-    cost_heater
-    lifetime_heater: pd.Series
-    cost_insulation
-    p_heater
-    p_insulation
-    flow_built
-    year
-    post_inputs
-    ms_heater
-    calib_intensive
-    calib_renovation
-    financing_cost
-    prices_before
-    climate: int, optional
+
 
     Returns
     -------

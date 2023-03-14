@@ -790,6 +790,12 @@ def parse_inputs(inputs, taxes, config, stock):
 
     parsed_inputs['input_financing'].update(config['financing_cost'])
 
+    supply = None
+    if config.get('supply') is not None:
+        if config['supply']['activated']:
+            supply = {'markup': config['supply']['markup']}
+    parsed_inputs.update({'supply': supply})
+
     return parsed_inputs
 
 

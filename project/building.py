@@ -866,6 +866,8 @@ class AgentBuildings(ThermalBuildings):
         self._renovation_store = {}
         self._condition_store = None
 
+        self._markup_store = 1
+
         self._annuities_store = {'investment_owner': Series(dtype=float),
                                  'rent_tenant': Series(dtype=float),
                                  'stock_annuities': Series(dtype=float),
@@ -899,6 +901,7 @@ class AgentBuildings(ThermalBuildings):
         self._replaced_by = None
         self._only_heater = None
         self._flow_obligation = {}
+        self._markup_store = 1
 
         index = self.stock.droplevel('Income tenant').index
         index = index[~index.duplicated()]
@@ -2185,7 +2188,7 @@ class AgentBuildings(ThermalBuildings):
 
         return cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition
 
-    def endogenous_retrofit(self, stock, prices, subsidies_total, cost_insulation,
+    def endogenous_renovation(self, stock, prices, subsidies_total, cost_insulation,
                             calib_renovation=None, calib_intensive=None, min_performance=None,
                             subsidies_details=None, cost_financing=None, supply=False):
         """Calculate endogenous retrofit based on discrete choice model.
@@ -2326,7 +2329,7 @@ class AgentBuildings(ThermalBuildings):
 
                 return expected_utility
 
-        def retrofit_func(u):
+        def renovation_func(u):
             return 1 / (1 + exp(- u))
 
         def to_renovation_rate(_expected_utility):
@@ -2348,11 +2351,11 @@ class AgentBuildings(ThermalBuildings):
                 utility_constant = reindex_mi(self.constant_insulation_extensive, _expected_utility.index)
                 utility_renovate = _expected_utility + utility_constant
 
-            retrofit_proba = retrofit_func(utility_renovate)
+            retrofit_proba = renovation_func(utility_renovate)
 
             return retrofit_proba
 
-        def apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _stock=None,
+        def apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _stock=None,
                                       _supply=True):
 
             _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total,
@@ -2443,24 +2446,19 @@ class AgentBuildings(ThermalBuildings):
                         make_plot(pd.Series(temp), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
                                   save=os.path.join(self.path_calibration, 'price_cournot'))
 
-                        # TODO: elasticity of demand function of u ?
 
-                    mark_up_target = 1.4
+                    mark_up_target = _supply['markup']
                     number_firms = fsolve(lambda x: mark_up(cost_renovation * mark_up_target, u=utility, n=x) - mark_up_target, 1)[0]
-                    price = cost_renovation * mark_up_target
-                    elasticity_global = price_elasticity_demand(price)
-                    number_firms = price / (price - cost_renovation) * (1 / abs(elasticity_global))
                     self.number_firms = number_firms
+
                 flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
                 cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
-
-                if self.year == 2020:
-                    print('break')
 
                 root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation,
                                                     args=(self.number_firms, cost_renovation, utility),
                                                     full_output=True)
                 mu = root[0] / cost_renovation
+                self._markup_store = mu
 
                 pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
                 utility_investment = (_cost_total.T * pref_investment).T / 1000
@@ -2514,11 +2512,11 @@ class AgentBuildings(ThermalBuildings):
             float
             """
 
-            retrofit = retrofit_func(_utility * _scale)
+            retrofit = renovation_func(_utility * _scale)
             flow = (retrofit * _stock).sum()
 
             utility_plus = (_utility + pref_sub * delta_sub).dropna() * _scale
-            retrofit_plus = retrofit_func(utility_plus)
+            retrofit_plus = renovation_func(utility_plus)
             flow_plus = (retrofit_plus * _stock).sum()
 
             return min(flow, flow_plus) / max(flow, flow_plus)
@@ -2606,7 +2604,7 @@ class AgentBuildings(ThermalBuildings):
                 stock_ref = stock_ini.copy()
                 utility_cst = reindex_mi(cst, utility_ref.index)
                 u = (utility_ref + utility_cst).copy()
-                retrofit_rate_calc = retrofit_func(u * scale)
+                retrofit_rate_calc = renovation_func(u * scale)
                 agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
                 retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
                 rslt = retrofit_rate_agg - retrofit_rate_target
@@ -2627,7 +2625,7 @@ class AgentBuildings(ThermalBuildings):
                 stock_ref = stock_ini.copy()
                 utility_cst = reindex_mi(cst, utility_ref.index)
                 u = (utility_ref + utility_cst).copy()
-                retrofit_rate_calc = retrofit_func(u * scale)
+                retrofit_rate_calc = renovation_func(u * scale)
                 agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
                 retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
                 rslt = retrofit_rate_agg - retrofit_rate_target
@@ -2650,7 +2648,7 @@ class AgentBuildings(ThermalBuildings):
                 utility_cst = reindex_mi(cst, utility_ref.index)
                 u = log(exp(utility_ref * scale).sum(axis=1))
                 u = (u + utility_cst * scale).copy()
-                retrofit_rate_calc = retrofit_func(u)
+                retrofit_rate_calc = renovation_func(u)
                 agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
                 retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
                 rslt = retrofit_rate_agg - retrofit_rate_target
@@ -2670,7 +2668,7 @@ class AgentBuildings(ThermalBuildings):
                 stock_ref = stock_ini.copy()
                 utility_cst = reindex_mi(cst, utility_ref.index)
                 u = (utility_ref + utility_cst).copy()
-                retrofit_rate_calc = retrofit_func(u)
+                retrofit_rate_calc = renovation_func(u)
                 agg = (retrofit_rate_calc * stock_ref).groupby(retrofit_rate_target.index.names).sum()
                 retrofit_rate_agg = agg / stock_ref.groupby(retrofit_rate_target.index.names).sum()
                 rslt = retrofit_rate_agg - retrofit_rate_target
@@ -2725,17 +2723,17 @@ class AgentBuildings(ThermalBuildings):
                 self.logger.info('Scale: {}'.format(_scale))
 
             # without calibration
-            retrofit_ini = retrofit_func(_utility)
+            retrofit_ini = renovation_func(_utility)
             agg_ini = (retrofit_ini * _stock).groupby(retrofit_rate_ini.index.names).sum()
             retrofit_rate_agg_ini = agg_ini / _stock.groupby(retrofit_rate_ini.index.names).sum()
 
             utility_constant = reindex_mi(_constant, _utility.index)
             _utility = _utility * _scale + utility_constant
-            retrofit_rate = retrofit_func(_utility)
+            retrofit_rate = renovation_func(_utility)
             agg = (retrofit_rate * _stock).groupby(retrofit_rate_ini.index.names).sum()
             retrofit_rate_agg = agg / _stock.groupby(retrofit_rate_ini.index.names).sum()
 
-            retrofit_rate_cst = retrofit_func(utility_constant)
+            retrofit_rate_cst = renovation_func(utility_constant)
             agg_cst = (retrofit_rate_cst * _stock).groupby(retrofit_rate_ini.index.names).sum()
             retrofit_rate_agg_cst = agg_cst / _stock.groupby(retrofit_rate_ini.index.names).sum()
 
@@ -2804,7 +2802,6 @@ class AgentBuildings(ThermalBuildings):
 
                 _renovation_rate = to_renovation_rate(expected_utility)
 
-
                 # checking value compare to target
                 flow = _renovation_rate * _stock
                 rate = flow.groupby(renovation_rate_ini.index.names).sum() / _stock.groupby(
@@ -2857,7 +2854,7 @@ class AgentBuildings(ThermalBuildings):
 
                 expected_utility = log(exp(utility_intensive).sum(axis=1))
 
-                _renovation_rate = retrofit_func(expected_utility + constant_renovation)
+                _renovation_rate = renovation_func(expected_utility + constant_renovation)
 
                 flow_renovation = _renovation_rate * _stock
                 f_replace = (_market_share.T * flow_renovation).T
@@ -2927,7 +2924,7 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved * v, _subsidies_total,
+                _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved * v, _subsidies_total,
                                                                             _cost_total, _supply=False)
                 f_renovation = _renovation_rate * _stock
                 f_replace = (f_renovation * _market_share.T).T
@@ -2944,7 +2941,7 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total * v,
+                _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved, _subsidies_total * v,
                                                                             _cost_total, _supply=False)
                 f_renovation = _renovation_rate * _stock
                 f_replace = (f_renovation * _market_share.T).T
@@ -2961,7 +2958,7 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total,
+                _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved, _subsidies_total,
                                                                             _cost_total * v, _supply=False)
                 f_renovation = _renovation_rate * _stock
                 f_replace = (f_renovation * _market_share.T).T
@@ -2998,7 +2995,7 @@ class AgentBuildings(ThermalBuildings):
 
             """
 
-            _market_share, _renovation_rate = apply_endogenous_retrofit(_bill_saved, _subsidies_total, _cost_total,
+            _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
                                                                         _supply=False)
 
             f_retrofit = _renovation_rate * _stock
@@ -3018,7 +3015,7 @@ class AgentBuildings(ThermalBuildings):
                 assert (c_total >= _cost_total).all().all(), 'Cost issue'
                 sub_total = _subsidies_total - _sub
                 assert (sub_total <= _subsidies_total).all().all(), 'Subsidies issue'
-                ms_sub, retrofit_sub = apply_endogenous_retrofit(_bill_saved, sub_total, c_total, _supply=False)
+                ms_sub, retrofit_sub = apply_endogenous_renovation(_bill_saved, sub_total, c_total, _supply=False)
                 f_retrofit_sub = retrofit_sub * stock
                 f_replace_sub = (f_retrofit_sub * ms_sub.T).T
                 avg_cost_global_sub = (f_replace_sub * _cost_total).sum().sum() / f_retrofit_sub.sum()
@@ -3079,7 +3076,7 @@ class AgentBuildings(ThermalBuildings):
                     assess_sensitivity(stock, cost_total, bill_saved, subsidies_total)
 
         if self._threshold is False:
-            market_share, renovation_rate = apply_endogenous_retrofit(bill_saved, subsidies_total, cost_total,
+            market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total, cost_total,
                                                                       _stock=stock, _cost_financing=cost_financing,
                                                                       _supply=supply)
         else:
@@ -3092,7 +3089,7 @@ class AgentBuildings(ThermalBuildings):
 
         return renovation_rate, market_share
 
-    def exogenous_retrofit(self, stock, condition):
+    def exogenous_renovation(self, stock, condition):
         """Format retrofit rate and market share for each segment.
 
 
@@ -3319,7 +3316,7 @@ class AgentBuildings(ThermalBuildings):
                         delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
                     calib_renovation['scale']['delta_subsidies'] = delta_subsidies
 
-            renovation_rate, market_share = self.endogenous_retrofit(stock, prices, subsidies_total,
+            renovation_rate, market_share = self.endogenous_renovation(stock, prices, subsidies_total,
                                                                      cost_insulation_reindex,
                                                                      calib_intensive=calib_intensive,
                                                                      calib_renovation=calib_renovation,
@@ -3336,7 +3333,7 @@ class AgentBuildings(ThermalBuildings):
                 renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
 
         else:
-            renovation_rate, market_share = self.exogenous_retrofit(stock, condition)
+            renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
         return renovation_rate, market_share
 
