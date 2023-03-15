@@ -25,7 +25,7 @@
     "mpr_serenite_low_income": {
       "start": 2019,
       "end": 2025,
-      "insulation": "project/input/policies/mpr_serenite_low_income.csv",
+      "insulation": "project/input/policies/mpr_serenite.csv",
       "cap": "project/input/policies/mpr_serenite_cap.csv",
       "growth_insulation": null,
       "non_cumulative": [

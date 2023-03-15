@@ -12,7 +12,7 @@
       "duration": 10
     },
     "supply": {
-      "activated": false,
+      "activated": true,
       "markup_insulation": 1.2,
       "markup_heater": 1.2
     },
@@ -37,7 +37,8 @@
         "endogenous": true,
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
-    }
+    },
+      "threshold": false
     },
     "switch_heater": {
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",

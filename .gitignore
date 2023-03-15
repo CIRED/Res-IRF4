@@ -3,6 +3,7 @@
 /project/input/.DS_Store
 /project/input/revealed_data/.DS_Store
 .DS_Store
+.idea
 /ResIRF.egg-info/
 /project/test.py
 /project/input/prices/
