@@ -850,7 +850,7 @@ class AgentBuildings(ThermalBuildings):
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
         self.scale = 1.0
-        self.number_firms = None
+        self.number_firms_insulation, self.number_firms_heater = None, None
 
         self._list_condition_subsidies = []
         self._stock_ref = None
@@ -860,7 +860,7 @@ class AgentBuildings(ThermalBuildings):
         self._renovation_store = {}
         self._condition_store = None
 
-        self._markup_insulation_store = 1
+        self._markup_insulation_store, self._markup_heater_store = 1, 1
 
         self._annuities_store = {'investment_owner': Series(dtype=float),
                                  'rent_tenant': Series(dtype=float),
@@ -1544,7 +1544,7 @@ class AgentBuildings(ThermalBuildings):
 
     def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, ms_heater=None,
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
-                           prices_before=None):
+                           prices_before=None, supply=None):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -1710,16 +1710,57 @@ class AgentBuildings(ThermalBuildings):
         # adding heating system final equal to heating system because no switch
         flow_premature_replacement = 0
         if premature_replacement is not None:
+            alpha = 1
 
-            def premature_func(x, x0=3, alpha=1):
+            def premature_func(x, x0=3, alpha=alpha):
                 return 1 / (1 + exp(alpha * (x - x0)))
 
             bill_saved[bill_saved <= 0] = float('nan')
             time = (cost_total - subsidies_total) / bill_saved
             time = time.loc[:, [i for i in time.columns if i in self._resources_data['index']['Heat pumps']]]
             time = time.dropna(axis=1, how='all')
-
             time = time[(time < 10)].dropna(how='all')
+
+            if supply is not None:
+                if self.number_firms_heater is None:
+                    self._markup_heater_store = supply['markup_heater']
+                bill = bill_saved.loc[time.index, time.columns]
+                cost = cost_heater['Electricity-Heat pump water']
+                weight = stock / stock.sum()
+
+                def mark_up(price, u=-time, n=2, cost=cost, bill=bill, weight=weight):
+                    u, bill = u.squeeze(), bill.squeeze()
+                    u -= (price - cost) / bill
+                    proba = premature_func(-u)
+                    elasticity = - alpha / bill * price * (1 - proba)
+                    elasticity = elasticity.reindex(weight.index).fillna(0)
+                    elasticity_global = (elasticity * weight).sum()
+                    return 1 / (1 + 1 / (elasticity_global * n))
+
+                if self.number_firms_heater is None:
+
+                    mark_up_target = supply['markup_heater']
+                    number_firms = fsolve(
+                        lambda x: mark_up(cost * self._markup_heater_store, u=-time,
+                                          n=x) - mark_up_target, 3)[0]
+
+                    self.number_firms_heater = number_firms
+                    self.logger.info('Number of firms heater market: {:.1f}'.format(number_firms))
+
+                def cournot_equilibrium(price, n=self.number_firms_heater, cost=cost, u=-time):
+                    return price / cost - mark_up(price, u=u, n=n)
+
+                if self.year == 2020:
+                    print('break')
+
+                price = fsolve(cournot_equilibrium, cost * self._markup_heater_store)[0]
+                if price != 0:
+                    markup = price / cost
+                    self._markup_heater_store = markup
+                    self.logger.info('Equilibrium heater found. Markup: {:.2f}'.format(markup))
+                else:
+                    self.logger.info('ERROR No Equilibrium. Keeping the same markup. Markup: {:.2f}'.format(self._markup_heater_store))
+                time += (self._markup_heater_store - 1) / bill
 
             flow_replace = premature_func(time, x0=premature_replacement['time']) * premature_replacement['information_rate']
 
@@ -2194,7 +2235,7 @@ class AgentBuildings(ThermalBuildings):
 
     def endogenous_renovation(self, stock, prices, subsidies_total, cost_insulation,
                             calib_renovation=None, calib_intensive=None, min_performance=None,
-                            subsidies_details=None, cost_financing=None, supply=False):
+                            subsidies_details=None, cost_financing=None, supply=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
 
@@ -2361,8 +2402,7 @@ class AgentBuildings(ThermalBuildings):
 
         def apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _stock=None,
                                         _supply=None):
-            if self.number_firms is None and _supply is not None:
-                print('set markup')
+            if self.number_firms_insulation is None and _supply is not None:
                 self._markup_insulation_store = _supply['markup_insulation']
 
             _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total,
@@ -2432,8 +2472,8 @@ class AgentBuildings(ThermalBuildings):
                 make_plot(pd.Series(temp_margin), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
                           save=os.path.join(self.path_calibration, 'price.png'), integer=False)"""
 
-                # self.number_firms = 2
-                if self.number_firms is None:
+                # self.number_firms_insulation = 2
+                if self.number_firms_insulation is None:
                     if False and self.path_calibration is not None:
                         temp = {}
                         for n in range(1, 10, 2):
@@ -2446,26 +2486,26 @@ class AgentBuildings(ThermalBuildings):
 
                     mark_up_target = _supply['markup_insulation']
                     number_firms = fsolve(lambda x: mark_up(cost_renovation * self._markup_insulation_store, u=expected_utility, n=x) - mark_up_target, 3)[0]
-                    self.number_firms = number_firms
+                    self.number_firms_insulation = number_firms
 
-                flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
-                cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
                 root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation * self._markup_insulation_store,
-                                                    args=(self.number_firms, cost_renovation, expected_utility),
+                                                    args=(self.number_firms_insulation, cost_renovation, expected_utility),
                                                     full_output=True)
+                """flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
+                cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()                
                 print(flow_renovation_before)
                 print(cost_renovation)
-                print(self.number_firms)
+                print(self.number_firms_insulation)
                 proba = 1 / (1 + exp(-expected_utility))
                 elasticity = pref_investment * cost_renovation * _supply['markup_insulation'] / 1000 * (1 - proba)
                 elasticity_global = (elasticity * weight).sum()
-                print(elasticity_global)
+                print(elasticity_global)"""
 
                 mu = root[0] / cost_renovation
                 if mu != 0:
                     self._markup_insulation_store = mu
-                    self.logger.info('Equilibrium found. Markup: {:.2f}'.format(mu))
+                    self.logger.info('Equilibrium insulation found. Markup: {:.2f}'.format(mu))
 
                     _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total,
                                                                         _cost_total * self._markup_insulation_store,
@@ -2479,12 +2519,12 @@ class AgentBuildings(ThermalBuildings):
                     for i in range(50):
                         print((1 + i / 10))
                         print(price_elasticity_demand_bis(cost_renovation * (1 + i / 10), u=utility))
-                        print(mark_up(cost_renovation * (1 + i / 10), u=utility, n=self.number_firms))
+                        print(mark_up(cost_renovation * (1 + i / 10), u=utility, n=self.number_firms_insulation))
 
                     """
 
-                flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
-                cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
+                """flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
+                cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()"""
 
             return _market_share, _renovation_rate
 
@@ -3212,7 +3252,7 @@ class AgentBuildings(ThermalBuildings):
 
     def insulation_replacement(self, stock, prices, cost_insulation_raw, policies_insulation=None, financing_cost=None,
                                calib_renovation=None, calib_intensive=None, min_performance=None,
-                               exogenous_social=None, prices_before=None, supply=False):
+                               exogenous_social=None, prices_before=None, supply=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -3361,7 +3401,7 @@ class AgentBuildings(ThermalBuildings):
     def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, policies_heater=None,
                       policies_insulation=None,  ms_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None, calib_intensive=None,
-                      step=1, exogenous_social=None, premature_replacement=None, prices_before=None, supply=False):
+                      step=1, exogenous_social=None, premature_replacement=None, prices_before=None, supply=None):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -3400,7 +3440,7 @@ class AgentBuildings(ThermalBuildings):
         stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
                                         ms_heater=ms_heater, step=1, financing_cost=financing_cost,
                                         district_heating=district_heating, premature_replacement=premature_replacement,
-                                        prices_before=prices_before)
+                                        prices_before=prices_before, supply=supply)
 
         self.logger.info('Number of agents that can insulate: {:,.0f}'.format(stock.shape[0]))
         self.logger.info('Calculation insulation replacement')
@@ -3423,7 +3463,7 @@ class AgentBuildings(ThermalBuildings):
             # approximation
             stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
                                             ms_heater=ms_heater, step=step, financing_cost=financing_cost,
-                                            district_heating=district_heating)
+                                            district_heating=district_heating, supply=supply)
             flow_insulation = flow_insulation.where(flow_insulation < stock, stock)
 
         flow_only_heater = stock - flow_insulation
@@ -3870,6 +3910,7 @@ class AgentBuildings(ThermalBuildings):
             output['Retrofit (Thousand households)'] = (renovation + self._only_heater.sum()) / 10 ** 3 / step
             output['Renovation (Thousand households)'] = renovation / 10 ** 3 / step
             output['Markup insulation'] = self._markup_insulation_store
+            output['Markup heater'] = self._markup_heater_store
 
             if self._flow_obligation:
                 temp = pd.Series(self._flow_obligation)

@@ -16,11 +16,11 @@ from project.input.resources import resources_data
 
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
-CONFIG_TEST = 'project/config/coupling/config_coupling_simple.json'
+CONFIG_TEST = 'project/config/coupling/config_coupling_simple_test.json'
 CONFIG_THRESHOLD_TEST = 'project/config/coupling/config_coupling_simple_threshold.json'
 
 
-def ini_res_irf(path=None, config=None, climate=2006):
+def ini_res_irf(path=None, config=None):
     """Initialize and calibrate Res-IRF.
 
     Parameters
@@ -47,8 +47,8 @@ def ini_res_irf(path=None, config=None, climate=2006):
             pass
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    buildings, energy_prices, taxes, post_inputs, cost_heater, lifetime_heater, ms_heater, cost_insulation, calibration_intensive, calibration_renovation, demolition_rate, flow_built, financing_cost, technical_progress, consumption_ini = initialize(
-        inputs, stock, year, taxes, path=path, config=config)
+    inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
+    buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']
 
     # calibration
     if config.get('calibration'):
@@ -73,25 +73,27 @@ def ini_res_irf(path=None, config=None, climate=2006):
         }, file)
 
     output = pd.DataFrame()
-    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], post_inputs)
+    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'])
     output = pd.concat((output, o), axis=1)
     year = 2019
     prices = energy_prices.loc[year, :]
     p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
     p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-    f_built = flow_built.loc[:, year]
+    f_built = inputs_dynamics['flow_built'].loc[:, year]
 
-    buildings, _, o = stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater,
-                                     cost_insulation, p_heater,
-                                     p_insulation, f_built, year, post_inputs,
-                                     ms_heater=ms_heater, financing_cost=financing_cost,
-                                     demolition_rate=demolition_rate)
+    buildings, _, o = stock_turnover(buildings, prices, taxes, inputs_dynamics['cost_heater'],
+                                     inputs_dynamics['lifetime_heater'],
+                                     inputs_dynamics['cost_insulation'], p_heater,
+                                     p_insulation, f_built, year, inputs_dynamics['post_inputs'],
+                                     ms_heater=inputs_dynamics['ms_heater'],
+                                     financing_cost=inputs_dynamics['financing_cost'],
+                                     demolition_rate=inputs_dynamics['demolition_rate'],
+                                     supply=inputs_dynamics['supply'])
 
     output = pd.concat((output, o), axis=1)
     output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
-    return buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, policies_heater, policies_insulation, technical_progress, financing_cost, config.get('premature_replacement')
-
+    return buildings, inputs_dynamics, policies_heater, policies_insulation
 
 def create_subsidies(sub_insulation, sub_design, start, end):
     """
@@ -170,7 +172,7 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                  lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
                  climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, full_output=True, rebound=True, technical_progress=None,
-                 premature_replacement=None
+                 premature_replacement=None, supply=None
                  ):
     # initialize policies
     if sub_heater is not None:
@@ -205,7 +207,8 @@ def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_price
                                          financing_cost=financing_cost,
                                          demolition_rate=demolition_rate,
                                          full_output=full_output,
-                                         premature_replacement=premature_replacement)
+                                         premature_replacement=premature_replacement,
+                                         supply=supply)
 
         output.update({year: o})
         if full_output:
@@ -319,22 +322,27 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
     path = os.path.join('project', 'output', 'ResIRF')
     config = CONFIG_TEST
-    buildings, energy_prices, taxes, cost_heater, cost_insulation, lifetime_heater, demolition_rate, flow_built, post_inputs, p_heater, p_insulation, technical_progress, financing_cost, premature_replacement = ini_res_irf(
-        path=path,
-        config=config)
+    buildings, inputs_dynamics, policies_heater, policies_insulation = ini_res_irf(path=path, config=config)
 
     sub_heater = 0
     sub_insulation = 0
 
     concat_output, concat_stock = DataFrame(), DataFrame()
-    output, stock, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes,
-                                              cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs,
-                                              p_heater,
-                                              p_insulation, sub_design, financing_cost, climate=2006, smooth=False,
-                                              efficiency_hour=False, demolition_rate=demolition_rate,
+    output, stock, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end,
+                                              inputs_dynamics['energy_prices'], inputs_dynamics['taxes'],
+                                              inputs_dynamics['cost_heater'], inputs_dynamics['cost_insulation'],
+                                              inputs_dynamics['lifetime_heater'],
+                                              inputs_dynamics['flow_built'],
+                                              inputs_dynamics['post_inputs'],
+                                              policies_heater,
+                                              policies_insulation, sub_design, inputs_dynamics['financing_cost'],
+                                              climate=2006, smooth=False,
+                                              efficiency_hour=False, demolition_rate=inputs_dynamics['demolition_rate'],
                                               output_consumption=output_consumption, full_output=True, rebound=rebound,
-                                              technical_progress=technical_progress,
-                                              premature_replacement=premature_replacement)
+                                              technical_progress=inputs_dynamics['technical_progress'],
+                                              premature_replacement=inputs_dynamics['premature_replacement'],
+                                              supply=inputs_dynamics['supply']
+                                              )
 
     concat_output = concat((concat_output, output), axis=1)
 
@@ -347,4 +355,4 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=True, rebound=True, start=2020, end=2021, sub_design='efficiency_100')
+    run_simu(output_consumption=False, start=2020, end=2021, sub_design='efficiency_100')

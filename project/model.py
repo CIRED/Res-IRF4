@@ -238,8 +238,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
                      'health_cost', 'income']
 
     inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
-    inputs_dynamics = initialize(
-        inputs, stock, year, taxes, path=path, config=config)
+    inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': inputs_dynamics['buildings'],
               'income': inputs['income'],
               'energy_prices': inputs_dynamics['energy_prices'],
@@ -330,7 +329,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
-                   exogenous_social=None, full_output=True, premature_replacement=None, supply=False):
+                   exogenous_social=None, full_output=True, premature_replacement=None, supply=None):
     """Update stock vintage due to renovation, demolition and construction.
 
 
@@ -457,7 +456,7 @@ def res_irf(config, path):
             years.append(config['end'] - 1)
 
         if inputs_dynamics['supply'] is not None:
-            inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['markup']
+            inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['markup_insulation']
 
         for k, year in enumerate(years):
             start = time()
