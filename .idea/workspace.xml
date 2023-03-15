@@ -4,11 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e14dde23-e7b0-4477-9084-c52edf5570a7" name="Changes" comment="removing debug mode">
+    <list default="true" id="e14dde23-e7b0-4477-9084-c52edf5570a7" name="Changes" comment="cleaning coupling">
+      <change afterPath="$PROJECT_DIR$/project/input/policies/coupling/list_policies_alternative.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/building.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/coupling.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/coupling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/config/coupling/config_coupling_simple_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/config/coupling/config_coupling_simple_test.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_alternative.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_current.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_current.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_test.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -83,7 +87,7 @@
       <recent name="$PROJECT_DIR$/project/config/coupling_energy/old" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.coupling">
+  <component name="RunManager" selected="Python.coupling/config_coupling_simple_test.json">
     <configuration name="config" type="PythonConfigurationType" factoryName="Python">
       <module name="Res-IRF4" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -546,14 +550,7 @@
       <workItem from="1678179072672" duration="113632000" />
       <workItem from="1678694530856" duration="27738000" />
       <workItem from="1678780255521" duration="30995000" />
-      <workItem from="1678831128803" duration="13230000" />
-    </task>
-    <task id="LOCAL-00345" summary="add configuration to launch run coupling">
-      <created>1677603321397</created>
-      <option name="number" value="00345" />
-      <option name="presentableId" value="LOCAL-00345" />
-      <option name="project" value="LOCAL" />
-      <updated>1677603321398</updated>
+      <workItem from="1678831128803" duration="19600000" />
     </task>
     <task id="LOCAL-00346" summary="new input sfec">
       <created>1677608960962</created>
@@ -891,7 +888,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678873163637</updated>
     </task>
-    <option name="localTasksCounter" value="394" />
+    <task id="LOCAL-00394" summary="cleaning coupling">
+      <created>1678877919734</created>
+      <option name="number" value="00394" />
+      <option name="presentableId" value="LOCAL-00394" />
+      <option name="project" value="LOCAL" />
+      <updated>1678877919734</updated>
+    </task>
+    <option name="localTasksCounter" value="395" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -912,7 +916,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="same color for each scenario in all graphs&#10;change carbon tax color&#10;add images to summary&#10;change name in CBA scenarios" />
     <MESSAGE value="correcting bugs" />
     <MESSAGE value="add energy poverty in make_summary&#10;correcting bugs make_summary" />
     <MESSAGE value="corrected bug calibration - resirf" />
@@ -937,7 +940,8 @@
     <MESSAGE value="reorganize config files" />
     <MESSAGE value="integrating supply from insulation" />
     <MESSAGE value="removing debug mode" />
-    <option name="LAST_COMMIT_MESSAGE" value="removing debug mode" />
+    <MESSAGE value="cleaning coupling" />
+    <option name="LAST_COMMIT_MESSAGE" value="cleaning coupling" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1008,7 +1012,7 @@
     <SUITE FILE_PATH="coverage/Res_IRF4$config_config_sfec.coverage" NAME="config/config_sfec_2030 Coverage Results" MODIFIED="1676890650861" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$obligation_designlaw.coverage" NAME="obligation/designlaw Coverage Results" MODIFIED="1674384342635" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$test_obligation.coverage" NAME="obligation/design Coverage Results" MODIFIED="1672340691552" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Res_IRF4$coupling_config_coupling_simple_test_json.coverage" NAME="coupling/config_coupling_simple_test.json Coverage Results" MODIFIED="1678877099809" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Res_IRF4$coupling_config_coupling_simple_test_json.coverage" NAME="coupling/config_coupling_simple_test.json Coverage Results" MODIFIED="1678884093410" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$a.coverage" NAME="a Coverage Results" MODIFIED="1659534803767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$mpr.coverage" NAME="mpr Coverage Results" MODIFIED="1659901839375" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$runs_test.coverage" NAME="runs/test Coverage Results" MODIFIED="1660123352389" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
@@ -1019,7 +1023,7 @@
     <SUITE FILE_PATH="coverage/Res_IRF4$test_config__1_.coverage" NAME="test/config (1) Coverage Results" MODIFIED="1676450373619" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$test.coverage" NAME="test Coverage Results" MODIFIED="1659349046467" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$read_input.coverage" NAME="read_input Coverage Results" MODIFIED="1659015884715" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/project" />
-    <SUITE FILE_PATH="coverage/Res_IRF4$coupling.coverage" NAME="coupling Coverage Results" MODIFIED="1678877856093" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Res_IRF4$coupling.coverage" NAME="coupling Coverage Results" MODIFIED="1678884024873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$ongoing_global_renovation_json.coverage" NAME="ongoing/global_renovation.json Coverage Results" MODIFIED="1674897551523" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$sensitivity.coverage" NAME="sensitivity Coverage Results" MODIFIED="1675158559564" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$thermal.coverage" NAME="thermal Coverage Results" MODIFIED="1673628167611" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/project" />

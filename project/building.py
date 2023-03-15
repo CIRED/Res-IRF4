@@ -2487,7 +2487,7 @@ class AgentBuildings(ThermalBuildings):
                     mark_up_target = _supply['markup_insulation']
                     number_firms = fsolve(lambda x: mark_up(cost_renovation * self._markup_insulation_store, u=expected_utility, n=x) - mark_up_target, 3)[0]
                     self.number_firms_insulation = number_firms
-
+                    self.logger.info('Number of firms insulation market: {:.1f}'.format(self.number_firms_insulation))
 
                 root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation * self._markup_insulation_store,
                                                     args=(self.number_firms_insulation, cost_renovation, expected_utility),

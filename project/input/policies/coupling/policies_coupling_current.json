@@ -25,9 +25,9 @@
     "mpr_serenite_low_income": {
       "start": 2019,
       "end": 2025,
-      "insulation": "project/input/policies/sfec/mpr_serenite_low_income_sfec.csv",
-      "cap": "project/input/policies/sfec/mpr_serenite_cap_sfec.csv",
-      "growth_insulation": "project/input/policies/sfec/growth_mpr_serenite_low_income.csv",
+      "insulation": "project/input/policies/mpr_serenite_low_income.csv",
+      "cap": "project/input/policies/mpr_serenite_cap.csv",
+      "growth_insulation": null,
       "non_cumulative": [
         "cite",
         "mpr"
@@ -38,8 +38,8 @@
     "mpr_multifamily": {
       "start": 2019,
       "end": 2025,
-      "insulation": "project/input/policies/sfec/mpr_multifamily_sfec.csv",
-      "cap": "project/input/policies/sfec/mpr_multifamily_cap_sfec.csv",
+      "insulation": "project/input/policies/policies/mpr_multifamily.csv",
+      "cap": "project/input/policies/policies/mpr_multifamily_cap.csv",
       "non_cumulative": [
         "cite",
         "mpr"
