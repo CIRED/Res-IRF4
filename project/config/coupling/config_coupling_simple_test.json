@@ -4,7 +4,7 @@
     "activated": false
   },
   "Reference": {
-    "end": 2051,
+    "end": 2022,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -47,7 +47,7 @@
     "switch_heater": {
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-      "premature_replacement": null,
+      "premature_replacement": 3,
       "information_rate": 0.333
     },
     "technical": {
@@ -98,7 +98,7 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/coupling/policies_coupling_current.json",
+    "policies": "project/input/policies/coupling/policies_coupling_test.json",
     "simple": {
       "quintiles": true,
       "surface": false,
@@ -119,7 +119,8 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 
 }

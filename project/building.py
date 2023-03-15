@@ -1710,9 +1710,8 @@ class AgentBuildings(ThermalBuildings):
         # adding heating system final equal to heating system because no switch
         flow_premature_replacement = 0
         if premature_replacement is not None:
-            alpha = 1
 
-            def premature_func(x, alpha=1):
+            def premature_func(x, alpha=10**-3):
                 return 1 / (1 + exp(-alpha * x))
 
             alpha = fsolve(lambda a: premature_func(-500, alpha=a) - 0.05, 10**-3)[0]
@@ -1724,39 +1723,39 @@ class AgentBuildings(ThermalBuildings):
             time = time[(time < 10)].dropna(how='all')"""
             npv = - cost_total + subsidies_total + 3 * bill_saved
             npv = npv.loc[:, [i for i in npv.columns if i in self._resources_data['index']['Heat pumps']]]
+            npv = npv.dropna(axis=1, how='all')
 
             if supply is not None:
                 if self.number_firms_heater is None:
                     self._markup_heater_store = supply['markup_heater']
-                bill = bill_saved.loc[:, time.columns]
                 cost = cost_heater['Electricity-Heat pump water']
                 weight = stock / stock.sum()
-                print(time.describe())
 
-                def mark_up(price, u=npv, n=2, cost=cost, bill=bill, weight=weight):
-                    t, bill = u.squeeze(), bill.squeeze()
-                    t += (price - cost) / bill
-                    proba = premature_func(-npv)
-                    # proba = proba.reindex(weight.index).fillna(0)
+                def mark_up(price, u=npv, n=2, cost=cost, weight=weight):
+                    u = u.squeeze()
+                    u += - (price - cost)
+                    proba = premature_func(u, alpha=alpha)
+                    proba = proba.reindex(weight.index).fillna(0)
                     elasticity = - alpha * price * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
                     return 1 / (1 + 1 / (elasticity_global * n))
 
-                if self.number_firms_heater is None:
+                if False and self.number_firms_heater is None:
 
                     mark_up_target = supply['markup_heater']
                     number_firms = fsolve(
-                        lambda x: mark_up(cost * self._markup_heater_store, t=time, n=x) - mark_up_target, 3)[0]
+                        lambda x: mark_up(cost * self._markup_heater_store, u=npv.copy(), n=x) - mark_up_target, 3)[0]
 
                     self.number_firms_heater = number_firms
                     self.logger.info('Number of firms heater market: {:.1f}'.format(number_firms))
 
-                def cournot_equilibrium(price, n=self.number_firms_heater, cost=cost, t=time.copy()):
-                    return price / cost - mark_up(price, t=t, n=n)
+                self.number_firms_heater = 2
+
+                def cournot_equilibrium(price, n=self.number_firms_heater, cost=cost, u=npv.copy()):
+                    return price / cost - mark_up(price, u=u, n=n)
 
                 if self.year == 2020:
-                    # x = concat((elasticity, proba, bill, time), axis=1, keys=['elasticity', 'proba', 'bill', 'time'])
-
+                    # x = concat((elasticity, proba, npv), axis=1, keys=['elasticity', 'proba', 'npv'])
                     print('break')
 
                 price = fsolve(cournot_equilibrium, cost * self._markup_heater_store)[0]
@@ -1766,19 +1765,19 @@ class AgentBuildings(ThermalBuildings):
                     self.logger.info('Equilibrium heater found. Markup: {:.2f}'.format(markup))
                 else:
                     self.logger.info('ERROR No Equilibrium. Keeping the same markup. Markup: {:.2f}'.format(self._markup_heater_store))
-                time += (self._markup_heater_store - 1) / bill
 
-            flow_replace = premature_func(time, x0=premature_replacement['time']) * premature_replacement['information_rate']
+            proba_replace = premature_func(npv, alpha=alpha) * premature_replacement['information_rate']
+            proba_replace.dropna(inplace=True)
+            to_replace = (stock[flow_replace.index] * proba_replace.T).T
 
-            if not time.empty:
+            if to_replace.sum().sum() > 1:
                 # TODO: does not work if multiple heater
-                to_replace = stock[time.index] * flow_replace.squeeze()
                 flow_premature_replacement = to_replace.sum()
 
-                flow_replace = flow_replace.idxmin(axis=1).rename('Heating system final')
+                flow_replace = to_replace.idxmin(axis=1).rename('Heating system final')
                 flow_replace = concat((flow_replace, to_replace), axis=1)
                 stock_replacement_premature = flow_replace.set_index('Heating system final', append=True).squeeze(axis=1)
-                stock = stock - to_replace.reindex(stock.index).fillna(0)
+                stock = stock - to_replace.squeeze().reindex(stock.index).fillna(0)
                 stock_replacement = concat((stock_replacement, stock_replacement_premature), axis=0)
                 stock_replacement = stock_replacement.groupby(stock_replacement.index.names).sum()
 
