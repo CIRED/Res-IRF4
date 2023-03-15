@@ -38,8 +38,8 @@
     "mpr_multifamily": {
       "start": 2019,
       "end": 2025,
-      "insulation": "project/input/policies/policies/mpr_multifamily.csv",
-      "cap": "project/input/policies/policies/mpr_multifamily_cap.csv",
+      "insulation": "project/input/policies/mpr_multifamily.csv",
+      "cap": "project/input/policies/mpr_multifamily_cap.csv",
       "non_cumulative": [
         "cite",
         "mpr"

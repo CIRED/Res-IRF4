@@ -1713,7 +1713,7 @@ class AgentBuildings(ThermalBuildings):
             alpha = 1
 
             def premature_func(x, x0=3, alpha=alpha):
-                return 1 / (1 + exp(alpha * (x - x0)))
+                return 1 / (1 + exp(-alpha * (x - x0)))
 
             bill_saved[bill_saved <= 0] = float('nan')
             time = (cost_total - subsidies_total) / bill_saved
@@ -1728,10 +1728,10 @@ class AgentBuildings(ThermalBuildings):
                 cost = cost_heater['Electricity-Heat pump water']
                 weight = stock / stock.sum()
 
-                def mark_up(price, u=-time, n=2, cost=cost, bill=bill, weight=weight):
+                def mark_up(price, u=time, n=2, cost=cost, bill=bill, weight=weight):
                     u, bill = u.squeeze(), bill.squeeze()
-                    u -= (price - cost) / bill
-                    proba = premature_func(-u)
+                    u += (price - cost) / bill
+                    proba = premature_func(u)
                     elasticity = - alpha / bill * price * (1 - proba)
                     elasticity = elasticity.reindex(weight.index).fillna(0)
                     elasticity_global = (elasticity * weight).sum()
@@ -1751,6 +1751,8 @@ class AgentBuildings(ThermalBuildings):
                     return price / cost - mark_up(price, u=u, n=n)
 
                 if self.year == 2020:
+                    x = concat((elasticity, proba, bill, time), axis=1, keys=['elasticity', 'proba', 'bill', 'time'])
+
                     print('break')
 
                 price = fsolve(cournot_equilibrium, cost * self._markup_heater_store)[0]
