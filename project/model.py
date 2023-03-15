@@ -297,7 +297,6 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                logger=logger,
                                quintiles=config['simple']['quintiles'],
                                financing_cost=config.get('financing_cost'),
-                               debug_mode=config.get('debug_mode'),
                                threshold=config['renovation'].get('threshold'),
                                resources_data=resources_data,
                                expected_utility=config['renovation'].get('expected_utility'))
@@ -322,7 +321,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         'financing_cost': parsed_inputs.get('input_financing'),
         'technical_progress': technical_progress,
         'consumption_ini': parsed_inputs['consumption_ini'],
-        'supply': parsed_inputs['supply']
+        'supply': parsed_inputs['supply'],
+        'premature_replacement': parsed_inputs['premature_replacement']
     }
     return inputs_dynamic
 
@@ -456,6 +456,9 @@ def res_irf(config, path):
         if config['end'] - 1 not in years:
             years.append(config['end'] - 1)
 
+        if inputs_dynamics['supply'] is not None:
+            inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['markup']
+
         for k, year in enumerate(years):
             start = time()
 
@@ -477,9 +480,6 @@ def res_irf(config, path):
             if isinstance(f_built, pd.DataFrame):
                 f_built = f_built.sum(axis=1).rename(year)
 
-            if inputs_dynamics['supply'] is not None:
-                inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['markup']
-
             if technical_progress is not None:
                 if technical_progress.get('insulation') is not None:
                     inputs_dynamics['cost_insulation'] *= (1 + technical_progress['insulation'].loc[year])**step
@@ -494,7 +494,7 @@ def res_irf(config, path):
                                              calib_intensive=inputs_dynamics['calibration_intensive'],
                                              calib_renovation=inputs_dynamics['calibration_renovation'],
                                              ms_heater=inputs_dynamics['ms_heater'],
-                                             premature_replacement=config['switch_heater'].get('premature_replacement'),
+                                             premature_replacement=inputs_dynamics['premature_replacement'],
                                              financing_cost=inputs_dynamics['financing_cost'],
                                              supply=inputs_dynamics['supply'],
                                              district_heating=inputs.get('district_heating'),

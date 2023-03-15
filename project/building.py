@@ -68,7 +68,6 @@ class ThermalBuildings:
     consumption_ini: Series
     path: str, optional
     year: int, default: 2018
-    debug_mode: bool, default: False
 
     Attributes:
     ----------
@@ -76,9 +75,7 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 debug_mode=False, resources_data=None):
-
-        self._debug_mode = debug_mode
+                 resources_data=None):
 
         if isinstance(stock, MultiIndex):
             stock = Series(index=stock, dtype=float)
@@ -791,14 +788,11 @@ class AgentBuildings(ThermalBuildings):
     performance_insulation: dict
     path: str, optional
     year: int, default: 2018
-    debug_mode: bool, default: False
     demolition_rate: float, default 0.0
     endogenous: bool, default True
     number_exogenous: float or int, default 300000
     expected_utility: {'market_share', 'max}
     logger: default
-    debug_mode: bool, default False
-        Detailed output.
     calib_scale: bool, default True
     full_output: None
     quintiles: bool or None, default None
@@ -811,11 +805,11 @@ class AgentBuildings(ThermalBuildings):
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
                  performance_insulation, path=None, year=2018,
                  endogenous=True, exogenous=None, expected_utility=None,
-                 logger=None, debug_mode=False, calib_scale=True,
+                 logger=None, calib_scale=True,
                  quintiles=None, financing_cost=True, threshold=None, resources_data=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
-                         debug_mode=debug_mode, resources_data=resources_data)
+                         resources_data=resources_data)
 
         if logger is None:
             logger = logging.getLogger()
@@ -866,7 +860,7 @@ class AgentBuildings(ThermalBuildings):
         self._renovation_store = {}
         self._condition_store = None
 
-        self._markup_store = 1
+        self._markup_insulation_store = 1
 
         self._annuities_store = {'investment_owner': Series(dtype=float),
                                  'rent_tenant': Series(dtype=float),
@@ -901,7 +895,6 @@ class AgentBuildings(ThermalBuildings):
         self._replaced_by = None
         self._only_heater = None
         self._flow_obligation = {}
-        self._markup_store = 1
 
         index = self.stock.droplevel('Income tenant').index
         index = index[~index.duplicated()]
@@ -1567,7 +1560,6 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
 
-
         index = stock.index
 
         list_heater = list(stock.index.get_level_values('Heating system').unique().union(cost_heater.index))
@@ -1716,33 +1708,26 @@ class AgentBuildings(ThermalBuildings):
                        save=os.path.join(self.path_calibration, 'premature_replacement.png'))
 
         # adding heating system final equal to heating system because no switch
-        information_rate = 1/3
         flow_premature_replacement = 0
         if premature_replacement is not None:
 
-            def premature_func(x, x0, alpha):
+            def premature_func(x, x0=3, alpha=1):
                 return 1 / (1 + exp(alpha * (x - x0)))
-
-            def calibration_premature(x, stock, time, mean=3, std=1):
-                proba = premature_func(time, x[0], x[1])
-                replace = proba * stock.reindex(proba.index)
-                mean_calc = (replace * time).sum() / replace.sum()
-                std_calc = (((time - mean) ** 2 * replace).sum() / (replace.sum() - 1)) ** (1 / 2)
-                return mean_calc - mean, std_calc - std
 
             bill_saved[bill_saved <= 0] = float('nan')
             time = (cost_total - subsidies_total) / bill_saved
             time = time.loc[:, [i for i in time.columns if i in self._resources_data['index']['Heat pumps']]]
-            time = time.dropna(axis=1, how='all').squeeze()
-            time = time[time < 10]
-            fsolve(calibration_premature, (3, 1), args=(stock, time))
-            calibration_premature((3, 0.5), stock, time)
+            time = time.dropna(axis=1, how='all')
 
+            time = time[(time < 10)].dropna(how='all')
 
-            flow_replace = time[(time < premature_replacement)]
-            if not flow_replace.empty:
-                to_replace = stock[flow_replace.index]
+            flow_replace = premature_func(time, x0=premature_replacement['time']) * premature_replacement['information_rate']
+
+            if not time.empty:
+                # TODO: does not work if multiple heater
+                to_replace = stock[time.index] * flow_replace.squeeze()
                 flow_premature_replacement = to_replace.sum()
+
                 flow_replace = flow_replace.idxmin(axis=1).rename('Heating system final')
                 flow_replace = concat((flow_replace, to_replace), axis=1)
                 stock_replacement_premature = flow_replace.set_index('Heating system final', append=True).squeeze(axis=1)
@@ -2375,9 +2360,13 @@ class AgentBuildings(ThermalBuildings):
             return retrofit_proba
 
         def apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _stock=None,
-                                      _supply=True):
+                                        _supply=None):
+            if self.number_firms is None and _supply is not None:
+                print('set markup')
+                self._markup_insulation_store = _supply['markup_insulation']
 
-            _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total,
+            _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total,
+                                                                _cost_total * self._markup_insulation_store,
                                                                 _cost_financing=_cost_financing)
 
             # _bill, _subsidies, _cost = None, None, None
@@ -2392,49 +2381,33 @@ class AgentBuildings(ThermalBuildings):
 
             if _supply:
                 _investment_insulation = (_cost_total.reindex(_market_share.index) * _market_share).sum(axis=1)
-                _bill_saved_insulation = (_bill_saved.reindex(_market_share.index) * _market_share).sum(axis=1)
-                _subsidies_insulation = (_subsidies_total.reindex(_market_share.index) * _market_share).sum(axis=1)
-
-                # bill saved == 0 should have been removed in market_share calculation
-                idx = _bill_saved_insulation[_bill_saved_insulation <= 0].index
-                _investment_insulation.drop(idx, inplace=True)
-                _bill_saved_insulation.drop(idx, inplace=True)
-                _subsidies_insulation.drop(idx, inplace=True)
-
-                utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved_insulation.index) * _bill_saved_insulation / 1000
-
-                utility_subsidies = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_insulation.index).rename(None) * _subsidies_insulation / 1000
-
-                utility_constant = reindex_mi(self.constant_insulation_extensive, utility_bill_saving.index)
 
                 pref_investment = reindex_mi(self.preferences_insulation['cost'], _investment_insulation.index).rename(None)
-                utility_investment = (_investment_insulation * pref_investment) / 1000
 
-                utility = utility_subsidies + utility_bill_saving + utility_constant + utility_investment
                 weight = stock / stock.sum()
 
                 cost_renovation = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
-                def price_elasticity_demand(price, u=utility):
+                def price_elasticity_demand(price, u=expected_utility):
                     u = u + pref_investment * (price/cost_renovation) / 1000
                     proba = 1 / (1 + exp(-u))
                     elasticity = pref_investment * price / 1000 * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
                     return elasticity_global
 
-                def price_elasticity_demand_bis(price, u=utility):
+                def price_elasticity_demand_bis(price, u=expected_utility):
                     proba = 1 / (1 + exp(-u))
                     elasticity = pref_investment * price / 1000 * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
                     return elasticity_global
 
-                def mark_up(price, u=utility, n=2):
+                def mark_up(price, u=expected_utility, n=2):
                     proba = 1 / (1 + exp(-u))
                     elasticity = pref_investment * price / 1000 * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
                     return 1 / (1 + 1 / (elasticity_global * n))
 
-                def cournot_equilibrium(price, n=1, cost_renovation=cost_renovation, u=utility):
+                def cournot_equilibrium(price, n=1, cost_renovation=cost_renovation, u=expected_utility):
                     return price / cost_renovation - mark_up(price, u=u, n=n)
 
                 """temp_elasticity, temp_margin, temp_markup, temp_feedback = dict(), dict(), dict(), dict()
@@ -2471,40 +2444,37 @@ class AgentBuildings(ThermalBuildings):
                         make_plot(pd.Series(temp), 'Price (Euro)', format_y=lambda y, _: '{:,.2f}'.format(y),
                                   save=os.path.join(self.path_calibration, 'price_cournot'))
 
-                    mark_up_target = _supply['markup']
-                    number_firms = fsolve(lambda x: mark_up(cost_renovation * mark_up_target, u=utility, n=x) - mark_up_target, 1)[0]
+                    mark_up_target = _supply['markup_insulation']
+                    number_firms = fsolve(lambda x: mark_up(cost_renovation * self._markup_insulation_store, u=expected_utility, n=x) - mark_up_target, 3)[0]
                     self.number_firms = number_firms
 
                 flow_renovation_before = (_renovation_rate * _stock).sum() / 10**3
                 cost_renovation_before = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
 
-                root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation * _supply['markup'],
-                                                    args=(self.number_firms, cost_renovation, utility),
+                root, info_dict, ier, mess = fsolve(cournot_equilibrium, cost_renovation * self._markup_insulation_store,
+                                                    args=(self.number_firms, cost_renovation, expected_utility),
                                                     full_output=True)
                 print(flow_renovation_before)
                 print(cost_renovation)
                 print(self.number_firms)
-                proba = 1 / (1 + exp(-utility))
-                elasticity = pref_investment * cost_renovation * _supply['markup'] / 1000 * (1 - proba)
+                proba = 1 / (1 + exp(-expected_utility))
+                elasticity = pref_investment * cost_renovation * _supply['markup_insulation'] / 1000 * (1 - proba)
                 elasticity_global = (elasticity * weight).sum()
                 print(elasticity_global)
 
-
                 mu = root[0] / cost_renovation
                 if mu != 0:
-                    self._markup_store = mu
+                    self._markup_insulation_store = mu
                     self.logger.info('Equilibrium found. Markup: {:.2f}'.format(mu))
 
-                    pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
-                    utility_investment = (_cost_total.T * pref_investment).T / 1000
-
-                    expected_utility = log(exp(_utility_intensive + (mu - 1) * utility_investment).sum(axis=1))
-
+                    _market_share, _utility_intensive = to_market_share(_bill_saved, _subsidies_total,
+                                                                        _cost_total * self._markup_insulation_store,
+                                                                        _cost_financing=_cost_financing)
+                    expected_utility = log(exp(_utility_intensive).sum(axis=1))
                     _renovation_rate = to_renovation_rate(expected_utility)
-                    flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
-                    cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
+
                 else:
-                    self.logger.info('ERROR No Equilibrium')
+                    self.logger.info('ERROR No Equilibrium. Keeping the same markup')
                     """
                     for i in range(50):
                         print((1 + i / 10))
@@ -2512,6 +2482,10 @@ class AgentBuildings(ThermalBuildings):
                         print(mark_up(cost_renovation * (1 + i / 10), u=utility, n=self.number_firms))
 
                     """
+
+                flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
+                cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()
+
             return _market_share, _renovation_rate
 
         def apply_rational_choice(_consumption_saved, _subsidies_total, _cost_total):
@@ -2800,7 +2774,7 @@ class AgentBuildings(ThermalBuildings):
             self.logger.info('Calibration intensive and renovation rate')
 
             if _supply is not None:
-                _cost_total *= _supply['markup']
+                _cost_total *= _supply['markup_insulation']
 
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
             ms_insulation_ini = _calib_intensive['ms_insulation_ini']
@@ -3225,12 +3199,12 @@ class AgentBuildings(ThermalBuildings):
             'consumption_saved_households': consumption_saved,
             'consumption_saved_actual_households': consumption_saved_actual,
             'consumption_saved_no_rebound_households': consumption_saved_no_rebound,
-            'cost_households': cost_insulation * self._markup_store,
+            'cost_households': cost_insulation * self._markup_insulation_store,
             'cost_financing_households': cost_financing,
             'vta_households': vta_insulation,
             'subsidies_households': subsidies_total,
             'subsidies_details_households': subsidies_details,
-            'cost_component': cost_insulation_raw * self.surface_insulation * (1 + tax) * self._markup_store,
+            'cost_component': cost_insulation_raw * self.surface_insulation * (1 + tax) * self._markup_insulation_store,
             'debt_households': amount_debt,
             'saving_households': amount_saving,
             'discount': discount
@@ -3895,7 +3869,7 @@ class AgentBuildings(ThermalBuildings):
             renovation = replaced_by_grouped.sum().sum()
             output['Retrofit (Thousand households)'] = (renovation + self._only_heater.sum()) / 10 ** 3 / step
             output['Renovation (Thousand households)'] = renovation / 10 ** 3 / step
-            output['Markup insulation'] = self._markup_store
+            output['Markup insulation'] = self._markup_insulation_store
 
             if self._flow_obligation:
                 temp = pd.Series(self._flow_obligation)

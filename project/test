@@ -1189,3 +1189,32 @@ def select_output(output):
                 utility_renovate = utility_investment + utility_bill_saving + utility_subsidies
             else:
                 utility_renovate = expected_utility
+
+                                """
+                _bill_saved_insulation = (_bill_saved.reindex(_market_share.index) * _market_share).sum(axis=1)
+                _subsidies_insulation = (_subsidies_total.reindex(_market_share.index) * _market_share).sum(axis=1)
+
+                # bill saved == 0 should have been removed in market_share calculation
+                idx = _bill_saved_insulation[_bill_saved_insulation <= 0].index
+                _investment_insulation.drop(idx, inplace=True)
+                _bill_saved_insulation.drop(idx, inplace=True)
+                _subsidies_insulation.drop(idx, inplace=True)
+
+                utility_bill_saving = reindex_mi(self.preferences_insulation['bill_saved'], _bill_saved_insulation.index) * _bill_saved_insulation / 1000
+
+                utility_subsidies = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_insulation.index).rename(None) * _subsidies_insulation / 1000
+
+                utility_constant = reindex_mi(self.constant_insulation_extensive, utility_bill_saving.index)
+
+                utility_investment = (_investment_insulation * pref_investment) / 1000
+
+                utility = utility_subsidies + utility_bill_saving + utility_constant + utility_investment"""
+
+
+                """pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
+                utility_investment = (_cost_total.T * pref_investment).T / 1000
+                expected_utility = log(exp(_utility_intensive + (mu - 1) * utility_investment).sum(axis=1))"""
+                """pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
+                _utility_intensive += (self._markup_store - 1) * (_cost_total.T * pref_investment).T / 1000
+                expected_utility = log(exp(_utility_intensive).sum(axis=1))
+                _renovation_rate = to_renovation_rate(expected_utility)"""

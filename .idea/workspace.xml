@@ -4,13 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e14dde23-e7b0-4477-9084-c52edf5570a7" name="Changes" comment="change retrofit to renovation">
+    <list default="true" id="e14dde23-e7b0-4477-9084-c52edf5570a7" name="Changes" comment="integrating supply from insulation">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/building.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/config/coupling/config_coupling_simple_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/config/coupling/config_coupling_simple_test.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/config/test/temp.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/config/test/temp.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/project/input/policies/coupling/policies_coupling_test.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/project/read_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/project/read_input.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/project/test" beforeDir="false" afterPath="$PROJECT_DIR$/project/test" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,7 +60,7 @@
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/lucas/PycharmProjects/Res-IRF4/project/input/policies/sfec&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/lucas/PycharmProjects/Res-IRF4/project/input/policies/coupling&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -71,11 +73,11 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/project/input/policies/coupling" />
       <recent name="$PROJECT_DIR$/project/input/policies/sfec" />
       <recent name="$PROJECT_DIR$/project/config" />
       <recent name="$PROJECT_DIR$/project/input/policies" />
       <recent name="$PROJECT_DIR$/project/config/test" />
-      <recent name="$PROJECT_DIR$/project/input/stock" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/project/input/policies/coupling" />
@@ -547,14 +549,8 @@
       <workItem from="1678177057737" duration="1999000" />
       <workItem from="1678179072672" duration="113632000" />
       <workItem from="1678694530856" duration="27738000" />
-      <workItem from="1678780255521" duration="23530000" />
-    </task>
-    <task id="LOCAL-00343" summary="add inputs SFEC">
-      <created>1677591326741</created>
-      <option name="number" value="00343" />
-      <option name="presentableId" value="LOCAL-00343" />
-      <option name="project" value="LOCAL" />
-      <updated>1677591326741</updated>
+      <workItem from="1678780255521" duration="30995000" />
+      <workItem from="1678831128803" duration="8354000" />
     </task>
     <task id="LOCAL-00344" summary="try/except for mistake on Florian computer">
       <created>1677591922653</created>
@@ -892,7 +888,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678784364167</updated>
     </task>
-    <option name="localTasksCounter" value="392" />
+    <task id="LOCAL-00392" summary="reorganize config files">
+      <created>1678810485867</created>
+      <option name="number" value="00392" />
+      <option name="presentableId" value="LOCAL-00392" />
+      <option name="project" value="LOCAL" />
+      <updated>1678810485867</updated>
+    </task>
+    <option name="localTasksCounter" value="393" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -913,8 +916,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="adding plot table" />
-    <MESSAGE value="add stock.png" />
     <MESSAGE value="make summary update" />
     <MESSAGE value="same color for each scenario in all graphs&#10;change carbon tax color&#10;add images to summary&#10;change name in CBA scenarios" />
     <MESSAGE value="correcting bugs" />
@@ -938,7 +939,9 @@
     <MESSAGE value="correcting bugs read_input" />
     <MESSAGE value="reorganize input" />
     <MESSAGE value="change retrofit to renovation" />
-    <option name="LAST_COMMIT_MESSAGE" value="change retrofit to renovation" />
+    <MESSAGE value="reorganize config files" />
+    <MESSAGE value="integrating supply from insulation" />
+    <option name="LAST_COMMIT_MESSAGE" value="integrating supply from insulation" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -950,18 +953,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/project/building.py</url>
-          <line>2929</line>
+          <line>2909</line>
           <option name="timeStamp" value="220" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/project/utils.py</url>
           <line>736</line>
           <option name="timeStamp" value="221" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/project/building.py</url>
-          <line>1736</line>
-          <option name="timeStamp" value="243" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -1009,7 +1007,7 @@
     <SUITE FILE_PATH="coverage/Res_IRF4$config_config_sfec.coverage" NAME="config/config_sfec_2030 Coverage Results" MODIFIED="1676890650861" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$obligation_designlaw.coverage" NAME="obligation/designlaw Coverage Results" MODIFIED="1674384342635" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$test_obligation.coverage" NAME="obligation/design Coverage Results" MODIFIED="1672340691552" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Res_IRF4$coupling_config_coupling_simple_test_json.coverage" NAME="coupling/config_coupling_simple_test.json Coverage Results" MODIFIED="1678806635712" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Res_IRF4$coupling_config_coupling_simple_test_json.coverage" NAME="coupling/config_coupling_simple_test.json Coverage Results" MODIFIED="1678872956094" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$a.coverage" NAME="a Coverage Results" MODIFIED="1659534803767" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$mpr.coverage" NAME="mpr Coverage Results" MODIFIED="1659901839375" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Res_IRF4$runs_test.coverage" NAME="runs/test Coverage Results" MODIFIED="1660123352389" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

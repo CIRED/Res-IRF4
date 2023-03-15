@@ -793,8 +793,16 @@ def parse_inputs(inputs, taxes, config, stock):
     supply = None
     if config.get('supply') is not None:
         if config['supply']['activated']:
-            supply = {'markup': config['supply']['markup']}
+            supply = {'markup_heater': config['supply']['markup_heater'],
+                      'markup_insulation': config['supply']['markup_insulation']
+                      }
     parsed_inputs.update({'supply': supply})
+
+    premature_replacement = None
+    if config['switch_heater'].get('premature_replacement') is not None:
+        premature_replacement = {'time': config['switch_heater']['premature_replacement'],
+                                 'information_rate': config['switch_heater']['information_rate']}
+    parsed_inputs.update({'premature_replacement': premature_replacement})
 
     return parsed_inputs
 
