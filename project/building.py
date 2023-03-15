@@ -1689,7 +1689,7 @@ class AgentBuildings(ThermalBuildings):
 
         stock = stock - to_replace
 
-        if self.year == 2019 and self.path_calibration is not None:
+        if self.year == 2019 and self.path_calibration is not None and False:
             bill_saved[bill_saved <= 0] = float('nan')
             temp = {}
             for threshold in [3, 5, 10]:
@@ -1712,28 +1712,33 @@ class AgentBuildings(ThermalBuildings):
         if premature_replacement is not None:
             alpha = 1
 
-            def premature_func(x, x0=3, alpha=alpha):
-                return 1 / (1 + exp(-alpha * (x - x0)))
+            def premature_func(x, alpha=1):
+                return 1 / (1 + exp(-alpha * x))
+
+            alpha = fsolve(lambda a: premature_func(-500, alpha=a) - 0.05, 10**-3)[0]
 
             bill_saved[bill_saved <= 0] = float('nan')
-            time = (cost_total - subsidies_total) / bill_saved
+            """time = (cost_total - subsidies_total) / bill_saved
             time = time.loc[:, [i for i in time.columns if i in self._resources_data['index']['Heat pumps']]]
             time = time.dropna(axis=1, how='all')
-            time = time[(time < 10)].dropna(how='all')
+            time = time[(time < 10)].dropna(how='all')"""
+            npv = - cost_total + subsidies_total + 3 * bill_saved
+            npv = npv.loc[:, [i for i in npv.columns if i in self._resources_data['index']['Heat pumps']]]
 
             if supply is not None:
                 if self.number_firms_heater is None:
                     self._markup_heater_store = supply['markup_heater']
-                bill = bill_saved.loc[time.index, time.columns]
+                bill = bill_saved.loc[:, time.columns]
                 cost = cost_heater['Electricity-Heat pump water']
                 weight = stock / stock.sum()
+                print(time.describe())
 
-                def mark_up(price, u=time, n=2, cost=cost, bill=bill, weight=weight):
-                    u, bill = u.squeeze(), bill.squeeze()
-                    u += (price - cost) / bill
-                    proba = premature_func(u)
-                    elasticity = - alpha / bill * price * (1 - proba)
-                    elasticity = elasticity.reindex(weight.index).fillna(0)
+                def mark_up(price, u=npv, n=2, cost=cost, bill=bill, weight=weight):
+                    t, bill = u.squeeze(), bill.squeeze()
+                    t += (price - cost) / bill
+                    proba = premature_func(-npv)
+                    # proba = proba.reindex(weight.index).fillna(0)
+                    elasticity = - alpha * price * (1 - proba)
                     elasticity_global = (elasticity * weight).sum()
                     return 1 / (1 + 1 / (elasticity_global * n))
 
@@ -1741,17 +1746,16 @@ class AgentBuildings(ThermalBuildings):
 
                     mark_up_target = supply['markup_heater']
                     number_firms = fsolve(
-                        lambda x: mark_up(cost * self._markup_heater_store, u=-time,
-                                          n=x) - mark_up_target, 3)[0]
+                        lambda x: mark_up(cost * self._markup_heater_store, t=time, n=x) - mark_up_target, 3)[0]
 
                     self.number_firms_heater = number_firms
                     self.logger.info('Number of firms heater market: {:.1f}'.format(number_firms))
 
-                def cournot_equilibrium(price, n=self.number_firms_heater, cost=cost, u=-time):
-                    return price / cost - mark_up(price, u=u, n=n)
+                def cournot_equilibrium(price, n=self.number_firms_heater, cost=cost, t=time.copy()):
+                    return price / cost - mark_up(price, t=t, n=n)
 
                 if self.year == 2020:
-                    x = concat((elasticity, proba, bill, time), axis=1, keys=['elasticity', 'proba', 'bill', 'time'])
+                    # x = concat((elasticity, proba, bill, time), axis=1, keys=['elasticity', 'proba', 'bill', 'time'])
 
                     print('break')
 
@@ -4417,7 +4421,6 @@ class AgentBuildings(ThermalBuildings):
         if constant_insulation_extensive is not None:
             self.constant_insulation_extensive = constant_insulation_extensive.dropna()
 
-        self.scale = scale
         self.apply_scale(scale)
         self.threshold_indicator = threshold_indicator
 

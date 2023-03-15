@@ -641,7 +641,9 @@ def calibration_res_irf(path, config=None):
                                          ms_heater=inputs_dynamics['ms_heater'],
                                          financing_cost=inputs_dynamics['financing_cost'],
                                          demolition_rate=inputs_dynamics['demolition_rate'],
-                                         supply=config.get('supply'))
+                                         supply=inputs_dynamics['supply'],
+                                         premature_replacement=inputs_dynamics['premature_replacement'],
+                                         )
 
         output = pd.concat((output, o), axis=1)
         output.to_csv(os.path.join(buildings.path, 'output_calibration.csv'))

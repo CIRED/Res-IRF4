@@ -95,6 +95,7 @@ def ini_res_irf(path=None, config=None):
 
     return buildings, inputs_dynamics, policies_heater, policies_insulation
 
+
 def create_subsidies(sub_insulation, sub_design, start, end):
     """
 
@@ -355,4 +356,4 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=False, start=2020, end=2021, sub_design='efficiency_100')
+    run_simu(output_consumption=False, start=2020, end=2022, sub_design='efficiency_100')
