@@ -15,3 +15,6 @@
 /project/config/obligation/
 /project/config/policies/
 /project/config/sensitivity/
+/project/test
+/project/input/stock/buildingstock_sdes2018_medium_3.csv
+/project/analysis/
