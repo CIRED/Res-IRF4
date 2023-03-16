@@ -4,7 +4,7 @@
     "activated": false
   },
   "Reference": {
-    "end": 2022,
+    "end": 2031,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -108,7 +108,6 @@
       "current_policies": false,
       "income": false,
       "prices_constant": true,
-      "taxes_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler":  "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler":  "Natural gas-Performance boiler",
@@ -119,8 +118,7 @@
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
-  }
+    }
+ }
 
 }

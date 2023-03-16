@@ -84,6 +84,10 @@ def config2inputs(config=None, building_stock=None, end=None):
     stock = read_stock(config)
     inputs = read_inputs(config)
 
+    if config['simple'].get('emission_constant'):
+        inputs['carbon_emission'] = pd.concat([inputs['carbon_emission'].loc[config['start'], :]] * inputs['carbon_emission'].shape[0], axis=1,
+                                              keys=inputs['carbon_emission'].index).T
+
     if isinstance(config['policies'], str):
         config['policies'] = get_json(config['policies'])['policies']
 
