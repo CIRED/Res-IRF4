@@ -798,12 +798,14 @@ def parse_inputs(inputs, taxes, config, stock):
 
     parsed_inputs['input_financing'].update(config['financing_cost'])
 
-    supply = None
+    supply = {'insulation': None, 'heater': None}
     if config.get('supply') is not None:
-        if config['supply']['activated']:
-            supply = {'markup_heater': config['supply']['markup_heater'],
-                      'markup_insulation': config['supply']['markup_insulation']
-                      }
+        if config['supply']['activated_insulation']:
+            supply.update({'insulation': {'markup_insulation': config['supply']['markup_insulation']}})
+
+        if config['supply']['activated_heater']:
+            supply.update({'heater': {'markup_heater': config['supply']['markup_heater']}})
+
     parsed_inputs.update({'supply': supply})
 
     premature_replacement = None

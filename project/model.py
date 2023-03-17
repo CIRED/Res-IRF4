@@ -469,8 +469,8 @@ def res_irf(config, path):
         if config['end'] - 1 not in years:
             years.append(config['end'] - 1)
 
-        if inputs_dynamics['supply'] is not None:
-            inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['markup_insulation']
+        if inputs_dynamics['supply']['insulation'] is not None:
+            inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['insulation']['markup_insulation']
 
         for k, year in enumerate(years):
             start = time()

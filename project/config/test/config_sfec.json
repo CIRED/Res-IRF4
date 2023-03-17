@@ -134,6 +134,5 @@
       "no_natural_replacement": false
     },
     "calibration": "project/input/calibration/calibration.pkl"
-
   }
 }

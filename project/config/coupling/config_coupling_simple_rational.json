@@ -41,7 +41,7 @@
       "rational_behavior": {
         "activated": true,
         "social": false,
-        "calibration": false
+        "calibration": true
       }
     },
     "switch_heater": {

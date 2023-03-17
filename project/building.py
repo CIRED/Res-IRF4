@@ -2109,6 +2109,10 @@ class AgentBuildings(ThermalBuildings):
             if 'mpr_no_fg' in _list_conditions:
                 _condition.update({'mpr_no_fg': ~_certificate_before.isin(['G', 'F'])})
 
+            if 'heater_replacement' in _list_conditions:
+                _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)
+                _condition.update({'heater_replacement': _temp})
+
             if 'mpr_no_fg_heater_replacement' in _list_conditions:
                 _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)
                 _temp = _temp & reindex_mi(~_certificate_before.isin(['G', 'F']), _temp.index)
@@ -3561,7 +3565,7 @@ class AgentBuildings(ThermalBuildings):
         stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
                                         ms_heater=ms_heater, step=1, financing_cost=financing_cost,
                                         district_heating=district_heating, premature_replacement=premature_replacement,
-                                        prices_before=prices_before, supply=supply)
+                                        prices_before=prices_before, supply=supply['heater'])
 
         self.logger.info('Number of agents that can insulate: {:,.0f}'.format(stock.shape[0]))
         self.logger.info('Calculation insulation replacement')
@@ -3573,7 +3577,7 @@ class AgentBuildings(ThermalBuildings):
                                                                   financing_cost=financing_cost,
                                                                   exogenous_social=exogenous_social,
                                                                   prices_before=prices_before,
-                                                                  supply=supply, carbon_value=carbon_value)
+                                                                  supply=supply['insulation'], carbon_value=carbon_value)
 
         self.logger.info('Formatting and storing replacement')
         retrofit_rate = retrofit_rate.reindex(stock.index).fillna(0)

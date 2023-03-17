@@ -4,7 +4,7 @@
     "activated": false
   },
   "Reference": {
-    "end": 2031,
+    "end": 2025,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -16,8 +16,9 @@
       "duration": 10
     },
     "supply": {
-      "activated": false,
+      "activated_insulation": true,
       "markup_insulation": 1.2,
+      "activated_heater": false,
       "markup_heater": 1.2
     },
     "renovation": {
@@ -30,7 +31,7 @@
       },
       "scale": {
         "name": "standard_deviation",
-        "deviation": 0.048
+        "deviation": 0.0297
       },
       "exogenous": {
         "number": 700000,
