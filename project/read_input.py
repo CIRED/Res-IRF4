@@ -405,7 +405,7 @@ def read_policies(config):
     def read_multi_family(data):
         return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
 
-    read = {'mpr': read_mpr,
+    read = {'mpr': read_mpr, 'mpr_new': read_mpr,
             'mpr_serenite': read_mpr_serenite,
             'mpr_serenite_high_income': read_mpr_serenite,
             'mpr_serenite_low_income': read_mpr_serenite,

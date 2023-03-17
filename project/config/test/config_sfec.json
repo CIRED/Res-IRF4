@@ -7,7 +7,7 @@
     "constant": false
 },
   "Reference": {
-    "end": 2031,
+    "end": 2025,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -28,7 +28,7 @@
       },
       "scale": {
         "name": "standard_deviation",
-        "deviation": 0.048
+        "deviation": 0.0297
       },
       "exogenous": {
         "number": 700000,
@@ -91,7 +91,7 @@
       "share_single_family_construction": "project/input/policies/sfec/share_singlefamily_construction.csv",
       "surface_built": null,
       "income_rate": 0.012,
-      "demolition_rate": null,
+      "demolition_rate": "project/input/policies/sfec/demolition_rate_sfec.csv",
       "stock_ini": 29037000,
       "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
@@ -109,7 +109,7 @@
       "no_policy": false,
       "income": false,
       "prices_constant": true,
-      "emission_constant": true,
+      "emission_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
@@ -121,7 +121,9 @@
       },
       "insulation": false,
       "no_heating_switch": false,
-      "collective_boiler": false
-    }
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

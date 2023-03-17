@@ -1,61 +1,13 @@
-﻿Housing type,Occupancy status,Heater replacement,Performance,
-Single-family,Owner-occupied,FALSE,C,0.04
-Single-family,Owner-occupied,FALSE,D,0.05
-Single-family,Owner-occupied,FALSE,E,0.06
-Single-family,Owner-occupied,FALSE,F,0.12
-Single-family,Owner-occupied,FALSE,G,0.12
-Single-family,Owner-occupied,TRUE,C,0.23
-Single-family,Owner-occupied,TRUE,D,0.27
-Single-family,Owner-occupied,TRUE,E,0.29
-Single-family,Owner-occupied,TRUE,F,0.59
-Single-family,Owner-occupied,TRUE,G,0.61
-Single-family,Privately rented,FALSE,C,0.02
-Single-family,Privately rented,FALSE,D,0.03
-Single-family,Privately rented,FALSE,E,0.03
-Single-family,Privately rented,FALSE,F,0.06
-Single-family,Privately rented,FALSE,G,0.06
-Single-family,Privately rented,TRUE,C,0.16
-Single-family,Privately rented,TRUE,D,0.19
-Single-family,Privately rented,TRUE,E,0.21
-Single-family,Privately rented,TRUE,F,0.42
-Single-family,Privately rented,TRUE,G,0.43
-Single-family,Social-housing,FALSE,C,0.03
-Single-family,Social-housing,FALSE,D,0.03
-Single-family,Social-housing,FALSE,E,0.03
-Single-family,Social-housing,FALSE,F,0.07
-Single-family,Social-housing,FALSE,G,0.07
-Single-family,Social-housing,TRUE,C,0.21
-Single-family,Social-housing,TRUE,D,0.25
-Single-family,Social-housing,TRUE,E,0.27
-Single-family,Social-housing,TRUE,F,0.54
-Single-family,Social-housing,TRUE,G,0.56
-Multi-family,Owner-occupied,FALSE,C,0.03
-Multi-family,Owner-occupied,FALSE,D,0.03
-Multi-family,Owner-occupied,FALSE,E,0.03
-Multi-family,Owner-occupied,FALSE,F,0.07
-Multi-family,Owner-occupied,FALSE,G,0.07
-Multi-family,Owner-occupied,TRUE,C,0.13
-Multi-family,Owner-occupied,TRUE,D,0.15
-Multi-family,Owner-occupied,TRUE,E,0.17
-Multi-family,Owner-occupied,TRUE,F,0.34
-Multi-family,Owner-occupied,TRUE,G,0.35
-Multi-family,Privately rented,FALSE,C,0.01
-Multi-family,Privately rented,FALSE,D,0.02
-Multi-family,Privately rented,FALSE,E,0.02
-Multi-family,Privately rented,FALSE,F,0.03
-Multi-family,Privately rented,FALSE,G,0.03
-Multi-family,Privately rented,TRUE,C,0.09
-Multi-family,Privately rented,TRUE,D,0.11
-Multi-family,Privately rented,TRUE,E,0.12
-Multi-family,Privately rented,TRUE,F,0.24
-Multi-family,Privately rented,TRUE,G,0.24
-Multi-family,Social-housing,FALSE,C,0.01
-Multi-family,Social-housing,FALSE,D,0.02
-Multi-family,Social-housing,FALSE,E,0.02
-Multi-family,Social-housing,FALSE,F,0.04
-Multi-family,Social-housing,FALSE,G,0.04
-Multi-family,Social-housing,TRUE,C,0.12
-Multi-family,Social-housing,TRUE,D,0.14
-Multi-family,Social-housing,TRUE,E,0.15
-Multi-family,Social-housing,TRUE,F,0.31
-Multi-family,Social-housing,TRUE,G,0.32
+﻿Housing type,Occupancy status,Heater replacement,
+Single-family,Owner-occupied,FALSE,0.04
+Single-family,Owner-occupied,TRUE,0.23
+Single-family,Privately rented,FALSE,0.02
+Single-family,Privately rented,TRUE,0.16
+Single-family,Social-housing,FALSE,0.03
+Single-family,Social-housing,TRUE,0.21
+Multi-family,Owner-occupied,FALSE,0.03
+Multi-family,Owner-occupied,TRUE,0.13
+Multi-family,Privately rented,FALSE,0.01
+Multi-family,Privately rented,TRUE,0.09
+Multi-family,Social-housing,FALSE,0.01
+Multi-family,Social-housing,TRUE,0.12

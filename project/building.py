@@ -2803,11 +2803,12 @@ class AgentBuildings(ThermalBuildings):
             wtp = _constant / coefficient_cost
             ref = ('Single-family', 'Owner-occupied', False)
             diff = wtp - wtp[ref]
+            stock_ini = _stock.groupby(retrofit_rate_ini.index.names).sum()
 
             details = concat((
-                             _constant, retrofit_rate_agg_ini, retrofit_rate_agg, retrofit_rate_ini, agg / 10 ** 3, wtp,
-                             diff, retrofit_rate_agg_cst), axis=1,
-                             keys=['constant', 'ini', 'calcul', 'observed', 'thousand', 'wtp', 'market_barriers',
+                             _constant, retrofit_rate_agg_ini, retrofit_rate_agg, retrofit_rate_ini, stock_ini / 10**6,
+                             agg / 10 ** 3, wtp, diff, retrofit_rate_agg_cst), axis=1,
+                             keys=['constant', 'ini', 'calcul', 'observed', 'stock', 'flow', 'wtp', 'market_barriers',
                                    'cste']).round(decimals=3)
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
@@ -2830,7 +2831,7 @@ class AgentBuildings(ThermalBuildings):
             expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
                                                    option='market_share', _cost_financing=_cost_financing)
             compare, utility_intensive = None, None
-            for k in range(10):
+            for k in range(15):
                 # calibration of renovation rate
                 if self._expected_utility != 'log_sum' or utility_intensive is None:
                     constant, scale = calibration_extensive(expected_utility, _stock, _calib_renovation, option='market_share')
@@ -2879,7 +2880,7 @@ class AgentBuildings(ThermalBuildings):
                                        axis=1).round(3)
 
                 compare = concat((compare_rate, compare_share), ignore_index=True)
-                if allclose(compare['Calculated'], compare['Observed'], rtol=10**-3):
+                if allclose(compare['Calculated'], compare['Observed'], rtol=10**-2):
                     self.logger.debug('Coupled optim worked')
                     break
 

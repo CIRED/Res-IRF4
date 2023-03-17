@@ -84,9 +84,6 @@ def config2inputs(config=None, building_stock=None, end=None):
     stock = read_stock(config)
     inputs = read_inputs(config)
 
-    if config['simple'].get('emission_constant'):
-        inputs['carbon_emission'] = pd.concat([inputs['carbon_emission'].loc[config['start'], :]] * inputs['carbon_emission'].shape[0], axis=1,
-                                              keys=inputs['carbon_emission'].index).T
 
     if isinstance(config['policies'], str):
         config['policies'] = get_json(config['policies'])['policies']
@@ -126,6 +123,14 @@ def config2inputs(config=None, building_stock=None, end=None):
         ratio_surface = (reindex_mi(inputs['ratio_surface'], stock.index).T * stock).T.sum() / stock.sum()
         for idx in inputs['ratio_surface'].index:
             inputs['ratio_surface'].loc[idx, :] = ratio_surface.round(1)
+
+    if config['simple'].get('emission_constant'):
+        inputs['carbon_emission'] = pd.concat([inputs['carbon_emission'].loc[config['start'], :]] * inputs['carbon_emission'].shape[0], axis=1,
+                                              keys=inputs['carbon_emission'].index).T
+
+    if config['simple'].get('no_natural_replacement'):
+        inputs['demolition_rate'] = None
+        config['macro']['construction'] = False
 
     if config['simple'].get('no_policy'):
         for name, policy in config['policies'].items():

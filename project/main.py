@@ -144,6 +144,8 @@ def run(path=None):
                     configuration['Constant'] = copy.deepcopy(configuration['Reference'])
                     configuration['Constant']['simple']['prices_constant'] = True
                     configuration['Constant']['simple']['current_policies'] = True
+                    configuration['Constant']['simple']['no_natural_replacement'] = True
+                    configuration['Constant']['simple']['emission_constant'] = True
 
             if 'step' in config_sensitivity.keys():
                 values = config_sensitivity['step']
