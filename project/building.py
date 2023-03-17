@@ -28,7 +28,7 @@ from copy import deepcopy
 from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
-    get_size, compare_bar_plot
+    get_size, compare_bar_plot, make_sensitivity_tables
 from project.utils import make_hist
 
 import project.thermal as thermal
@@ -3194,19 +3194,21 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     avg_sub = (f_replace_benef * _sub).sum().sum() / f_replace_benef.sum().sum()
 
+                _beneficiaries = f_replace[_sub > 0].sum().sum() / 10**3
                 _free_riders = f_retrofit_sub.sum() / f_retrofit.sum()
                 _intensive_margin = (avg_cost_global - avg_cost_global_sub) / avg_cost_global_sub
                 _intensive_margin_benef = (avg_cost_benef - avg_cost_benef_sub) / avg_cost_benef_sub
                 share_sub = avg_sub / avg_cost_benef_sub
 
                 rslt.update({key: Series(
-                    [_free_riders, _intensive_margin, _intensive_margin_benef, avg_sub, avg_cost_benef_sub, share_sub],
-                    index=['Freeriders (%)', 'Intensive margin (%)', 'Intensive margin benef (%)', 'Average sub (euro)',
+                    [_beneficiaries, _free_riders, _intensive_margin_benef, avg_sub, avg_cost_benef_sub, share_sub],
+                    index=['Beneficiaries (hh)', 'Freeriders (%)', 'Intensive margin benef (%)', 'Average sub (euro)',
                            'Average cost benef (euro)', 'Share sub (%)'])})
 
             rslt = DataFrame(rslt)
             if self.path_calibration is not None:
                 rslt.to_csv(os.path.join(self.path_calibration, 'result_policies_assessment.csv'))
+                make_sensitivity_tables(rslt, os.path.join(self.path_calibration, 'result_policies_assessment.png'))
 
             return rslt
 

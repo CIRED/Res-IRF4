@@ -266,6 +266,7 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 
 
+
 def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
                    'subsidy_ad_valorem': 'Subsidy, ad valorem',
@@ -370,15 +371,16 @@ def plot_table(tables_policies, path):
     number_max = 50
     for row in range(len(tables_policies)):
         temp = tables_policies.iloc[row].copy()
-        t = temp.loc['Details'].split('\n')
-        if [i for i in t if len(i) > number_max]:
-            new = []
-            for i in temp.loc['Details'].split('\n'):
-                if len(i) > number_max:
-                    new.append(i[:number_max] + '\n' + i[number_max:])
-                else:
-                    new.append(i)
-            temp.loc['Details'] = '\n'.join(new)
+        if 'Details' in temp.index:
+            t = temp.loc['Details'].split('\n')
+            if [i for i in t if len(i) > number_max]:
+                new = []
+                for i in temp.loc['Details'].split('\n'):
+                    if len(i) > number_max:
+                        new.append(i[:number_max] + '\n' + i[number_max:])
+                    else:
+                        new.append(i)
+                temp.loc['Details'] = '\n'.join(new)
 
         cell_text.append(temp)
 
@@ -390,6 +392,37 @@ def plot_table(tables_policies, path):
     table.auto_set_font_size(False)
     table.set_fontsize(7)
     table.scale(1, 4)
+    plt.savefig(path.replace('.csv', '.png'), dpi=200, bbox_inches='tight')
+    plt.close()
+
+
+def make_sensitivity_tables(table_result, path):
+    ax = plt.subplot(111, frame_on=False)  # no visible frame
+    ax.axis('tight')  # turns off the axis lines and labels
+    ax.axis('off')  # hide the y axis
+
+    cell_text = []
+    for row in range(len(table_result)):
+        temp = table_result.iloc[row].copy()
+        if temp.name.split('(')[1].split(')')[0] == '%':
+            temp = temp.map('{:,.0%}'.format)
+        elif temp.name.split('(')[1].split(')')[0] == 'euro':
+            temp = temp.map('{:,.0f}'.format)
+        else:
+            temp = temp.map('{:,.0f}'.format)
+        cell_text.append(temp)
+
+    colLabels = ['{}'.format(i.replace('_', ' ').capitalize()) for i in table_result.columns]
+    colLabels = [i[:15] for i in colLabels]
+    table = plt.table(cellText=cell_text,
+                      colLabels=colLabels,
+                      rowLabels=table_result.index,
+                      loc='center',
+                      cellLoc='center')
+    plt.axis('off')
+    table.auto_set_font_size(False)
+    table.set_fontsize(7)
+    table.scale(1, 2)
     plt.savefig(path.replace('.csv', '.png'), dpi=200, bbox_inches='tight')
     plt.close()
 
