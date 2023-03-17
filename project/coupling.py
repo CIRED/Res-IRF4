@@ -35,8 +35,14 @@ def ini_res_irf(path=None, config=None):
     """
     # creating object to calibrate with calibration
     if config is not None:
-        with open(config) as file:
-            config = json.load(file).get('Reference')
+        if isinstance(config, str):
+            if os.path.isfile(config):
+                with open(config) as file:
+                    config = json.load(file).get('Reference')
+        elif isinstance(config, dict):
+            pass
+        else:
+            raise NotImplemented('Config should be dict or str')
 
     if path is None:
         path = os.path.join('output', 'ResIRF')
