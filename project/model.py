@@ -84,7 +84,6 @@ def config2inputs(config=None, building_stock=None, end=None):
     stock = read_stock(config)
     inputs = read_inputs(config)
 
-
     if isinstance(config['policies'], str):
         config['policies'] = get_json(config['policies'])['policies']
 
@@ -150,7 +149,10 @@ def config2inputs(config=None, building_stock=None, end=None):
                 policy['growth_insulation'] = None
             config['policies'][name] = policy
 
-    policies_heater, policies_insulation, taxes = read_policies(config)
+    if config.get('policies') is not None:
+        policies_heater, policies_insulation, taxes = read_policies(config)
+    else:
+        policies_insulation, policies_heater, taxes = [], [], []
 
     policies_insulation = [p for p in policies_insulation if p.end > p.start]
     policies_heater = [p for p in policies_heater if p.end > p.start]
@@ -305,7 +307,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                logger=logger,
                                quintiles=config['simple']['quintiles'],
                                financing_cost=config.get('financing_cost'),
-                               threshold=config['renovation'].get('threshold'),
+                               rational_behavior=parsed_inputs['rational_behavior'],
                                resources_data=resources_data,
                                expected_utility=config['renovation'].get('expected_utility'))
 
@@ -371,7 +373,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             step=step,
                                             exogenous_social=exogenous_social,
                                             premature_replacement=premature_replacement,
-                                            supply=supply)
+                                            supply=supply,
+                                            carbon_value=post_inputs['carbon_value_kwh'].loc[year, :])
 
     if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
@@ -426,8 +429,10 @@ def res_irf(config, path):
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
 
         policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
-        make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
-        make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
+        if policies_calibration:
+            make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
+        if policies_heater + policies_insulation:
+            make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
 
         inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config, logger=logger)
         buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']

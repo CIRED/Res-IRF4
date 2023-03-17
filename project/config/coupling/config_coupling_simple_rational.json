@@ -1,10 +1,6 @@
 {
-
-  "sensitivity":{
-    "activated": false
-  },
   "Reference": {
-    "end": 2031,
+    "end": 2025,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -43,9 +39,9 @@
         "minimum_performance": null
     },
       "rational_behavior": {
-        "activated": false,
+        "activated": true,
         "social": false,
-        "calibration": true
+        "calibration": false
       }
     },
     "switch_heater": {
@@ -102,7 +98,7 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/coupling/policies_coupling_test.json",
+    "policies": null,
     "simple": {
       "quintiles": true,
       "surface": false,

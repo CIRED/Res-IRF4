@@ -40,7 +40,11 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-      "threshold": false
+      "rational_behavior": {
+        "activated": false,
+        "social": false,
+        "calibration": true
+      }
     },
     "switch_heater": {
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",

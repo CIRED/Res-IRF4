@@ -599,6 +599,14 @@ def read_inputs(config, other_inputs=generic_input):
     else:
         inputs.update({'use_subsidies': pd.Series(dtype=float)})
 
+    temp = None
+    if config['renovation'].get('rational_behavior') is not None:
+        if config['renovation']['rational_behavior']['activated']:
+            temp = {'calibration': config['renovation']['rational_behavior']['calibration'],
+                    'social': config['renovation']['rational_behavior']['social'],
+                    }
+    inputs.update({'rational_behavior': temp})
+
     return inputs
 
 
