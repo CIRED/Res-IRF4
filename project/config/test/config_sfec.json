@@ -47,7 +47,7 @@
         "minimum_performance": null
     },
       "rational_behavior": {
-        "activated_insulation": false,
+        "activated": false,
         "social": false,
         "calibration": true
       }
