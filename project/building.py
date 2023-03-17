@@ -4586,7 +4586,8 @@ class AgentBuildings(ThermalBuildings):
 
     def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
                               constant_insulation_intensive=None, constant_insulation_extensive=None, scale=None,
-                              energy_prices=None, taxes=None, rational_hidden_cost=None):
+                              energy_prices=None, taxes=None, rational_hidden_cost=None, number_firms_insulation=None,
+                              number_firms_heater=None):
         """Function calibrating buildings object with exogenous data.
 
 
@@ -4623,6 +4624,8 @@ class AgentBuildings(ThermalBuildings):
 
         self.apply_scale(scale)
         self.rational_hidden_cost = rational_hidden_cost
+        self.number_firms_insulation, self.number_firms_heater = number_firms_insulation, number_firms_heater
+
 
     def remove_calibration(self):
 
@@ -4637,6 +4640,8 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_intensive = None
         self.constant_insulation_extensive = None
         self.scale = None
+
+        self.rational_hidden_cost = None
 
     def flow_demolition(self, demolition_rate, step=1):
         """Demolition of E, F and G buildings based on their share in the mobile stock.

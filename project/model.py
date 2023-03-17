@@ -672,7 +672,9 @@ def calibration_res_irf(path, config=None):
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_insulation_extensive': buildings.constant_insulation_extensive,
             'scale': buildings.scale,
-            'threshold_indicator': buildings.threshold_indicator
+            'number_firms_insulation': buildings.number_firms_insulation,
+            'number_firms_heater': buildings.number_firms_heater,
+            'rational_hidden_cost': buildings.rational_hidden_cost
         }
 
         return calibration

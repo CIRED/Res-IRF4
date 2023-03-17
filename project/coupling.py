@@ -75,7 +75,10 @@ def ini_res_irf(path=None, config=None):
             'constant_insulation_extensive': buildings.constant_insulation_extensive,
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_heater': buildings.constant_heater,
-            'scale': buildings.scale
+            'scale': buildings.scale,
+            'number_firms_insulation': buildings.number_firms_insulation,
+            'number_firms_heater': buildings.number_firms_heater,
+            'rational_hidden_cost': buildings.rational_hidden_cost
         }, file)
 
     output = pd.DataFrame()
