@@ -7,7 +7,7 @@
     "constant": false
 },
   "Reference": {
-    "end": 2025,
+    "end": 2021,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -17,6 +17,11 @@
       "interest_rate": 0.04,
       "saving_rate": 0.025,
       "duration": 10
+    },
+    "supply": {
+      "activated": false,
+      "markup_insulation": 1.2,
+      "markup_heater": 1.2
     },
     "renovation": {
       "endogenous": true,
@@ -127,7 +132,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }
