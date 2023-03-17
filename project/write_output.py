@@ -167,12 +167,15 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
         subset.fillna(0, inplace=True)
         subset = subset.loc[:, (subset != 0).any(axis=0)].T
         subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
+        color = [i for i in subset.columns if i not in resources_data['colors']]
+        resources_data['colors'].update(dict(zip(color, sns.color_palette(n_colors=len(color)))))
+        subset = subset.sort_index(axis=1)
         if not subset.empty:
             scatter = resources_data['public_policies_2019']
             if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan', 'Mpr serenite']:
                 fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
                 subset.index = subset.index.astype(int)
-                subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'])
+                subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'], linewidth=0)
                 scatter.T.plot.bar(ax=ax[0], stacked=True, color=resources_data['colors'], legend=False, width=1.5, rot=0)
                 ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
                 ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)

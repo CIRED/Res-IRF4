@@ -670,9 +670,9 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
     df.index = df.index.astype(int)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
     if colors is None:
-        df.plot.area(ax=ax, stacked=True)
+        df.plot.area(ax=ax, stacked=True, linewidth=0)
     else:
-        df.plot.area(ax=ax, stacked=True, color=colors)
+        df.plot.area(ax=ax, stacked=True, color=colors, linewidth=0)
 
     if total:
         df.sum(axis=1).rename('Total').plot(ax=ax, color='black')
@@ -700,9 +700,9 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     if colors is None:
-        df.plot(ax=ax, kind='bar', stacked=True)
+        df.plot(ax=ax, kind='bar', stacked=True, linewidth=0)
     else:
-        df.plot(ax=ax, kind='bar', stacked=True, color=colors)
+        df.plot(ax=ax, kind='bar', stacked=True, color=colors, linewidth=0)
 
     ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
     format_legend(ax, ncol=ncol, offset=offset)
