@@ -19,8 +19,9 @@
       "duration": 10
     },
     "supply": {
-      "activated": false,
+      "activated_insulation": false,
       "markup_insulation": 1.2,
+      "activated_heater": false,
       "markup_heater": 1.2
     },
     "renovation": {
@@ -46,7 +47,7 @@
         "minimum_performance": null
     },
       "rational_behavior": {
-        "activated": false,
+        "activated_insulation": false,
         "social": false,
         "calibration": true
       }
