@@ -4,7 +4,7 @@
     "activated": false
   },
   "Reference": {
-    "end": 2025,
+    "end": 2023,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -16,7 +16,7 @@
       "duration": 10
     },
     "supply": {
-      "activated_insulation": true,
+      "activated_insulation": false,
       "markup_insulation": 1.2,
       "activated_heater": false,
       "markup_heater": 1.2
@@ -44,7 +44,7 @@
         "minimum_performance": null
     },
       "rational_behavior": {
-        "activated": false,
+        "activated": true,
         "social": false,
         "calibration": true
       }
@@ -103,7 +103,7 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/coupling/policies_coupling_test.json",
+    "policies": "project/input/policies/coupling/policies_coupling_rational.json",
     "simple": {
       "quintiles": true,
       "surface": false,
@@ -125,5 +125,4 @@
       "insulation": false
     }
  }
-
 }

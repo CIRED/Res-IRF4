@@ -115,6 +115,19 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    save=os.path.join(path, 'replacement_insulation.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y), colors=resources_data['colors'], loc='left', left=1.1)
 
+    i = ['Switch heater only (Thousand households)',
+         'Renovation with heater replacement (Thousand households)',
+         'Renovation endogenous (Thousand households)',
+         'Renovation obligation (Thousand households)',
+         ]
+    df = output.loc[i, :].T
+    df.dropna(inplace=True)
+    df.columns = [i.split(' (')[0] for i in df.columns]
+    make_area_plot(df, 'Renovation (Thousand households)',
+                   save=os.path.join(path, 'renovation.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   loc='left', left=1.25)
+
     df = output.loc[['Renovation {} (Thousand households)'.format(i) for i in resources_data['index']['Decision maker']], :].T
     df.dropna(inplace=True)
     df.columns = resources_data['index']['Decision maker']
@@ -161,9 +174,15 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     try:
         non_subsidies = ['subsidies_cap', 'obligation']
         subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies], :]
-        taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
 
-        subset = pd.concat((subsidies, -taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax']],:]), axis=0)
+        subset = subsidies.copy()
+
+        taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
+        taxes_expenditures = taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax'] if i in output.index], :]
+
+        if not taxes_expenditures.empty:
+            subset = pd.concat((subsidies, -taxes_expenditures), axis=0)
+
         subset.fillna(0, inplace=True)
         subset = subset.loc[:, (subset != 0).any(axis=0)].T
         subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]

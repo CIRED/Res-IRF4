@@ -2609,31 +2609,38 @@ class AgentBuildings(ThermalBuildings):
 
             if social:
                 _discount = discount_social
-            discount_factor = (1 - (1 + _discount) ** -30) / _discount
+            discount_factor = (1 - (1 + _discount) ** -10) / _discount
 
             # subsidies do not change market-share
-            npv = - _cost_total + _bill_saved * discount_factor
-            if discount_social:
-                npv += _carbon_saved * discount_factor
+            """npv = - _cost_total + _bill_saved * discount_factor + _subsidies_total
+            if social:
+                npv = - _cost_total + (_bill_saved + _carbon_saved) * discount_social + _subsidies_total"""
+            _bill_saved[_bill_saved == 0] = float('nan')
 
-            best_npv = AgentBuildings.find_best_option(npv, {'consumption_saved': _consumption_saved}, func='max')
-            _market_share = DataFrame(0, index=npv.index, columns=npv.columns)
+            ratio = (_cost_total - _subsidies_total) / _bill_saved
+            if social:
+                ratio = (_cost_total - _subsidies_total) / (_bill_saved + _carbon_saved)
+
+            best_option = AgentBuildings.find_best_option(ratio, {'consumption_saved': _consumption_saved}, func='min')
+            _market_share = DataFrame(0, index=ratio.index, columns=ratio.columns)
             for i in _market_share.index:
-                _market_share.loc[i, best_npv.loc[i, 'columns']] = 1
+                _market_share.loc[i, best_option.loc[i, 'columns']] = 1
 
-            npv = best_npv['criteria']
-            _consumption_saved = best_npv['consumption_saved'] * _stock
+            ratio = best_option['criteria']
+            ratio = ratio[ratio >= 0]
+            """_consumption_saved = best_npv['consumption_saved'] * _stock
             x = concat((npv, _consumption_saved), axis=1, keys=['npv', 'consumption_saved']).sort_values('npv', ascending=False)
-            x['consumption_saved'] = x['consumption_saved'].cumsum() / 10**6
+            x['consumption_saved'] = x['consumption_saved'].cumsum() / 10**6"""
 
             if calibration:
                 if self.rational_hidden_cost is None:
-                    self.rational_hidden_cost = npv.max()
-                npv -= self.rational_hidden_cost
+                    self.rational_hidden_cost = ratio.min()
 
-            _renovation_rate = npv.copy()
-            _renovation_rate[_renovation_rate > 0] = 1
-            _renovation_rate[_renovation_rate <= 0] = 0
+            _renovation_rate = ratio.copy()
+            _renovation_rate[ratio < self.rational_hidden_cost] = 1
+            _renovation_rate[ratio >= self.rational_hidden_cost] = 0
+
+            _market_share = _market_share.loc[_renovation_rate.index, :]
 
             return _market_share, _renovation_rate
 
@@ -4070,10 +4077,14 @@ class AgentBuildings(ThermalBuildings):
             output['Markup insulation'] = self._markup_insulation_store
             output['Markup heater'] = self._markup_heater_store
 
+            output['Renovation obligation (Thousand households)'] = 0
             if self._flow_obligation:
                 temp = pd.Series(self._flow_obligation)
                 temp.index = temp.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
                 output.update(temp.T / 10 ** 3)
+                output['Renovation obligation (Thousand households)'] = temp.sum()
+
+            output['Renovation endogenous (Thousand households)'] = output['Renovation (Thousand households)'] - output['Renovation obligation (Thousand households)']
 
             if True in self._replaced_by.index.get_level_values('Heater replacement'):
                 temp = self._replaced_by.xs(True, level='Heater replacement').sum().sum()

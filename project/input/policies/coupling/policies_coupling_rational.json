@@ -1,0 +1,13 @@
+{
+  "policies": {
+    "global_renovation": {
+      "start": 2020,
+      "end": 2051,
+      "policy": "subsidy_ad_valorem",
+      "target": null,
+      "gest": "insulation",
+      "value": 1,
+      "growth": null
+    }
+  }
+}
