@@ -3182,39 +3182,53 @@ class AgentBuildings(ThermalBuildings):
             for key, _sub in _subsidies_details.items():
                 _c = 0
                 mask = _sub > 0
+                eligible = (_sub > 0).any(axis=1)
                 if key == 'reduced_vta':
                     _c = _sub
                     _sub = 0
+
+                f_replace_eligible = f_replace.loc[eligible, :]
+
+                _eligible = f_replace_eligible.sum().sum() / 10**3
+                _beneficiaries = f_replace[_sub > 0].sum().sum() / 10**3
+
+                avg_cost_eligible = (f_replace_eligible * _cost_total).sum().sum() / f_replace_eligible.sum().sum()
+                if key == 'reduced_vta':
+                    avg_sub = (f_replace_eligible * _c).sum().sum() / f_replace_eligible.sum().sum()
+                else:
+                    avg_sub = (f_replace_eligible * _sub).sum().sum() / f_replace_eligible.sum().sum()
+
+                share_sub = avg_sub / avg_cost_eligible
 
                 c_total = _cost_total + _c
                 assert (c_total >= _cost_total).all().all(), 'Cost issue'
                 sub_total = _subsidies_total - _sub
                 assert (sub_total <= _subsidies_total).all().all(), 'Subsidies issue'
-                ms_sub, retrofit_sub = apply_endogenous_renovation(_bill_saved, sub_total, c_total, _supply=None,
-                                                                   _cost_financing=_cost_financing)
-                f_retrofit_sub = retrofit_sub * stock
-                f_replace_sub = (f_retrofit_sub * ms_sub.T).T
-                avg_cost_global_sub = (f_replace_sub * _cost_total).sum().sum() / f_retrofit_sub.sum()
-                f_replace_sub = f_replace_sub[mask]
-                avg_cost_benef_sub = (f_replace_sub * _cost_total).sum().sum() / f_replace_sub.sum().sum()
-                f_replace_benef = f_replace[mask]
-                avg_cost_benef = (f_replace_benef * _cost_total).sum().sum() / f_replace_benef.sum().sum()
+                ms_nosub, renovation_nosub = apply_endogenous_renovation(_bill_saved, sub_total, c_total, _supply=None,
+                                                                       _cost_financing=_cost_financing)
+                f_renovation_nosub = renovation_nosub * stock
+                f_replace_nosub = (f_renovation_nosub * ms_nosub.T).T
+                # avg_cost_global_sub = (f_replace_sub * _cost_total).sum().sum() / f_retrofit_sub.sum()
 
-                if key == 'reduced_vta':
-                    avg_sub = (f_replace_benef * _c).sum().sum() / f_replace_benef.sum().sum()
-                else:
-                    avg_sub = (f_replace_benef * _sub).sum().sum() / f_replace_benef.sum().sum()
+                f_replace_eligible_nosub = f_replace_nosub.loc[eligible, :]
+                avg_cost_eligible_nosub = (f_replace_eligible_nosub * _cost_total).sum().sum() / f_replace_eligible_nosub.sum().sum()
 
-                _beneficiaries = f_replace[_sub > 0].sum().sum() / 10**3
-                _free_riders = f_retrofit_sub.sum() / f_retrofit.sum()
-                _intensive_margin = (avg_cost_global - avg_cost_global_sub) / avg_cost_global_sub
-                _intensive_margin_benef = (avg_cost_benef - avg_cost_benef_sub) / avg_cost_benef_sub
-                share_sub = avg_sub / avg_cost_benef_sub
+                _additional_participant = f_replace_eligible.sum().sum() - f_replace_eligible_nosub.sum().sum()
+                _additional_participant_share = _additional_participant / f_replace_eligible_nosub.sum().sum()
+                _non_additional_participant = f_replace_eligible_nosub.sum().sum()
+                _free_riders = _non_additional_participant / f_replace_eligible.sum().sum()
+                # _free_riders = f_retrofit_sub.sum() / f_retrofit.sum()
+                # _intensive_margin = (avg_cost_global - avg_cost_global_sub) / avg_cost_global_sub
+                _intensive_margin = (avg_cost_eligible - avg_cost_eligible_nosub) / avg_cost_eligible_nosub
 
                 rslt.update({key: Series(
-                    [_beneficiaries, _free_riders, _intensive_margin_benef, avg_sub, avg_cost_benef_sub, share_sub],
-                    index=['Beneficiaries (hh)', 'Freeriders (%)', 'Intensive margin benef (%)', 'Average sub (euro)',
-                           'Average cost benef (euro)', 'Share sub (%)'])})
+                    [_eligible, _beneficiaries, avg_sub, share_sub,
+                     _additional_participant, _non_additional_participant, _free_riders,
+                     avg_cost_eligible, avg_cost_eligible_nosub, _intensive_margin],
+                    index=['Eligible (hh)', 'Beneficiaries (hh)', 'Average sub (euro)', 'Share sub (%)',
+                           'Additional participant (hh)', 'Non additional participant (hh)', 'Freeriders (%)',
+                           'Average cost eligible (euro)', 'Average cost eligible no sub (euro)',
+                           'Intensive margin benef (%)'])})
 
             rslt = DataFrame(rslt)
             if self.path_calibration is not None:

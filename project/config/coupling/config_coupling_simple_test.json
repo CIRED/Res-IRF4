@@ -45,7 +45,7 @@
     },
       "rational_behavior": {
         "activated": true,
-        "social": false,
+        "social": true,
         "calibration": true
       }
     },
