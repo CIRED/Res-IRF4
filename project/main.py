@@ -52,13 +52,14 @@ def run(path=None):
     with open(path) as file:
         configuration = json.load(file)
 
-    config_policies = None
-    name_policy = ''
+    policy_name = None
+    prefix = ''
     if 'assessment' in configuration.keys():
         if configuration['assessment']['activated']:
             config_policies = configuration['assessment']
             config_policies = {key: item for key, item in config_policies.items() if item is not None}
-            name_policy = configuration['assessment']['Policy name'] + '_'
+            policy_name = configuration['assessment']['Policy name']
+            prefix = policy_name
 
             if config_policies['AP-1']:
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
@@ -123,7 +124,7 @@ def run(path=None):
     config_sensitivity = None
     if 'sensitivity' in configuration.keys():
         if configuration['sensitivity']['activated'] * args.sensitivity:
-            name_policy = 'sensitivity_'
+            prefix = 'sensitivity'
             config_sensitivity = configuration['sensitivity']
             if 'no_policy' in config_sensitivity.keys():
                 if config_sensitivity['no_policy']:
@@ -203,7 +204,7 @@ def run(path=None):
         del configuration['sensitivity']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
-    folder = os.path.join(os.path.join('project', 'output'), '{}{}'.format(name_policy, t))
+    folder = os.path.join(os.path.join('project', 'output'), '{}_{}'.format(prefix, t))
     os.mkdir(folder)
 
     logger = logging.getLogger('log_{}'.format(t))
@@ -232,7 +233,7 @@ def run(path=None):
             plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
             config_policies = get_json('project/input/policies/cba_inputs.json')
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
-                indicator_policies(result, folder, config_policies)
+                indicator_policies(result, folder, config_policies, policy_name=policy_name)
             make_summary(folder)
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))

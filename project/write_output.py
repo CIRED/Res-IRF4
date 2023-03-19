@@ -746,16 +746,16 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 year = int(s[-4:])
                 if year in result['Reference'].columns:
 
-                    indicator.loc['Intensive margin diff (Thousand euro / households)', s] = result['Reference'].loc['Investment insulation / households (Thousand euro)', year] - result[s].loc['Investment insulation / households (Thousand euro)', year]
-                    indicator.loc['Intensive margin diff (%)', s] = indicator.loc['Intensive margin diff (Thousand euro / households)', s] / result['Reference'].loc['Investment insulation / households (Thousand euro)', year]
+                    indicator.loc['Intensive margin diff (Thousand euro / households)', s] = result['Reference'].loc['Investment insulation (Thousand euro/household)', year] - result[s].loc['Investment insulation (Thousand euro/household)', year]
+                    indicator.loc['Intensive margin diff (%)', s] = indicator.loc['Intensive margin diff (Thousand euro / households)', s] / result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
                     indicator.loc['Freeriding renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
                     indicator.loc['Non-freeriding renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - (
                         result[s].loc['Renovation (Thousand households)', year])
                     indicator.loc['Freeriding investment diff (Billion euro)', s] = indicator.loc['Freeriding renovation (Thousand households)', s] * 10**3 * indicator.loc['Intensive margin diff (Thousand euro / households)', s] / 10**6
-                    indicator.loc['Non-freeriding investment diff (Billion euro)', s] = indicator.loc['Non-freeriding renovation (Thousand households)', s] * 10**3 * result[s].loc['Investment insulation / households (Thousand euro)', year] / 10**6
+                    indicator.loc['Non-freeriding investment diff (Billion euro)', s] = indicator.loc['Non-freeriding renovation (Thousand households)', s] * 10**3 * result[s].loc['Investment insulation (Thousand euro/household)', year] / 10**6
                     indicator.loc['Freeriding renovation ratio (%)', s] = result[s].loc['Renovation (Thousand households)', year] / (
                         result['Reference'].loc['Renovation (Thousand households)', year])
-                    decile = ['D{}'.format(i) for i in range(1, 11)]
+                    """decile = ['D{}'.format(i) for i in range(1, 11)]
                     df = result[s].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year] / \
                          result['Reference'].loc[['Renovation {} (Thousand households)'.format(d) for d in decile], year]
                     df.index = ['Freeriding renovation ratio {} (%)'.format(d) for d in decile]
@@ -765,7 +765,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     if set(list(df.index)).issubset(list(indicator.index)):
                         indicator.loc[list(df.index), s] = df[s]
                     else:
-                        indicator = pd.concat((indicator, df), axis=0)
+                        indicator = pd.concat((indicator, df), axis=0)"""
         else:
             indicator = pd.DataFrame(indicator).T
         indicator.sort_index(axis=1, inplace=True)

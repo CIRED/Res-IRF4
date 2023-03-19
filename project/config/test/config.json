@@ -9,7 +9,6 @@
   "Reference": {
     "end": 2031,
     "step": 1,
-    "debug_mode": false,
     "full_output": true,
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
@@ -18,6 +17,12 @@
       "interest_rate": 0.04,
       "saving_rate": 0.025,
       "duration": 10
+    },
+    "supply": {
+      "activated_insulation": false,
+      "markup_insulation": 1.2,
+      "activated_heater": false,
+      "markup_heater": 1.2
     },
     "renovation": {
       "endogenous": true,
@@ -29,7 +34,7 @@
       },
       "scale": {
         "name": "standard_deviation",
-        "deviation": 0.048
+        "deviation": 0.0297
       },
       "exogenous": {
         "number": 700000,
@@ -41,7 +46,11 @@
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
     },
-      "threshold": false
+      "rational_behavior": {
+        "activated": false,
+        "social": false,
+        "calibration": true
+      }
     },
     "switch_heater": {
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
@@ -49,7 +58,8 @@
       "premature_replacement": 3,
       "information_rate": 0.333
     },
-    "district_heating": null,
+    "district_heating":null,
+    "exogenous_social": null,
     "technical": {
       "cost_heater": "project/input/technical/cost_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
@@ -119,7 +129,8 @@
       },
       "insulation": false,
       "no_heating_switch": false,
-      "collective_boiler": false
+      "collective_boiler": false,
+      "no_natural_replacement": false
     }
   }
 }
