@@ -23,15 +23,6 @@
         "tax": "project/input/policies/cee_tax.csv",
         "growth_insulation": null
       },
-      "mpr": {
-        "start": 2021,
-        "end": 2051,
-        "heater": "project/input/policies/mpr_heater.csv",
-        "growth_heater": null,
-        "insulation": "project/input/policies/mpr_insulation.csv",
-        "growth_insulation": null,
-        "bonus": "project/input/policies/mpr_bonus.csv"
-      },
       "mpr_serenite": {
         "start": 2019,
         "end": 2051,
@@ -42,8 +33,17 @@
         "target": "mpr_serenite_nb",
         "policy": "subsidy_ad_valorem"
       },
+      "mpr": {
+        "start": 2021,
+        "end": 2051,
+        "heater": "project/input/policies/mpr_heater.csv",
+        "growth_heater": null,
+        "insulation": "project/input/policies/mpr_insulation.csv",
+        "growth_insulation": null,
+        "bonus": "project/input/policies/mpr_bonus.csv"
+      },
       "mpr_multifamily": {
-        "start": 2019,
+        "start": 2021,
         "end": 2051,
         "insulation": "project/input/policies/mpr_multifamily.csv",
         "cap": "project/input/policies/mpr_multifamily_cap.csv",
@@ -71,7 +71,7 @@
       "obligation_pb": {
         "start": 2022,
         "end": 2051,
-        "value": "project/input/policies/agenda_obligation_pb.csv",
+        "value": "project/input/policies/agenda_obligation_test.csv",
         "frequency": {"value": [0, 0.1, 0],
                     "index": ["Owner-occupied", "Privately rented", "Social-housing"],
                     "name": "Occupancy status"},

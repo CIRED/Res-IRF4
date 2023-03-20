@@ -204,7 +204,10 @@ def run(path=None):
         del configuration['sensitivity']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
-    folder = os.path.join(os.path.join('project', 'output'), '{}_{}'.format(prefix, t))
+    if prefix == '':
+        folder = os.path.join(os.path.join('project', 'output'), '{}'.format(t))
+    else:
+        folder = os.path.join(os.path.join('project', 'output'), '{}_{}'.format(prefix, t))
     os.mkdir(folder)
 
     logger = logging.getLogger('log_{}'.format(t))

@@ -865,7 +865,7 @@ def make_summary(path):
     # 3. result - compare
     path_compare = os.path.join(path, 'img')
     images_compare = ['renovation.png', 'retrofit_measures_count.png', 'consumption_hist.png', 'consumption_energy.png',
-                      'investment_total.png', 'energy_poverty.png'
+                      'investment_total.png', 'efficiency_insulation.png', 'energy_poverty.png'
                       ]
     images_compare = [os.path.join(path_compare, i) for i in images_compare]
 

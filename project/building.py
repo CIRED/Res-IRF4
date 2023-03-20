@@ -3243,8 +3243,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_before = self.consumption_heating_store(index, level_heater='Heating system final')[0]
         consumption_before = reindex_mi(consumption_before, index) * reindex_mi(self._surface, index)
         energy_bill_before = AgentBuildings.energy_bill(prices, consumption_before, level_heater='Heating system final')
-        carbon_value_before = AgentBuildings.energy_bill(carbon_value, consumption_before,
-                                                         level_heater='Heating system final')
+
 
         consumption_after = self.prepare_consumption(self._choice_insulation, index=index,
                                                      level_heater='Heating system final', full_output=False)
@@ -3255,11 +3254,15 @@ class AgentBuildings(ThermalBuildings):
         energy = Series(index.get_level_values('Heating system final'), index=index).str.split('-').str[0].rename(
             'Energy')
         energy_prices = prices.reindex(energy).set_axis(index)
-        carbon_value = carbon_value.reindex(energy).set_axis(index)
         energy_bill_sd = (consumption_after.T * energy_prices).T
         bill_saved = - energy_bill_sd.sub(energy_bill_before, axis=0).dropna()
-        carbon_value_after = (consumption_after.T * carbon_value).T
-        carbon_saved = - carbon_value_after.sub(carbon_value_before, axis=0).dropna()
+
+        if carbon_value is not None:
+            carbon_value_before = AgentBuildings.energy_bill(carbon_value, consumption_before,
+                                                             level_heater='Heating system final')
+            carbon_value = carbon_value.reindex(energy).set_axis(index)
+            carbon_value_after = (consumption_after.T * carbon_value).T
+            carbon_saved = - carbon_value_after.sub(carbon_value_before, axis=0).dropna()
 
         # TODO reindex subsidies_total with stock.index
         if self.constant_insulation_intensive is None and self.rational_behavior is None:
@@ -4097,7 +4100,7 @@ class AgentBuildings(ThermalBuildings):
                 temp = pd.Series(self._flow_obligation)
                 temp.index = temp.index.map(lambda x: 'Renovation {} (Thousand households)'.format(x))
                 output.update(temp.T / 10 ** 3)
-                output['Renovation obligation (Thousand households)'] = temp.sum()
+                output['Renovation obligation (Thousand households)'] = temp.sum() / 10**3
 
             output['Renovation endogenous (Thousand households)'] = output['Renovation (Thousand households)'] - output['Renovation obligation (Thousand households)']
 

@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
@@ -55,7 +55,7 @@
     "switch_heater": {
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-      "premature_replacement": 3,
+      "premature_replacement": null,
       "information_rate": 0.333
     },
     "district_heating":null,
@@ -123,7 +123,7 @@
       "current_policies": false,
       "no_policy": false,
       "income": false,
-      "prices_constant": true,
+      "prices_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
