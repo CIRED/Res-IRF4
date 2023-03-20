@@ -86,6 +86,11 @@ def config2inputs(config=None, building_stock=None, end=None):
 
     if isinstance(config['policies'], str):
         config['policies'] = get_json(config['policies'])['policies']
+    elif isinstance(config['policies'], dict):
+        if 'file' in config['policies'].keys():
+            policies = get_json(config['policies']['file'])
+            del config['policies']['file']
+            config['policies'].update(policies['policies'])
 
     if config['simple'].get('heating_system'):
         replace = config['simple']['heating_system']

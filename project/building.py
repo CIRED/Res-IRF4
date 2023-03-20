@@ -1349,8 +1349,7 @@ class AgentBuildings(ThermalBuildings):
 
         regulation = [p for p in policies_heater if p.policy == 'regulation']
         if 'inertia_heater' in [p.name for p in regulation]:
-            pass
-            # apply_regulation('Privately rented', 'Owner-occupied', 'Occupancy status')
+            self.preferences_heater['inertia_heater'] = 0
 
         return cost_heater, vta_heater, subsidies_details, subsidies_total
 
@@ -1754,13 +1753,10 @@ class AgentBuildings(ThermalBuildings):
             def premature_func(x, alpha=10 ** -3):
                 return 1 / (1 + exp(-alpha * x))
 
-            alpha = fsolve(lambda a: premature_func(-500, alpha=a) - 0.05, 10 ** -3)[0]
+            alpha = fsolve(lambda a: premature_func(-500, alpha=a) - 0.10, 10 ** -3)[0]
 
             bill_saved[bill_saved <= 0] = float('nan')
-            """time = (cost_total - subsidies_total) / bill_saved
-            time = time.loc[:, [i for i in time.columns if i in self._resources_data['index']['Heat pumps']]]
-            time = time.dropna(axis=1, how='all')
-            time = time[(time < 10)].dropna(how='all')"""
+
             npv = - cost_total + subsidies_total + 3 * bill_saved
             npv = npv.loc[:, [i for i in npv.columns if i in self._resources_data['index']['Heat pumps']]]
             npv = npv.dropna(axis=1, how='all')
@@ -2075,6 +2071,13 @@ class AgentBuildings(ThermalBuildings):
                 condition_global_renovation = _certificate_jump_all >= global_condition
                 _condition.update({'global_renovation_fge': (
                             condition_global_renovation.T & _certificate_before.isin(['G', 'F', 'E'])).T})
+
+            if 'fossil' in _list_conditions:
+                fossil = ['Oil fuel-Performance boiler', 'Oil fuel-Standard boiler', 'Oil fuel-Collective boiler',
+                          'Natural gas-Performance boiler', 'Natural gas-Standard boiler', 'Natural gas-Collective boiler'
+                          ]
+                _temp = pd.Series(_certificate.index.get_level_values('Heating system').isin(fossil), index=_certificate.index)
+                _condition.update({'fossil': _temp})
 
             low_income_condition = ['D1', 'D2', 'D3', 'D4']
             if self.quintiles:

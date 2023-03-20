@@ -399,11 +399,8 @@ def read_policies(config):
                                   gest='insulation'))
         return l
 
-    def read_landlord(data):
-        return [PublicPolicy('landlord', data['start'], data['end'], None, 'regulation', gest='insulation')]
-
-    def read_multi_family(data):
-        return [PublicPolicy('multi_family', data['start'], data['end'], None, 'regulation', gest='insulation')]
+    def read_regulation(data):
+        return [PublicPolicy(data['name'], data['start'], data['end'], None, 'regulation', gest=data['gest'])]
 
     read = {'mpr': read_mpr, 'mpr_new': read_mpr,
             'mpr_serenite': read_mpr_serenite,
@@ -411,8 +408,7 @@ def read_policies(config):
             'mpr_serenite_low_income': read_mpr_serenite,
             'mpr_multifamily': read_mpr_serenite,
             'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
-            'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil,
-            'landlord': read_landlord, 'multi_family': read_multi_family}
+            'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil}
 
     list_policies = list()
     for key, item in config['policies'].items():
@@ -430,6 +426,8 @@ def read_policies(config):
                 list_policies += restriction_heater(item)
             elif item.get('policy') == 'obligation':
                 list_policies += read_obligation(item)
+            elif item.get('policy') == 'regulation':
+                list_policies += read_regulation(item)
             else:
                 print('{} reading function is not implemented'.format(key))
 

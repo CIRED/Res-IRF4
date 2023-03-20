@@ -55,7 +55,7 @@
     "switch_heater": {
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-      "premature_replacement": 3,
+      "premature_replacement": null,
       "information_rate": 0.333
     },
     "district_heating": "project/input/policies/sfec/district_heating_transition2050_sfec.csv",
@@ -63,6 +63,7 @@
     "technical": {
       "cost_heater": "project/input/technical/cost_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
+      "performance_insulation": "project/input/technical/performance_insulation.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/policies/sfec/lifetime_heater_sfec.csv",
       "carbon_emission": "project/input/policies/sfec/carbon_emission_sfec.csv",
@@ -90,22 +91,26 @@
       "ratio_surface": "project/input/technical/ratio_surface.csv"
     },
     "macro": {
-      "construction": false,
+      "construction": true,
       "flow_construction": "project/input/policies/sfec/flow_construction_sfec.csv",
-      "population": "project/input/macro/population.csv",
       "income": "project/input/macro/income.csv",
-      "energy_prices": "project/input/macro/energy_prices_ht.csv",
-      "energy_taxes": "project/input/macro/energy_taxes.csv",
-      "pop_housing": null,
-      "share_multi_family": null,
-      "share_single_family_construction": "project/input/policies/sfec/share_singlefamily_construction.csv",
-      "surface_built": null,
+      "energy_prices": "project/input/macro/energy_prices_ht_ame2021.csv",
+      "energy_taxes": "project/input/macro/energy_taxes_ame2021.csv",
+      "energy_vta": "project/input/macro/energy_vta.csv",
+      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
       "income_rate": 0.012,
       "demolition_rate": "project/input/policies/sfec/demolition_rate_sfec.csv",
-      "stock_ini": 29037000,
-      "available_income": 1421000000000,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
-      "use_subsidies": "project/input/policies/sfec/use_subsidies_sfec.csv"
+      "consumption_ini": "project/input/revealed_data/consumption_ini.csv",
+      "preferences_heater": "project/input/revealed_data/stated_preferences_heater.csv",
+      "preferences_insulation": "project/input/revealed_data/stated_preferences_insulation.csv",
+      "preferences_saving": "project/input/revealed_data/stated_preferences_saving.csv",
+      "population": null,
+      "surface_built": null,
+      "stock_ini": null,
+      "available_income": null,
+      "pop_housing": null,
+      "share_multi_family": null
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
@@ -133,6 +138,7 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

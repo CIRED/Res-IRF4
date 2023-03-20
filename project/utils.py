@@ -266,7 +266,6 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 
 
-
 def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
                    'subsidy_ad_valorem': 'Subsidy, ad valorem',
@@ -276,7 +275,8 @@ def make_policies_tables(policies, path, plot=True):
                    'reduced_vta': 'Reduced VTA',
                    'restriction_heater': 'Restriction heater',
                    'restriction_energy': 'Restriction energy',
-                   'subsidies_cap': 'Subsidy, cap'
+                   'subsidies_cap': 'Subsidy, cap',
+                   'regulation': 'Regulation instrument'
                    }
 
     heater_replace = {'Electricity-Heat pump air': 'HP-air',

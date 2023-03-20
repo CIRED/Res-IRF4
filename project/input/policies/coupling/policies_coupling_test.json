@@ -69,7 +69,7 @@
       "end": 2051,
       "policy": "subsidy_ad_valorem",
       "gest": "heater",
-      "value": 1,
+      "value": 0,
       "columns": "project/input/policies/coupling/subsidies_heater.csv",
       "growth": "project/input/policies/coupling/subsidies_heater_global_renovation_simple.csv"
     },
