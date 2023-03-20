@@ -4463,15 +4463,6 @@ class AgentBuildings(ThermalBuildings):
             output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output[
                 'Expenditure state (Billion euro)']
 
-            # TODO: NOT IMPLEMENTED YET
-
-            """prices_reindex = prices.reindex(
-                self.to_energy(self._renovation_store['consumption_saved_households'])).set_axis(
-                self._renovation_store['consumption_saved_households'].index, axis=0)
-            bill_saved = (self._renovation_store['consumption_saved_households'].T * prices_reindex).T
-            bill_saved = (self._replaced_by * bill_saved).groupby(levels).sum().sum(axis=1)
-            bill_saved_mean = bill_saved.sum() / self._replaced_by.sum().sum()"""
-
             # co-benefit
             if 'Embodied energy Wall (TWh PE)' in output.keys():
                 output['Embodied energy renovation (TWh PE)'] = output['Embodied energy Wall (TWh PE)'] + output[
@@ -4498,8 +4489,7 @@ class AgentBuildings(ThermalBuildings):
             output['Health cost (Billion euro)'], o = self.health_cost(inputs)
             output.update(o)
 
-            # subsidies - details
-            # policies amount and number of beneficiaries
+            # subsidies - details: policies amount and number of beneficiaries
             subsidies_details_renovation, subsidies_count_renovation, subsidies_average_renovation = {}, {}, {}
             for key, sub in self._renovation_store['subsidies_details_households'].items():
                 subsidies_details_renovation[key] = (
@@ -4580,6 +4570,16 @@ class AgentBuildings(ThermalBuildings):
                 temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
                 temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
                 output.update(temp.T / 10 ** 6 / step)
+
+                if True:
+                    level = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Income owner', 'Occupancy status', 'Heating system']
+                    temp = self._replaced_by.groupby(level).sum()
+                    s = self._stock_ref.groupby(level).sum()
+                    proba_insulation_measures = (temp.T / s).T.dropna()
+                    path_output_special = os.path.join(self.path, 'output_special')
+                    if not os.path.isdir(path_output_special):
+                        os.mkdir(path_output_special)
+                    proba_insulation_measures.to_csv(os.path.join(path_output_special, 'proba_insulation_measures_{}.csv'.format(self.year)))
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)

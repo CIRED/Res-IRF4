@@ -1,13 +1,13 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
     "constant": false
 },
   "Reference": {
-    "end": 2022,
+    "end": 2051,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -69,13 +69,13 @@
       "carbon_emission": "project/input/technical/carbon_emission.csv",
       "technical_progress": {
         "insulation": {
-          "activated": true,
+          "activated": false,
           "start": 2020,
           "end": 2035,
           "value_end": -0.1
         },
         "heater": {
-          "activated": true,
+          "activated": false,
           "start": 2020,
           "end": 2035,
           "value_end": -0.2
@@ -120,7 +120,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": false,
+      "current_policies": true,
       "no_policy": false,
       "income": false,
       "prices_constant": false,
@@ -137,6 +137,7 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

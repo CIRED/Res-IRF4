@@ -804,7 +804,7 @@ def parse_inputs(inputs, taxes, config, stock):
         total_taxes = pd.concat([total_taxes.loc[config['start'], :]] * total_taxes.shape[0], keys=total_taxes.index,
                                 axis=1).T
 
-    energy_vta = energy_prices * (1 / (1 - inputs['energy_vta']))
+    energy_vta = energy_prices * (inputs['energy_vta'] / (1 - inputs['energy_vta']))
     taxes += [PublicPolicy('energy_vta', energy_vta.index[0], energy_vta.index[-1], energy_vta, 'tax')]
     total_taxes += energy_vta
     parsed_inputs['taxes'] = taxes
