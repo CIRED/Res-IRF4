@@ -613,7 +613,7 @@ class ThermalBuildings:
             consumption_energy = _consumption_actual.groupby(self.energy).sum()
             if 'Heating' in consumption_energy.index:
                 consumption_energy = consumption_energy.drop('Heating')
-            consumption_ini = consumption_ini.drop('District heating')
+            consumption_ini = consumption_ini.drop('Heating')
 
             # 1. consumption total
             coefficient_global = consumption_ini.sum() * 10 ** 9 / consumption_energy.sum()
@@ -3842,8 +3842,9 @@ class AgentBuildings(ThermalBuildings):
         output = dict()
         output['Stock (Million)'] = stock.sum() / 10 ** 6
         output['Surface (Million m2)'] = (self.stock * self.surface).sum() / 10 ** 6
-        output['Surface (m2/person)'] = (
-                output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
+        if 'population' in inputs.keys():
+            output['Surface (m2/person)'] = (
+                    output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
         output['Consumption standard (TWh)'] = self.consumption_agg(prices=prices, freq='year', climate=climate,
                                                                     standard=True, energy=False)
