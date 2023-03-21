@@ -1349,7 +1349,7 @@ class AgentBuildings(ThermalBuildings):
 
         regulation = [p for p in policies_heater if p.policy == 'regulation']
         if 'inertia_heater' in [p.name for p in regulation]:
-            self.preferences_heater['inertia_heater'] = 0
+            self.preferences_heater['inertia'] = 0
 
         return cost_heater, vta_heater, subsidies_details, subsidies_total
 
