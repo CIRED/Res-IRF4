@@ -125,15 +125,7 @@
       "income": false,
       "prices_constant": true,
       "emission_constant": false,
-      "heating_system": {
-        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
-        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
-        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water",
-        "Heating-District heating": null,
-        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
-      },
+      "heating_system": false,
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false,
