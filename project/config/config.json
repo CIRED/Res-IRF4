@@ -1,13 +1,14 @@
 {
   "sensitivity": {
-    "activated": false,
-    "current_policies": true,
+    "activated": true,
+    "current_policies": false,
     "no_policy": true,
     "prices_constant": false,
-    "constant": false
+    "constant": false,
+    "policies": {"Ambitious":  "project/input/policies/policies_ambitious.json"}
 },
   "Reference": {
-    "end": 2021,
+    "end": 2051,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -114,13 +115,13 @@
     },
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies":  "project/input/policies/policies_ref.json",
+    "policies":  "project/input/policies/current/policies_ref.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": false,
@@ -137,6 +138,7 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

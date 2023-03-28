@@ -623,7 +623,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
     # Getting inputs needed
     energy_prices = pd.read_csv(cba_inputs['energy_prices'], index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
-    carbon_value = pd.read_csv(cba_inputs['carbon_value'], index_col=[0]).squeeze()  # euro/tCO2
+    carbon_value = pd.read_csv(cba_inputs['carbon_value'], index_col=[0], header=None).squeeze()  # euro/tCO2
     carbon_emission = pd.read_csv(cba_inputs['carbon_emission'], index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
     # euro/tCO2 * tCO2/TWh  = euro/TWh
     carbon_emission_value = (carbon_value * carbon_emission.T).T  # euro/TWh

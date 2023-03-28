@@ -338,15 +338,22 @@ def read_policies(config):
         l = list()
 
         value = data['value']
+        if isinstance(value, str):
+            value = get_pandas(data['value'])
+            value = value.set_index(list(value.columns[:-1])).squeeze().rename(None)
 
+        by = 'index'
         if data.get('index') is not None:
             mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
             value *= mask
 
-        by = 'index'
         if data.get('columns') is not None:
-            mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            value *= mask
+            mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename(None)
+            if isinstance(value, (float, int)):
+                value *= mask
+            else:
+                value = value.to_frame().dot(mask.to_frame().T)
+
             by = 'columns'
 
         if data.get('growth'):
@@ -593,7 +600,7 @@ def read_inputs(config, other_inputs=generic_input):
     df = get_pandas(config['health_cost'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     inputs.update({'health_cost': df})
 
-    carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+    carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'carbon_value': carbon_value.loc[idx]})
 
     carbon_emission = get_pandas(config['technical']['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
@@ -757,6 +764,7 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['health_expenditure'] = df['Health expenditure']
     parsed_inputs['mortality_cost'] = df['Social cost of mortality']
     parsed_inputs['loss_well_being'] = df['Loss of well-being']
+
     parsed_inputs['carbon_value_kwh'] = (parsed_inputs['carbon_value'] * parsed_inputs['carbon_emission'].T).T.dropna() / 10**6
 
     carbon_footprint_built = inputs['footprint_built'].loc[:, 'Carbon content (kgCO2/m2)']

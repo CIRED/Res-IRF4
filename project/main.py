@@ -126,6 +126,7 @@ def run(path=None):
         if configuration['sensitivity']['activated'] * args.sensitivity:
             prefix = 'sensitivity'
             config_sensitivity = configuration['sensitivity']
+
             if 'no_policy' in config_sensitivity.keys():
                 if config_sensitivity['no_policy']:
                     configuration['NoPolicy'] = copy.deepcopy(configuration['Reference'])
@@ -136,10 +137,18 @@ def run(path=None):
                 if config_sensitivity['current_policies']:
                     configuration['CurrentPolicies'] = copy.deepcopy(configuration['Reference'])
                     configuration['CurrentPolicies']['simple']['current_policies'] = True
+
+            if config_sensitivity.get('policies'):
+                for key, item in config_sensitivity['policies'].items():
+
+                    configuration[key] = copy.deepcopy(configuration['Reference'])
+                    configuration[key]['policies'] = item
+
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:
                     configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
                     configuration['PriceConstant']['simple']['prices_constant'] = True
+
             if 'constant' in config_sensitivity.keys():
                 if config_sensitivity['constant']:
                     configuration['Constant'] = copy.deepcopy(configuration['Reference'])

@@ -427,7 +427,8 @@ def make_sensitivity_tables(table_result, path):
     plt.close()
 
 
-def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
+def format_ax(ax, y_label=None, title=None, format_x=None,
+              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
     """
 
     Parameters
@@ -452,6 +453,9 @@ def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, yma
     ax.xaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+    if format_x is not None:
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(format_x))
+
 
     if y_label is not None:
         ax.set_ylabel(y_label)
@@ -467,7 +471,7 @@ def format_ax(ax, y_label=None, title=None, format_y=lambda y, _: y, ymin=0, yma
         ax.set_ylim(ymax=y_max * 1.1)
 
     if ymax is not None:
-        ax.set_ylim(ymax=ymax)
+        ax.set_ylim(ymax=ymax, ymin=ymin)
 
     if xinteger:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -554,7 +558,8 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
 
 
 def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
-               integer=False, loc='upper', left=1.04):
+               integer=False, loc='upper', left=1.04, ymax=None, ymin=0, format_x=None, hlines=None,
+               scatter_dict=None):
     """Make plot.
 
     Parameters
@@ -582,10 +587,19 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
         else:
             df.plot(ax=ax, color=colors, style=STYLES)
 
-        if scatter is not None:
-            scatter.plot(ax=ax, style='.', ms=15, c='red')
+        if scatter_dict is not None:
+            if key in scatter_dict.keys():
+                item = scatter_dict[key]
+                item.plot(ax=ax, kind='.', ms=15, c=colors[key], label='_nolegend_')
+                #ax.annotate('{:.2f}'.format(item), (item.index[0], item.values[0] + 0.2))
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=0, xinteger=True)
+        if hlines is not None:
+            ax.axhline(y=hlines, linewidth=1, color='grey')
+
+    if scatter is not None:
+        scatter.plot(ax=ax, style='.', ms=15, c='red')
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x)
     if legend:
         format_legend(ax, loc=loc, left=left)
     save_fig(fig, save=save)
