@@ -19,7 +19,9 @@ import argparse
 import logging
 
 from project.main import run
-
+import json
+from datetime import datetime
+from copy import deepcopy
 
 if __name__ == '__main__':
 
@@ -28,10 +30,42 @@ if __name__ == '__main__':
     logging.getLogger('matplotlib.axes').disabled = True
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--directory', default='project/input/config/obligation', help='path config directory')
+    parser.add_argument('-d', '--directory', default=None, help='path config directory')
+    parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
+
     args = parser.parse_args()
 
-    configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
+    configs = []
+    if args.directory is not None:
+        configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
+
+    if args.assessment is not None:
+        with open(args.assessment) as file:
+            configuration = json.load(file)
+
+        policies = configuration['sensitivity']['assessment']
+
+        t = datetime.today().strftime('%Y%m%d_%H%M%S')
+        folder = os.path.join(os.path.join('project', 'output'), 'assessment_{}'.format(t))
+        os.mkdir(folder)
+        folder_config = os.path.join(folder, 'config')
+        os.mkdir(folder_config)
+
+        for policy in policies:
+
+            _config = deepcopy(configuration)
+            _config['assessment'] = {
+                "activated": True,
+                "Policy name": policy,
+                "AP": "Reference",
+                "AP-1": True,
+                "ZP": True,
+                "ZP+1": True,
+                "AP-2020": True
+            },
+            del _config['sensitivity']
+
+
 
     for config in configs:
         # add try/except to continue if one config fail

@@ -32,7 +32,7 @@ from project.utils import get_json
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 
-def run(path=None):
+def run(path=None, folder=None):
     start = time()
 
     parser = argparse.ArgumentParser()
@@ -51,6 +51,15 @@ def run(path=None):
         path = args.config
     with open(path) as file:
         configuration = json.load(file)
+
+    for key in [k for k in configuration.keys() if k not in ['assessment', 'sensitivity']]:
+        if isinstance(configuration[key]['policies'], str):
+            configuration[key]['policies'] = get_json(configuration[key]['policies'])['policies']
+        elif isinstance(configuration[key]['policies'], dict):
+            if 'file' in configuration[key]['policies'].keys():
+                policies = get_json(configuration[key]['policies']['file'])
+                del configuration[key]['policies']['file']
+                configuration[key]['policies'].update(policies[key]['policies'])
 
     policy_name = None
     prefix = ''
@@ -140,9 +149,8 @@ def run(path=None):
 
             if config_sensitivity.get('policies'):
                 for key, item in config_sensitivity['policies'].items():
-
                     configuration[key] = copy.deepcopy(configuration['Reference'])
-                    configuration[key]['policies'] = item
+                    configuration[key]['policies'] = get_json(item)['policies']
 
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:
@@ -213,10 +221,14 @@ def run(path=None):
         del configuration['sensitivity']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
+
+    if folder is None:
+        folder = os.path.join('project', 'output')
+
     if prefix == '':
-        folder = os.path.join(os.path.join('project', 'output'), '{}'.format(t))
+        folder = os.path.join(folder, '{}'.format(t))
     else:
-        folder = os.path.join(os.path.join('project', 'output'), '{}_{}'.format(prefix, t))
+        folder = os.path.join(folder, '{}_{}'.format(prefix, t))
     os.mkdir(folder)
 
     logger = logging.getLogger('log_{}'.format(t))
