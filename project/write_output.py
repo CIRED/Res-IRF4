@@ -749,8 +749,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 if year in result['Reference'].columns:
                     indicator.loc['Investment insulation reference (Thousand euro/household)', s] = result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
                     indicator.loc['Investment insulation (Thousand euro/household)', s] = result[s].loc['Investment insulation (Thousand euro/household)', year]
-                    indicator.loc['Intensive margin (Thousand euro / households)', s] = indicator.loc['Investment insulation reference (Thousand euro/household)', s] - indicator.loc['Investment insulation (Thousand euro/household)', s]
-                    indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin diff (Thousand euro / households)', s] / result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
+                    indicator.loc['Intensive margin (Thousand euro/household)', s] = indicator.loc['Investment insulation reference (Thousand euro/household)', s] - indicator.loc['Investment insulation (Thousand euro/household)', s]
+                    indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (Thousand euro/household)', s] / result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
 
                     indicator.loc['Non additional renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
                     indicator.loc['Additional renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - result[s].loc['Renovation (Thousand households)', year]

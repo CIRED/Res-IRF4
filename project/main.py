@@ -39,6 +39,7 @@ def run(path=None, folder=None):
     parser.add_argument('-c', '--config', default=os.path.join('project', 'config', 'test', 'config.json'), help='path config file')
 
     parser.add_argument('-d', '--directory', default='project/config/policies', help='path config directory')
+    parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
     parser.add_argument('-y', '--year', default=None, help='end year')
     parser.add_argument('-s', '--sensitivity', default=True, help='sensitivity')
 
@@ -49,8 +50,12 @@ def run(path=None, folder=None):
 
     if path is None:
         path = args.config
-    with open(path) as file:
-        configuration = json.load(file)
+
+    if isinstance(path, str):
+        with open(path) as file:
+            configuration = json.load(file)
+    else:
+        configuration = path
 
     for key in [k for k in configuration.keys() if k not in ['assessment', 'sensitivity']]:
         if isinstance(configuration[key]['policies'], str):
@@ -72,18 +77,7 @@ def run(path=None, folder=None):
 
             if config_policies['AP-1']:
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
-                if config_policies['Policy name'] in ['global_retrofit', 'bonus', 'mpr_serenite']:
-                    configuration['AP-1']['policies']['mpr'][config_policies['Policy name']]['end'] = \
-                    configuration['Reference'][
-                        'start'] + 2
-                else:
-                    configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
-                                                                                               'start'] + 2
-                if config_policies['Policy name'] == 'mpr':
-                    for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
-                        if isinstance(configuration['AP-1']['policies']['mpr'][options], dict):
-                            configuration['AP-1']['policies']['mpr'][options]['end'] = configuration['Reference'][
-                                                                                               'start'] + 2
+                configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['start'] + 2
 
             if config_policies['ZP']:
                 configuration['ZP'] = copy.deepcopy(configuration['Reference'])
@@ -91,46 +85,20 @@ def run(path=None, folder=None):
                     policy['end'] = configuration['Reference']['start'] + 2
                     configuration['ZP']['policies'][name] = policy
 
-                    if name == 'mpr':
-                        for options in ['global_retrofit', 'bonus']:
-                            if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
-                                configuration['ZP']['policies']['mpr'][options]['end'] = configuration['Reference'][
-                                                                                               'start'] + 2
-
             if config_policies['ZP'] and config_policies['ZP+1']:
                 configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
-                if config_policies['Policy name'] in ['global_retrofit', 'bonus', 'mpr_serenite']:
-                    configuration['ZP+1']['policies']['mpr'][config_policies['Policy name']]['end'] = \
-                    configuration['Reference']['end']
-                else:
-                    configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference'][
-                    'end']
-
-                if config_policies['Policy name'] == 'mpr':
-                    for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
-                        if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
-                            configuration['ZP+1']['policies']['mpr'][options]['end'] = configuration['Reference'][
-                    'end']
+                configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['end']
 
             list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                           re.search('20[0-9][0-9]', key)]
             for year in list_years:
-                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end']:
+                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year < configuration['Reference']['policies'][policy_name]['start']:
                     configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
-                    if config_policies['Policy name'] in ['global_retrofit', 'bonus', 'mpr_serenite']:
-                        configuration['AP-{}'.format(year)]['policies']['mpr'][config_policies['Policy name']]['end'] = year
-                    else:
-                        configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
-                    if config_policies['Policy name'] == 'mpr':
-                        for options in ['global_retrofit', 'mpr_serenite', 'bonus']:
-                            if isinstance(configuration['ZP']['policies']['mpr'][options], dict):
-                                configuration['AP-{}'.format(year)]['policies']['mpr'][options]['end'] = year
-
+                    configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
                     configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
 
-    config_sensitivity = None
     if 'sensitivity' in configuration.keys():
         if configuration['sensitivity']['activated'] * args.sensitivity:
             prefix = 'sensitivity'
@@ -222,13 +190,15 @@ def run(path=None, folder=None):
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
 
-    if folder is None:
+    if folder is None or not prefix:
         folder = os.path.join('project', 'output')
-
-    if prefix == '':
-        folder = os.path.join(folder, '{}'.format(t))
+        if prefix:
+            folder = os.path.join(folder, '{}'.format(t))
+        else:
+            folder = os.path.join(folder, '{}_{}'.format(prefix, t))
     else:
-        folder = os.path.join(folder, '{}_{}'.format(prefix, t))
+        folder = os.path.join(folder, '{}'.format(prefix))
+
     os.mkdir(folder)
 
     logger = logging.getLogger('log_{}'.format(t))

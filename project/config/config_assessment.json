@@ -6,40 +6,11 @@
     "prices_constant": false,
     "constant": false,
     "policies": false,
-    "assessment": {
-      "cite": [
-        2020
-      ],
-      "cee": [
-        2020,
-        2025,
-        2030
-      ],
-      "carbon_tax": [
-        2020,
-        2025,
-        2030
-      ],
-      "mpr_serenite": [
-        2020,
-        2025,
-        2030
-      ],
-      "mpr": [
-        2025,
-        2030
-      ],
-      "mpr_multifamily": [
-        2025,
-        2030
-      ],
-      "reduced_vta": [2020, 2025, 2030],
-
-    }
-
+    "assessment": ["reduced_vta"],
+    "test": ["cite", "cee", "mpr", "mpr_serenite", "carbon_tax", "mpr_multifamily", "reduced_vta"]
 },
   "Reference": {
-    "end": 2031,
+    "end": 2021,
     "step": 1,
     "full_output": true,
     "start": 2018,

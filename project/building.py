@@ -2269,9 +2269,9 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = value.copy()
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
-        if subsidies_details:
-            subsidies_total = sum(
-                [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']])
+        subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']]
+        if subsidies_total:
+            subsidies_total = sum(subsidies_total)
         else:
             subsidies_total = pd.DataFrame(0, index=consumption_saved.index, columns=consumption_saved.columns)
         if subsidies_cap:

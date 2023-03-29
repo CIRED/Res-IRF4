@@ -19,7 +19,7 @@ import argparse
 import logging
 
 from project.main import run
-import json
+from json import load, dumps
 from datetime import datetime
 from copy import deepcopy
 
@@ -35,24 +35,24 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    configs = []
+    configs, folder = [], None
+
     if args.directory is not None:
         configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
 
     if args.assessment is not None:
+        configs = []
+
         with open(args.assessment) as file:
-            configuration = json.load(file)
+            configuration = load(file)
 
         policies = configuration['sensitivity']['assessment']
 
         t = datetime.today().strftime('%Y%m%d_%H%M%S')
         folder = os.path.join(os.path.join('project', 'output'), 'assessment_{}'.format(t))
         os.mkdir(folder)
-        folder_config = os.path.join(folder, 'config')
-        os.mkdir(folder_config)
 
         for policy in policies:
-
             _config = deepcopy(configuration)
             _config['assessment'] = {
                 "activated": True,
@@ -61,12 +61,14 @@ if __name__ == '__main__':
                 "AP-1": True,
                 "ZP": True,
                 "ZP+1": True,
-                "AP-2020": True
-            },
+                "AP-2020": True,
+                "AP-2030": True,
+                "AP-2040": True,
+                "AP-2050": True
+            }
             del _config['sensitivity']
+            configs += [_config]
 
-
-
-    for config in configs:
+    for c in configs:
         # add try/except to continue if one config fail
-        run(path=config)
+        run(path=c, folder=folder)
