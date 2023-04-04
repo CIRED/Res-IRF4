@@ -21,7 +21,7 @@ import os
 import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot
+    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict
 from PIL import Image
 
 
@@ -33,6 +33,63 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     if buildings.quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
         resources_data['index']['Income owner'] = resources_data['quintiles']
+
+    """rslt = reverse_dict(buildings.store_over_years)
+    temp = pd.Index([])
+    for y, item in rslt['Social, global renovation'].items():
+        temp = temp.union(item.index)
+    for y, item in rslt['Social, global renovation'].items():
+        rslt['Social, global renovation'][y] = item.reindex(temp).interpolate()
+
+    df = pd.concat(rslt['Private, global renovation'], axis=1)
+    test = df.stack().reset_index()
+    test.columns = ['Stock', 'Year', 'NPV']
+    test.dropna(inplace=True)
+    sns.displot(test, x="Year", y="NPV", binwidth=(0.2, 10000), weights='Stock', hue='Year', cbar=False)
+    plt.show()
+
+    import numpy as np
+    from matplotlib.colors import BoundaryNorm
+
+
+    # define the colormap
+    cmap = plt.get_cmap('PuOr')
+
+    # extract all colors from the .jet map
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    # create the new map
+    cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
+
+    # define the bins and normalize and forcing 0 to be part of the colorbar!
+    bounds = np.arange(df.min().min(), df.max().max(), .5)
+    idx = np.searchsorted(bounds, 0)
+    bounds = np.insert(bounds, idx, 0)
+    norm = BoundaryNorm(bounds, cmap.N)
+
+
+    # cmap
+    f, ax = plt.subplots()
+
+    plt.imshow(df)
+    plt.show()
+
+
+    for col, ds in df.items():
+        s = ax.scatter(x=[col] * ds.shape[0], y=ds.index, c=ds.values, plotnonfinite=False,
+                       norm=norm, cmap=cmap)
+        break
+    f.colorbar(s, ax=ax)
+    plt.show()
+    plt.pcolormesh([df.iloc[:, k].values])
+
+    
+    plt.pcolormesh(df.index, df.columns, df.values)
+    sns.barplot("size", y="total_bill", data=tips, palette="Blues_d")
+    
+    test  = df.iloc[:, 0]
+    sns.barplot(data=test, y=test.max())
+
+    """
 
     # energy consumption
     df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
@@ -747,16 +804,17 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             for s in efficiency_scenarios:
                 year = int(s[-4:])
                 if year in result['Reference'].columns:
+                    """
                     indicator.loc['Investment insulation reference (Thousand euro/household)', s] = result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
                     indicator.loc['Investment insulation (Thousand euro/household)', s] = result[s].loc['Investment insulation (Thousand euro/household)', year]
                     indicator.loc['Intensive margin (Thousand euro/household)', s] = indicator.loc['Investment insulation reference (Thousand euro/household)', s] - indicator.loc['Investment insulation (Thousand euro/household)', s]
                     indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (Thousand euro/household)', s] / result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
+                    """
 
                     indicator.loc['Non additional renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
                     indicator.loc['Additional renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - result[s].loc['Renovation (Thousand households)', year]
-                    indicator.loc['Freeriding renovation ratio (%)', s] = result[s].loc['Renovation (Thousand households)', year] / result['Reference'].loc['Renovation (Thousand households)', year]
-                    indicator.loc['Extensive margin (%)', s] = (result['Reference'].loc['Renovation (Thousand households)', year] / result[s].loc['Renovation (Thousand households)', year]) - 1
-
+                    indicator.loc['Freeriding renovation ratio (%)', s] = indicator.loc['Non additional renovation (Thousand households)', s] / (indicator.loc['Additional renovation (Thousand households)', s] + indicator.loc['Non additional renovation (Thousand households)', s])
+                    indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional renovation (Thousand households)', s] / indicator.loc['Non additional renovation (Thousand households)', s]
         else:
             indicator = pd.DataFrame(indicator).T
         indicator.sort_index(axis=1, inplace=True)

@@ -1,16 +1,16 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": false,
     "no_policy": false,
     "prices_constant": false,
     "constant": false,
     "policies": false,
-    "assessment": ["reduced_vta"],
-    "test": ["cite", "cee", "mpr", "mpr_serenite", "carbon_tax", "mpr_multifamily", "reduced_vta"]
+    "assessment": ["cite", "cee", "mpr", "mpr_serenite"],
+    "test": ["cite", "cee", "mpr", "mpr_serenite", "mpr_multifamily", "reduced_vta"]
 },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -140,7 +140,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }

@@ -92,7 +92,7 @@ def run(path=None, folder=None):
             list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                           re.search('20[0-9][0-9]', key)]
             for year in list_years:
-                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year < configuration['Reference']['policies'][policy_name]['start']:
+                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year > configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
                     configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
                     configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
                     configuration['AP-{}'.format(year)]['end'] = year + 1
@@ -192,7 +192,7 @@ def run(path=None, folder=None):
 
     if folder is None or not prefix:
         folder = os.path.join('project', 'output')
-        if prefix:
+        if not prefix:
             folder = os.path.join(folder, '{}'.format(t))
         else:
             folder = os.path.join(folder, '{}_{}'.format(prefix, t))

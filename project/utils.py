@@ -1228,19 +1228,21 @@ def compare_bar_plot(df, y_label, legend=True, format_y=lambda y, _: y, save=Non
 
 
 def make_hist(df, x, hue, y_label, legend=True, format_y=lambda y, _: y, save=None, kde=False, palette=None,
-              bins=20):
+              bins=20, xlim=None):
 
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     if palette is None:
         ax = sns.histplot(data=df, x=x, kde=kde, weights='Stock', hue=hue, bins=bins,
-                     palette=palette, ax=ax, legend=legend)
+                          palette=palette, ax=ax, legend=legend)
     else:
         ax = sns.histplot(data=df, x=x, kde=kde, weights='Stock', hue=hue, bins=bins,
-                     palette=palette, ax=ax, legend=legend)
+                          palette=palette, ax=ax, legend=legend)
 
     ax = format_ax(ax, title=y_label, format_y=format_y)
     ax.yaxis.label.set_visible(False)
+    if xlim is not None:
+        ax.set_xlim(left=xlim[0], right=xlim[1])
 
     # plt.legend(bbox_to_anchor=(1.2, 0.5))
 

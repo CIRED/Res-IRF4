@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
@@ -8,7 +8,7 @@
     "policies": {"Ambitious":  "project/input/policies/policies_ambitious.json"}
 },
   "Reference": {
-    "end": 2021,
+    "end": 2020,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -138,7 +138,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "calibration": "project/input/calibration/calibration.pkl"
+    }
   }
 }

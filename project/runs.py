@@ -62,7 +62,9 @@ if __name__ == '__main__':
                 "ZP": True,
                 "ZP+1": True,
                 "AP-2020": True,
+                "AP-2025": True,
                 "AP-2030": True,
+                "AP-2035": True,
                 "AP-2040": True,
                 "AP-2050": True
             }
