@@ -2476,9 +2476,9 @@ class AgentBuildings(ThermalBuildings):
                 utility_constant = reindex_mi(self.constant_insulation_extensive, _expected_utility.index)
                 utility_renovate = _expected_utility + utility_constant
 
-            retrofit_proba = renovation_func(utility_renovate)
+            probability_renovation = renovation_func(utility_renovate)
 
-            return retrofit_proba
+            return probability_renovation
 
         def nested_logit_formula(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None):
 
@@ -2527,12 +2527,12 @@ class AgentBuildings(ThermalBuildings):
                                                                 _cost_financing=_cost_financing)
 
             # _bill, _subsidies, _cost = None, None, None
-            if self._expected_utility != 'log_sum':
+            """if self._expected_utility != 'log_sum':
                 expected_utility = to_expected_utility(_cost_total, _bill_saved, _subsidies_total, _market_share,
                                                        _utility_intensive=_utility_intensive,
                                                        _cost_financing=_cost_financing)
-            else:
-                expected_utility = log(exp(_utility_intensive).sum(axis=1))
+            else:"""
+            expected_utility = log(exp(_utility_intensive).sum(axis=1))
 
             _renovation_rate = to_renovation_rate(expected_utility)
 
@@ -3019,14 +3019,6 @@ class AgentBuildings(ThermalBuildings):
 
         def calibration_renovation(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
                                    _calib_intensive, _cost_financing=None):
-            self.logger.info('Calibration renovation nested-logit function')
-
-            # input cleaning
-            _bill_saved[_bill_saved == 0] = float('nan')
-            _subsidies_total[_bill_saved == 0] = float('nan')
-            _cost_total[_bill_saved == 0] = float('nan')
-            if _cost_financing is not None:
-                _cost_financing[_bill_saved == 0] = float('nan')
 
             def calibration(x, _stock, utilities, ms_insulation_ini, renovation_rate_ini, std_deviation, ref):
 
@@ -3068,34 +3060,27 @@ class AgentBuildings(ThermalBuildings):
 
                     rslt = append(rslt, std_deviation - std_deviation_calc)
 
-                if (rslt.round(3) == 0).all():
-                    rslt[:] = 0
+                """if (rslt.round(3) == 0).all():
+                    rslt[:] = 0"""
 
                 return rslt
+
+            self.logger.info('Calibration renovation nested-logit function')
+
+            # input cleaning
+            _bill_saved[_bill_saved == 0] = float('nan')
+            _subsidies_total[_bill_saved == 0] = float('nan')
+            _cost_total[_bill_saved == 0] = float('nan')
+            if _cost_financing is not None:
+                _cost_financing[_bill_saved == 0] = float('nan')
 
             # target
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
             ms_insulation_ini = _calib_intensive['ms_insulation_ini']
             std_deviation = _calib_renovation['scale']['deviation']
 
-            flow_ini = _stock.groupby(renovation_rate_ini.index.names).sum() * renovation_rate_ini
-            flow_ini = flow_ini.to_frame().dot(ms_insulation_ini.to_frame().T)
-
-            # utility intensive
-            pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
-            utility_subsidies = (_subsidies_total.T * pref_sub).T / 1000
-
-            pref_investment = reindex_mi(self.preferences_insulation['cost'], _cost_total.index).rename(None)
-            utility_investment = (_cost_total.T * pref_investment).T / 1000
-
-            utility_bill_saving = (_bill_saved.T * reindex_mi(self.preferences_insulation['bill_saved'],
-                                                              _bill_saved.index)).T / 1000
-            utility_intensive = utility_bill_saving + utility_investment + utility_subsidies
-
-            # utility_representative = ((utility_intensive.T * _stock).T.groupby(renovation_rate_ini.index.names).sum().T / _stock.groupby(renovation_rate_ini.index.names).sum()).T
-            utility_representative = ((utility_intensive.T * _stock).T.sum().T / _stock.sum()).T
-
-            # fsolve(lambda x: (exp(utility_representative + x) / exp(utility_representative + x).sum()).round(2) - ms_insulation_ini, constant_insulation_intensive, xtol=10**-2)
+            _, utility_intensive = to_market_share(_bill_saved, _subsidies_total, _cost_total,
+                                                   _cost_financing=_cost_financing)
 
             # initialization
             ref = MultiIndex.from_tuples([(False, False, True, False)], names=['Wall', 'Floor', 'Roof', 'Windows'])
@@ -3113,19 +3098,11 @@ class AgentBuildings(ThermalBuildings):
             x = append(constant_insulation_intensive, constant_renovation)
             x = append(x, 1)
 
-            """constant_insulation_intensive = array([-1.895, -3.954, -6.263, -1.986, -5.448, -2.661, -2.606, -5.485, -2.637, -4.857, -6.97, -4.328, -3.952, -3.23])
-            constant_renovation = array([-4.018, -2.118, -5.004, -3.674, -4.265, -2.055, -4.711, -2.854, -5.537, -4.256, -5.126, -2.946])
-
-            scale = 0.8
-            x = append(constant_insulation_intensive, constant_renovation)
-            x = append(x, scale)"""
-
             root, info_dict, ier, mess = fsolve(calibration, x, args=(
                 _stock, utility_intensive, ms_insulation_ini, renovation_rate_ini,
                 std_deviation, ref), full_output=True)
 
-            constant_insulation_intensive = Series(root[:len(ms_insulation_ini) - 1],
-                                                    index=ms_insulation_ini.index.drop(ref))
+            constant_insulation_intensive = Series(root[:len(ms_insulation_ini) - 1], index=ms_insulation_ini.index.drop(ref))
             constant_insulation_intensive = concat((constant_insulation_intensive, Series(0, index=ref)))
             constant_insulation_intensive = constant_insulation_intensive.loc[ms_insulation_ini.index]
             constant_renovation = pd.Series(
@@ -3133,23 +3110,55 @@ class AgentBuildings(ThermalBuildings):
                 index=renovation_rate_ini.index)
             scale = root[-1]
 
-            """flow = _renovation_rate * _stock
+            self.constant_insulation_intensive = constant_insulation_intensive * scale
+            self.constant_insulation_extensive = constant_renovation
+            self.apply_scale(scale)
+
+            # results
+            _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
+                                                                          _stock=_stock, _cost_financing=_cost_financing)
+
+            flow = _renovation_rate * _stock
             rate = flow.groupby(renovation_rate_ini.index.names).sum() / _stock.groupby(
                 renovation_rate_ini.index.names).sum()
             compare_rate = concat((rate.rename('Calculated'), renovation_rate_ini.rename('Observed')),
                                   axis=1).round(3)
+            agg = flow.groupby(renovation_rate_ini.index.names).sum()
+
+            wtp = self.constant_insulation_extensive / self.preferences_insulation['cost']
+            ref = ('Single-family', 'Owner-occupied', False)
+            diff = wtp - wtp[ref]
+            stock_ini = _stock.groupby(renovation_rate_ini.index.names).sum()
+
+            details = concat((
+                self.constant_insulation_extensive, rate, renovation_rate_ini, stock_ini / 10 ** 6,
+                agg / 10 ** 3, wtp, diff), axis=1, keys=['constant', 'calcul', 'observed', 'stock', 'flow', 'wtp', 'market_barriers']).round(decimals=3)
+            if self.path is not None:
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
+
             flow_insulation = (flow * _market_share.T).T.sum()
             share = flow_insulation / flow_insulation.sum()
             compare_share = concat((share.rename('Calculated'), ms_insulation_ini.rename('Observed')),
                                    axis=1).round(3)
 
+            wtp = self.constant_insulation_intensive / self.preferences_insulation['cost']
+            details = concat(
+                (self.constant_insulation_intensive, share, ms_insulation_ini, flow_insulation / 10 ** 3, wtp), axis=1,
+                keys=['constant', 'calcul', 'observed', 'thousand', 'wtp']).round(decimals=3)
+            if self.path is not None:
+                details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
+
+
+
             compare = concat((compare_rate, compare_share), ignore_index=True)
-            if allclose(compare['Calculated'], compare['Observed'], rtol=10 ** -3):
+            if allclose(compare['Calculated'], compare['Observed'], rtol=10 ** -2):
                 self.logger.debug('Coupled optim worked')
+            else:
+                assert allclose(compare['Calculated'], compare['Observed'],
+                                rtol=10 ** -2), 'Calibration insulation did not work'
+
             if self.path is not None:
                 compare.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
-                assert allclose(compare['Calculated'], compare['Observed'],
-                                rtol=10 ** -2), 'Calibration insulation did not work'"""
 
         def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total, _cost_financing):
 
@@ -3348,9 +3357,6 @@ class AgentBuildings(ThermalBuildings):
                 assess_policies(stock, subsidies_details, cost_insulation, bill_saved, subsidies_total, cost_financing)
                 assess_sensitivity(stock, cost_insulation, bill_saved, subsidies_total, cost_financing)
 
-
-
-
         if self.rational_behavior is None:
             market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total, cost_insulation,
                                                                         _stock=stock, _cost_financing=cost_financing,
@@ -3375,20 +3381,15 @@ class AgentBuildings(ThermalBuildings):
             p.loc[p.index.get_level_values('Heater replacement') == True] *= proba_heater
             p.loc[p.index.get_level_values('Heater replacement') == False] *= (1 - proba_heater)
             p = p.groupby([i for i in p.index.names if i != 'Heater replacement']).sum()
-            print(p.describe())
 
             proba = (renovation_rate * market_share.T).T
             proba.loc[proba.index.get_level_values('Heater replacement') == True, :] *= proba_heater
             proba.loc[proba.index.get_level_values('Heater replacement') == False, :] *= (1 - proba_heater)
             proba = proba.groupby([i for i in proba.index.names if i != 'Heater replacement']).sum()
             reno = proba.sum(axis=1)
-            print(reno.describe())
 
             for i in self._resources_data['index']['Insulation']:
                 p = proba.xs(True, level=i, axis=1).sum(axis=1)
-                print(i)
-                print(p.describe())
-
 
             """if self.year == self.first_year + 1:
                 probability = (renovation_rate * market_share.T).T

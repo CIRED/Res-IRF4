@@ -8,7 +8,7 @@
     "policies": {"Ambitious":  "project/input/policies/policies_ambitious.json"}
 },
   "Reference": {
-    "end": 2020,
+    "end": 2022,
     "step": 1,
     "full_output": true,
     "start": 2018,
