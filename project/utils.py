@@ -262,6 +262,17 @@ def deciles2quintiles_dict(inputs):
     return inputs
 
 
+def parse_policies(config):
+    # configuration[key]
+    if isinstance(config['policies'], str):
+        config['policies'] = get_json(config['policies'])['policies']
+    elif isinstance(config['policies'], dict):
+        if 'file' in config['policies'].keys():
+            policies = get_json(config['policies']['file'])
+            del config['policies']['file']
+            config['policies'].update(policies['policies'])
+
+
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 

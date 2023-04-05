@@ -178,15 +178,17 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     i = ['Switch heater only (Thousand households)',
          'Renovation with heater replacement (Thousand households)',
          'Renovation endogenous (Thousand households)',
-         'Renovation obligation (Thousand households)',
+         'Renovation obligation (Thousand households)'
          ]
+    colors = ['royalblue', 'tomato', 'darksalmon', 'grey']
+
     df = output.loc[i, :].T
     df.dropna(inplace=True)
     df.columns = [i.split(' (')[0] for i in df.columns]
     make_area_plot(df, 'Renovation (Thousand households)',
                    save=os.path.join(path, 'renovation.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   loc='left', left=1.25)
+                   loc='left', left=1.25, colors=colors)
 
     df = output.loc[['Renovation {} (Thousand households)'.format(i) for i in resources_data['index']['Decision maker']], :].T
     df.dropna(inplace=True)

@@ -17,7 +17,6 @@ from project.input.resources import resources_data
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
 CONFIG_TEST = 'project/config/coupling/config_coupling_simple_test.json'
-CONFIG_THRESHOLD_TEST = 'project/config/coupling/config_coupling_simple_threshold.json'
 
 
 def ini_res_irf(path=None, config=None):
@@ -327,11 +326,12 @@ def test_design_subsidies():
                )
 
 
-def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
-             sub_design='global_renovation'):
+def run_simu(output_consumption=False, rebound=True, start=2020, end=2021, sub_design='global_renovation',
+             config=None):
 
     path = os.path.join('project', 'output', 'ResIRF')
-    config = CONFIG_TEST
+    if config is None:
+        config = CONFIG_TEST
     buildings, inputs_dynamics, policies_heater, policies_insulation = ini_res_irf(path=path, config=config)
 
     sub_heater = 0
@@ -365,4 +365,5 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021,
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    run_simu(output_consumption=False, start=2020, end=2022, sub_design='efficiency_100')
+    config = 'project/config/coupling/config_ref.json'
+    run_simu(output_consumption=False, start=2020, end=2022, sub_design=None, config=config)

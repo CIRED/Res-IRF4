@@ -10,7 +10,7 @@ import psutil
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes, plot_thermal_insulation
+from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies
 from project.input.resources import resources_data
 
 
@@ -147,6 +147,7 @@ def config2inputs(config=None, building_stock=None, end=None):
             config['policies'][name] = policy
 
     if config.get('policies') is not None:
+        parse_policies(config)
         policies_heater, policies_insulation, taxes = read_policies(config)
     else:
         policies_insulation, policies_heater, taxes = [], [], []

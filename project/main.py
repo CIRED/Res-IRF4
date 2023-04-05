@@ -27,7 +27,7 @@ import argparse
 
 from project.write_output import plot_compare_scenarios, indicator_policies, make_summary
 from project.model import res_irf
-from project.utils import get_json
+from project.utils import get_json, parse_policies
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -58,13 +58,7 @@ def run(path=None, folder=None):
         configuration = path
 
     for key in [k for k in configuration.keys() if k not in ['assessment', 'sensitivity']]:
-        if isinstance(configuration[key]['policies'], str):
-            configuration[key]['policies'] = get_json(configuration[key]['policies'])['policies']
-        elif isinstance(configuration[key]['policies'], dict):
-            if 'file' in configuration[key]['policies'].keys():
-                policies = get_json(configuration[key]['policies']['file'])
-                del configuration[key]['policies']['file']
-                configuration[key]['policies'].update(policies[key]['policies'])
+        parse_policies(configuration[key])
 
     policy_name = None
     prefix = ''
