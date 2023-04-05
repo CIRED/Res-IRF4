@@ -10,7 +10,7 @@
   "Reference": {
     "end": 2051,
     "step": 1,
-    "full_output": false,
+    "full_output": true,
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
@@ -18,7 +18,8 @@
       "interest_rate": 0.04,
       "saving_rate": 0.025,
       "duration": 10,
-      "debt_ratio": 0.05
+      "debt_ratio": 0.05,
+      "method": "MENFIS"
     },
     "supply": {
       "activated_insulation": false,
@@ -123,7 +124,7 @@
       "ratio_surface": false,
       "stock": false,
       "current_policies": false,
-      "no_policy": false,
+      "no_policy": true,
       "income": false,
       "prices_constant": false,
       "heating_system": {

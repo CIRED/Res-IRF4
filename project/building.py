@@ -1254,31 +1254,30 @@ class AgentBuildings(ThermalBuildings):
         -------
 
         """
-
+        cost_total, cost_financing, amount_debt, amount_saving, discount = cost, None, None, None, None
+        to_pay = cost - subsidies
         if financing_cost is not None and self.financing_cost:
-            to_pay = cost - subsidies
-            share_debt = financing_cost['share_debt'][0] + to_pay * financing_cost['share_debt'][1]
-            cost_debt = financing_cost['interest_rate'] * share_debt * to_pay * financing_cost['duration']
-            cost_saving = (financing_cost['saving_rate'] * reindex_mi(financing_cost['factor_saving_rate'],
-                                                                      to_pay.index) * (
-                                   (1 - share_debt) * to_pay).T).T * financing_cost['duration']
-            cost_financing = cost_debt + cost_saving
-            cost_total = cost + cost_financing
 
-            amount_debt = share_debt * to_pay
-            amount_saving = (1 - share_debt) * to_pay
+            if self.financing_cost['method'] == 'MENFIS':
+                share_debt = financing_cost['share_debt'][0] + to_pay * financing_cost['share_debt'][1]
+                cost_debt = financing_cost['interest_rate'] * share_debt * to_pay * financing_cost['duration']
+                cost_saving = (financing_cost['saving_rate'] * reindex_mi(financing_cost['factor_saving_rate'],
+                                                                          to_pay.index) * (
+                                       (1 - share_debt) * to_pay).T).T * financing_cost['duration']
+                cost_financing = cost_debt + cost_saving
+                cost_total = cost + cost_financing
 
-            discount = financing_cost['interest_rate'] * share_debt + ((1 - share_debt).T * reindex_mi(financing_cost[
-                                                                                                           'factor_saving_rate'] *
-                                                                                                       financing_cost[
-                                                                                                           'saving_rate'],
-                                                                                                       share_debt.index)).T
+                amount_debt = share_debt * to_pay
+                amount_saving = (1 - share_debt) * to_pay
+
+                discount = financing_cost['interest_rate'] * share_debt + ((1 - share_debt).T * reindex_mi(financing_cost[
+                                                                                                               'factor_saving_rate'] *
+                                                                                                           financing_cost[
+                                                                                                               'saving_rate'],
+                                                                                                           share_debt.index)).T
             # discount_factor = (1 - (1 + discount) ** -30) / 30
 
-            return cost_total, cost_financing, amount_debt, amount_saving, discount
-
-        else:
-            return cost, None, None, None, None
+        return cost_total, cost_financing, amount_debt, amount_saving, discount
 
     def apply_subsidies_heater(self, index, policies_heater, cost_heater):
         """Calculate subsidies for each dwelling and each heating system.
@@ -3919,45 +3918,47 @@ class AgentBuildings(ThermalBuildings):
             self._replaced_by.index = self._replaced_by.index.reorder_levels(names)
             self._renovation_store['discount'] = self._renovation_store['discount'].groupby(levels).mean()
 
-            c_saved = self._renovation_store['consumption_saved_households'].droplevel(['Heating system', 'Heater replacement'])
-            c_saved.index.rename({'Heating system final': 'Heating system'}, inplace=True)
-            c_saved = c_saved[~c_saved.index.duplicated()]
-            # carbon_value_2030 = inputs['carbon_value_kwh'].loc[2030, :]
-
-            c_value = carbon_value_kwh.reindex(self.to_energy(c_saved)).set_axis(c_saved.index)
-            e_saved = (c_saved.T * c_value).T
-            c_insulation = reindex_mi(self._renovation_store['cost_households'], c_saved.index)
-
-            options = {
-                'Social, global renovation': {'discount_rate': discount_rate,
-                                              'carbon_saved': e_saved,
-                                              'option': True,
-                                              'health_cost': inputs['health_cost'].sum(axis=1)},
-                'Private, global renovation': {'discount_rate': self._renovation_store['discount'],
-                                               'carbon_saved': None,
-                                               'option': True},
-                'Private, all measures': {'discount_rate': self._renovation_store['discount'],
-                                          'carbon_saved': None}
-            }
-            options = {k: i for k, i in options.items() if k in ['Social, global renovation', 'Private, global renovation',
-                                                                 'Private, all measures']}
-
-            colors = {'Social, all measures': 'darkred',
-                      'Social, global renovation': 'orangered',
-                      'Private, global renovation': 'cornflowerblue',
-                      'Private, all measures': 'darkblue',
-                      }
-
-            dict_rslt, dict_stats = {}, {}
-            for key, option in options.items():
-                temp = marginal_abatement_cost(c_saved, c_insulation, self._stock_ref, prices, **option)
-                dict_rslt.update({key: temp[0]})
-                dict_stats.update({key: temp[1]})
-
-            dict_rslt = reverse_dict(dict_rslt)
-            self.store_over_years.update({self.year: deepcopy(dict_rslt['npv_pop'])})
-            dict_stats = reverse_dict(dict_stats)
+            # self.store_over_years.update({self.year: deepcopy(dict_rslt['npv_pop'])})
+            # dict_stats = reverse_dict(dict_stats)
             if self.year == 2019:
+                c_saved = self._renovation_store['consumption_saved_households'].droplevel(
+                    ['Heating system', 'Heater replacement'])
+                c_saved.index.rename({'Heating system final': 'Heating system'}, inplace=True)
+                c_saved = c_saved[~c_saved.index.duplicated()]
+                # carbon_value_2030 = inputs['carbon_value_kwh'].loc[2030, :]
+
+                c_value = carbon_value_kwh.reindex(self.to_energy(c_saved)).set_axis(c_saved.index)
+                e_saved = (c_saved.T * c_value).T
+                c_insulation = reindex_mi(self._renovation_store['cost_households'], c_saved.index)
+
+                options = {
+                    'Social, global renovation': {'discount_rate': discount_rate,
+                                                  'carbon_saved': e_saved,
+                                                  'option': True,
+                                                  'health_cost': inputs['health_cost'].sum(axis=1)},
+                    'Private, global renovation': {'discount_rate': self._renovation_store['discount'],
+                                                   'carbon_saved': None,
+                                                   'option': True},
+                    'Private, all measures': {'discount_rate': self._renovation_store['discount'],
+                                              'carbon_saved': None}
+                }
+                options = {k: i for k, i in options.items() if
+                           k in ['Social, global renovation', 'Private, global renovation',
+                                 'Private, all measures']}
+
+                colors = {'Social, all measures': 'darkred',
+                          'Social, global renovation': 'orangered',
+                          'Private, global renovation': 'cornflowerblue',
+                          'Private, all measures': 'darkblue',
+                          }
+
+                dict_rslt, dict_stats = {}, {}
+                for key, option in options.items():
+                    temp = marginal_abatement_cost(c_saved, c_insulation, self._stock_ref, prices, **option)
+                    dict_rslt.update({key: temp[0]})
+                    dict_stats.update({key: temp[1]})
+
+                dict_rslt = reverse_dict(dict_rslt)
 
                 c_before = self.consumption_heating_store(self._stock_ref.index, full_output=False)
                 c_before = reindex_mi(c_before, self._stock_ref.index) * self._stock_ref * reindex_mi(self._surface, self._stock_ref.index)

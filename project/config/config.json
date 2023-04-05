@@ -8,7 +8,7 @@
     "policies": {"Ambitious":  "project/input/policies/policies_ambitious.json"}
 },
   "Reference": {
-    "end": 2022,
+    "end": 2031,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -17,8 +17,9 @@
       "activated": true,
       "interest_rate": 0.04,
       "saving_rate": 0.025,
-      "duration": 10,
-      "upfront": "project/input/macro/upfront.csv"
+      "duration": 15,
+      "upfront_max": "project/input/macro/upfront_max.csv",
+      "method": "MENFIS"
     },
     "supply": {
       "activated_insulation": false,
@@ -123,7 +124,7 @@
       "ratio_surface": false,
       "stock": false,
       "current_policies": false,
-      "no_policy": false,
+      "no_policy": true,
       "income": false,
       "prices_constant": false,
       "heating_system": {
@@ -139,6 +140,7 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

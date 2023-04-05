@@ -23,7 +23,7 @@ from numpy.testing import assert_almost_equal
 import copy
 import os
 
-from project.utils import reindex_mi, get_pandas, make_plot
+from project.utils import reindex_mi, get_pandas, make_plot, get_series
 from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 from project.input.param import generic_input
 from project.input.resources import resources_data
@@ -820,6 +820,8 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['energy_prices'] = energy_prices
 
     parsed_inputs['input_financing'].update(config['financing_cost'])
+    if 'upfront_max' in parsed_inputs['input_financing'].keys():
+        parsed_inputs['input_financing']['upfront_max'] = get_series(parsed_inputs['input_financing']['upfront_max'])
 
     supply = {'insulation': None, 'heater': None}
     if config.get('supply') is not None:
