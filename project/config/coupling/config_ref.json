@@ -10,14 +10,15 @@
   "Reference": {
     "end": 2051,
     "step": 1,
-    "full_output": true,
+    "full_output": false,
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
       "activated": true,
       "interest_rate": 0.04,
       "saving_rate": 0.025,
-      "duration": 10
+      "duration": 10,
+      "debt_ratio": 0.05
     },
     "supply": {
       "activated_insulation": false,
@@ -138,6 +139,7 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
+    },
+    "calibration": "project/input/calibration/calibration_20230405.pkl"
   }
 }

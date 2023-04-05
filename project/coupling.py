@@ -12,7 +12,7 @@ from project.model import config2inputs, initialize, stock_turnover, calibration
 from project.read_input import PublicPolicy
 from project.utils import make_plot, make_plots
 from project.input.resources import resources_data
-
+from project.write_output import plot_scenario
 
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
@@ -348,7 +348,8 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021, sub_d
                                               policies_insulation, sub_design, inputs_dynamics['financing_cost'],
                                               climate=2006, smooth=False,
                                               efficiency_hour=False, demolition_rate=inputs_dynamics['demolition_rate'],
-                                              output_consumption=output_consumption, full_output=True, rebound=rebound,
+                                              output_consumption=output_consumption,
+                                              full_output=inputs_dynamics['full_output'], rebound=rebound,
                                               technical_progress=inputs_dynamics['technical_progress'],
                                               premature_replacement=inputs_dynamics['premature_replacement'],
                                               supply=inputs_dynamics['supply']
@@ -357,7 +358,6 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021, sub_d
     concat_output = concat((concat_output, output), axis=1)
 
     concat_output.to_csv(os.path.join(buildings.path, 'output.csv'))
-    from project.write_output import plot_scenario
     concat_stock = concat((concat_stock, stock), axis=1)
 
     plot_scenario(concat_output, concat_stock, buildings)

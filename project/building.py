@@ -4589,22 +4589,87 @@ class AgentBuildings(ThermalBuildings):
         stock = stock.rename(self.year)
         return stock, output
 
-    def parse_output_run_simple(self, inputs, step):
+    def parse_output_run_simple(self, prices, inputs, step, taxes=None):
         output = dict()
 
         # investment
         investment_cost = (self._replaced_by * self._renovation_store['cost_households']).sum().sum()
         investment_cost = investment_cost.sum() / 10 ** 9 / step
         vta = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
-        vta = vta / 10 ** 9 / step
-        output['Investment insulation WT (Billion euro)'] = investment_cost - vta
+        output['VTA insulation (Billion euro)'] = vta / 10 ** 9 / step
+        output['Investment insulation WT (Billion euro)'] = investment_cost - output['VTA insulation (Billion euro)']
 
         # vta
         investment_heater = self._heater_store['cost'].sum().sum() / 10 ** 9 / step
-        vta = self._heater_store['vta'] / 10 ** 9 / step
-        output['Investment heater WT (Billion euro)'] = investment_heater - vta
+        output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
+        output['Investment heater WT (Billion euro)'] = investment_heater - output['VTA heater (Billion euro)']
 
-        output['Health cost (Billion euro)'], _ = self.health_cost(inputs)
+        output['Health cost (Billion euro)'], temp = self.health_cost(inputs)
+
+        output['VTA (Billion euro)'] = output['VTA insulation (Billion euro)'] + output['VTA heater (Billion euro)']
+        output['Health expenditure (Billion euro)'] = temp['Health expenditure (Billion euro)']
+        output['Subsidies heater (Billion euro)'] = self._heater_store['subsidies'].sum().sum() / 10 ** 9 / step
+        output['Subsidies insulation (Billion euro)'] = (self._replaced_by * self._renovation_store[
+            'subsidies_households']).sum().sum() / 10 ** 9
+        output['Subsidies (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output['Subsidies insulation (Billion euro)']
+
+        if taxes is not None:
+            consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False,
+                                                      energy=True)
+
+            taxes_expenditures = dict()
+            total_taxes = Series(0, index=prices.index)
+            for tax in taxes:
+                if self.year in tax.value.index:
+                    if tax.name not in self.taxes_list:
+                        self.taxes_list += [tax.name]
+                    amount = tax.value.loc[self.year, :] * consumption_energy
+                    taxes_expenditures[tax.name] = amount
+                    total_taxes += amount
+
+            output['Taxes expenditure (Billion euro)'] = DataFrame(taxes_expenditures).sum().sum() / step
+            """taxes_expenditures.index = taxes_expenditures.index.map(
+                lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
+            output.update((taxes_expenditures / step).T)"""
+
+        output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output['Taxes expenditure (Billion euro)']
+        output['Cost state (Billion euro)'] = output['Subsidies (Billion euro)'] + output['Health expenditure (Billion euro)']
+
+        output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Cost state (Billion euro)']
+
+        if False:
+            levels = [i for i in self._replaced_by.index.names if
+                      i not in ['Heater replacement', 'Heating system final']]
+            temp = self.add_level(self._replaced_by.fillna(0), self._stock_ref, 'Income tenant')
+            consumption_saved_actual_insulation = (
+                        temp * reindex_mi(self._renovation_store['consumption_saved_actual_households'],
+                                          temp.index)).groupby(levels + ['Income tenant']).sum()
+            consumption_saved_no_rebound_insulation = (
+                        temp * reindex_mi(self._renovation_store['consumption_saved_no_rebound_households'],
+                                          temp.index)).groupby(levels + ['Income tenant']).sum()
+            rebound_insulation = (consumption_saved_no_rebound_insulation - consumption_saved_actual_insulation).sum(
+                axis=1)
+            rebound_insulation = rebound_insulation.groupby(self.to_energy(rebound_insulation)).sum()
+
+            rebound_heater = self._heater_store['rebound']
+
+            thermal_comfort = (rebound_insulation + rebound_heater) * prices
+            output.update({'Thermal comfort EE (Billion euro)': thermal_comfort.sum() / 10 ** 9})
+
+            """_consumption_saved_actual_insulation = self.apply_calibration(
+                consumption_saved_actual_insulation.sum(axis=1))
+
+            consumption_saved_price_constant = _consumption_saved_actual_insulation + self._heater_store[
+                'consumption_saved_actual']
+            output['Consumption saving prices constant (TWh/year)'] = consumption_saved_price_constant.sum() / 10 ** 9
+            output['Consumption saving prices effect (TWh/year)'] = round(
+                output['Consumption saving (TWh/year)'] - output['Consumption saving prices constant (TWh/year)'], 3)
+
+            prices_effect = pd.Series({i: output['Consumption {} saving (TWh/year)'.format(i)] -
+                                          consumption_saved_price_constant.loc[i] / 10 ** 9 for i in
+                                       consumption_saved_price_constant.index})
+            thermal_loss = prices_effect * prices
+            output.update({'Thermal loss prices (Billion euro)': round(thermal_loss.sum(), 3)})"""
 
         output = Series(output).rename(self.year)
 

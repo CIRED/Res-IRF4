@@ -84,6 +84,9 @@ def config2inputs(config=None, building_stock=None, end=None):
     stock = read_stock(config)
     inputs = read_inputs(config)
 
+    if config.get('policies') is not None:
+        parse_policies(config)
+
     if config['simple'].get('heating_system'):
         replace = config['simple']['heating_system']
         shape_ini = stock.shape[0]
@@ -147,7 +150,6 @@ def config2inputs(config=None, building_stock=None, end=None):
             config['policies'][name] = policy
 
     if config.get('policies') is not None:
-        parse_policies(config)
         policies_heater, policies_insulation, taxes = read_policies(config)
     else:
         policies_insulation, policies_heater, taxes = [], [], []
@@ -285,10 +287,10 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
-    if path is not None and config.get('full_output') is True:
+    if path is not None:# and config.get('full_output') is True:
         dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
-    if logger is None and config.get('full_output') is True:
+    if logger is None:# and config.get('full_output') is True:
         logger = create_logger(path)
     logger.info('Creating AgentBuildings object')
 
@@ -330,7 +332,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         'technical_progress': technical_progress,
         'consumption_ini': parsed_inputs['consumption_ini'],
         'supply': parsed_inputs['supply'],
-        'premature_replacement': parsed_inputs['premature_replacement']
+        'premature_replacement': parsed_inputs['premature_replacement'],
+        'full_output': config['full_output']
     }
     return inputs_dynamic
 
@@ -394,10 +397,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if full_output:
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
     else:
+        buildings.logger.debug('Simplified output')
         stock = buildings.simplified_stock().rename(year)
         # output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
         # output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-        output = buildings.parse_output_run_simple(post_inputs, step)
+        output = buildings.parse_output_run_simple(prices, post_inputs, step, taxes=taxes)
 
     return buildings, stock, output
 

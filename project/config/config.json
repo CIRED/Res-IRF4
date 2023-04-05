@@ -17,7 +17,8 @@
       "activated": true,
       "interest_rate": 0.04,
       "saving_rate": 0.025,
-      "duration": 10
+      "duration": 10,
+      "upfront": "project/input/macro/upfront.csv"
     },
     "supply": {
       "activated_insulation": false,
