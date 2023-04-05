@@ -1265,17 +1265,27 @@ class AgentBuildings(ThermalBuildings):
                                                                           to_pay.index) * (
                                        (1 - share_debt) * to_pay).T).T * financing_cost['duration']
                 cost_financing = cost_debt + cost_saving
-                cost_total = cost + cost_financing
 
                 amount_debt = share_debt * to_pay
                 amount_saving = (1 - share_debt) * to_pay
 
-                discount = financing_cost['interest_rate'] * share_debt + ((1 - share_debt).T * reindex_mi(financing_cost[
-                                                                                                               'factor_saving_rate'] *
-                                                                                                           financing_cost[
-                                                                                                               'saving_rate'],
-                                                                                                           share_debt.index)).T
-            # discount_factor = (1 - (1 + discount) ** -30) / 30
+                # discount_factor = (1 - (1 + discount) ** -30) / 30
+            elif self.financing_cost['method'] == 'I4CE':
+                upfront_max = reindex_mi(financing_cost['upfront_max'], to_pay.index)
+                amount_debt = (to_pay.T - upfront_max).T
+                amount_debt = amount_debt.where(amount_debt > 0, 0)
+                amount_saving = to_pay - amount_debt
+
+                assert ((upfront_max - amount_saving.T).T.fillna(0) >= 0).all().all(), 'Saving sup to upfront max'
+
+                cost_financing = financing_cost['interest_rate'] * amount_debt + (reindex_mi(financing_cost['factor_saving_rate'], amount_saving.index) * amount_saving.T).T
+
+            discount = financing_cost['interest_rate'] * share_debt + ((1 - share_debt).T * reindex_mi(financing_cost[
+                                                                                                           'factor_saving_rate'] *
+                                                                                                       financing_cost[
+                                                                                                           'saving_rate'],
+                                                                                                       share_debt.index)).T
+            cost_total = cost + cost_financing
 
         return cost_total, cost_financing, amount_debt, amount_saving, discount
 
@@ -1357,7 +1367,8 @@ class AgentBuildings(ThermalBuildings):
 
         return cost_heater, vta_heater, subsidies_details, subsidies_total
 
-    def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, ms_heater=None):
+    def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, ms_heater=None,
+                                       cost_financing=None):
 
         def calibration_constant_heater(_utility, _ms_heater):
             """Constant to match the observed market-share.
@@ -1447,6 +1458,11 @@ class AgentBuildings(ThermalBuildings):
                 utility_inertia.index.get_level_values('Heating system') == hs, hs] = self.preferences_heater['inertia']
 
         utility = utility_inertia + utility_cost + utility_bill_saving + utility_subsidies
+
+        if cost_financing is not None:
+            pref_financing = reindex_mi(self.preferences_heater['cost'], cost_financing.index).rename(None)
+            utility_financing = (cost_financing.T * pref_financing).T / 1000
+            utility += utility_financing
 
         """# removing heat-pump for low-efficient buildings
         hp_idx = self._resources_data['index']['Heat pumps']
@@ -1645,7 +1661,11 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total,
             financing_cost)
 
-        choice_heater = cost_total.columns
+        choice_heater = cost_heater.index
+        _cost_heater = cost_heater.copy()
+        cost_heater = Series(1, index=index, dtype='float').to_frame().dot(
+            cost_heater.to_frame().T)
+
         choice_heater_idx = Index(choice_heater, name='Heating system final')
         energy = Series(choice_heater).str.split('-').str[0].set_axis(choice_heater_idx)
 
@@ -1700,10 +1720,10 @@ class AgentBuildings(ThermalBuildings):
             certificate_before.replace(EPC2INT), axis=0)
 
         if self._endogenous:
-            market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_total,
-                                                               ms_heater=ms_heater)
+            market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_heater,
+                                                               ms_heater=ms_heater, cost_financing=cost_financing)
         else:
-            market_share = self.exogenous_market_share_heater(index, cost_heater.index)
+            market_share = self.exogenous_market_share_heater(index, cost_heater.columns)
 
         assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
 
@@ -1823,7 +1843,7 @@ class AgentBuildings(ThermalBuildings):
                      0) == 0, 'Sum problem'
 
         if store_information:
-            self.store_information_heater(cost_heater, subsidies_total, subsidies_details,
+            self.store_information_heater(_cost_heater, subsidies_total, subsidies_details,
                                           stock_replacement.unstack('Heating system final'),
                                           vta_heater, cost_financing, amount_debt, amount_saving, discount,
                                           consumption_saved,
@@ -2174,7 +2194,6 @@ class AgentBuildings(ThermalBuildings):
             list_conditions = self._list_condition_subsidies.copy()
             if not self._endogenous:
                 list_conditions += ['mitigation_option']
-
 
             condition = defined_condition(index, certificate, certificate_before,
                                           certificate_before_heater,
@@ -3354,7 +3373,6 @@ class AgentBuildings(ThermalBuildings):
                                    args=(cost_heater.index), xtol=10**-1)
             prices_heater = Series(prices_heater, index=cost_heater.index)
 
-
             stock = self.heater_replacement(stock_mobile, prices, prices_heater, lifetime_heater, policies_heater,
                                             ms_heater=ms_heater, step=1, financing_cost=financing_cost,
                                             district_heating=district_heating, premature_replacement=premature_replacement,
@@ -3621,6 +3639,10 @@ class AgentBuildings(ThermalBuildings):
                                     health_cost=None):
 
             discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
+            if isinstance(discount_rate, Series):
+                discount_rate = reindex_mi(discount_rate, _cost_insulation.index)
+                discount_rate = concat([discount_rate] * _cost_insulation.shape[1], axis=1, keys=_cost_insulation.columns)
+
             cost_annualized = calculate_annuities(_cost_insulation, lifetime=lifetime, discount_rate=discount_rate)
             _consumption_saved = reindex_mi(_consumption_saved, _stock.index).dropna()
             _bill_saved = self.energy_bill(prices, _consumption_saved)
@@ -3932,6 +3954,10 @@ class AgentBuildings(ThermalBuildings):
                 c_insulation = reindex_mi(self._renovation_store['cost_households'], c_saved.index)
 
                 options = {
+                    'Private implicit discount, global renovation': {
+                        'discount_rate': inputs['implicit_discount_rate'],
+                        'carbon_saved': None,
+                        'option': True},
                     'Social, global renovation': {'discount_rate': discount_rate,
                                                   'carbon_saved': e_saved,
                                                   'option': True,
@@ -3944,12 +3970,13 @@ class AgentBuildings(ThermalBuildings):
                 }
                 options = {k: i for k, i in options.items() if
                            k in ['Social, global renovation', 'Private, global renovation',
-                                 'Private, all measures']}
+                                 'Private, all measures', 'Private implicit discount, global renovation']}
 
                 colors = {'Social, all measures': 'darkred',
                           'Social, global renovation': 'orangered',
                           'Private, global renovation': 'cornflowerblue',
                           'Private, all measures': 'darkblue',
+                          'Private implicit discount, global renovation': 'royalblue'
                           }
 
                 dict_rslt, dict_stats = {}, {}

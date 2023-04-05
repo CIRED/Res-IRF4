@@ -235,7 +235,9 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     # graph subsidies
     try:
         non_subsidies = ['subsidies_cap', 'obligation']
-        subsidies = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies], :]
+        temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies]
+        subsidies = output.loc[[i for i in temp if i in output.index], :]
+        subsidies = subsidies.loc[~(subsidies == 0).all(axis=1)]
 
         subset = subsidies.copy()
 

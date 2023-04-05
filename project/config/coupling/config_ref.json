@@ -115,16 +115,17 @@
       "pop_housing": null,
       "share_multi_family": null
     },
+    "implicit_discount_rate": "project/input/revealed_data/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/current/policies_ref.json",
+    "policies": "project/input/policies/policies_ambitious.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "current_policies": false,
-      "no_policy": true,
+      "no_policy": false,
       "income": false,
       "prices_constant": false,
       "heating_system": {

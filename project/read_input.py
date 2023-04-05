@@ -635,6 +635,13 @@ def read_inputs(config, other_inputs=generic_input):
                     }
     inputs.update({'rational_behavior': temp})
 
+    if 'implicit_discount_rate' in config.keys():
+        inputs['implicit_discount_rate'] = get_series(config['implicit_discount_rate'])
+
+    inputs['input_financing'].update(config['financing_cost'])
+    if 'upfront_max' in inputs['input_financing'].keys():
+        inputs['input_financing']['upfront_max'] = get_series(inputs['input_financing']['upfront_max'])
+
     return inputs
 
 
@@ -818,10 +825,6 @@ def parse_inputs(inputs, taxes, config, stock):
 
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
     parsed_inputs['energy_prices'] = energy_prices
-
-    parsed_inputs['input_financing'].update(config['financing_cost'])
-    if 'upfront_max' in parsed_inputs['input_financing'].keys():
-        parsed_inputs['input_financing']['upfront_max'] = get_series(parsed_inputs['input_financing']['upfront_max'])
 
     supply = {'insulation': None, 'heater': None}
     if config.get('supply') is not None:

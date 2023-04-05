@@ -366,4 +366,4 @@ def run_simu(output_consumption=False, rebound=True, start=2020, end=2021, sub_d
 if __name__ == '__main__':
     # test_design_subsidies()
     config = 'project/config/coupling/config_ref.json'
-    run_simu(output_consumption=False, start=2020, end=2027, sub_design=None, config=config)
+    run_simu(output_consumption=False, start=2020, end=2022, sub_design=None, config=config)
