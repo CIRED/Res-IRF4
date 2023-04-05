@@ -4487,12 +4487,7 @@ class AgentBuildings(ThermalBuildings):
                 output.update((taxes_expenditures / step).T)
                 output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / step
 
-            output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output[
-                'Taxes expenditure (Billion euro)']
-            output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
-                'Subsidies insulation (Billion euro)']
-            output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output[
-                'Expenditure state (Billion euro)']
+
 
             # co-benefit
             if 'Embodied energy Wall (TWh PE)' in output.keys():
@@ -4519,6 +4514,13 @@ class AgentBuildings(ThermalBuildings):
             output['Carbon value (Billion euro)'] = (consumption_energy * carbon_value_kwh).sum()
             output['Health cost (Billion euro)'], o = self.health_cost(inputs)
             output.update(o)
+
+            output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output[
+                'Taxes expenditure (Billion euro)']
+            output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
+                'Subsidies insulation (Billion euro)'] + o['Health expenditure (Billion euro)']
+            output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output[
+                'Expenditure state (Billion euro)']
 
             # subsidies - details: policies amount and number of beneficiaries
             subsidies_details_renovation, subsidies_count_renovation, subsidies_average_renovation = {}, {}, {}
