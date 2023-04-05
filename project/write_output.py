@@ -241,8 +241,10 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
 
         subset = subsidies.copy()
 
-        taxes_expenditures = output.loc[['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in buildings.taxes_list], :]
-        taxes_expenditures = taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax'] if i in output.index], :]
+        # temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in ]
+        temp = ['Cee tax (Billion euro)', 'Carbon tax (Billion euro)']
+        taxes_expenditures = output.loc[[i for i in temp if i in output.index], :]
+        #taxes_expenditures = taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax'] if i in output.index], :]
 
         if not taxes_expenditures.empty:
             subset = pd.concat((subsidies, -taxes_expenditures), axis=0)

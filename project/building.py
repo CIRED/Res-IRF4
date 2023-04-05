@@ -4661,9 +4661,9 @@ class AgentBuildings(ThermalBuildings):
             output.update((taxes_expenditures / step).T)"""
 
         output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output['Taxes expenditure (Billion euro)']
-        output['Cost state (Billion euro)'] = output['Subsidies (Billion euro)'] + output['Health expenditure (Billion euro)']
+        output['Expenditure state (Billion euro)'] = output['Subsidies (Billion euro)'] + output['Health expenditure (Billion euro)']
 
-        output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Cost state (Billion euro)']
+        output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Expenditure state (Billion euro)']
 
         if False:
             levels = [i for i in self._replaced_by.index.names if
