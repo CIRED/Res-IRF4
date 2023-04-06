@@ -23,7 +23,7 @@ from numpy.testing import assert_almost_equal
 import copy
 import os
 
-from project.utils import reindex_mi, get_pandas, make_plot, get_series
+from project.utils import reindex_mi, get_pandas, make_plot, get_series, reverse_dict
 from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 from project.input.param import generic_input
 from project.input.resources import resources_data
@@ -799,6 +799,7 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['Embodied energy construction (TWh PE)'] = (parsed_inputs['Surface construction (Million m2)'] * parsed_inputs['embodied_energy_built']) / 10**3
 
     energy_prices = parsed_inputs['energy_prices'].copy()
+
     energy_taxes = parsed_inputs['energy_taxes'].copy()
 
     if config['simple']['prices_constant']:
@@ -806,18 +807,26 @@ def parse_inputs(inputs, taxes, config, stock):
                                   axis=1).T
 
     total_taxes = pd.DataFrame(0, index=energy_prices.index, columns=energy_prices.columns)
+    export_prices = dict()
+    export_prices.update({'energy_prices': energy_prices})
+
     for t in taxes:
         total_taxes = total_taxes.add(t.value, fill_value=0)
+        export_prices.update({t.name: t.value})
 
     if energy_taxes is not None:
         total_taxes = total_taxes.add(energy_taxes, fill_value=0)
         taxes += [PublicPolicy('energy_taxes', energy_taxes.index[0], energy_taxes.index[-1], energy_taxes, 'tax')]
+        export_prices.update({'energy_taxes': energy_taxes})
 
     if config['simple']['prices_constant']:
         total_taxes = pd.concat([total_taxes.loc[config['start'], :]] * total_taxes.shape[0], keys=total_taxes.index,
                                 axis=1).T
 
-    energy_vta = energy_prices * (inputs['energy_vta'] / (1 - inputs['energy_vta']))
+    # energy_vta = energy_prices * (inputs['energy_vta'] / (1 - inputs['energy_vta']))
+    energy_vta = energy_prices * inputs['energy_vta']
+    export_prices.update({'energy_vta': energy_vta})
+
     taxes += [PublicPolicy('energy_vta', energy_vta.index[0], energy_vta.index[-1], energy_vta, 'tax')]
     total_taxes += energy_vta
     parsed_inputs['taxes'] = taxes
@@ -825,6 +834,10 @@ def parse_inputs(inputs, taxes, config, stock):
 
     energy_prices = energy_prices.add(total_taxes, fill_value=0)
     parsed_inputs['energy_prices'] = energy_prices
+
+    export_prices = reverse_dict({k: item.to_dict() for k, item in export_prices.items()})
+    export_prices = concat([pd.DataFrame(item) for k, item in export_prices.items()], axis=1, keys=export_prices.keys())
+    parsed_inputs.update({'export_prices': export_prices})
 
     supply = {'insulation': None, 'heater': None}
     if config.get('supply') is not None:
@@ -888,7 +901,9 @@ def dump_inputs(parsed_inputs, path):
     make_plot(temp.dropna(), 'Prices (euro/kWh)', format_y=lambda y, _: '{:.2f}'.format(y),
               colors=resources_data['colors'], save=os.path.join(path, 'energy_prices.png'))
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
-    pd.concat((summary_input, t, temp), axis=1).to_csv(os.path.join(path, 'input.csv'))
+    pd.concat((summary_input, t, temp), axis=1).T.round(3).to_csv(os.path.join(path, 'input.csv'))
+
+    parsed_inputs['export_prices'].to_csv(os.path.join(path, 'energy_prices.csv'))
 
     return summary_input
 

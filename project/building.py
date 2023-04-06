@@ -30,7 +30,7 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
     get_size, compare_bar_plot, make_sensitivity_tables
-from project.utils import make_hist, reverse_dict
+from project.utils import make_hist, reverse_dict, select
 
 import project.thermal as thermal
 import psutil
@@ -2377,9 +2377,9 @@ class AgentBuildings(ThermalBuildings):
             util_intensive: DataFrame
             """
 
-            _bill_saved[_bill_saved == 0] = float('nan')
+            """_bill_saved[_bill_saved == 0] = float('nan')
             _subsidies_total[_bill_saved == 0] = float('nan')
-            _cost_total[_bill_saved == 0] = float('nan')
+            _cost_total[_bill_saved == 0] = float('nan')"""
 
             pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
             utility_subsidies = (_subsidies_total.T * pref_sub).T / 1000
@@ -2678,11 +2678,11 @@ class AgentBuildings(ThermalBuildings):
             self.logger.info('Calibration renovation nested-logit function')
 
             # input cleaning
-            _bill_saved[_bill_saved == 0] = float('nan')
+            """_bill_saved[_bill_saved == 0] = float('nan')
             _subsidies_total[_bill_saved == 0] = float('nan')
             _cost_total[_bill_saved == 0] = float('nan')
             if _cost_financing is not None:
-                _cost_financing[_bill_saved == 0] = float('nan')
+                _cost_financing[_bill_saved == 0] = float('nan')"""
 
             # target
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
@@ -2972,10 +2972,51 @@ class AgentBuildings(ThermalBuildings):
                                                                                 _stock=stock,
                                                                                 _cost_financing=cost_financing)
 
+                    discount_factor = abs(self.preferences_insulation['bill_saved'] / self.preferences_insulation['cost'])
+                    discount_factor = 10
+
+                    npv = - cost_insulation - cost_financing + subsidies_total + (reindex_mi(discount_factor, bill_saved.index) * bill_saved.T).T
+                    npv = (npv * market_share).sum(axis=1)
+                    sub = (subsidies_total * market_share).sum(axis=1)
+
+                    """df = pd.concat((renovation_rate, npv), axis=1, keys=['rate', 'npv'])
+                    import seaborn as sns
+                    # sns.scatterplot(data=df, x='npv', y='rate', hue='Occupancy status', ax=ax)
+                    for i in ['Occupancy status', 'Income owner', 'Housing type', 'Heater replacement']:
+                        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                        sns.scatterplot(data=df, x='npv', y='rate', hue=i, ax=ax)
+                        plt.show()"""
+
+
+                    level = ['Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']
+                    flow = (renovation_rate * stock).groupby(level).sum()
+                    rate = flow / stock.groupby(level).sum()
+                    rate = self.add_certificate(rate)
+                    npv = npv.groupby(level).mean()
+                    npv = self.add_certificate(npv)
+
+                    select(self.add_certificate(renovation_rate), {'Heating system': 'Electricity-Heat pump water', 'Performance': 'B'})
+                    select(self.add_certificate(subsidies_total), {'Heating system': 'Electricity-Heat pump water', 'Performance': 'B'})
+
+                    df = pd.concat((rate, npv), axis=1, keys=['rate', 'npv'])
+                    df[df.index.get_level_values('Performance') == 'B']
+                    for i in df.index.names:
+                        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+                        sns.scatterplot(data=df, x='npv', y='rate', hue=i, ax=ax)
+                        plt.show()
+
                     p = renovation_rate.copy()
+                    p = p.droplevel('Heating system')
+                    p = p.groupby(p.index.names).first()
                     p.loc[p.index.get_level_values('Heater replacement') == True] *= proba_heater
                     p.loc[p.index.get_level_values('Heater replacement') == False] *= (1 - proba_heater)
                     p = p.groupby([i for i in p.index.names if i != 'Heater replacement']).sum()
+                    flow = stock.groupby(p.index.names).sum() * p
+                    flow = self.add_certificate(flow)
+                    npv, p = self.add_certificate(npv).xs(False, level='Heater replacement').droplevel('Heating system'), self.add_certificate(p)
+
+                    test = pd.concat((flow, npv, p), keys=['flow', 'npv', 'rate'], axis=1)
+
 
                     proba = (renovation_rate * market_share.T).T
                     proba.loc[proba.index.get_level_values('Heater replacement') == True, :] *= proba_heater
@@ -3170,18 +3211,24 @@ class AgentBuildings(ThermalBuildings):
             Market-share insulation
         """
 
+        stock = self.add_certificate(stock)
+        stock = stock[stock.index.get_level_values('Performance').astype(str) > 'B']
+        stock = stock.droplevel('Performance')
         index = stock.index
 
+        to_drop = select(stock, self._performance_insulation)
+        if not to_drop.empty:
+            index = index.drop(to_drop.index)
+            stock = stock.loc[index]
+
         # select index that can undertake insulation replacement
-        consumption_before_heater, _, certificate_before_heater = self.consumption_heating_store(index,
-                                                                                                 level_heater='Heating system')
+        _, _, certificate_before_heater = self.consumption_heating_store(index, level_heater='Heating system')
 
         # before include the change of heating system
-        consumption_before, consumption_3uses_before, certificate_before = self.consumption_heating_store(index,
-                                                                                                          level_heater='Heating system final')
+        consumption_before, consumption_3uses_before, certificate_before = self.consumption_heating_store(index, level_heater='Heating system final')
 
         # select only index that can actually be retrofitted
-        certificate_before = certificate_before[certificate_before > 'B']
+        """certificate_before = certificate_before[certificate_before > 'B']
         consumption_3uses_before = consumption_3uses_before.loc[certificate_before.index]
         consumption_before = consumption_before.loc[certificate_before.index]
         temp = reindex_mi(certificate_before, index)
@@ -3189,11 +3236,12 @@ class AgentBuildings(ThermalBuildings):
         stock = stock[index]
 
         # seems to not be very useful
+        {'Wall': 0.4, 'Floor': 0.3, 'Roof': 0.2, 'Windows': 1.3}
         condition = array([1] * stock.shape[0], dtype=bool)
         for k, v in self._performance_insulation.items():
             condition *= stock.index.get_level_values(k) <= v
         stock = stock[~condition]
-        index = stock.index
+        index = stock.index"""
 
         surface = reindex_mi(self._surface, index)
 
@@ -3715,6 +3763,7 @@ class AgentBuildings(ThermalBuildings):
                 cost_efficiency = cost_annualized / _consumption_saved
                 cost_efficiency *= reindex_mi(_condition, cost_efficiency.index)
                 cost_efficiency = cost_efficiency.apply(pd.to_numeric)
+                cost_efficiency.dropna(how='all', inplace=True)
                 rslt_efficiency = self.find_best_option(cost_efficiency, dict_df=dict_df, func='min')
                 cost_efficiency = rslt_efficiency['criteria']
                 _consumption_saved_efficiency = _stock * rslt_efficiency['consumption_saved']
@@ -3728,6 +3777,7 @@ class AgentBuildings(ThermalBuildings):
 
                 npv *= reindex_mi(_condition, npv.index)
                 npv = npv.apply(pd.to_numeric)
+                npv.dropna(how='all', inplace=True)
                 rslt_npv = self.find_best_option(- npv, dict_df=dict_df, func='min')
                 npv = rslt_npv['criteria']
                 _consumption_saved_npv = _stock * rslt_npv['consumption_saved']
@@ -3736,6 +3786,7 @@ class AgentBuildings(ThermalBuildings):
                 roi = _cost_insulation / cash_flow
                 roi *= reindex_mi(_condition, roi.index)
                 roi = roi.apply(pd.to_numeric)
+                roi.dropna(how='all', inplace=True)
                 rslt_roi = self.find_best_option(roi, dict_df=dict_df, func='min')
                 roi = rslt_roi['criteria']
                 _consumption_saved_roi = _stock * rslt_roi['consumption_saved']
@@ -4486,8 +4537,6 @@ class AgentBuildings(ThermalBuildings):
                     lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
                 output.update((taxes_expenditures / step).T)
                 output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / step
-
-
 
             # co-benefit
             if 'Embodied energy Wall (TWh PE)' in output.keys():

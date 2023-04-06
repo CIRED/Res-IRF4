@@ -287,10 +287,10 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
-    if path is not None:# and config.get('full_output') is True:
+    if path is not None:
         dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
-    if logger is None:# and config.get('full_output') is True:
+    if logger is None:
         logger = create_logger(path)
     logger.info('Creating AgentBuildings object')
 
