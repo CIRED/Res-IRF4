@@ -473,7 +473,6 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     if format_x is not None:
         ax.xaxis.set_major_formatter(plt.FuncFormatter(format_x))
 
-
     if y_label is not None:
         ax.set_ylabel(y_label)
 
@@ -691,6 +690,80 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
 
     fig.legend(handles, labels, loc='lower center', frameon=False, ncol=3,
                bbox_to_anchor=(0.5, -0.1))
+
+    save_fig(fig, save=save)
+
+
+def make_grouped_scatterplots(dict_df, x, y, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None,
+                              order=None, colors=None):
+    """ Plot a line for each index in a subplot.
+
+    Parameters
+    ----------
+    dict_df: dict
+        df_dict values are pd.DataFrame (index=years, columns=scenario)
+    format_y: function, optional
+    n_columns: int, default 3
+    n_bins: int, default None
+    save: str, default None
+    scatter: dict, default None
+    """
+    list_keys = list(dict_df.keys())
+    if order is not None:
+        list_keys = order
+    try:
+        sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
+    except:
+        print('break')
+    try:
+        y_max = max([i[y].fillna(0).to_numpy().max() for i in dict_df.values()]) * 1.1
+    except ValueError:
+        print('break')
+
+    n_axes = int(len(list_keys))
+    n_rows = ceil(n_axes / n_columns)
+    fig, axes = plt.subplots(n_rows, n_columns, figsize=(12.8, 9.6), sharex='all', sharey='all')
+    handles, labels = None, None
+    for k in range(n_rows * n_columns):
+
+        row = floor(k / n_columns)
+        column = k % n_columns
+        if n_rows == 1:
+            ax = axes[column]
+        else:
+            ax = axes[row, column]
+        try:
+            key = list_keys[k]
+            palette = None
+            if set(dict_df[key].index.get_level_values(key)).issubset(colors.keys()):
+                palette = colors
+            sns.scatterplot(data=dict_df[key], x=x, y=y, hue=key, ax=ax, palette=palette)
+
+            ax = format_ax(ax, format_y=format_y, ymin=None, xinteger=False)
+            ax.spines['left'].set_visible(False)
+            ax.set_ylim(ymax=y_max)
+
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+            if n_bins is not None:
+                plt.locator_params(axis='x', nbins=n_bins)
+
+            title = key
+            if isinstance(key, tuple):
+                title = '{}-{}'.format(key[0], key[1])
+            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6)
+
+            if k == 0:
+                handles, labels = ax.get_legend_handles_labels()
+                labels = [l.replace('_', ' ') for l in labels]
+            ax.get_legend().remove()
+
+            ax.set(xlabel=None, ylabel=None)
+
+        except IndexError:
+            ax.axis('off')
+
+    """fig.legend(handles, labels, loc='lower center', frameon=False, ncol=3,
+               bbox_to_anchor=(0.5, -0.1))"""
 
     save_fig(fig, save=save)
 

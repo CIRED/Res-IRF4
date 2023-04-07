@@ -112,7 +112,9 @@ def run(path=None, folder=None):
             if config_sensitivity.get('policies'):
                 for key, item in config_sensitivity['policies'].items():
                     configuration[key] = copy.deepcopy(configuration['Reference'])
-                    configuration[key]['policies'] = get_json(item)['policies']
+                    temp = {'policies': item}
+                    parse_policies(temp)
+                    configuration[key]['policies'] = temp['policies']
 
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:

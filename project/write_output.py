@@ -185,8 +185,22 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     df = output.loc[i, :].T
     df.dropna(inplace=True)
     df.columns = [i.split(' (')[0] for i in df.columns]
-    make_area_plot(df, 'Renovation (Thousand households)',
-                   save=os.path.join(path, 'renovation.png'), total=False,
+    make_area_plot(df, 'Retrofit (Thousand households)',
+                   save=os.path.join(path, 'retrofit.png'), total=False,
+                   format_y=lambda y, _: '{:.0f}'.format(y),
+                   loc='left', left=1.25, colors=colors)
+
+    i = ['Switch decarbonize (Thousand households)',
+         'Insulation (Thousand households)',
+         'Insulation and switch decarbonize (Thousand households)'
+         ]
+    colors = ['royalblue', 'darksalmon', 'tomato']
+
+    df = output.loc[i, :].T
+    df.dropna(inplace=True)
+    df.columns = [i.split(' (')[0] for i in df.columns]
+    make_area_plot(df, 'Retrofit (Thousand households)',
+                   save=os.path.join(path, 'retrofit_decarbonize_options.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    loc='left', left=1.25, colors=colors)
 
@@ -397,33 +411,37 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             variables}
         return {k: i for k, i in temp.items() if not i.empty}
 
-    def details_graphs(data, v, inf, folder_img):
-        n = (v.split(' {}')[0] + '_' + inf[0] + '.png').replace(' ', '_').lower()
-        temp = grouped(data, [v.format(i) for i in resources_data['index'][inf[0]]])
-        temp = {k: i for k, i in temp.items() if not (i == 0).all().all()}
-        replace = {v.format(i): i for i in resources_data['index'][inf[0]]}
-        temp = {replace[key]: item.astype(float).interpolate(limit_area='inside') for key, item in temp.items()}
+    def details_graphs(data, v, inf, folder_img, colors=None):
 
-        try:
-            n_columns = inf[2]
-        except IndexError:
-            n_columns = len(temp.keys())
+        order = None
+        if inf.get('groupby') is not None:
+            n = (v.split(' {}')[0] + '_by_' + inf['groupby'] + '.png').replace(' ', '_').lower()
+            dict_data = grouped(data, [v.format(i) for i in resources_data['index'][inf['groupby']]])
+            replace = {v.format(i): i for i in resources_data['index'][inf['groupby']]}
+            dict_data = {replace[key]: item for key, item in dict_data.items()}
+            dict_data = {k: i for k, i in dict_data.items() if not (i == 0).all().all()}
+            order = [i for i in resources_data['index'][inf['groupby']] if i in dict_data.keys()]
+        elif inf.get('variables') is not None:
+            n = inf.get('name')
+            dict_data = grouped(data, inf['variables'])
+            dict_data = {k.split(' (')[0]: i for k, i in dict_data.items()}
+            dict_data = {k: i for k, i in dict_data.items() if not (i == 0).all().all()}
+        else:
+            raise NotImplemented('groupby or variables must be defined')
 
-        try:
-            if inf[3] is not None:
-                for key in temp.keys():
-                    temp[key] = pd.concat((temp[key], inf[3][key]), axis=1)
-                    temp[key].sort_index(inplace=True)
-        except IndexError:
-            pass
+        dict_data = {key: item.astype(float).interpolate(limit_area='inside') for key, item in dict_data.items()}
 
-        try:
-            scatter = inf[4]
-        except IndexError:
-            scatter = None
+        n_columns = len(dict_data.keys())
+        if inf.get('n_columns') is not None:
+            n_columns = inf['n_columns']
 
-        make_grouped_subplots(temp, format_y=inf[1], n_columns=n_columns, save=os.path.join(folder_img, n), scatter=scatter,
-                              order=[i for i in resources_data['index'][inf[0]] if i in temp.keys()], colors=colors)
+        if inf.get('exogenous') is not None:
+            for key in dict_data.keys():
+                dict_data[key] = pd.concat((dict_data[key], inf['exogenous'][key]), axis=1)
+                dict_data[key].sort_index(inplace=True)
+
+        make_grouped_subplots(dict_data, format_y=inf.get('format_y'), n_columns=n_columns, save=os.path.join(folder_img, n),
+                              order=order, scatter=inf.get('scatter'), colors=colors)
 
     if quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
@@ -437,73 +455,131 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     if not os.path.isdir(folder_img):
         os.mkdir(folder_img)
 
-    variables = {'Consumption (TWh)': ('consumption_hist.png', lambda y, _: '{:,.0f}'.format(y),
-                                       resources_data['consumption_total_hist'],
-                                       resources_data['consumption_total_objectives']),
-                 'Consumption standard (TWh)': ('consumption_standard.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Heating intensity (%)': ('heating_intensity.png', lambda y, _: '{:,.0%}'.format(y)),
-                 'Emission (MtCO2)': ('emission.png', lambda y, _: '{:,.0f}'.format(y), None,
-                                       resources_data['emissions_total_objectives']),
-                 'Stock Heat pump (Million)': ('stock_heat_pump.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Energy poverty (Million)': ('energy_poverty.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Retrofit (Thousand households)': ('retrofit.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Renovation (Thousand households)': ('renovation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Investment total (Thousand euro/household)': ('investment_households.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Consumption saving insulation (TWh/year)': ('saving_insulation.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Consumption saving heater (TWh/year)': ('saving_heater.png', lambda y, _: '{:,.1f}'.format(y)),
-                 'Retrofit at least 1 EPC (Thousand households)': (
-                     'retrofit_jump_comparison.png', lambda y, _: '{:,.0f}'.format(y),
-                     resources_data['retrofit_comparison']),
-                 'Investment total (Billion euro)': ('investment_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Subsidies total (Billion euro)': ('subsidies_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Energy expenditures (Billion euro)': (
-                 'energy_expenditures.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Health cost (Billion euro)': ('health_cost.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement total (Thousand)': ('replacement_total.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Replacement insulation (Thousand)': ('replacement_insulation.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Switch heater (Thousand households)': ('switch_heater.png', lambda y, _: '{:,.0f}'.format(y)),
-                 'Efficiency heater (euro/kWh)': ('efficiency_heater.png', lambda y, _: '{:,.2f}'.format(y)),
-                 'Efficiency insulation (euro/kWh)': ('efficiency_insulation.png', lambda y, _: '{:,.2f}'.format(y))
+    variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
+                                       'format_y': lambda y, _: '{:,.0f}'.format(y),
+                                       'exogenous': resources_data['consumption_total_hist'],
+                                       'scatter': resources_data['consumption_total_objectives']},
+                 'Consumption standard (TWh)': {'name': 'consumption_standard.png',
+                                                'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Heating intensity (%)': {'name': 'heating_intensity.png',
+                                           'format_y': lambda y, _: '{:,.0%}'.format(y)},
+                 'Emission (MtCO2)': {'name': 'emission.png',
+                                      'format_y': lambda y, _: '{:,.0f}'.format(y),
+                                      'scatter': resources_data['emissions_total_objectives']},
+                 'Stock Heat pump (Million)': {'name': 'stock_heat_pump.png',
+                                               'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Energy poverty (Million)': {'name': 'energy_poverty.png',
+                                              'format_y': lambda y, _: '{:,.1f}'.format(y)},
+                 'Retrofit (Thousand households)': {'name': 'retrofit.png',
+                                                    'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Renovation (Thousand households)': {'name': 'renovation.png',
+                                                      'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Investment total (Thousand euro/household)': {'name': 'investment_households.png',
+                                                                'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Consumption saving insulation (TWh/year)': {'name': 'saving_insulation.png',
+                                                              'format_y': lambda y, _: '{:,.1f}'.format(y)},
+                 'Consumption saving heater (TWh/year)': {'name': 'saving_heater.png',
+                                                          'format_y': lambda y, _: '{:,.1f}'.format(y)},
+                 'Retrofit at least 1 EPC (Thousand households)':
+                     {'name': 'retrofit_jump_comparison.png',
+                      'format_y': lambda y, _: '{:,.0f}'.format(y),
+                      'exogenous': resources_data['retrofit_comparison']},
+                 'Investment total (Billion euro)': {'name': 'investment_total.png',
+                                                     'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Subsidies total (Billion euro)': {'name': 'subsidies_total.png',
+                                                    'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Energy expenditures (Billion euro)': {
+                     'name': 'energy_expenditures.png',
+                     'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Health cost (Billion euro)': {'name': 'health_cost.png',
+                                                'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Replacement total (Thousand)': {'name': 'replacement_total.png',
+                                                  'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Replacement insulation (Thousand)': {'name': 'replacement_insulation.png',
+                                                       'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Switch heater (Thousand households)': {'name': 'switch_heater.png',
+                                                         'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                 'Efficiency heater (euro/kWh)': {'name': 'efficiency_heater.png',
+                                                  'format_y': lambda y, _: '{:,.2f}'.format(y)},
+                 'Efficiency insulation (euro/kWh)': {'name': 'efficiency_insulation.png',
+                                                      'format_y': lambda y, _: '{:,.2f}'.format(y)},
+                 'Consumption standard saving insulation (%)': {'name': 'consumption_saving_insulation.png',
+                                                                'format_y': lambda y, _: '{:,.1%}'.format(y)},
                  }
 
     for variable, infos in variables.items():
         temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()}).astype(float)
         temp = temp.interpolate(limit_area='inside')
 
-        try:
-            temp = pd.concat((temp, infos[2]), axis=1)
+        if infos.get('exogenous') is not None:
+            temp = pd.concat((temp, infos['exogenous']), axis=1)
             temp.sort_index(inplace=True)
-        except IndexError:
-            pass
 
-        try:
-            scatter = infos[3]
-        except IndexError:
-            scatter = None
-            pass
+        scatter = infos.get('scatter')
 
         colors_temp = colors
         t = [i for i in temp.columns if i not in colors_temp.keys()]
         if t:
             colors_temp.update({i: colors_add[k] for k, i in enumerate(t)})
         
-        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos[0])), format_y=infos[1],
+        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos['name'])), format_y=infos['format_y'],
                   scatter=scatter, colors=colors)
 
     variables_output = {
         'Consumption {} (TWh)': [
-            ('Energy', lambda y, _: '{:,.0f}'.format(y), 2, resources_data['consumption_hist'])],
-        'Stock {} (Million)': [('Performance', lambda y, _: '{:,.0f}'.format(y)),
-                               ('Heater', lambda y, _: '{:,.0f}'.format(y))],
-        'Investment {} (Billion euro)': [('Insulation', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Retrofit measures {} (Thousand households)': [('Count', lambda y, _: '{:,.0f}'.format(y), 2)],
-        'Renovation {} (Thousand households)': [('Decision maker', lambda y, _: '{:,.0f}'.format(y), 2)],
+            {'groupby': 'Energy',
+             'format_y': lambda y, _: '{:,.0f}'.format(y),
+             'n_columns': 2,
+             'exogenous': resources_data['consumption_hist']}],
+        'Stock {} (Million)': [{'groupby': 'Performance',
+                                'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                               {'groupby': 'Heater',
+                                'format_y': lambda y, _: '{:,.0f}'.format(y)}],
+        'Investment {} (Billion euro)': [{
+            'groupby': 'Insulation',
+            'format_y': lambda y, _: '{:,.1f}'.format(y),
+            'n_columns': 4
+        }],
+        'Replacement {} (Thousand households)': [{
+            'groupby': 'Insulation',
+            'format_y': lambda y, _: '{:,.1f}'.format(y),
+            'n_columns': 4
+        }],
+        'Retrofit measures {} (Thousand households)': [{
+            'groupby': 'Count',
+            'format_y': lambda y, _: '{:,.0f}'.format(y),
+            'n_columns': 5}],
+        'Renovation {} (Thousand households)': [{
+            'groupby': 'Decision maker',
+            'format_y': lambda y, _: '{:,.0f}'.format(y),
+            'n_columns': 2}],
+        'Rate {} (%)': [{
+            'groupby': 'Decision maker',
+            'format_y': lambda y, _: '{:,.1%}'.format(y),
+            'n_columns': 2}],
+        'Rate Single-family - Owner-occupied {} (%)': [{
+            'groupby': 'Income owner',
+            'format_y': lambda y, _: '{:,.1%}'.format(y),
+            'n_columns': 5}],
+        'Retrofit': [{
+            'variables': ['Switch decarbonize (Thousand households)',
+                          'Insulation (Thousand households)',
+                          'Insulation and switch decarbonize (Thousand households)'
+                          ],
+            'name': 'retrofit_decarbonize_options.png',
+            'format_y': lambda y, _: '{:,.0f}'.format(y),
+            'n_columns': 3
+        }],
+        'Share subsidies {} (%)': [{
+            'groupby': 'Income owner',
+            'format_y': lambda y, _: '{:,.1%}'.format(y),
+            'n_columns': 5
+        }]
     }
-    #         'Share subsidies {} (%)': [('Income owner', lambda y, _: '{:,.1%}'.format(y))],
 
     for var, infos in variables_output.items():
         for info in infos:
-            details_graphs(result, var, info, folder_img)
+            details_graphs(result, var, info, folder_img, colors=colors)
 
     # TODO: uncertainty plot to work on
     if False:

@@ -30,10 +30,9 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
     get_size, compare_bar_plot, make_sensitivity_tables
-from project.utils import make_hist, reverse_dict, select
+from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots
 
 import project.thermal as thermal
-import psutil
 
 ACCURACY = 10 ** -5
 EPC2INT = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
@@ -2927,6 +2926,41 @@ class AgentBuildings(ThermalBuildings):
 
             return rslt
 
+        def indicator_renovation_rate(_stock, _cost_insulation, _bill_saved, _subsidies_total, _cost_financing):
+            _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved, _subsidies_total,
+                                                                          _cost_insulation,
+                                                                          _stock=_stock,
+                                                                          _cost_financing=_cost_financing)
+
+            # discount_factor = abs(self.preferences_insulation['bill_saved'] / self.preferences_insulation['cost'])
+            discount_factor = 10
+
+            npv = - _cost_insulation - _cost_financing + _subsidies_total + (
+                    reindex_mi(discount_factor, bill_saved.index) * _bill_saved.T).T
+            npv = (npv * _market_share).sum(axis=1)
+
+            level = ['Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor', 'Roof', 'Windows',
+                     'Heating system']
+            flow = (_renovation_rate * stock).groupby(level).sum()
+            rate = flow / stock.groupby(level).sum()
+            rate = self.add_certificate(rate)
+            npv = npv.groupby(level).mean()
+            npv = self.add_certificate(npv)
+
+            df = pd.concat((rate, npv), axis=1, keys=['rate', 'npv'])
+            dict_df = {i: df for i in df.index.names if i not in ['Existing', 'Wall', 'Floor', 'Roof', 'Windows']}
+            make_grouped_scatterplots(dict_df, 'npv', 'rate', colors=self._resources_data['colors'],
+                                      save=os.path.join(self.path_ini, 'renovation_rate_ini.png'), n_columns=2,
+                                      format_y=lambda y, _: '{:.0%}'.format(y))
+
+            temp = DataFrame()
+            for i in [i for i in rate.index.names if i not in ['Existing', 'Wall', 'Floor', 'Roof', 'Windows']]:
+                temp = concat((temp, rate.groupby(i).describe()), axis=0)
+            temp.round(4).to_csv(os.path.join(self.path_ini, 'renovation_rate_describe_ini.csv'))
+
+            flow = self.add_certificate(flow)
+            temp = flow.groupby('Performance').sum() / flow.sum()
+
         index = stock.index
         cost_insulation = reindex_mi(cost_insulation, index)
 
@@ -2953,7 +2987,6 @@ class AgentBuildings(ThermalBuildings):
             carbon_value_after = (consumption_after.T * carbon_value).T
             carbon_saved = - carbon_value_after.sub(carbon_value_before, axis=0).dropna()
 
-        # TODO reindex subsidies_total with stock.index
         if self.constant_insulation_intensive is None and self.rational_behavior is None:
 
             calibration_renovation(stock, cost_insulation.copy(), bill_saved.copy(), subsidies_total.copy(),
@@ -2961,99 +2994,9 @@ class AgentBuildings(ThermalBuildings):
                                    _cost_financing=cost_financing)
 
             if self.path_calibration is not None:
-                assess_policies(stock, subsidies_details, cost_insulation, bill_saved, subsidies_total, cost_financing)
+                indicator_renovation_rate(stock, cost_insulation, bill_saved, subsidies_total, cost_financing)
                 assess_sensitivity(stock, cost_insulation, bill_saved, subsidies_total, cost_financing)
-
-                if False:
-                    proba_heater = 1 / 20
-
-                    market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total,
-                                                                                cost_insulation,
-                                                                                _stock=stock,
-                                                                                _cost_financing=cost_financing)
-
-                    discount_factor = abs(self.preferences_insulation['bill_saved'] / self.preferences_insulation['cost'])
-                    discount_factor = 10
-
-                    npv = - cost_insulation - cost_financing + subsidies_total + (reindex_mi(discount_factor, bill_saved.index) * bill_saved.T).T
-                    npv = (npv * market_share).sum(axis=1)
-                    sub = (subsidies_total * market_share).sum(axis=1)
-
-                    """df = pd.concat((renovation_rate, npv), axis=1, keys=['rate', 'npv'])
-                    import seaborn as sns
-                    # sns.scatterplot(data=df, x='npv', y='rate', hue='Occupancy status', ax=ax)
-                    for i in ['Occupancy status', 'Income owner', 'Housing type', 'Heater replacement']:
-                        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-                        sns.scatterplot(data=df, x='npv', y='rate', hue=i, ax=ax)
-                        plt.show()"""
-
-
-                    level = ['Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']
-                    flow = (renovation_rate * stock).groupby(level).sum()
-                    rate = flow / stock.groupby(level).sum()
-                    rate = self.add_certificate(rate)
-                    npv = npv.groupby(level).mean()
-                    npv = self.add_certificate(npv)
-
-                    select(self.add_certificate(renovation_rate), {'Heating system': 'Electricity-Heat pump water', 'Performance': 'B'})
-                    select(self.add_certificate(subsidies_total), {'Heating system': 'Electricity-Heat pump water', 'Performance': 'B'})
-
-                    df = pd.concat((rate, npv), axis=1, keys=['rate', 'npv'])
-                    df[df.index.get_level_values('Performance') == 'B']
-                    for i in df.index.names:
-                        fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-                        sns.scatterplot(data=df, x='npv', y='rate', hue=i, ax=ax)
-                        plt.show()
-
-                    p = renovation_rate.copy()
-                    p = p.droplevel('Heating system')
-                    p = p.groupby(p.index.names).first()
-                    p.loc[p.index.get_level_values('Heater replacement') == True] *= proba_heater
-                    p.loc[p.index.get_level_values('Heater replacement') == False] *= (1 - proba_heater)
-                    p = p.groupby([i for i in p.index.names if i != 'Heater replacement']).sum()
-                    flow = stock.groupby(p.index.names).sum() * p
-                    flow = self.add_certificate(flow)
-                    npv, p = self.add_certificate(npv).xs(False, level='Heater replacement').droplevel('Heating system'), self.add_certificate(p)
-
-                    test = pd.concat((flow, npv, p), keys=['flow', 'npv', 'rate'], axis=1)
-
-
-                    proba = (renovation_rate * market_share.T).T
-                    proba.loc[proba.index.get_level_values('Heater replacement') == True, :] *= proba_heater
-                    proba.loc[proba.index.get_level_values('Heater replacement') == False, :] *= (1 - proba_heater)
-                    proba = proba.groupby([i for i in proba.index.names if i != 'Heater replacement']).sum()
-                    reno = proba.sum(axis=1)
-
-                    for i in self._resources_data['index']['Insulation']:
-                        p = proba.xs(True, level=i, axis=1).sum(axis=1)
-
-                    """if self.year == self.first_year + 1:
-                        probability = (renovation_rate * market_share.T).T
-                        rslt = {}
-                        for i in self._resources_data['index']['Insulation']:
-                            p = probability.xs(True, level=i, axis=1).sum(axis=1)
-                            rslt.update({i: p})
-                            print(i)
-                            print(p.describe())
-
-                        df = pd.concat((stock, renovation_rate), axis=1, keys=['Stock', 'Renovation rate'])
-                        df = self.add_certificate(df)
-                        import seaborn as sns
-                        fig, ax = plt.subplots()
-                        #ns.displot(df, x="Renovation rate", binwidth=0.01, weights='Stock', ax=ax)
-                        sns.histplot(data=df, x="Renovation rate", weights='Stock', ax=ax, hue='Performance', binwidth=0.01,
-                                     stat="density")
-                        ax.set_xlim(0, 0.1)
-                        plt.show()
-
-                        sns.displot(df, x="Renovation rate", weights='Stock', kind='ecdf')
-                        plt.xlim(0, 0.5)
-                        plt.show()
-
-                        make_hist(df, 'Renovation rate', 'Heater replacement', 'Count (Million)',
-                                  format_y=lambda y, _: '{:.0f}'.format(y / 10**6),
-                                  save=os.path.join(self.path_ini, 'renovation_rate.png'),
-                                  kde=True, xlim=(0, 0.1))"""
+                assess_policies(stock, subsidies_details, cost_insulation, bill_saved, subsidies_total, cost_financing)
 
         if self.rational_behavior is None:
             market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total, cost_insulation,
@@ -3227,22 +3170,6 @@ class AgentBuildings(ThermalBuildings):
         # before include the change of heating system
         consumption_before, consumption_3uses_before, certificate_before = self.consumption_heating_store(index, level_heater='Heating system final')
 
-        # select only index that can actually be retrofitted
-        """certificate_before = certificate_before[certificate_before > 'B']
-        consumption_3uses_before = consumption_3uses_before.loc[certificate_before.index]
-        consumption_before = consumption_before.loc[certificate_before.index]
-        temp = reindex_mi(certificate_before, index)
-        index = temp[temp > 'B'].index
-        stock = stock[index]
-
-        # seems to not be very useful
-        {'Wall': 0.4, 'Floor': 0.3, 'Roof': 0.2, 'Windows': 1.3}
-        condition = array([1] * stock.shape[0], dtype=bool)
-        for k, v in self._performance_insulation.items():
-            condition *= stock.index.get_level_values(k) <= v
-        stock = stock[~condition]
-        index = stock.index"""
-
         surface = reindex_mi(self._surface, index)
 
         # calculation of energy_saved_3uses after heating system final
@@ -3272,13 +3199,6 @@ class AgentBuildings(ThermalBuildings):
         assert allclose(amount_debt + amount_saving + subsidies_total, cost_insulation_reindex), 'Sum problem'
 
         if self._endogenous:
-
-            if calib_renovation is not None:
-                if calib_renovation['scale']['name'] == 'freeriders':
-                    delta_subsidies = None
-                    if (self.year in [self.first_year + 1]) and (self.scale is None):
-                        delta_subsidies = subsidies_details[calib_renovation['scale']['target_policies']].copy()
-                    calib_renovation['scale']['delta_subsidies'] = delta_subsidies
 
             renovation_rate, market_share = self.endogenous_renovation(stock, prices, subsidies_total,
                                                                        cost_insulation_reindex,
@@ -4199,6 +4119,28 @@ class AgentBuildings(ThermalBuildings):
                 'Switch heater only (Thousand households)']
             nb_measures.index = nb_measures.index.map(lambda x: 'Retrofit measures {} (Thousand households)'.format(x))
             output.update(nb_measures.T / 10 ** 3)
+
+            heater_no_carbon = ['Electricity-Heat pump water', 'Electricity-Heat pump air',
+                                'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler']
+            def condition_decarbonizing(x):
+                return x.index.get_level_values('Heating system final').isin(heater_no_carbon) & ~x.index.get_level_values('Heating system').isin(heater_no_carbon)
+
+            output['Switch decarbonize (Thousand households)'] = self._only_heater[condition_decarbonizing(self._only_heater)].sum() / 10**3
+            temp = self._replaced_by.sum(axis=1)
+            condition = condition_decarbonizing(temp)
+            output['Insulation (Thousand households)'] = temp[~condition].sum() / 10**3
+            output['Insulation and switch decarbonize (Thousand households)'] = temp[condition].sum() / 10**3
+
+            temp = self._replaced_by.groupby(['Housing type', 'Occupancy status']).sum()
+            temp = (temp.sum(axis=1) / self._stock_ref.groupby(temp.index.names).sum()).dropna()
+            temp.index = temp.index.map(lambda x: 'Rate {} - {} (%)'.format(x[0], x[1]))
+            output.update(temp.T)
+
+            temp = self._replaced_by.groupby(['Occupancy status', 'Housing type', 'Income owner']).sum()
+            temp = (temp.sum(axis=1) / self._stock_ref.groupby(temp.index.names).sum()).dropna()
+            temp = temp.xs('Owner-occupied', level='Occupancy status').xs('Single-family', level='Housing type')
+            temp.index = temp.index.map(lambda x: 'Rate Single-family - Owner-occupied {} (%)'.format(x))
+            output.update(temp.T)
 
             certificate_jump = self._heater_store['certificate_jump'].stack()
             temp = {}

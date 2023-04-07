@@ -173,7 +173,7 @@ def read_policies(config):
     def read_mpr(data):
         l = list()
         heater = get_pandas(data['heater'],
-                            lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system'))
+                            lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system final'))
         if data.get('growth_heater'):
             growth_heater = get_pandas(data['growth_heater'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
             heater = {k: i * heater for k, i in growth_heater.items()}
@@ -489,10 +489,10 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'performance_insulation': performance_insulation.to_dict()})
 
     bill_saving_preferences = get_pandas(config['macro']['preferences_saving'],
-                                         lambda x: pd.read_csv(x, index_col=[0, 1]))
+                                         lambda x: pd.read_csv(x, index_col=[0]))
     preferences_insulation = get_pandas(config['macro']['preferences_insulation'],
                                         lambda x: pd.read_csv(x, index_col=[0], header=None)).squeeze().to_dict()
-    preferences_insulation.update({'bill_saved': bill_saving_preferences.loc[:, 'Heater']})
+    preferences_insulation.update({'bill_saved': bill_saving_preferences.loc[:, 'Insulation']})
 
     preferences_heater = get_pandas(config['macro']['preferences_heater'],
                                         lambda x: pd.read_csv(x, index_col=[0], header=None)).squeeze().to_dict()
@@ -903,7 +903,7 @@ def dump_inputs(parsed_inputs, path):
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
     pd.concat((summary_input, t, temp), axis=1).T.round(3).to_csv(os.path.join(path, 'input.csv'))
 
-    parsed_inputs['export_prices'].to_csv(os.path.join(path, 'energy_prices.csv'))
+    parsed_inputs['export_prices'].round(3).to_csv(os.path.join(path, 'energy_prices.csv'))
 
     return summary_input
 

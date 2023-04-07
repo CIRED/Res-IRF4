@@ -1,14 +1,38 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": false,
     "no_policy": true,
     "prices_constant": false,
     "constant": false,
-    "policies": {"Ambitious":  "project/input/policies/policies_ambitious.json"}
+    "policies": {
+      "Ambitious": "project/input/policies/policies_ambitious.json",
+      "AmbitiousRenovation": {
+        "file": "project/input/policies/policies_current_2020.json",
+        "global_renovation": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_ad_valorem",
+          "target": "global_renovation",
+          "gest": "insulation",
+          "value": "project/input/policies/sub_sichel.csv"
+        }
+      },
+      "AmbitiousHeater": {
+        "file": "project/input/policies/policies_current_2020.json",
+        "sichel_heater": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_ad_valorem",
+          "columns": "project/input/policies/target_heat_pump.csv",
+          "gest": "heater",
+          "value": "project/input/policies/sub_sichel.csv"
+        }
+      }
+    }
 },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "step": 1,
     "full_output": true,
     "start": 2018,
