@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "current_policies": false,
     "no_policy": true,
     "prices_constant": false,

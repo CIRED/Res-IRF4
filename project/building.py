@@ -3288,7 +3288,6 @@ class AgentBuildings(ThermalBuildings):
         Series
         """
 
-        # select only stock mobile and existing before the first year
         stock_mobile = self.stock_mobile.groupby(
             [i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
         stock_mobile = stock_mobile.xs(True, level='Existing', drop_level=False)
@@ -3574,6 +3573,7 @@ class AgentBuildings(ThermalBuildings):
             flows_obligation.append(flow_obligation)
         return flows_obligation
 
+
     def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None, detailed_output=True,
                          lifetime=50, discount_rate=0.032):
         """Parse output.
@@ -3601,187 +3601,6 @@ class AgentBuildings(ThermalBuildings):
 
         """
         import gc
-
-        def marginal_abatement_cost(_consumption_saved, _cost_insulation, _stock, _prices, lifetime=lifetime,
-                                    discount_rate=discount_rate, option=None, plot=False, carbon_saved=None,
-                                    health_cost=None):
-
-            discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
-            if isinstance(discount_rate, Series):
-                discount_rate = reindex_mi(discount_rate, _cost_insulation.index)
-                discount_rate = concat([discount_rate] * _cost_insulation.shape[1], axis=1, keys=_cost_insulation.columns)
-
-            cost_annualized = calculate_annuities(_cost_insulation, lifetime=lifetime, discount_rate=discount_rate)
-            _consumption_saved = reindex_mi(_consumption_saved, _stock.index).dropna()
-            _bill_saved = self.energy_bill(prices, _consumption_saved)
-
-            _index = _consumption_saved.index
-            cost_annualized = reindex_mi(cost_annualized, _index)
-            _cost_insulation = reindex_mi(_cost_insulation, _index)
-            discount_factor = reindex_mi(discount_factor, _index)
-
-            _, _, _certificate = self.prepare_consumption(cost_annualized.columns, index=cost_annualized.index,
-                                                          level_heater='Heating system', full_output=True)
-            _output_statistics = {}
-            health_cost_saved = None
-            if health_cost is not None:
-                s = self.add_certificate(_stock.loc[_index])
-                health_cost_before = s * reindex_mi(health_cost, s.index).fillna(0)
-
-                c = reindex_mi(_certificate, _index)
-                health_cost_after = {}
-                for i, j in c.items():
-                    df = concat((j, _stock.loc[_index]), keys=['Performance', 'Stock'], axis=1).dropna().set_index('Performance', append=True).squeeze()
-                    health_cost_after.update({i: (reindex_mi(health_cost, df.index) * df).droplevel('Performance')})
-                health_cost_after = DataFrame(health_cost_after).fillna(0)
-                health_cost_saved = (health_cost_before - health_cost_after.T).T
-                health_cost_saved = (health_cost_saved.T / _stock.loc[_index]).T
-
-            npv, roi = None, None
-            if option is None:
-                insulation = MultiIndex.from_frame(DataFrame(INSULATION))
-                _consumption_saved_efficiency = _consumption_saved.loc[:, insulation]
-                cost_annualized = cost_annualized.loc[:, insulation]
-
-                if carbon_saved is not None:
-                    carbon_saved = reindex_mi(carbon_saved, _index)
-                    carbon_saved = carbon_saved.loc[:, insulation]
-                    cost_annualized -= carbon_saved
-
-                if health_cost_saved is not None:
-                    health_cost_saved = health_cost_saved.loc[:, insulation]
-                    cost_annualized -= health_cost_saved
-
-                cost_efficiency = cost_annualized / _consumption_saved_efficiency
-
-                _consumption_saved_efficiency = (_stock * _consumption_saved_efficiency.T).T
-                _consumption_saved_efficiency = _consumption_saved_efficiency.stack(_consumption_saved_efficiency.columns.names).squeeze()
-                cost_efficiency = cost_efficiency.stack(cost_efficiency.columns.names).squeeze()
-                # _output_statistics.update({'efficiency': (cost_efficiency * _stock.loc[_index]).sum() / _stock.loc[_index].sum()})
-
-            else:
-                dict_df = {'consumption_saved': _consumption_saved}
-                cash_flow = _bill_saved
-
-                if carbon_saved is not None:
-                    carbon_saved = reindex_mi(carbon_saved, _index)
-                    cost_annualized = cost_annualized - carbon_saved
-                    cash_flow += carbon_saved
-
-                if health_cost_saved is not None:
-                    cost_annualized -= health_cost_saved
-                    cash_flow += health_cost_saved
-
-                dict_df.update({'cash_flow': cash_flow, 'cost_insulation': _cost_insulation})
-
-                _condition = _certificate.isin(['A', 'B']).replace(False, float('nan'))
-                _index = _certificate[_condition.isnull().all(1)].index
-                _condition.dropna(how='all', inplace=True)
-                _condition = concat((_condition, _certificate.loc[_index, :].isin(['C'])), axis=0)
-                _condition = _condition.replace(False, float('nan'))
-
-                cost_efficiency = cost_annualized / _consumption_saved
-                cost_efficiency *= reindex_mi(_condition, cost_efficiency.index)
-                cost_efficiency = cost_efficiency.apply(pd.to_numeric)
-                cost_efficiency.dropna(how='all', inplace=True)
-                rslt_efficiency = self.find_best_option(cost_efficiency, dict_df=dict_df, func='min')
-                cost_efficiency = rslt_efficiency['criteria']
-                _consumption_saved_efficiency = _stock * rslt_efficiency['consumption_saved']
-
-                _output_statistics.update({'efficiency': (cost_efficiency * _stock).sum() / _stock.sum()})
-
-                if isinstance(discount_factor, Series):
-                    npv = - _cost_insulation + (discount_factor * cash_flow.T).T
-                else:
-                    npv = - _cost_insulation + discount_factor * cash_flow
-
-                npv *= reindex_mi(_condition, npv.index)
-                npv = npv.apply(pd.to_numeric)
-                npv.dropna(how='all', inplace=True)
-                rslt_npv = self.find_best_option(- npv, dict_df=dict_df, func='min')
-                npv = rslt_npv['criteria']
-                _consumption_saved_npv = _stock * rslt_npv['consumption_saved']
-                _output_statistics.update({'npv': (npv * _stock).sum() / _stock.sum()})
-
-                roi = _cost_insulation / cash_flow
-                roi *= reindex_mi(_condition, roi.index)
-                roi = roi.apply(pd.to_numeric)
-                roi.dropna(how='all', inplace=True)
-                rslt_roi = self.find_best_option(roi, dict_df=dict_df, func='min')
-                roi = rslt_roi['criteria']
-                _consumption_saved_roi = _stock * rslt_roi['consumption_saved']
-                _output_statistics.update({'roi': (roi * _stock).sum() / _stock.sum()})
-
-                """cash_flow = rslt_npv['cash_flow']
-                _cost_insulation = rslt_npv['cost_insulation']
-                _cost_insulation = _cost_insulation[cash_flow > 0]
-                cash_flow = cash_flow[cash_flow > 0]
-                (cash_flow > _cost_insulation).any()
-
-                x0 = Series([0.05] * cash_flow.shape[0], index=cash_flow.index)
-                irr = fsolve(lambda x: ((1 - (1 + x) ** -lifetime) / x) * cash_flow - _cost_insulation, x0=x0)"""
-
-
-            # multiply cost_saved by stock cost_efficiency do not change
-            # _stock = _stock.groupby(_consumption_saved.index.names).sum().loc[_consumption_saved.index]
-            def sort_cum(df, round=3):
-                df.sort_values(y.name, inplace=True)
-                df.dropna(inplace=True)
-                df[y.name] = df[y.name].round(round)
-                df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
-                df[x.name] = df[x.name].cumsum() / 10 ** 9
-                df = df.set_index(x.name)[y.name]
-                return df
-
-            def closest(df, value):
-                return(df - value).abs().sort_values().index[0]
-
-            _output = {}
-            x = _consumption_saved_efficiency.rename('Consumption saved (TWh)')
-            y = cost_efficiency.rename('Cost efficiency (euro/kWh)')
-            df_efficiency = concat((x, y), axis=1)
-            df_efficiency = sort_cum(df_efficiency, round=3)
-            _output.update({'efficiency': df_efficiency})
-            if _output_statistics:
-                _output_statistics.update({'efficiency': pd.Series(_output_statistics['efficiency'], index=[
-                    closest(df_efficiency, _output_statistics['efficiency'])])})
-
-            if plot:
-                make_plot(df_efficiency, 'Cost efficiency (euro/kWh)', ymax=0.5, legend=False,
-                          format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(self.path, 'cost_curve_insulation.png'))
-
-            # sort by marginal cost
-            if npv is not None:
-                x = _consumption_saved_npv.rename('Consumption saved (TWh)')
-                y = npv.rename('Net present cost (euro)')
-                df_npv = concat((x, y), axis=1)
-                df_npv.dropna(inplace=True)
-                df_npv = df_npv[df_npv['Consumption saved (TWh)'] > 0]
-                df_npv = sort_cum(df_npv, round=0)
-                _output.update({'npv': df_npv})
-                if _output_statistics:
-                    _output_statistics.update({'npv': (
-                    closest(df_npv, _output_statistics['npv']), _output_statistics['npv'])})
-
-                x = _stock.rename('Stock (Million)')
-                y = npv.rename('Net present cost(euro)')
-                df_npv = concat((x, y), axis=1)
-                df_npv = sort_cum(df_npv, round=0)
-                df_npv.index = df_npv.index * 10**3
-                _output.update({'npv_pop': df_npv})
-
-            if roi is not None:
-                x = _consumption_saved_roi.rename('Consumption saved (TWh)')
-                y = roi.rename('Return on Investment (ROI) (year)')
-                df_roi = concat((x, y), axis=1)
-                df_roi = sort_cum(df_roi, round=1)
-                _output.update({'roi': df_roi})
-                if _output_statistics:
-                    _output_statistics.update({'roi': (
-                    closest(df_roi, _output_statistics['roi']), _output_statistics['roi'])})
-
-            return _output, _output_statistics
 
         carbon_value_kwh = inputs['carbon_value_kwh'].loc[self.year, :]
 
@@ -3914,7 +3733,7 @@ class AgentBuildings(ThermalBuildings):
             # self.store_over_years.update({self.year: deepcopy(dict_rslt['npv_pop'])})
             # dict_stats = reverse_dict(dict_stats)
             if self.year == 2019:
-                c_saved = self._renovation_store['consumption_saved_households'].droplevel(
+                """c_saved = self._renovation_store['consumption_saved_households'].droplevel(
                     ['Heating system', 'Heater replacement'])
                 c_saved.index.rename({'Heating system final': 'Heating system'}, inplace=True)
                 c_saved = c_saved[~c_saved.index.duplicated()]
@@ -3928,16 +3747,17 @@ class AgentBuildings(ThermalBuildings):
                     'Private implicit discount, global renovation': {
                         'discount_rate': inputs['implicit_discount_rate'],
                         'carbon_saved': None,
-                        'option': True},
+                        'measures': 'global_renovation'},
                     'Social, global renovation': {'discount_rate': discount_rate,
                                                   'carbon_saved': e_saved,
-                                                  'option': True,
+                                                  'measures': 'global_renovation',
                                                   'health_cost': inputs['health_cost'].sum(axis=1)},
                     'Private, global renovation': {'discount_rate': self._renovation_store['discount'],
                                                    'carbon_saved': None,
-                                                   'option': True},
+                                                   'measures': 'global_renovation'},
                     'Private, all measures': {'discount_rate': self._renovation_store['discount'],
-                                              'carbon_saved': None}
+                                              'carbon_saved': None,
+                                              'measures': 'full'}
                 }
                 options = {k: i for k, i in options.items() if
                            k in ['Social, global renovation', 'Private, global renovation',
@@ -3952,7 +3772,7 @@ class AgentBuildings(ThermalBuildings):
 
                 dict_rslt, dict_stats = {}, {}
                 for key, option in options.items():
-                    temp = marginal_abatement_cost(c_saved, c_insulation, self._stock_ref, prices, **option)
+                    temp = self.marginal_abatement_cost(c_saved, c_insulation, self._stock_ref, prices, **option)
                     dict_rslt.update({key: temp[0]})
                     dict_stats.update({key: temp[1]})
 
@@ -3979,7 +3799,7 @@ class AgentBuildings(ThermalBuildings):
                 make_plots(dict_rslt['roi'], 'Return Time on Investment (years)',
                            save=os.path.join(self.path_ini, 'roi_insulation_curve.png'.format(k)),
                            format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
-                           format_x=lambda x, _: '{:.0%}'.format(x), ymax=50)
+                           format_x=lambda x, _: '{:.0%}'.format(x), ymax=50)"""
 
             levels_owner = ['Occupancy status', 'Income owner']
 
@@ -4122,6 +3942,7 @@ class AgentBuildings(ThermalBuildings):
 
             heater_no_carbon = ['Electricity-Heat pump water', 'Electricity-Heat pump air',
                                 'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler']
+
             def condition_decarbonizing(x):
                 return x.index.get_level_values('Heating system final').isin(heater_no_carbon) & ~x.index.get_level_values('Heating system').isin(heater_no_carbon)
 
@@ -4799,6 +4620,290 @@ class AgentBuildings(ThermalBuildings):
 
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
+
+    def marginal_abatement_cost(self, consumption_saved, cost_insulation, stock, prices, certificate_after, lifetime=30,
+                                discount_rate=0.05, measures='global_renovation', plot=False, carbon_saved=None,
+                                health_cost=None):
+
+        discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
+        if isinstance(discount_rate, Series):
+            discount_rate = reindex_mi(discount_rate, cost_insulation.index)
+            discount_rate = concat([discount_rate] * cost_insulation.shape[1], axis=1, keys=cost_insulation.columns)
+
+        cost_annualized = calculate_annuities(cost_insulation, lifetime=lifetime, discount_rate=discount_rate)
+        consumption_saved = reindex_mi(consumption_saved, stock.index).dropna()
+        bill_saved = self.energy_bill(prices, consumption_saved)
+
+        index = consumption_saved.index
+        cost_annualized = reindex_mi(cost_annualized, index)
+        cost_insulation = reindex_mi(cost_insulation, index)
+        discount_factor = reindex_mi(discount_factor, index)
+
+        """insulation_option = cost_annualized.columns.droplevel('Heater replacement')
+        insulation_option = insulation_option[~insulation_option.duplicated()]
+        _, _, _certificate = self.prepare_consumption(index=cost_annualized.index,
+                                                      level_heater='Heating system', full_output=True)"""
+        _output_statistics = {}
+        health_cost_saved = None
+        if health_cost is not None:
+            s = self.add_certificate(stock.loc[index])
+            health_cost_before = s * reindex_mi(health_cost, s.index).fillna(0)
+
+            c = reindex_mi(certificate_after, index)
+            health_cost_after = {}
+            for i, j in c.items():
+                df = concat((j, stock.loc[index]), keys=['Performance', 'Stock'], axis=1).dropna().set_index('Performance', append=True).squeeze()
+                health_cost_after.update({i: (reindex_mi(health_cost, df.index) * df).droplevel('Performance')})
+            health_cost_after = DataFrame(health_cost_after).fillna(0)
+            health_cost_saved = (health_cost_before - health_cost_after.T).T
+            health_cost_saved = (health_cost_saved.T / stock.loc[index]).T
+
+        npv, roi = None, None
+        if measures == 'full_insulation':
+            insulation = deepcopy(INSULATION)
+            if 'Heater replacement' in consumption_saved.columns.names:
+                insulation.update({'Heater replacement': (False, False, False, False)})
+            insulation = MultiIndex.from_frame(DataFrame(insulation))
+            consumption_saved_efficiency = consumption_saved.loc[:, insulation]
+            cost_annualized = cost_annualized.loc[:, insulation]
+
+            if carbon_saved is not None:
+                carbon_saved = reindex_mi(carbon_saved, index)
+                carbon_saved = carbon_saved.loc[:, insulation]
+                cost_annualized -= carbon_saved
+
+            if health_cost_saved is not None:
+                health_cost_saved = health_cost_saved.loc[:, insulation]
+                cost_annualized -= health_cost_saved
+
+            cost_efficiency = cost_annualized / consumption_saved_efficiency
+
+            consumption_saved_efficiency = (stock * consumption_saved_efficiency.T).T
+            consumption_saved_efficiency = consumption_saved_efficiency.stack(consumption_saved_efficiency.columns.names).squeeze()
+            cost_efficiency = cost_efficiency.stack(cost_efficiency.columns.names).squeeze()
+            # _output_statistics.update({'efficiency': (cost_efficiency * _stock.loc[_index]).sum() / _stock.loc[_index].sum()})
+
+        elif measures in ['global_renovation', 'global_insulation']:
+            dict_df = {'consumption_saved': consumption_saved}
+            cash_flow = bill_saved
+
+            if carbon_saved is not None:
+                carbon_saved = reindex_mi(carbon_saved, index)
+                cost_annualized = cost_annualized - carbon_saved
+                cash_flow += carbon_saved
+
+            if health_cost_saved is not None:
+                cost_annualized -= health_cost_saved
+                cash_flow += health_cost_saved
+
+            dict_df.update({'cash_flow': cash_flow, 'cost_insulation': cost_insulation})
+
+            _condition = certificate_after.isin(['A', 'B']).replace(False, float('nan'))
+            _index = certificate_after[_condition.isnull().all(1)].index
+            _condition.dropna(how='all', inplace=True)
+            _condition = concat((_condition, certificate_after.loc[_index, :].isin(['C'])), axis=0)
+            _condition = _condition.replace(False, float('nan'))
+
+            if measures == 'global_insulation':
+                _condition.loc[:, _condition.columns.get_level_values('Heater replacement')] = float('nan')
+
+            _condition.dropna(how='all', inplace=True)
+
+            cost_efficiency = cost_annualized / consumption_saved
+            cost_efficiency *= reindex_mi(_condition, cost_efficiency.index)
+            cost_efficiency = cost_efficiency.apply(pd.to_numeric)
+            cost_efficiency.dropna(how='all', inplace=True)
+            rslt_efficiency = self.find_best_option(cost_efficiency, dict_df=dict_df, func='min')
+            cost_efficiency = rslt_efficiency['criteria']
+            consumption_saved_efficiency = stock * rslt_efficiency['consumption_saved']
+
+            _output_statistics.update({'efficiency': (cost_efficiency * stock).sum() / stock.sum()})
+
+            if isinstance(discount_factor, Series):
+                npv = - cost_insulation + (discount_factor * cash_flow.T).T
+            else:
+                npv = - cost_insulation + discount_factor * cash_flow
+
+            npv *= reindex_mi(_condition, npv.index)
+            npv = npv.apply(pd.to_numeric)
+            npv.dropna(how='all', inplace=True)
+            rslt_npv = self.find_best_option(- npv, dict_df=dict_df, func='min')
+            npv = rslt_npv['criteria']
+            consumption_saved_npv = stock * rslt_npv['consumption_saved']
+            _output_statistics.update({'npv': (npv * stock).sum() / stock.sum()})
+
+            roi = cost_insulation / cash_flow
+            roi *= reindex_mi(_condition, roi.index)
+            roi = roi.apply(pd.to_numeric)
+            roi.dropna(how='all', inplace=True)
+            rslt_roi = self.find_best_option(roi, dict_df=dict_df, func='min')
+            roi = rslt_roi['criteria']
+            consumption_saved_roi = stock * rslt_roi['consumption_saved']
+            _output_statistics.update({'roi': (roi * stock).sum() / stock.sum()})
+        else:
+            raise NotImplemented
+
+        def sort_cum(df, round=3):
+            df.sort_values(y.name, inplace=True)
+            df.dropna(inplace=True)
+            df[y.name] = df[y.name].round(round)
+            df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
+            df[x.name] = df[x.name].cumsum() / 10 ** 9
+            df = df.set_index(x.name)[y.name]
+            return df
+
+        def closest(df, value):
+            return(df - value).abs().sort_values().index[0]
+
+        _output = {}
+        x = consumption_saved_efficiency.rename('Consumption saved (TWh)')
+        y = cost_efficiency.rename('Cost efficiency (euro/kWh)')
+        df_efficiency = concat((x, y), axis=1)
+        df_efficiency = sort_cum(df_efficiency, round=3)
+        _output.update({'efficiency': df_efficiency})
+        if _output_statistics:
+            _output_statistics.update({'efficiency': pd.Series(_output_statistics['efficiency'], index=[
+                closest(df_efficiency, _output_statistics['efficiency'])])})
+
+        if plot:
+            make_plot(df_efficiency, 'Cost efficiency (euro/kWh)', ymax=0.5, legend=False,
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      save=os.path.join(self.path, 'cost_curve_insulation.png'))
+
+        # sort by marginal cost
+        if npv is not None:
+            x = consumption_saved_npv.rename('Consumption saved (TWh)')
+            y = npv.rename('Net present cost (euro)')
+            df_npv = concat((x, y), axis=1)
+            df_npv.dropna(inplace=True)
+            df_npv = df_npv[df_npv['Consumption saved (TWh)'] > 0]
+            df_npv = sort_cum(df_npv, round=0)
+            _output.update({'npv': df_npv})
+            if _output_statistics:
+                _output_statistics.update({'npv': (
+                closest(df_npv, _output_statistics['npv']), _output_statistics['npv'])})
+
+            x = stock.rename('Stock (Million)')
+            y = npv.rename('Net present cost(euro)')
+            df_npv = concat((x, y), axis=1)
+            df_npv = sort_cum(df_npv, round=0)
+            df_npv.index = df_npv.index * 10**3
+            _output.update({'npv_pop': df_npv})
+
+        if roi is not None:
+            x = consumption_saved_roi.rename('Consumption saved (TWh)')
+            y = roi.rename('Return on Investment (ROI) (year)')
+            df_roi = concat((x, y), axis=1)
+            df_roi = sort_cum(df_roi, round=1)
+            _output.update({'roi': df_roi})
+            if _output_statistics:
+                _output_statistics.update({'roi': (
+                closest(df_roi, _output_statistics['roi']), _output_statistics['roi'])})
+
+        return _output, _output_statistics
+
+    def make_static_analysis(self, cost_insulation, cost_heater, prices, discount_rate,
+                             implicit_discount_rate, health_cost, carbon_value, carbon_content):
+        # select only stock mobile and existing before the first year
+        # select stock
+        stock = self.add_certificate(self.stock)
+        stock = stock[stock.index.get_level_values('Performance').astype(str) > 'B']
+        stock = stock.droplevel('Performance')
+        index = stock.index
+
+        consumption_before = self.consumption_heating_store(index, full_output=False)
+
+        idx_fossil = ['Natural gas', 'Oil fuel']
+        s_no_switch = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
+                                      name='Heating system final')), axis=1).set_index('Heating system final',
+                                                                                       append=True).squeeze()
+        s_switch = stock[self.to_energy(stock).isin(idx_fossil)]
+        s_switch = concat((stock, Series('Electricity-Heat pump water', index=stock.index,
+                                      name='Heating system final')), axis=1).set_index('Heating system final',
+                                                                                       append=True).squeeze()
+        s = concat((s_no_switch, s_switch), axis=0, keys=[False, True], names=['Heater replacement'])
+
+        consumption_after, _, certificate_after = self.prepare_consumption(self._choice_insulation,
+                                                                           index=s.index,
+                                                                           level_heater='Heating system final',
+                                                                           full_output=True)
+        consumption_after = reindex_mi(consumption_after, s.index)
+        consumption_after = consumption_after.droplevel('Heating system final').unstack('Heater replacement')
+        consumption_before = reindex_mi(consumption_before, consumption_after.index)
+        consumption_saved = (consumption_before - consumption_after.T).T
+        consumption_saved = (consumption_saved.T * reindex_mi(self._surface, consumption_saved.index)).T
+
+        certificate_after = reindex_mi(certificate_after, s.index)
+        certificate_after = certificate_after.droplevel('Heating system final').unstack('Heater replacement')
+
+        carbon_value = carbon_value.reindex(self.to_energy(consumption_saved)).set_axis(consumption_saved.index)
+        emission_saved_value = (consumption_saved.T * carbon_value).T
+
+        cost = self.prepare_cost_insulation(cost_insulation * self.surface_insulation)
+        cost = concat((cost, cost + cost_heater.loc['Electricity-Heat pump water']), axis=1, keys=[False, True], names=['Heater replacement'])
+        cost = cost.reorder_levels(consumption_saved.columns.names, axis=1)
+        cost = reindex_mi(cost, consumption_saved.index)
+
+        options = {
+            'Private, global renovation': {
+                'discount_rate': implicit_discount_rate,
+                'carbon_saved': None,
+                'measures': 'global_renovation'},
+            'Private, global insulation': {
+                'discount_rate': implicit_discount_rate,
+                'carbon_saved': None,
+                'measures': 'global_insulation'},
+            'Private, all measures': {'discount_rate': implicit_discount_rate,
+                                      'carbon_saved': None,
+                                      'measures': 'full_insulation'},
+            'Social, global renovation': {'discount_rate': discount_rate,
+                                          'carbon_saved': emission_saved_value,
+                                          'measures': 'global_renovation',
+                                          'health_cost': health_cost}
+        }
+        options = {k: i for k, i in options.items() if
+                   k in ['Private, global renovation', 'Private, global insulation', 'Social, global renovation',
+                         'Private, all measures', 'Private implicit discount, global renovation']}
+
+        colors = {'Social, all measures': 'darkred',
+                  'Social, global renovation': 'orangered',
+                  'Private, global insulation': 'darkmagenta',
+                  'Private, global renovation': 'cornflowerblue',
+                  'Private, all measures': 'darkblue',
+                  'Private implicit discount, global renovation': 'royalblue'
+                  }
+
+        dict_rslt, dict_stats = {}, {}
+        for key, option in options.items():
+            temp = self.marginal_abatement_cost(consumption_saved, cost, self._stock_ref, prices, certificate_after, **option)
+            dict_rslt.update({key: temp[0]})
+            dict_stats.update({key: temp[1]})
+
+        dict_rslt = reverse_dict(dict_rslt)
+
+        c_before = self.consumption_heating_store(self._stock_ref.index, full_output=False)
+        c_before = reindex_mi(c_before, self._stock_ref.index) * self._stock_ref * reindex_mi(self._surface,
+                                                                                              self._stock_ref.index)
+
+        # percentage of initial value
+        for key in dict_rslt.keys():
+            for k in dict_rslt[key].keys():
+                dict_rslt[key][k].index = dict_rslt[key][k].index / (c_before.sum() / 10 ** 9)
+                dict_rslt[key][k].name = 'Consumption saving (% / 2019)'
+
+        #  plt.xticks(default_x_ticks, x)
+        make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
+                   save=os.path.join(self.path_ini, 'abatement_curve.png'.format(k)), ymax=1, ymin=-1,
+                   format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x))
+        make_plots(dict_rslt['npv'], 'Net present cost (Thousand euro)',
+                   save=os.path.join(self.path_ini, 'npv_insulation_curve.png'.format(k)),
+                   format_y=lambda y, _: '{:.1f}'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), ymin=None, hlines=0)
+        make_plots(dict_rslt['roi'], 'Return Time on Investment (years)',
+                   save=os.path.join(self.path_ini, 'roi_insulation_curve.png'.format(k)),
+                   format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), ymax=50)
 
     def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission=None, carbon_value=None,
                              health_cost=None,

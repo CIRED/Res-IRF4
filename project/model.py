@@ -396,6 +396,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     buildings.logger.info('Writing output')
     if full_output:
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
+
     else:
         buildings.logger.debug('Simplified output')
         stock = buildings.simplified_stock().rename(year)
@@ -527,6 +528,14 @@ def res_irf(config, path):
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
             if year == 2019 and config.get('full_output'):
                 compare_results(o, buildings.path)
+
+                buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
+                                               prices, 0.05,
+                                               inputs_dynamics['post_inputs']['implicit_discount_rate'],
+                                               inputs_dynamics['post_inputs']['health_cost'].sum(axis=1),
+                                               inputs_dynamics['post_inputs']['carbon_value_kwh'].loc[year, :],
+                                               inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :])
+
                 with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
                     dump({
                         'coefficient_global': buildings.coefficient_global,
