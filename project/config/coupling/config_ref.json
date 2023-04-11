@@ -141,7 +141,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "calibration": "project/input/calibration/calibration_20230405.pkl"
+    }
   }
 }

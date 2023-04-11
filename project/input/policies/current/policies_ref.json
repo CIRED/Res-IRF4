@@ -63,7 +63,7 @@
         "value": 0.055
       },
       "restriction_oil": {
-        "start": 2022,
+        "start": 2019,
         "end": 2051,
         "value": "Oil fuel",
         "policy": "restriction_energy"

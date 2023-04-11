@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": false,
     "no_policy": false,
     "prices_constant": false,
@@ -19,7 +19,9 @@
       "activated": true,
       "interest_rate": 0.04,
       "saving_rate": 0.025,
-      "duration": 10
+      "duration": 15,
+      "upfront_max": "project/input/macro/upfront_max.csv",
+      "method": "MENFIS"
     },
     "supply": {
       "activated_insulation": false,
@@ -115,6 +117,7 @@
       "pop_housing": null,
       "share_multi_family": null
     },
+    "implicit_discount_rate": "project/input/revealed_data/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies":  "project/input/policies/current/policies_ref.json",
