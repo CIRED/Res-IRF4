@@ -105,8 +105,18 @@ def config2inputs(config=None, building_stock=None, end=None):
         to_replace = [k for k, i in replace.items() if i not in inputs['ms_heater'].columns and i is not None]
         if to_replace:
             raise NotImplemented
-        inputs['ms_heater'].drop([i for i in replace.keys() if i in inputs['ms_heater'].columns], axis=1, inplace=True)
-        inputs['cost_heater'].drop([i for i in replace.keys() if i in inputs['cost_heater'].index], inplace=True)
+
+        list_heater = list(stock.index.get_level_values('Heating system').unique())
+        list_heater.extend([i if i not in replace.keys() else replace[i] for i in inputs['ms_heater'].columns])
+        list_heater = list(set(list_heater))
+        list_heater = [i for i in list_heater if i is not None]
+
+        if isinstance(inputs['ms_heater'], pd.DataFrame):
+            inputs['ms_heater'].drop([i for i in inputs['ms_heater'].columns if i not in list_heater], axis=1, inplace=True)
+            inputs['ms_heater'].drop([i for i in inputs['ms_heater'].index.get_level_values('Heating system') if i not in list_heater], axis=0, inplace=True, level='Heating system')
+            inputs['ms_heater'] = (inputs['ms_heater'].T / inputs['ms_heater'].sum(axis=1)).T
+
+        inputs['cost_heater'].drop([i for i in inputs['cost_heater'].index if i not in list_heater], inplace=True)
 
     if config['simple'].get('insulation'):
         pass

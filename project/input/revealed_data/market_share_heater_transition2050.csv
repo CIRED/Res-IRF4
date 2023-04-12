@@ -11,7 +11,7 @@ Multi-family,Oil fuel-Performance boiler,0.06,,,,,0.05,0.79,0.1,
 Multi-family,Wood fuel-Performance boiler,,,,,,,,1,
 Multi-family,Wood fuel-Standard boiler,,,,,,,,1,
 Multi-family,Heating-District heating,,,,,,,,,1
-Single-family,Electricity-Heat pump water,1,,,,,,,0.21,
+Single-family,Electricity-Heat pump water,1,,,,,,,,
 Single-family,Electricity-Heat pump air,,1,,,,,,,
 Single-family,Electricity-Performance boiler,0.03,0.2,0.59,0.02,,,,0.15,
 Single-family,Natural gas-Performance boiler,0.03,,,0.91,,,,0.06,
