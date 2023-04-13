@@ -1452,7 +1452,7 @@ class AgentBuildings(ThermalBuildings):
                 cst = pd.Series(x[1:], index=_idx).unstack('Heating system final')
                 cst.loc[:, ref] = 0
 
-                _u = (_utility_ini + cst) * scale
+                _u = _utility_ini * scale + cst
                 _market_share = (exp(_u).T / exp(_u).sum(axis=1)).T
                 _agg = (_market_share.T * _flow).T.groupby(_ms.index.names).sum()
                 _market_share_agg = (_agg.T / _agg.sum(axis=1)).T
@@ -1487,16 +1487,19 @@ class AgentBuildings(ThermalBuildings):
             x0 = append(1, x0)
 
             # func(x0, ms, _utility, flow, idx, _utility_shock)
-            # x, _ms, _utility_ini, _flow, _idx, _u_shock = x0, ms, _utility, flow, idx, _utility_shock
+            # x, _ms, _utility_ini, _flow, _idx, _u_shock = x0, ms, _utility, _flow_replace, idx, _utility_shock
+            x0, info_dict, ier, mess = fsolve(func, x0, args=(ms, _utility.copy(), _flow_replace, idx, _utility_shock,
+                                                                'Electricity-Heat pump water', False),
+                                                full_output=True)
 
             root, info_dict, ier, mess = fsolve(func, x0, args=(ms, _utility.copy(), _flow_replace, idx, _utility_shock,
-                                                                'Electricity-Heat pump water', False),
+                                                                'Electricity-Heat pump water', True),
                                                 full_output=True)
             if ier == 1:
                 self.logger.debug('Constant heater optim worked')
 
             scale = abs(root[0])
-            constant = Series(root[1:], index=idx).unstack('Heating system final') * abs(scale)
+            constant = Series(root[1:], index=idx).unstack('Heating system final')
             constant.loc[:, ref] = 0
 
             self.apply_scale(scale, gest='heater')
@@ -1628,7 +1631,7 @@ class AgentBuildings(ThermalBuildings):
 
         if (self.constant_heater is None) and (ms_heater is not None):
             self.logger.info('Calibration market-share heating system')
-            sub_shock = - utility_cost
+            sub_shock = - utility_cost - utility_financing
             sub_shock.loc[:, [i for i in sub_shock.columns if i != 'Electricity-Heat pump water']] = 0
             utility_shock = - utility_subsidies + sub_shock
             if condition is not None:
@@ -1644,13 +1647,12 @@ class AgentBuildings(ThermalBuildings):
 
             calibration(utility, ms_heater, utility_shock, flow_replace)
 
+            utility_cost *= self.scale_heater
+            utility_bill_saving *= self.scale_heater
+            utility_financing *= self.scale_heater
+            utility_inertia *= self.scale_heater
             assess_sensitivity_hp(utility_cost, utility_bill_saving, utility_financing, utility_inertia, condition,
                                   flow_replace, cost_heater)
-
-
-
-            print('break')
-
 
         utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
 
