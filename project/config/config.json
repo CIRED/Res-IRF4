@@ -1,6 +1,6 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": false,
@@ -10,7 +10,7 @@
     }
 },
   "Reference": {
-    "end": 2023,
+    "end": 2031,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -121,7 +121,7 @@
     "implicit_discount_rate": "project/input/revealed_data/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/current/policies_ref.json",
+    "policies": "project/input/policies/current/policies_cee_new.json",
     "simple": {
       "quintiles": true,
       "surface": false,

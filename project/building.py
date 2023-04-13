@@ -1326,7 +1326,6 @@ class AgentBuildings(ThermalBuildings):
 
         """
 
-        subsidies_total = DataFrame(0, index=index, columns=cost_heater.index)
         subsidies_details = {}
 
         vta = VTA
@@ -1381,7 +1380,30 @@ class AgentBuildings(ThermalBuildings):
                 continue
 
             subsidies_details[policy.name] = sub
-            subsidies_total += subsidies_details[policy.name]
+
+        subsidies_bonus = [p for p in policies_heater if p.policy == 'bonus']
+        for policy in subsidies_bonus:
+            if isinstance(policy.value, dict):
+                value = policy.value[self.year]
+            else:
+                value = policy.value
+
+            value = reindex_mi(value, index)
+            value = value.reindex(cost_heater.index, axis=1).fillna(0)
+
+            if policy.name in subsidies_details.keys():
+                subsidies_details[policy.name] = subsidies_details[policy.name] + value
+            else:
+                subsidies_details[policy.name] = value
+
+        # subsidies_details['cee'].to_csv(os.path.join(self.path, 'cee_heater.csv'))
+
+        subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if
+                           k not in ['reduced_vta', 'over_cap']]
+        if subsidies_total:
+            subsidies_total = sum(subsidies_total)
+        else:
+            subsidies_total = pd.DataFrame(0, index=index, columns=cost_heater.index)
 
         regulation = [p for p in policies_heater if p.policy == 'regulation']
         if 'inertia_heater' in [p.name for p in regulation]:
@@ -1462,6 +1484,7 @@ class AgentBuildings(ThermalBuildings):
                 rslt = rslt.stack('Heating system final').loc[_idx].to_numpy()
 
                 temp = _u + _u_shock * scale
+                # temp = _utility_ini + _u_shock
                 _market_share = (exp(temp).T / exp(temp).sum(axis=1)).T
                 _agg = (_market_share.T * _flow).T
 
@@ -1487,14 +1510,15 @@ class AgentBuildings(ThermalBuildings):
             x0 = append(1, x0)
 
             # func(x0, ms, _utility, flow, idx, _utility_shock)
-            # x, _ms, _utility_ini, _flow, _idx, _u_shock = x0, ms, _utility, _flow_replace, idx, _utility_shock
-            x0, info_dict, ier, mess = fsolve(func, x0, args=(ms, _utility.copy(), _flow_replace, idx, _utility_shock,
-                                                                'Electricity-Heat pump water', False),
-                                                full_output=True)
 
+            """x0, info_dict, ier, mess = fsolve(func, x0, args=(ms, _utility.copy(), _flow_replace, idx, _utility_shock,
+                                                                'Electricity-Heat pump water', False), full_output=True)
+            if ier == 1:
+                self.logger.debug('Constant heater without scale worked')"""
+
+            # x, _ms, _utility_ini, _flow, _idx, _u_shock = x0, ms, _utility, _flow_replace, idx, _utility_shock
             root, info_dict, ier, mess = fsolve(func, x0, args=(ms, _utility.copy(), _flow_replace, idx, _utility_shock,
-                                                                'Electricity-Heat pump water', True),
-                                                full_output=True)
+                                                                'Electricity-Heat pump water', True), full_output=True)
             if ier == 1:
                 self.logger.debug('Constant heater optim worked')
 
@@ -2409,6 +2433,11 @@ class AgentBuildings(ThermalBuildings):
                     value = policy.value[self.year]
                 else:
                     value = policy.value
+
+                if isinstance(value, Series):
+                    idx = pd.Index(['Single-family', 'Multi-family'], name='Housing type')
+                    value = concat([value] * len(idx), keys=idx, axis=1).T
+
                 value = (reindex_mi(self.prepare_subsidy_insulation(value), index).T * surface).T
                 if policy.target is not None:
                     if isinstance(condition[policy.target], Series):
@@ -2473,6 +2502,10 @@ class AgentBuildings(ThermalBuildings):
             if not policy.social_housing:
                 value.loc[value.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
 
+            # if policy defined by insulation
+            if len(value.columns.names) == 1:
+                value = (self.prepare_subsidy_insulation(value).T * surface).T
+
             if policy.name in subsidies_details.keys():
                 if isinstance(value, (DataFrame, float, int)):
                     subsidies_details[policy.name] = subsidies_details[policy.name] + value
@@ -2480,6 +2513,9 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_details[policy.name] = (subsidies_details[policy.name].T + value).T
             else:
                 subsidies_details[policy.name] = value.copy()
+
+
+        subsidies_details['cee'].to_csv(os.path.join(self.path, 'cee_insulation.csv'))
 
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']]
@@ -2867,8 +2903,6 @@ class AgentBuildings(ThermalBuildings):
 
             self.logger.info('Calibration renovation nested-logit function')
 
-            # input cleaning
-
             # target
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
             ms_insulation_ini = _calib_intensive['ms_insulation_ini']
@@ -3179,10 +3213,6 @@ class AgentBuildings(ThermalBuildings):
 
         energy_bill_after = AgentBuildings.energy_bill(prices, consumption_after, level_heater='Heating system final')
 
-        """energy = Series(index.get_level_values('Heating system final'), index=index).str.split('-').str[0].rename(
-            'Energy')
-        energy_prices = prices.reindex(energy).set_axis(index)
-        energy_bill_sd = (consumption_after.T * energy_prices).T"""
         bill_saved = - energy_bill_after.sub(energy_bill_before, axis=0).dropna()
 
         if carbon_value is not None:

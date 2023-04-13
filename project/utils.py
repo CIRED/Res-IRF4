@@ -102,8 +102,8 @@ def get_pandas(path, func=lambda x: pd.read_csv(x)):
             return func(df)
 
 
-def get_series(path):
-    value = get_pandas(path)
+def get_series(path, header=0):
+    value = get_pandas(path, func=lambda x: pd.read_csv(x, header=header))
     value = value.set_index(list(value.columns[:-1])).squeeze().rename(None)
     return value
 

@@ -240,6 +240,39 @@ def read_policies(config):
 
     def read_cee(data):
         l = list()
+        cee_value = get_series(data['value'], header=None)
+
+        cee_start = cee_value.loc[data['start']]
+
+        cumac_heater = get_pandas(data['cumac_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename_axis('Heating system final', axis=1)
+        cee_heater = cee_start * cumac_heater / 1000
+        cumac_insulation = get_series(data['cumac_insulation'], header=None)
+        cee_insulation = cee_start * cumac_insulation / 1000
+        cee_insulation = cee_insulation.rename_axis(None, axis=0)
+
+        bonus_heater = get_pandas(data['bonus_heater']['value'], lambda x: pd.read_csv(x, index_col=[0])).rename_axis('Heating system final', axis=1)
+        bonus_heater = concat([bonus_heater] * len(cee_heater.index), keys=cee_heater.index)
+        bonus_heater = bonus_heater.reindex(cee_heater.columns, axis=1).fillna(0)
+        l.append(PublicPolicy(data['name'], data['bonus_heater']['start'], data['bonus_heater']['end'], bonus_heater, 'bonus', gest='heater'))
+
+        # cee_heater = reindex_mi(cee_heater, bonus_heater.index)
+        # cee_heater += bonus_heater
+
+        bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))#.unstack('Heating system'))
+        # cee_insulation = bonus_insulation + cee_insulation.rename(None)
+        l.append(PublicPolicy(data['name'], data['bonus_insulation']['start'], data['bonus_insulation']['end'], bonus_insulation, 'bonus', gest='insulation'))
+
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_heater, 'subsidy_target', gest='heater'))
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_insulation, 'subsidy_target', gest='insulation'))
+
+        coefficient_obligation = get_pandas(data['coefficient_obligation'], lambda x: pd.read_csv(x, index_col=[0])).rename_axis('Energy', axis=1)
+        cee_tax = (coefficient_obligation.T * cee_value).T / 1000
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_tax.loc[data['start']:data['end'] - 1, :], 'tax'))
+
+        return l
+
+    def read_cee_old(data):
+        l = list()
         heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system'))
         insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
         if data.get('growth_insulation'):
