@@ -467,7 +467,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                       'format_y': lambda y, _: '{:,.0f}'.format(y),
                                       'scatter': resources_data['emissions_total_objectives']},
                  'Stock Heat pump (Million)': {'name': 'stock_heat_pump.png',
-                                               'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                                               'format_y': lambda y, _: '{:,.1f}'.format(y)},
                  'Energy poverty (Million)': {'name': 'energy_poverty.png',
                                               'format_y': lambda y, _: '{:,.1f}'.format(y)},
                  'Retrofit (Thousand households)': {'name': 'retrofit.png',

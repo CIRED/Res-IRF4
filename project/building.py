@@ -203,6 +203,7 @@ class ThermalBuildings:
                 ['Occupancy status', 'Income owner', 'Income tenant', 'Housing type', 'Heating system',
                  'Performance']).sum()
 
+        stock = stock[stock > 0]
         return stock
 
     @staticmethod
@@ -861,7 +862,7 @@ class AgentBuildings(ThermalBuildings):
         self.preferences_insulation = deepcopy(preferences['insulation'])
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
-        self.scale = 1.0
+        self.scale_insulation, self.scale_heater = 1.0, 1.0
         self.number_firms_insulation, self.number_firms_heater = None, None
 
         self._list_condition_subsidies = []
@@ -1389,52 +1390,135 @@ class AgentBuildings(ThermalBuildings):
         return cost_heater, vta_heater, subsidies_details, subsidies_total
 
     def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, ms_heater=None,
-                                       cost_financing=None, condition=None):
+                                       cost_financing=None, condition=None, flow_replace=None):
 
-        def calibration(_utility, _ms_heater):
+        def assess_sensitivity_hp(_utility_cost, _utility_bill_saving, _utility_financing, _utility_inertia, _condition,
+                                  _flow_replace, _cost_heater):
+            # assessing sensitivity to subsidies_heat_pump
+            _utility = _utility_cost + _utility_bill_saving + _utility_financing + _utility_inertia
+            _utility_constant = reindex_mi(self.constant_heater.reindex(_utility.columns, axis=1), _utility.index)
+            _utility += _utility_constant
 
-            def func(x, _ms, _utility_ini, _flow, _idx, ref='Electricity-Heat pump water'):
-                x = pd.Series(x, index=_idx).unstack('Heating system final')
-                x.loc[:, ref] = 0
-                _u = _utility_ini + x
+            c = _cost_heater.copy()
+            c.loc[:, [i for i in _cost_heater.columns if i != 'Electricity-Heat pump water']] = 0
+
+            dict_rslt = dict()
+
+            rslt = dict()
+            for sub in range(0, 110, 10):
+                sub /= 100
+                u_sub = c * sub * self.preferences_heater['subsidy'] / 1000
+                u = _utility + u_sub
+
+                if _condition is not None:
+                    _condition = _condition.astype(float)
+                    _condition = _condition.replace(0, float('nan'))
+                    u *= _condition
+
+                _market_share = (exp(u).T / exp(u).sum(axis=1)).T
+                temp = (_flow_replace * _market_share.T).T
+                rslt.update({sub: temp.loc[:, 'Electricity-Heat pump water'].sum()})
+            dict_rslt.update({'With inertia': Series(rslt) / 10**3})
+
+            _utility -= _utility_inertia
+            rslt = dict()
+            for sub in range(0, 110, 10):
+                sub /= 100
+                u_sub = c * sub * self.preferences_heater['subsidy'] / 1000
+                u = _utility + u_sub
+
+                if _condition is not None:
+                    _condition = _condition.astype(float)
+                    _condition = _condition.replace(0, float('nan'))
+                    u *= _condition
+
+                _market_share = (exp(u).T / exp(u).sum(axis=1)).T
+                temp = (_flow_replace * _market_share.T).T
+                rslt.update({sub: temp.loc[:, 'Electricity-Heat pump water'].sum()})
+            dict_rslt.update({'Without inertia': Series(rslt) / 10**3})
+
+            make_plots(dict_rslt, 'Heat pumps function of ad valorem subsidy (Thousand per year)',
+                       save=os.path.join(self.path_calibration, 'sensi_hp.png'), integer=False, legend=True)
+
+        def calibration(_utility, _ms_heater, _utility_shock, _flow_replace):
+
+            def func(x, _ms, _utility_ini, _flow, _idx, _u_shock, ref='Electricity-Heat pump water', calib_scale=False):
+
+                if calib_scale:
+                    scale = abs(x[0])
+                else:
+                    scale = 1
+
+                cst = pd.Series(x[1:], index=_idx).unstack('Heating system final')
+                cst.loc[:, ref] = 0
+
+                _u = (_utility_ini + cst) * scale
                 _market_share = (exp(_u).T / exp(_u).sum(axis=1)).T
                 _agg = (_market_share.T * _flow).T.groupby(_ms.index.names).sum()
                 _market_share_agg = (_agg.T / _agg.sum(axis=1)).T
+
                 rslt = _market_share_agg - _ms
                 rslt.drop(ref, axis=1, inplace=True)
-                rslt = rslt.stack('Heating system final').loc[_idx]
-                return rslt.to_numpy()
+                rslt = rslt.stack('Heating system final').loc[_idx].to_numpy()
 
-            flow = self.stock_mobile.groupby(_ms_heater.index.names).sum() * 1 / 20
+                temp = _u + _u_shock * scale
+                _market_share = (exp(temp).T / exp(temp).sum(axis=1)).T
+                _agg = (_market_share.T * _flow).T
+
+                heat_pump = _agg.loc[:, 'Electricity-Heat pump water'].sum() / _flow.sum()
+
+                if calib_scale:
+                    rslt = append(heat_pump - 0.6, rslt)
+                else:
+                    rslt = append(0, rslt)
+
+                return rslt
+
+            # flow = self.stock_mobile.groupby(_ms_heater.index.names).sum() * 1 / 20
+            flow = _flow_replace.groupby(_ms_heater.index.names).sum()
             ms = (flow * _ms_heater.T).T.groupby('Housing type').sum()
-            ms.drop('Oil fuel-Performance boiler', axis=1, inplace=True)
             ms = (ms.T / ms.sum(axis=1)).T
 
             ref = 'Electricity-Heat pump water'
             idx, cols = ms.index, ms.columns.drop(ref)
             x0 = pd.DataFrame(0, index=idx, columns=cols).stack()
             idx = x0.index
+            x0 = x0.copy().to_numpy()
+            x0 = append(1, x0)
 
-            root, info_dict, ier, mess = fsolve(func, x0.copy().to_numpy(), args=(ms, _utility, flow, idx),
+            # func(x0, ms, _utility, flow, idx, _utility_shock)
+            # x, _ms, _utility_ini, _flow, _idx, _u_shock = x0, ms, _utility, flow, idx, _utility_shock
+
+            root, info_dict, ier, mess = fsolve(func, x0, args=(ms, _utility.copy(), _flow_replace, idx, _utility_shock,
+                                                                'Electricity-Heat pump water', False),
                                                 full_output=True)
             if ier == 1:
                 self.logger.debug('Constant heater optim worked')
 
-            constant = pd.Series(root, index=idx).unstack('Heating system final')
+            scale = abs(root[0])
+            constant = Series(root[1:], index=idx).unstack('Heating system final') * abs(scale)
             constant.loc[:, ref] = 0
-            temp = (exp(_utility + constant).T / exp(_utility + constant).sum(axis=1)).T
+
+            self.apply_scale(scale, gest='heater')
+            self.constant_heater = constant
+
+            # no calibration
+            temp = (exp(_utility).T / exp(_utility).sum(axis=1)).T
+            agg = (temp.T * _flow_replace).T.groupby(ms.index.names).sum()
+            ms_no_calibration = (agg.T / agg.sum(axis=1)).T
+
+            temp = (exp(_utility * scale + constant).T / exp(_utility * scale + constant).sum(axis=1)).T
 
             assert (temp.sum(axis=1).round(1) == 1.0).all(), 'Market-share issue'
 
-            agg = (temp.T * self.stock_mobile.groupby(temp.index.names).sum() * 1/20).T.groupby(ms.index.names).sum()
+            agg = (temp.T * _flow_replace).T.groupby(ms.index.names).sum()
             market_share_agg = (agg.T / agg.sum(axis=1)).T
 
             wtp = constant / self.preferences_heater['cost']
 
-            details = concat((constant.stack(), market_share_agg.stack(), ms.stack(),
+            details = concat((constant.stack(), ms_no_calibration.stack(), market_share_agg.stack(), ms.stack(),
                               agg.stack() / 10 ** 3, wtp.stack()),
-                             axis=1, keys=['constant', 'calcul', 'observed', 'thousand', 'wtp']).round(
-                decimals=3)
+                             axis=1, keys=['constant', 'no_calibration', 'calcul', 'observed', 'thousand', 'wtp']).round(decimals=3)
 
             if self.path is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
@@ -1544,8 +1628,30 @@ class AgentBuildings(ThermalBuildings):
 
         if (self.constant_heater is None) and (ms_heater is not None):
             self.logger.info('Calibration market-share heating system')
-            ms_heater.dropna(how='all', inplace=True)
-            self.constant_heater = calibration(utility, ms_heater)
+            sub_shock = - utility_cost
+            sub_shock.loc[:, [i for i in sub_shock.columns if i != 'Electricity-Heat pump water']] = 0
+            utility_shock = - utility_subsidies + sub_shock
+            if condition is not None:
+                utility_shock *= condition
+                utility_shock.dropna(how='all', axis=1, inplace=True)
+
+            # ms_heater.dropna(how='all', inplace=True)
+            ms_heater = ms_heater.loc[:, utility.columns]
+
+            """temp = self.add_certificate(flow_replace)
+            potential_hp = temp[~temp.index.get_level_values('Performance').isin(['F', 'G'])].sum()
+            rate = potential_hp / temp.sum()"""
+
+            calibration(utility, ms_heater, utility_shock, flow_replace)
+
+            assess_sensitivity_hp(utility_cost, utility_bill_saving, utility_financing, utility_inertia, condition,
+                                  flow_replace, cost_heater)
+
+
+
+            print('break')
+
+
         utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
 
         utility += utility_constant
@@ -1700,10 +1806,13 @@ class AgentBuildings(ThermalBuildings):
         if isinstance(lifetime_heater, (float, int)):
             probability = Series(len(list_heater) * [1 / lifetime_heater], Index(list_heater, name='Heating system'))
 
+        # premature replacement
         premature_heater = [p for p in policies_heater if p.policy == 'premature_heater']
         for premature in premature_heater:
             temp = [i for i in probability.index if '{}'.format(i.split('-')[0]) in premature.target]
             probability.loc[temp] = premature.value
+
+        flow_replace = stock * reindex_mi(probability, stock.index)
 
         # subsidies
         cost_heater, vta_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(index,
@@ -1804,13 +1913,13 @@ class AgentBuildings(ThermalBuildings):
         if self._endogenous:
             market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_heater,
                                                                ms_heater=ms_heater, cost_financing=cost_financing,
-                                                               condition=condition)
+                                                               condition=condition, flow_replace=flow_replace)
         else:
             market_share = self.exogenous_market_share_heater(index, cost_heater.columns)
 
         assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
 
-        flow_replace = stock * reindex_mi(probability, stock.index)
+
         if district_heating is not None:
             to_district_heating = (reindex_mi(district_heating, flow_replace.index) * flow_replace).fillna(0)
             flow_replace = flow_replace - to_district_heating
@@ -2802,7 +2911,7 @@ class AgentBuildings(ThermalBuildings):
 
             self.constant_insulation_intensive = constant_insulation_intensive * scale
             self.constant_insulation_extensive = constant_renovation
-            self.apply_scale(scale)
+            self.apply_scale(scale, gest='insulation')
 
             # results
             _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
@@ -3073,7 +3182,6 @@ class AgentBuildings(ThermalBuildings):
         energy_prices = prices.reindex(energy).set_axis(index)
         energy_bill_sd = (consumption_after.T * energy_prices).T"""
         bill_saved = - energy_bill_after.sub(energy_bill_before, axis=0).dropna()
-
 
         if carbon_value is not None:
             carbon_value_before = AgentBuildings.energy_bill(carbon_value, consumption_before,
@@ -3393,6 +3501,8 @@ class AgentBuildings(ThermalBuildings):
         -------
         Series
         """
+
+        self.logger.info('Number of agents: {:,.0f}'.format(self.stock.shape[0]))
 
         stock_mobile = self.stock_mobile.groupby(
             [i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
@@ -4631,17 +4741,23 @@ class AgentBuildings(ThermalBuildings):
 
         return output
 
-    def apply_scale(self, scale):
-
-        self.scale *= scale
-        self.preferences_insulation['subsidy'] *= scale
-        self.preferences_insulation['cost'] *= scale
-        self.preferences_insulation['bill_saved'] *= scale
+    def apply_scale(self, scale, gest='insulation'):
+        if gest == 'insulation':
+            self.scale_insulation *= scale
+            self.preferences_insulation['subsidy'] *= scale
+            self.preferences_insulation['cost'] *= scale
+            self.preferences_insulation['bill_saved'] *= scale
+        elif gest == 'heater':
+            self.scale_heater *= scale
+            self.preferences_heater['subsidy'] *= scale
+            self.preferences_heater['cost'] *= scale
+            self.preferences_heater['bill_saved'] *= scale
+            self.preferences_heater['inertia'] *= scale
 
     def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
-                              constant_insulation_intensive=None, constant_insulation_extensive=None, scale=None,
-                              energy_prices=None, taxes=None, rational_hidden_cost=None, number_firms_insulation=None,
-                              number_firms_heater=None):
+                              scale_heater=None, constant_insulation_intensive=None, constant_insulation_extensive=None,
+                              scale_insulation=None, energy_prices=None, rational_hidden_cost=None,
+                              number_firms_insulation=None, number_firms_heater=None):
         """Function calibrating buildings object with exogenous data.
 
 
@@ -4661,8 +4777,8 @@ class AgentBuildings(ThermalBuildings):
         """
 
         # calibration energy consumption first year
-        if (coefficient_global is None) and (energy_prices is not None) and (taxes is not None):
-            self.calibration_consumption(energy_prices.loc[self.first_year, :], taxes)
+        if (coefficient_global is None) and (energy_prices is not None):
+            self.calibration_consumption(energy_prices.loc[self.first_year, :], None)
         else:
             self.coefficient_global = coefficient_global
             self.coefficient_heater = coefficient_heater
@@ -4676,7 +4792,8 @@ class AgentBuildings(ThermalBuildings):
         if constant_insulation_extensive is not None:
             self.constant_insulation_extensive = constant_insulation_extensive.dropna()
 
-        self.apply_scale(scale)
+        self.apply_scale(scale_heater, gest='heater')
+        self.apply_scale(scale_insulation, gest='insulation')
         self.rational_hidden_cost = rational_hidden_cost
         self.number_firms_insulation, self.number_firms_heater = number_firms_insulation, number_firms_heater
 
@@ -4685,14 +4802,14 @@ class AgentBuildings(ThermalBuildings):
         self.coefficient_global = None
         self.coefficient_heater = None
 
-        self.preferences_insulation['subsidy'] /= self.scale
-        self.preferences_insulation['cost'] /= self.scale
-        self.preferences_insulation['bill_saved'] /= self.scale
+        self.preferences_insulation['subsidy'] /= self.scale_insulation
+        self.preferences_insulation['cost'] /= self.scale_insulation
+        self.preferences_insulation['bill_saved'] /= self.scale_insulation
 
         self.constant_heater = None
         self.constant_insulation_intensive = None
         self.constant_insulation_extensive = None
-        self.scale = None
+        self.scale_insulation = None
 
         self.rational_hidden_cost = None
 

@@ -1,16 +1,49 @@
 {
   "sensitivity": {
     "activated": false,
-    "current_policies": true,
-    "no_policy": true,
+    "current_policies": false,
+    "no_policy": false,
     "prices_constant": false,
     "constant": false,
     "policies": {
-      "Ambitious": "project/input/policies/policies_ambitious.json"
+      "AdValorem30": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "ad_valorem": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_ad_valorem",
+          "gest": "heater",
+          "value": 0.3,
+          "columns": "project/input/policies/coupling/subsidies_heater.csv"
+        }
+    },
+      "AdValorem50": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "ad_valorem": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_ad_valorem",
+          "gest": "heater",
+          "value": 0.5,
+          "columns": "project/input/policies/coupling/subsidies_heater.csv"
+        }
+    },
+      "AdValorem70": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "ad_valorem": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_ad_valorem",
+          "gest": "heater",
+          "value": 0.7,
+          "columns": "project/input/policies/coupling/subsidies_heater.csv"
+        }
     }
-},
+
+    }
+  },
   "Reference": {
-    "end": 2023,
+    "end": 2025,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -34,6 +67,11 @@
     "renovation": {
       "endogenous": true,
       "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
+      "scale_old": {
+        "name": "freeriders",
+        "target_policies": "cite",
+        "target_freeriders": 0.7
+      },
       "scale": {
         "name": "standard_deviation",
         "deviation": 0.0297
@@ -58,11 +96,7 @@
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
       "premature_replacement": null,
-      "information_rate": 0.333,
-      "scale": {
-        "target_hp": 0.95,
-        "subsidies_hp": 1
-      }
+      "information_rate": 0.333
     },
     "district_heating":null,
     "exogenous_social": null,

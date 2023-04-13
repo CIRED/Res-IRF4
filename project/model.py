@@ -364,6 +364,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     """
 
     buildings.logger.info('Run {}'.format(year))
+
     if prices_before is None:
         prices_before = prices
 
@@ -553,7 +554,8 @@ def res_irf(config, path):
                         'constant_insulation_extensive': buildings.constant_insulation_extensive,
                         'constant_insulation_intensive': buildings.constant_insulation_intensive,
                         'constant_heater': buildings.constant_heater,
-                        'scale': buildings.scale
+                        'scale_insulation': buildings.scale_insulation,
+                        'scale_heater': buildings.scale_heater
                     }, file)
 
         if path is not None:
