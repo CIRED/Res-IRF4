@@ -29,7 +29,7 @@ from copy import deepcopy
 from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
-    get_size, compare_bar_plot, make_sensitivity_tables
+    get_size, compare_bar_plot, make_sensitivity_tables, cumulated_plot
 from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots
 
 import project.thermal as thermal
@@ -890,7 +890,7 @@ class AgentBuildings(ThermalBuildings):
 
         self.cost_curve_heater = None
         self.store_over_years = {}
-
+        self.expenditure_store = {}
 
         """if rational_behavior is None:
             self.rational_behavior = False
@@ -3605,6 +3605,7 @@ class AgentBuildings(ThermalBuildings):
                                             ms_heater=ms_heater, step=1, financing_cost=financing_cost,
                                             district_heating=district_heating, premature_replacement=premature_replacement,
                                             prices_before=prices_before)
+            assert ~stock.index.duplicated().any(), 'Duplicated index after heater replacement'
 
         self.logger.info('Number of agents that can insulate: {:,.0f}'.format(stock.shape[0]))
         self.logger.info('Calculation insulation replacement')
@@ -4443,6 +4444,37 @@ class AgentBuildings(ThermalBuildings):
             # specific about insulation
             levels_owner = debt.index.names
             if self._replaced_by.sum().sum().round(0) > 0:
+
+                # annuities include financing cost
+                # TODO: write it clearly. Add investment in heating system.
+                annuities_temp = self.add_level(annuities_hh, self._stock_ref, 'Income tenant')
+                lvls = ['Housing type', 'Occupancy status', 'Income tenant']
+                temp = annuities_temp.groupby(lvls).sum().sum(axis=1)
+
+                years = [y for y in self.expenditure_store.keys() if y > self.year - 30]
+                annuities_cumulated = sum([self.expenditure_store[y]['annuities'] for y in years])
+                temp += annuities_cumulated
+
+                # consumption = self.consumption_actual(prices) * self.stock
+                consumption = reindex_mi(self.consumption_heating(full_output=False), self.stock.index)
+                consumption *= reindex_mi(self._surface, self.stock.index) * self.stock
+                nrj = self.energy_bill(prices, consumption)
+                nrj = nrj.groupby(lvls).sum()
+
+                s = self.stock.groupby(lvls).sum()
+                i = (reindex_mi(self._income_tenant, s.index) * s)
+                temp = concat((temp, nrj, s, i), axis=1, keys=['annuities', 'energy_bill', 'stock', 'income'])
+                temp['total'] = temp['energy_bill'] + temp['annuities']
+                temp['ratio_bill'] = temp['energy_bill'] / temp['income']
+                temp['ratio_total'] = temp['total'] / temp['income']
+
+                self.expenditure_store.update({self.year: temp.copy()})
+
+                """y_name = 'Ratio energy expenditures - renovation and bill (%)'
+                x_name = 'Stock (Million households)'
+                df = cumulated_plot(temp['stock'].rename(x_name) / 10**6, temp['ratio_total'].rename(y_name), plot=False)
+                make_plot(df, df.name, format_y=lambda y, _: '{:.2%}'.format(y), legend=False)"""
+
                 owner = replaced_by_grouped.sum(axis=1).groupby(levels_owner).sum()
                 temp = annuities_hh.sum(axis=1).groupby(levels_owner).sum() / owner
                 temp.index = temp.index.map(
@@ -4689,6 +4721,14 @@ class AgentBuildings(ThermalBuildings):
                 temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
                 temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
                 output.update(temp.T / 10 ** 6 / step)
+
+                temp = self.expenditure_store[self.year]['ratio_total']
+                temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
+                temp = self.expenditure_store[self.year]['stock']
+                temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
                 if False:
                     level = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Income owner', 'Occupancy status', 'Heating system']

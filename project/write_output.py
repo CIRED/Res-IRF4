@@ -21,8 +21,9 @@ import os
 import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict
+    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots
 from PIL import Image
+from itertools import product
 
 
 def plot_scenario(output, stock, buildings, detailed_graph=False):
@@ -211,6 +212,12 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    save=os.path.join(path, 'renovation_decision_maker.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
+
+    y_name = 'Ratio energy expenditures - renovation and bill (%)'
+    x_name = 'Stock (Million households)'
+
+    dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
+    make_plots(dict_df, y_name, loc='left', left=1.1, save=os.path.join(path, 'distributive_effect.png'))
 
     df = output.loc[['Retrofit measures {} (Thousand households)'.format(i) for i in resources_data['index']['Count']], :].T
     df.dropna(inplace=True)
@@ -455,6 +462,28 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     if not os.path.isdir(folder_img):
         os.mkdir(folder_img)
 
+    # graph distributive impact
+    levels = ['Housing type', 'Occupancy status', 'Income tenant']
+    levels = list(product(*[resources_data['index'][i] for i in levels]))
+
+    years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
+    years = list(set(years))
+    years = [y for y in years if y in result['Reference'].columns]
+    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
+    stock = ['Stock {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
+    y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
+    x_name = 'Stock (Million households)'
+    dict_rslt = dict()
+
+    for year in years:
+        for key, item in result.items():
+            s, r = item.loc[stock, year].set_axis(levels, axis=0), item.loc[ratio, year].set_axis(levels, axis=0)
+            dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
+
+        make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
+                   hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_{}.png'.format(year)))
+
+    # graph line plot 2D comparison
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
                                        'format_y': lambda y, _: '{:,.0f}'.format(y),
                                        'exogenous': resources_data['consumption_total_hist'],
@@ -507,6 +536,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                                                 'format_y': lambda y, _: '{:,.1%}'.format(y)},
                  }
 
+    # graph line subplot comparison
     for variable, infos in variables.items():
         temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()}).astype(float)
         temp = temp.interpolate(limit_area='inside')
@@ -571,9 +601,9 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             'n_columns': 3
         }],
         'Financing': [{
-            'variables': ['Subsidies total(Billion euro)',
-                          'Debt total(Billion euro)',
-                          'Saving total(Billion euro)'
+            'variables': ['Subsidies total (Billion euro)',
+                          'Debt total (Billion euro)',
+                          'Saving total (Billion euro)'
                           ],
             'name': 'retrofit_financing.png',
             'format_y': lambda y, _: '{:,.0f}'.format(y),
@@ -589,6 +619,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     for var, infos in variables_output.items():
         for info in infos:
             details_graphs(result, var, info, folder_img, colors=colors)
+
 
     # TODO: uncertainty plot to work on
     if False:

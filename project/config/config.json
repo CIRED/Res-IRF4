@@ -1,16 +1,16 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": false,
     "no_policy": false,
     "prices_constant": false,
     "constant": false,
     "policies": {
-      "Ambitious": "project/input/policies/current/policies_cee_new.json"
+      "Ambitious": "project/input/policies/policies_ambitious.json"
     }
 },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "step": 1,
     "full_output": true,
     "start": 2018,
