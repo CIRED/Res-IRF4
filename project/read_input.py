@@ -253,14 +253,16 @@ def read_policies(config):
         bonus_heater = get_pandas(data['bonus_heater']['value'], lambda x: pd.read_csv(x, index_col=[0])).rename_axis('Heating system final', axis=1)
         bonus_heater = concat([bonus_heater] * len(cee_heater.index), keys=cee_heater.index)
         bonus_heater = bonus_heater.reindex(cee_heater.columns, axis=1).fillna(0)
-        l.append(PublicPolicy(data['name'], data['bonus_heater']['start'], data['bonus_heater']['end'], bonus_heater, 'bonus', gest='heater'))
+        end = min(data['bonus_heater']['end'], data['end'])
+        l.append(PublicPolicy('cee', data['bonus_heater']['start'], end, bonus_heater, 'bonus', gest='heater'))
 
         # cee_heater = reindex_mi(cee_heater, bonus_heater.index)
         # cee_heater += bonus_heater
 
         bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))#.unstack('Heating system'))
         # cee_insulation = bonus_insulation + cee_insulation.rename(None)
-        l.append(PublicPolicy(data['name'], data['bonus_insulation']['start'], data['bonus_insulation']['end'], bonus_insulation, 'bonus', gest='insulation'))
+        end = min(data['bonus_heater']['end'], data['end'])
+        l.append(PublicPolicy('cee', data['bonus_insulation']['start'], end, bonus_insulation, 'bonus', gest='insulation'))
 
         l.append(PublicPolicy('cee', data['start'], data['end'], cee_heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('cee', data['start'], data['end'], cee_insulation, 'subsidy_target', gest='insulation'))
@@ -447,7 +449,8 @@ def read_policies(config):
             'mpr_serenite_high_income': read_mpr_serenite,
             'mpr_serenite_low_income': read_mpr_serenite,
             'mpr_multifamily': read_mpr_serenite,
-            'cee': read_cee, 'cap': read_cap, 'carbon_tax': read_carbon_tax,
+            'cee': read_cee, 'cee_old': read_cee_old,
+            'cap': read_cap, 'carbon_tax': read_carbon_tax,
             'cite': read_cite, 'reduced_vta': read_reduced_vta, 'zero_interest_loan': read_zil}
 
     list_policies = list()

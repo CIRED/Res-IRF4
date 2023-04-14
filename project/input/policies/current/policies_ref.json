@@ -17,11 +17,22 @@
       "cee": {
         "start": 2018,
         "end": 2051,
-        "heater": "project/input/policies/current/cee_heater.csv",
-        "insulation": "project/input/policies/current/cee_insulation.csv",
+        "cumac_heater": "project/input/policies/current/cumac_heater.csv",
+        "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
+        "bonus_insulation": {
+          "value": "project/input/policies/current/cee_bonus_insulation.csv",
+          "start": 2018,
+          "end": 2021
+        },
+        "bonus_heater": {
+          "value": "project/input/policies/current/cee_bonus_heater.csv",
+          "start": 2018,
+          "end": 2051
+        },
+        "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
         "policy": "subsidy_targeted",
-        "tax": "project/input/policies/current/cee_tax.csv",
-        "growth_insulation": null
+        "value": "project/input/policies/current/cee_value.csv",
+        "growth": null
       },
       "mpr_serenite": {
         "start": 2019,

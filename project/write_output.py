@@ -499,10 +499,10 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                                        'format_y': lambda y, _: '{:,.0f}'.format(y)},
                  'Switch heater (Thousand households)': {'name': 'switch_heater.png',
                                                          'format_y': lambda y, _: '{:,.0f}'.format(y)},
-                 'Efficiency heater (euro/kWh)': {'name': 'efficiency_heater.png',
-                                                  'format_y': lambda y, _: '{:,.2f}'.format(y)},
-                 'Efficiency insulation (euro/kWh)': {'name': 'efficiency_insulation.png',
-                                                      'format_y': lambda y, _: '{:,.2f}'.format(y)},
+                 'Efficiency insulation (euro/kWh standard)': {'name': 'efficiency_insulation.png',
+                                                               'format_y': lambda y, _: '{:,.2f}'.format(y)},
+                 'Efficiency subsidies insulation (euro/kWh standard)': {'name': 'efficiency_subsidies_insulation.png',
+                                                                         'format_y': lambda y, _: '{:,.2f}'.format(y)},
                  'Consumption standard saving insulation (%)': {'name': 'consumption_saving_insulation.png',
                                                                 'format_y': lambda y, _: '{:,.1%}'.format(y)},
                  }
@@ -567,6 +567,15 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                           'Insulation and switch decarbonize (Thousand households)'
                           ],
             'name': 'retrofit_decarbonize_options.png',
+            'format_y': lambda y, _: '{:,.0f}'.format(y),
+            'n_columns': 3
+        }],
+        'Financing': [{
+            'variables': ['Subsidies total(Billion euro)',
+                          'Debt total(Billion euro)',
+                          'Saving total(Billion euro)'
+                          ],
+            'name': 'retrofit_financing.png',
             'format_y': lambda y, _: '{:,.0f}'.format(y),
             'n_columns': 3
         }],
@@ -998,7 +1007,6 @@ def make_summary(path):
     images_ini += ['calibration/result_policies_assessment.png']
     images_ini = [os.path.join(path_reference, i) for i in images_ini]
 
-
     # 2. result - reference
     path_reference_result = os.path.join(path_reference, 'img')
     images_reference = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png',
@@ -1007,8 +1015,10 @@ def make_summary(path):
 
     # 3. result - compare
     path_compare = os.path.join(path, 'img')
-    images_compare = ['renovation.png', 'retrofit_measures_count.png', 'consumption_hist.png', 'consumption_energy.png',
-                      'investment_total.png', 'efficiency_insulation.png', 'energy_poverty.png'
+    images_compare = ['renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
+                      'consumption_energy.png', 'investment_total.png', 'subsidies_total.png',
+                      'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',
+                      'retrofit_decarbonize_options.png'
                       ]
     images_compare = [os.path.join(path_compare, i) for i in images_compare]
 

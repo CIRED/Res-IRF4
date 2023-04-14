@@ -116,6 +116,13 @@ def run(path=None, folder=None):
                     parse_policies(temp)
                     configuration[key]['policies'] = temp['policies']
 
+            if config_sensitivity.get('remove_policies'):
+                for key in config_sensitivity['remove_policies']:
+                    s = 'No{}'.format(key.capitalize().replace('_', ''))
+                    configuration[s] = copy.deepcopy(configuration['Reference'])
+                    if key in configuration[s]['policies'].keys():
+                        configuration[s]['policies'][key]['end'] = configuration[s]['start'] + 2
+
             if 'prices_constant' in config_sensitivity.keys():
                 if config_sensitivity['prices_constant']:
                     configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])

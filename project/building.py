@@ -1396,8 +1396,6 @@ class AgentBuildings(ThermalBuildings):
             else:
                 subsidies_details[policy.name] = value
 
-        # subsidies_details['cee'].to_csv(os.path.join(self.path, 'cee_heater.csv'))
-
         subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if
                            k not in ['reduced_vta', 'over_cap']]
         if subsidies_total:
@@ -1677,6 +1675,8 @@ class AgentBuildings(ThermalBuildings):
             utility_inertia *= self.scale_heater
             assess_sensitivity_hp(utility_cost, utility_bill_saving, utility_financing, utility_inertia, condition,
                                   flow_replace, cost_heater)
+
+            utility *= self.scale_heater
 
         utility_constant = reindex_mi(self.constant_heater.reindex(utility.columns, axis=1), utility.index)
 
@@ -2515,8 +2515,6 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = value.copy()
 
 
-        subsidies_details['cee'].to_csv(os.path.join(self.path, 'cee_insulation.csv'))
-
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']]
         if subsidies_total:
@@ -2993,6 +2991,20 @@ class AgentBuildings(ThermalBuildings):
             if self.path is not None:
                 compare.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
 
+        def assess_sensitivity_ad_valorem(_stock, _cost_total, _bill_saved, _subsidies_total, _cost_financing):
+
+            rslt = dict()
+            for sub in range(0, 110, 10):
+                sub /= 100
+                _market_share, _renovation_rate = apply_endogenous_renovation(_bill_saved,
+                                                                              (_cost_total + _cost_financing) * sub,
+                                                                              _cost_total,
+                                                                              _cost_financing=_cost_financing)
+                rslt.update({sub: (_renovation_rate * _stock).sum() / 10 ** 3})
+
+            make_plot(Series(rslt), 'Renovation function of ad valorem subsidy (Thousand households)',
+                      save=os.path.join(self.path_calibration, 'sensi_ad_valorem.png'), integer=False, legend=False)
+
         def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total, _cost_financing):
 
             # bill saved
@@ -3233,6 +3245,7 @@ class AgentBuildings(ThermalBuildings):
 
             if self.path_calibration is not None:
                 indicator_renovation_rate(stock, cost_insulation, bill_saved, subsidies_total, cost_financing)
+                assess_sensitivity_ad_valorem(stock, cost_insulation, bill_saved, subsidies_total, cost_financing)
                 assess_sensitivity(stock, cost_insulation, bill_saved, subsidies_total, cost_financing)
                 assess_policies(stock, subsidies_details, cost_insulation, bill_saved, subsidies_total, cost_financing)
 
@@ -4334,6 +4347,7 @@ class AgentBuildings(ThermalBuildings):
             output['Efficiency insulation (euro/kWh standard)'] = output['Annuities insulation (Billion euro/year)'] / \
                                                                   output[
                                                                       'Consumption standard saving insulation (TWh/year)']
+
             output['Efficiency insulation (euro/kWh)'] = output['Annuities insulation (Billion euro/year)'] / output[
                 'Consumption saving insulation (TWh/year)']
             output['Efficiency insulation (euro/tCO2 standard)'] = output[
@@ -4368,6 +4382,9 @@ class AgentBuildings(ThermalBuildings):
             if output['Subsidies insulation (Billion euro)'] != 0:
                 output['Lever insulation (%)'] = output['Investment insulation (Billion euro)'] / output[
                     'Subsidies insulation (Billion euro)']
+
+                annuities_sub = calculate_annuities(output['Subsidies insulation (Billion euro)'], lifetime=lifetime, discount_rate=discount_rate)
+                output['Efficiency subsidies insulation (euro/kWh standard)'] = annuities_sub / output['Consumption standard saving insulation (TWh/year)']
 
             debt = (self._replaced_by * self._renovation_store['debt_households']).groupby(levels).sum().sum(
                 axis=1).groupby(levels_owner).sum()
