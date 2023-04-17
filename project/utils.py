@@ -50,8 +50,8 @@ plt.rc('xtick', labelsize=BIGGER_SIZE, color=COLOR)  # fontsize of the tick labe
 plt.rc('ytick', labelsize=BIGGER_SIZE, color=COLOR)  # fontsize of the tick labels
 plt.rc('legend', fontsize=MEDIUM_SIZE)  # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-plt.rc('lines', lw=3.5)
-plt.rc('axes', lw=3.5, edgecolor=COLOR)
+plt.rc('lines', lw=3) # 3.5
+plt.rc('axes', lw=2, edgecolor=COLOR) # 3.5
 
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
 
@@ -695,22 +695,25 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
                 scatter[key].plot(ax=ax, style='.', ms=8, color=sns.color_palette('bright', scatter[key].shape[1]))
 
             ax = format_ax(ax, format_y=format_y, ymin=0, xinteger=True)
+
             ax.spines['left'].set_visible(False)
             ax.set_ylim(ymax=y_max)
 
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
             if n_bins is not None:
                 plt.locator_params(axis='x', nbins=n_bins)
+            ax.tick_params(axis='both', which='major', labelsize=14)
 
             title = key
             if isinstance(key, tuple):
                 title = '{}-{}'.format(key[0], key[1])
-            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6)
+            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6, fontsize=16)
 
             if k == 0:
                 handles, labels = ax.get_legend_handles_labels()
                 labels = [l.replace('_', ' ') for l in labels]
             ax.get_legend().remove()
+
         except IndexError:
             ax.axis('off')
 

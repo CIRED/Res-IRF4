@@ -98,52 +98,46 @@ def run(path=None, folder=None):
             prefix = 'sensitivity'
             config_sensitivity = configuration['sensitivity']
 
-            if 'no_policy' in config_sensitivity.keys():
-                if config_sensitivity['no_policy']:
-                    configuration['NoPolicy'] = copy.deepcopy(configuration['Reference'])
-                    configuration['NoPolicy']['simple']['no_policy'] = True
-                    configuration['NoPolicy']['simple']['current_policies'] = False
+            if config_sensitivity.get('no_policy') is not None:
+                configuration['NoPolicy'] = copy.deepcopy(configuration['Reference'])
+                configuration['NoPolicy']['simple']['no_policy'] = True
+                configuration['NoPolicy']['simple']['current_policies'] = False
 
-            if 'current_policies' in config_sensitivity.keys():
-                if config_sensitivity['current_policies']:
-                    configuration['CurrentPolicies'] = copy.deepcopy(configuration['Reference'])
-                    configuration['CurrentPolicies']['simple']['current_policies'] = True
+            if config_sensitivity.get('current_policies') is not None:
+                configuration['CurrentPolicies'] = copy.deepcopy(configuration['Reference'])
+                configuration['CurrentPolicies']['simple']['current_policies'] = True
 
-            if config_sensitivity.get('policies'):
+            if config_sensitivity.get('policies') is not None:
                 for key, item in config_sensitivity['policies'].items():
                     configuration[key] = copy.deepcopy(configuration['Reference'])
                     temp = {'policies': item}
                     parse_policies(temp)
                     configuration[key]['policies'] = temp['policies']
 
-            if config_sensitivity.get('remove_policies'):
+            if config_sensitivity.get('remove_policies') is not None:
                 for key in config_sensitivity['remove_policies']:
                     s = 'No{}'.format(key.capitalize().replace('_', ''))
                     configuration[s] = copy.deepcopy(configuration['Reference'])
                     if key in configuration[s]['policies'].keys():
                         configuration[s]['policies'][key]['end'] = configuration[s]['start'] + 2
 
-            if 'prices_constant' in config_sensitivity.keys():
-                if config_sensitivity['prices_constant']:
-                    configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
-                    configuration['PriceConstant']['simple']['prices_constant'] = True
+            if config_sensitivity.get('prices_constant') is not None:
+                configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
+                configuration['PriceConstant']['simple']['prices_constant'] = True
 
-            if 'constant' in config_sensitivity.keys():
-                if config_sensitivity['constant']:
-                    configuration['Constant'] = copy.deepcopy(configuration['Reference'])
-                    configuration['Constant']['simple']['prices_constant'] = True
-                    configuration['Constant']['simple']['current_policies'] = True
-                    configuration['Constant']['simple']['no_natural_replacement'] = True
-                    configuration['Constant']['simple']['emission_constant'] = True
+            if config_sensitivity.get('energy_prices') is not None:
+                for key, item in config_sensitivity['energy_prices'].items():
+                    configuration[key] = copy.deepcopy(configuration['Reference'])
+                    configuration[key]['macro']['energy_prices'] = copy.deepcopy(item)
 
-            if 'step' in config_sensitivity.keys():
-                values = config_sensitivity['step']
-                for v in values:
-                    name = 'Step{}'.format(v)
-                    configuration[name] = copy.deepcopy(configuration['Reference'])
-                    configuration[name]['step'] = int(v)
+            if config_sensitivity.get('constant') is not None:
+                configuration['Constant'] = copy.deepcopy(configuration['Reference'])
+                configuration['Constant']['simple']['prices_constant'] = True
+                configuration['Constant']['simple']['current_policies'] = True
+                configuration['Constant']['simple']['no_natural_replacement'] = True
+                configuration['Constant']['simple']['emission_constant'] = True
 
-            if 'building_stock' in config_sensitivity.keys():
+            if config_sensitivity.get('building_stock') is not None:
                 values = config_sensitivity['building_stock']
                 if values:
                     if isinstance(values, str):
@@ -153,7 +147,7 @@ def run(path=None, folder=None):
                         configuration[name] = copy.deepcopy(configuration['Reference'])
                         configuration[name]['building_stock'] = v
 
-            if 'deviation' in config_sensitivity.keys():
+            if config_sensitivity.get('deviation') is not None:
                 values = config_sensitivity['deviation']
                 if values:
                     if isinstance(values, (float, int)):
@@ -162,24 +156,7 @@ def run(path=None, folder=None):
                         configuration['Deviation{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
                         configuration['Deviation{:.0f}'.format(v * 100)]['renovation']['scale']['deviation'] = v
 
-            if 'prices_factor' in config_sensitivity.keys():
-                values = config_sensitivity['prices_factor']
-                if values:
-                    if isinstance(values, (float, int)):
-                        values = [values]
-                    for v in values:
-                        configuration['PriceFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
-                        configuration['PriceFactor{:.0f}'.format(v * 100)]['prices_factor'] = v
-            if 'cost_factor' in config_sensitivity.keys():
-                values = config_sensitivity['cost_factor']
-                if values:
-                    if isinstance(values, float):
-                        values = [values]
-                    for v in values:
-                        configuration['CostFactor{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
-                        configuration['CostFactor{:.0f}'.format(v * 100)]['cost_factor'] = v
-
-            if 'exogenous' in config_sensitivity.keys():
+            if config_sensitivity.get('exogenous') is not None:
                 values = config_sensitivity['exogenous']
                 if values:
                     if isinstance(values, float):
@@ -188,6 +165,13 @@ def run(path=None, folder=None):
                         configuration['Exogenous{}'.format(v)] = copy.deepcopy(configuration['Reference'])
                         configuration['Exogenous{}'.format(v)]['renovation']['endogenous'] = False
                         configuration['Exogenous{}'.format(v)]['renovation']['exogenous']['number'] = v
+
+            if config_sensitivity.get('step') is not None:
+                values = config_sensitivity['step']
+                for v in values:
+                    name = 'Step{}'.format(v)
+                    configuration[name] = copy.deepcopy(configuration['Reference'])
+                    configuration[name]['step'] = int(v)
 
         del configuration['sensitivity']
 

@@ -529,7 +529,18 @@ def read_inputs(config, other_inputs=generic_input):
     idx = range(config['start'], config['end'])
 
     inputs.update(other_inputs)
-    energy_prices = get_pandas(config['macro']['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+
+    if isinstance(config['macro']['energy_prices'], str):
+        energy_prices = get_pandas(config['macro']['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Energy', axis=1))
+    elif isinstance(config['macro']['energy_prices'], dict):
+        energy_prices = get_pandas(config['macro']['energy_prices']['ini'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Energy', axis=1))
+        energy_prices = energy_prices.loc[config['start'], :]
+        rate = Series(config['macro']['energy_prices']['rate']).rename_axis('Energy')
+        temp = range(config['start'] + 1, config['end'])
+        rate = concat([(1 + rate) ** n for n in range(len(temp))], axis=1, keys=temp)
+        rate = concat((pd.Series(1, index=rate.index, name=config['start']), rate), axis=1)
+        energy_prices = rate.T * energy_prices
+
     inputs.update({'energy_prices': energy_prices.loc[:config['end'], :]})
 
     energy_taxes = get_pandas(config['macro']['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
@@ -968,7 +979,7 @@ def dump_inputs(parsed_inputs, path):
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
     pd.concat((summary_input, t, temp), axis=1).T.round(3).to_csv(os.path.join(path, 'input.csv'))
 
-    parsed_inputs['export_prices'].round(3).to_csv(os.path.join(path, 'energy_prices.csv'))
+    parsed_inputs['export_prices'].round(4).to_csv(os.path.join(path, 'energy_prices.csv'))
 
     return summary_input
 

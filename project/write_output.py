@@ -132,7 +132,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     make_area_plot(df, 'Retrofit (Thousand households)',
                    save=os.path.join(path, 'retrofit.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   loc='left', left=1.25, colors=colors)
+                   loc='left', left=1.3, colors=colors)
 
     i = ['Switch decarbonize (Thousand households)',
          'Insulation (Thousand households)',
@@ -146,7 +146,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     make_area_plot(df, 'Retrofit (Thousand households)',
                    save=os.path.join(path, 'retrofit_decarbonize_options.png'), total=False,
                    format_y=lambda y, _: '{:.0f}'.format(y),
-                   loc='left', left=1.25, colors=colors)
+                   loc='left', left=1.3, colors=colors)
 
     df = output.loc[['Renovation {} (Thousand households)'.format(i) for i in resources_data['index']['Decision maker']], :].T
     df.dropna(inplace=True)
