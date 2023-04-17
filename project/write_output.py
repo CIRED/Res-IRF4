@@ -21,7 +21,7 @@ import os
 import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots
+    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots, make_distribution_plot
 from PIL import Image
 from itertools import product
 
@@ -34,63 +34,6 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     if buildings.quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
         resources_data['index']['Income owner'] = resources_data['quintiles']
-
-    """rslt = reverse_dict(buildings.store_over_years)
-    temp = pd.Index([])
-    for y, item in rslt['Social, global renovation'].items():
-        temp = temp.union(item.index)
-    for y, item in rslt['Social, global renovation'].items():
-        rslt['Social, global renovation'][y] = item.reindex(temp).interpolate()
-
-    df = pd.concat(rslt['Private, global renovation'], axis=1)
-    test = df.stack().reset_index()
-    test.columns = ['Stock', 'Year', 'NPV']
-    test.dropna(inplace=True)
-    sns.displot(test, x="Year", y="NPV", binwidth=(0.2, 10000), weights='Stock', hue='Year', cbar=False)
-    plt.show()
-
-    import numpy as np
-    from matplotlib.colors import BoundaryNorm
-
-
-    # define the colormap
-    cmap = plt.get_cmap('PuOr')
-
-    # extract all colors from the .jet map
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    # create the new map
-    cmap = cmap.from_list('Custom cmap', cmaplist, cmap.N)
-
-    # define the bins and normalize and forcing 0 to be part of the colorbar!
-    bounds = np.arange(df.min().min(), df.max().max(), .5)
-    idx = np.searchsorted(bounds, 0)
-    bounds = np.insert(bounds, idx, 0)
-    norm = BoundaryNorm(bounds, cmap.N)
-
-
-    # cmap
-    f, ax = plt.subplots()
-
-    plt.imshow(df)
-    plt.show()
-
-
-    for col, ds in df.items():
-        s = ax.scatter(x=[col] * ds.shape[0], y=ds.index, c=ds.values, plotnonfinite=False,
-                       norm=norm, cmap=cmap)
-        break
-    f.colorbar(s, ax=ax)
-    plt.show()
-    plt.pcolormesh([df.iloc[:, k].values])
-
-    
-    plt.pcolormesh(df.index, df.columns, df.values)
-    sns.barplot("size", y="total_bill", data=tips, palette="Blues_d")
-    
-    test  = df.iloc[:, 0]
-    sns.barplot(data=test, y=test.max())
-
-    """
 
     # energy consumption
     df = output.loc[['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']], :].T
@@ -213,11 +156,21 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
+    # distributive impact
     y_name = 'Ratio energy expenditures - renovation and bill (%)'
     x_name = 'Stock (Million households)'
 
     dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
-    make_plots(dict_df, y_name, loc='left', left=1.1, save=os.path.join(path, 'distributive_effect.png'))
+    make_plots(dict_df, y_name, loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
+               save=os.path.join(path, 'distributive_effect.png'))
+
+    y_label = 'Distribution in the population (Million households)'
+    cbar_title = 'Energy expenditures on income ratio\n'
+
+    make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
+                           cbar_format=lambda y, _: '{:.0%}'.format(y),
+                           save=os.path.join(path, 'distributive_ratio_expenditures.png')
+                           )
 
     df = output.loc[['Retrofit measures {} (Thousand households)'.format(i) for i in resources_data['index']['Count']], :].T
     df.dropna(inplace=True)
@@ -481,7 +434,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
 
         make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
-                   hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_{}.png'.format(year)))
+                   hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_{}.png'.format(year)),
+                   colors=colors)
 
     # graph line plot 2D comparison
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',

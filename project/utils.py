@@ -21,6 +21,8 @@ from math import floor, ceil
 import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+from matplotlib.colors import Normalize
+
 from collections import defaultdict
 from functools import wraps
 from time import time
@@ -137,6 +139,27 @@ def reverse_dict(data):
         for subkey, subval in val.items():
             flipped[subkey][key] = subval
     return dict(flipped)
+
+
+def dict2data(dict_df):
+        """Concatenate different series in a single DataFrame by interpolating indexes.
+
+        Parameters
+        ----------
+        dict_df: dict
+            Dictionnary of DataFrame.
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        temp = pd.Index([])
+        for y, item in dict_df.items():
+            temp = temp.union(item.index)
+        for y, item in dict_df.items():
+            dict_df[y] = item.reindex(temp).interpolate()
+        df = pd.DataFrame(dict_df)
+        return df
 
 
 def reindex_mi(df, mi_index, levels=None, axis=0):
@@ -539,8 +562,8 @@ def save_fig(fig, save=None, bbox_inches='tight'):
         plt.show()
 
 
-def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
-              ymin=0, ymax=None):
+def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
+              ymin=0, ymax=None, hlines=None):
     """Make plot.
 
     Parameters
@@ -565,7 +588,10 @@ def make_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, scat
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax)
+    if hlines is not None:
+        ax.axhline(y=hlines, linewidth=1, color='grey')
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x)
     if legend:
         format_legend(ax)
     # plt.ticklabel_format(style='plain', axis='x')
@@ -1263,7 +1289,7 @@ def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_
         plt.show()
 
 
-def cumulated_plot(x, y, plot=True, format_y=lambda y, _: y):
+def cumulated_plot(x, y, plot=True, format_x=lambda x, _: x, format_y=lambda y, _: y, round=None, ref=None, hlines=None):
     """Y by cumulated x.
 
     Use for marginal abatement cost curve.
@@ -1278,12 +1304,21 @@ def cumulated_plot(x, y, plot=True, format_y=lambda y, _: y):
 
     """
     df = pd.concat((x, y), axis=1)
+    df.dropna(inplace=True)
     df.sort_values(y.name, inplace=True)
+    if round is not None:
+        df[y.name] = df[y.name].round(round)
+        df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
+
     df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
+    if ref is not None:
+        df['{} cumulated'.format(x.name)] /= ref
+        format_x = lambda x, _: '{:.0%}'.format(x)
     df = df.set_index('{} cumulated'.format(x.name))[y.name]
 
     if plot:
-        make_plot(df, y_label=y.name, legend=False, format_y=format_y)
+        make_plot(df, y_label=y.name, legend=False, format_x=format_x, format_y=format_y, ymin=None,
+                  hlines=hlines, integer=False)
     else:
         return df
 
@@ -1340,6 +1375,37 @@ def make_hist(df, x, hue, y_label, legend=True, format_y=lambda y, _: y, save=No
     # plt.ticklabel_format(style='plain', axis='x')
 
     save_fig(fig, save=save)
+
+
+def make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y), cbar_format=None,
+                           save=None):
+
+    df = dict2data(dict_df)
+    df = df.rename_axis(['stock'], axis=0).rename_axis(['year'], axis=1)
+    df = df.stack(df.columns.names).rename('data').reset_index()
+    df = df.loc[:, ['data', 'year', 'stock']]
+    df = df.astype({'year': str})
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    norm = Normalize(vmin=0.01, vmax=0.1, clip=True)
+    df['data_round'] = df['data'].round(5)
+
+    sns.histplot(df, x='year', y='stock', hue='data', legend=False, hue_norm=norm, ax=ax,
+                 palette='RdBu')
+
+    sm = plt.cm.ScalarMappable(cmap='RdBu', norm=norm)
+    sm.set_array([])
+    cbar = ax.figure.colorbar(sm)
+    cbar.outline.set_visible(False)
+    cbar.ax.tick_params(size=0)
+    if cbar_format is not None:
+        cbar.ax.yaxis.set_major_formatter(plt.FuncFormatter(cbar_format))
+    cbar.ax.set_title(cbar_title)
+
+    format_ax(ax, title=y_label, format_y=format_y)
+    ax.set(xlabel=None, ylabel=None)
+    if save is not None:
+        save_fig(fig, save)
 
 
 def plot_thermal_insulation(stock, save=None):

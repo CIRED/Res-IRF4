@@ -8,7 +8,7 @@
       },
       "cite": {
         "start": 2019,
-        "end": 2020,
+        "end": 2021,
         "heater": "project/input/policies/current/cite_heater.csv",
         "insulation": "project/input/policies/current/cite_insulation.csv",
         "cap": 4800,
@@ -16,7 +16,7 @@
       },
       "cee": {
         "start": 2018,
-        "end": 2051,
+        "end": 2022,
         "cumac_heater": "project/input/policies/current/cumac_heater.csv",
         "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
         "bonus_insulation": {
@@ -36,7 +36,7 @@
       },
       "mpr_serenite": {
         "start": 2019,
-        "end": 2020,
+        "end": 2022,
         "insulation": "project/input/policies/current/mpr_serenite.csv",
         "cap": "project/input/policies/current/mpr_serenite_cap.csv",
         "growth_insulation": null,
@@ -46,7 +46,7 @@
       },
       "mpr": {
         "start": 2021,
-        "end": 2020,
+        "end": 2022,
         "heater": "project/input/policies/current/mpr_heater.csv",
         "growth_heater": null,
         "insulation": "project/input/policies/current/mpr_insulation.csv",
@@ -55,7 +55,7 @@
       },
       "mpr_multifamily": {
         "start": 2021,
-        "end": 2020,
+        "end": 2022,
         "insulation": "project/input/policies/current/mpr_multifamily.csv",
         "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
         "non_cumulative": ["cite", "mpr"],
@@ -64,13 +64,13 @@
       },
       "cap": {
         "start": 2019,
-        "end": 2020,
+        "end": 2022,
         "insulation": "project/input/policies/current/subsidies_cap.csv",
         "target": ["mpr_serenite_high_income", "mpr_serenite_low_income", "mpr_multifamily", "mpr", "cite", "cee"]
       },
       "reduced_vta": {
         "start": 2019,
-        "end": 2020,
+        "end": 2022,
         "value": 0.055
       },
       "restriction_oil": {
@@ -91,7 +91,7 @@
         "policy": "obligation"
       },
     "global_renovation": {
-      "start": 2020,
+      "start": 2022,
       "end": 2051,
       "policy": "subsidy_ad_valorem",
       "target": "global_renovation",
@@ -99,7 +99,7 @@
       "value": "project/input/policies/sub_sichel.csv"
     },
     "sichel_heater": {
-      "start": 2020,
+      "start": 2022,
       "end": 2051,
       "policy": "subsidy_ad_valorem",
       "columns": "project/input/policies/target_heat_pump.csv",

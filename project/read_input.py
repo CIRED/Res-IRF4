@@ -326,7 +326,7 @@ def read_policies(config):
                          cap=data['cap'], target=data.get('target')))
         return l
 
-    def read_zil(data):
+    def read_zil_old(data):
         """Creates a zero_interest_loan PublicPolicy instance.
 
         "new" is a specific attribute of zero_interest_loan,
@@ -443,6 +443,35 @@ def read_policies(config):
 
     def read_regulation(data):
         return [PublicPolicy(data['name'], data['start'], data['end'], None, 'regulation', gest=data['gest'])]
+
+    def read_zil(data):
+        l = list()
+
+        value = data['value']
+        if isinstance(value, str):
+            value = get_series(data['value'])
+
+        by = 'index'
+        if data.get('index') is not None:
+            mask = get_series(data['index'])
+            value *= mask
+
+        if data.get('columns') is not None:
+            mask = get_series(data['columns'])
+            if isinstance(value, (float, int)):
+                value *= mask
+            else:
+                value = value.to_frame().dot(mask.to_frame().T)
+            by = 'columns'
+
+        name = 'zero_interest_loan'
+        if data.get('name') is not None:
+            name = data['name']
+
+        l.append(PublicPolicy(name, data['start'], data['end'], value, 'zero_interest_loan',
+                              gest=data['gest'], by=by, target=data.get('target')))
+        return l
+
 
     read = {'mpr': read_mpr, 'mpr_new': read_mpr,
             'mpr_serenite': read_mpr_serenite,
