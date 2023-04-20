@@ -15,15 +15,14 @@
 #
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
+import copy
+import os
 import pandas as pd
 from pandas import Series, DataFrame, concat, MultiIndex, Index
 from numpy.random import normal
 from numpy.testing import assert_almost_equal
 
-import copy
-import os
-
-from project.utils import reindex_mi, get_pandas, make_plot, get_series, reverse_dict
+from project.utils import reindex_mi, get_pandas, make_plot, get_series, reverse_dict, select
 from project.dynamic import stock_need, share_multi_family, evolution_surface_built, share_type_built
 from project.input.param import generic_input
 from project.input.resources import resources_data
@@ -126,6 +125,14 @@ def read_stock(config):
     stock_sum = stock.sum()
 
     stock = stock.reset_index('Heating system')
+
+    # replace wood fuel multi-family by natural gas in building stock
+    idx = (stock['Heating system'] == 'Wood fuel-Standard boiler') & (stock.index.get_level_values('Housing type') == 'Multi-family')
+    stock.loc[idx, 'Heating system'] = 'Natural gas-Standard boiler'
+    idx = (stock['Heating system'] == 'Wood fuel-Performance boiler') & (stock.index.get_level_values('Housing type') == 'Multi-family')
+    stock.loc[idx, 'Heating system'] = 'Natural gas-Performance boiler'
+
+    assert_almost_equal(stock['Stock buildings'].sum(), stock_sum)
 
     # specify heat-pump
     repartition = 0.8
@@ -256,9 +263,6 @@ def read_policies(config):
         end = min(data['bonus_heater']['end'], data['end'])
         l.append(PublicPolicy('cee', data['bonus_heater']['start'], end, bonus_heater, 'bonus', gest='heater'))
 
-        # cee_heater = reindex_mi(cee_heater, bonus_heater.index)
-        # cee_heater += bonus_heater
-
         bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))#.unstack('Heating system'))
         # cee_insulation = bonus_insulation + cee_insulation.rename(None)
         end = min(data['bonus_heater']['end'], data['end'])
@@ -303,9 +307,6 @@ def read_policies(config):
     def read_cite(data):
         """Creates the income tax credit PublicPolicy instance.
 
-        TODO: Cap set to 16,000€. (but seems to be 4,000€) ?
-        TODO: Windows should be exempted.
-
         Oil fuel-Performant Boiler exempted.
 
         Parameters
@@ -317,10 +318,10 @@ def read_policies(config):
 
         """
         l = list()
-        heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze()).unstack('Heating system final')
         l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_valorem', gest='heater',
                               cap=data['cap'], by='columns'))
-        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
         l.append(
             PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_valorem', gest='insulation',
                          cap=data['cap'], target=data.get('target')))
@@ -355,10 +356,45 @@ def read_policies(config):
         -------
         PublicPolicy instance with zero_interest_loan attributes
         """
+
+        def _read_zil(data):
+            l = list()
+
+            value = data['value']
+            if isinstance(value, str):
+                value = get_series(data['value'])
+
+            by = 'index'
+            if data.get('index') is not None:
+                mask = get_series(data['index'])
+                value *= mask
+
+            if data.get('columns') is not None:
+                mask = get_series(data['columns'])
+                if isinstance(value, (float, int)):
+                    value *= mask
+                else:
+                    value = value.to_frame().dot(mask.to_frame().T)
+                by = 'columns'
+
+            name = 'zero_interest_loan'
+            if data.get('name') is not None:
+                name = data['name']
+
+            l.append(PublicPolicy(name, data['start'], data['end'], value, 'zero_interest_loan',
+                                  gest=data['gest'], by=by, target=data.get('target')))
+            return l
+
         data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'subsidy_ad_valorem',
                              target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
+
+    def read_zil(data):
+        # data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        return [
+                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
+                             cost_max=data.get('cost_max'), gest='insulation')]
 
     def read_reduced_vta(data):
         l = list()
@@ -444,34 +480,6 @@ def read_policies(config):
     def read_regulation(data):
         return [PublicPolicy(data['name'], data['start'], data['end'], None, 'regulation', gest=data['gest'])]
 
-    def read_zil(data):
-        l = list()
-
-        value = data['value']
-        if isinstance(value, str):
-            value = get_series(data['value'])
-
-        by = 'index'
-        if data.get('index') is not None:
-            mask = get_series(data['index'])
-            value *= mask
-
-        if data.get('columns') is not None:
-            mask = get_series(data['columns'])
-            if isinstance(value, (float, int)):
-                value *= mask
-            else:
-                value = value.to_frame().dot(mask.to_frame().T)
-            by = 'columns'
-
-        name = 'zero_interest_loan'
-        if data.get('name') is not None:
-            name = data['name']
-
-        l.append(PublicPolicy(name, data['start'], data['end'], value, 'zero_interest_loan',
-                              gest=data['gest'], by=by, target=data.get('target')))
-        return l
-
 
     read = {'mpr': read_mpr, 'mpr_new': read_mpr,
             'mpr_serenite': read_mpr_serenite,
@@ -490,6 +498,8 @@ def read_policies(config):
         else:
             if item.get('policy') == 'subsidy_ad_valorem':
                 list_policies += read_ad_valorem(item)
+            if item.get('policy') == 'zero_interest_loan':
+                list_policies += read_zil(item)
             elif item.get('policy') == 'premature_heater':
                 list_policies += premature_heater(item)
             elif item.get('policy') == 'restriction_energy':
@@ -536,10 +546,15 @@ def read_inputs(config, other_inputs=generic_input):
         energy_prices = get_pandas(config['macro']['energy_prices']['ini'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Energy', axis=1))
         energy_prices = energy_prices.loc[config['start'], :]
         rate = Series(config['macro']['energy_prices']['rate']).rename_axis('Energy')
+        if config['macro']['energy_prices'].get('factor') is not None:
+            rate *= config['macro']['energy_prices']['factor']
         temp = range(config['start'] + 1, config['end'])
         rate = concat([(1 + rate) ** n for n in range(len(temp))], axis=1, keys=temp)
         rate = concat((pd.Series(1, index=rate.index, name=config['start']), rate), axis=1)
         energy_prices = rate.T * energy_prices
+        if config['macro']['energy_prices'].get('shock') is not None:
+            temp = config['macro']['energy_prices']['shock']
+            energy_prices.loc[temp['start']:, :] *= temp['factor']
 
     inputs.update({'energy_prices': energy_prices.loc[:config['end'], :]})
 

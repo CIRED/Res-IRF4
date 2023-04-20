@@ -171,6 +171,11 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                            cbar_format=lambda y, _: '{:.0%}'.format(y),
                            save=os.path.join(path, 'distributive_ratio_expenditures.png')
                            )
+    dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total_std'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
+    make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
+                           cbar_format=lambda y, _: '{:.0%}'.format(y),
+                           save=os.path.join(path, 'distributive_ratio_expenditures_standard.png')
+                           )
 
     df = output.loc[['Retrofit measures {} (Thousand households)'.format(i) for i in resources_data['index']['Count']], :].T
     df.dropna(inplace=True)
@@ -209,7 +214,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     # graph subsidies
     try:
         non_subsidies = ['subsidies_cap', 'obligation']
-        temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies if i not in non_subsidies]
+        temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies + ['reduced_vta'] if i not in non_subsidies]
         subsidies = output.loc[[i for i in temp if i in output.index], :]
         subsidies = subsidies.loc[~(subsidies == 0).all(axis=1)]
 
@@ -229,13 +234,15 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
         color = [i for i in subset.columns if i not in resources_data['colors']]
         resources_data['colors'].update(dict(zip(color, sns.color_palette(n_colors=len(color)))))
         subset = subset.sort_index(axis=1)
+
+        historic = [i for i in subset.columns if i in resources_data['public_policies_2019'].index ]
+        historic = resources_data['public_policies_2019'].loc[historic]
         if not subset.empty:
-            scatter = resources_data['public_policies_2019']
-            if scatter is not None and list(scatter.index) == ['Cee', 'Cite', 'Mpr', 'Reduced tax', 'Zero interest loan', 'Mpr serenite']:
+            if historic is not None:
                 fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
                 subset.index = subset.index.astype(int)
                 subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'], linewidth=0)
-                scatter.T.plot.bar(ax=ax[0], stacked=True, color=resources_data['colors'], legend=False, width=1.5, rot=0)
+                historic.T.plot.bar(ax=ax[0], stacked=True, color=resources_data['colors'], legend=False, width=1.5, rot=0)
                 ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
                 ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
                 subset.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
@@ -251,7 +258,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             else:
                 make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
                                colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                               scatter=resources_data['public_policies_2019'], loc='left', left=1.2)
+                               scatter=historic, loc='left', left=1.2)
     except KeyError:
         print('Policies graphic impossible because lack of subsidy color')
 

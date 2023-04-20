@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import Normalize
 
+from scipy.optimize import fsolve
 from collections import defaultdict
 from functools import wraps
 from time import time
@@ -227,6 +228,11 @@ def select(df, dict_levels):
         return df.loc[idx]
 
 
+def find_discount_rate(factor, lifetime=30):
+    discount = fsolve(lambda x: factor - (1 - (1 + x) ** -lifetime) / x, np.array([0.01] * factor.shape[0]))
+    return pd.Series(discount, index=factor.index)
+
+
 def deciles2quintiles_pandas(data, func='mean'):
     if isinstance(data, (pd.DataFrame, pd.Series)):
         level_income = []
@@ -316,7 +322,8 @@ def make_policies_tables(policies, path, plot=True):
                    'restriction_heater': 'Restriction heater',
                    'restriction_energy': 'Restriction energy',
                    'subsidies_cap': 'Subsidy, cap',
-                   'regulation': 'Regulation instrument'
+                   'regulation': 'Regulation instrument',
+                   'zero_interest_loan': 'Regulated loan'
                    }
 
     heater_replace = {'Electricity-Heat pump air': 'HP-air',

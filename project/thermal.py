@@ -627,6 +627,11 @@ def heat_intensity(budget):
     return -0.191 * budget.apply(log) + 0.1105
 
 
+def price_elasticity(consumption, income, price):
+    rslt = -0.191 / (consumption / income) * (1 / heat_intensity)
+    return
+
+
 if __name__ == '__main__':
     from project.model import get_inputs
     output = get_inputs(variables=['buildings'])

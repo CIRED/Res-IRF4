@@ -6,21 +6,10 @@
     "prices_constant": null,
     "constant": null,
     "policies": null,
-    "energy_prices": {
-      "High": {
-        "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
-        "rate": {
-          "Electricity": 0.025,
-          "Natural gas": 0.04,
-          "Wood fuel": 0.02,
-          "Oil fuel": 0.03,
-          "Heating": 0
-        }
-      }
-    }
+    "energy_prices": "project/input/macro/energy_prices_scenarios.json"
   },
   "Reference": {
-    "end": 2026,
+    "end": 2025,
     "step": 1,
     "full_output": true,
     "start": 2018,
@@ -138,7 +127,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": false,
+      "current_policies": true,
       "no_policy": false,
       "income": false,
       "prices_constant": false,

@@ -1,0 +1,50 @@
+{
+  "VeryHigh": {
+    "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0135,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0173,
+      "Heating": 0
+    },
+    "factor": 5
+  },
+  "High": {
+      "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
+      "rate": {
+        "Electricity": 0.0135,
+        "Natural gas": 0.0268,
+        "Wood fuel": 0.0127,
+        "Oil fuel": 0.0173,
+        "Heating": 0
+      },
+      "factor": 2
+  },
+  "Shock2030": {
+    "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0135,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0173,
+      "Heating": 0
+    },
+    "factor": 1,
+    "shock": {
+      "start": 2030,
+      "factor": 2
+    }
+  },
+  "Constant": {
+    "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0135,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0173,
+      "Heating": 0
+    },
+    "factor": 0
+  }
+}

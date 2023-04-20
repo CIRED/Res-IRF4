@@ -1,94 +1,125 @@
 {
   "policies": {
-      "carbon_tax": {
-        "start": 2018,
-        "end": 2051,
-        "tax": "project/input/policies/current/carbon_tax.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv"
+    "carbon_tax": {
+      "start": 2018,
+      "end": 2051,
+      "tax": "project/input/policies/current/carbon_tax.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv"
+    },
+    "cite": {
+      "start": 2019,
+      "end": 2021,
+      "heater": "project/input/policies/current/cite_heater_sf.csv",
+      "insulation": "project/input/policies/current/cite_insulation_sf.csv",
+      "cap": 4800,
+      "policy": "subsidy_ad_valorem"
+    },
+    "cee": {
+      "start": 2018,
+      "end": 2051,
+      "cumac_heater": "project/input/policies/current/cumac_heater.csv",
+      "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
+      "bonus_insulation": {
+        "value": "project/input/policies/current/cee_bonus_insulation.csv",
+        "start": 2020,
+        "end": 2021
       },
-      "cite": {
-        "start": 2019,
-        "end": 2021,
-        "heater": "project/input/policies/current/cite_heater.csv",
-        "insulation": "project/input/policies/current/cite_insulation.csv",
-        "cap": 4800,
-        "policy": "subsidy_ad_valorem"
+      "bonus_heater": {
+        "value": "project/input/policies/current/cee_bonus_heater.csv",
+        "start": 2020,
+        "end": 2051
       },
-      "cee": {
-        "start": 2018,
-        "end": 2051,
-        "cumac_heater": "project/input/policies/current/cumac_heater.csv",
-        "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
-        "bonus_insulation": {
-          "value": "project/input/policies/current/cee_bonus_insulation.csv",
-          "start": 2018,
-          "end": 2021
-        },
-        "bonus_heater": {
-          "value": "project/input/policies/current/cee_bonus_heater.csv",
-          "start": 2018,
-          "end": 2051
-        },
-        "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
-        "policy": "subsidy_targeted",
-        "value": "project/input/policies/current/cee_value.csv",
-        "growth": null
+      "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
+      "policy": "subsidy_targeted",
+      "value": "project/input/policies/current/cee_value.csv",
+      "growth": null
+    },
+    "mpr_serenite": {
+      "start": 2019,
+      "end": 2051,
+      "insulation": "project/input/policies/current/mpr_serenite.csv",
+      "cap": "project/input/policies/current/mpr_serenite_cap.csv",
+      "growth_insulation": null,
+      "non_cumulative": [
+        "cite",
+        "mpr"
+      ],
+      "target": "mpr_serenite_nb",
+      "policy": "subsidy_ad_valorem"
+    },
+    "mpr": {
+      "start": 2021,
+      "end": 2051,
+      "heater": "project/input/policies/current/mpr_heater.csv",
+      "growth_heater": null,
+      "insulation": "project/input/policies/current/mpr_insulation.csv",
+      "growth_insulation": null,
+      "bonus": "project/input/policies/current/mpr_bonus.csv"
+    },
+    "mpr_multifamily": {
+      "start": 2021,
+      "end": 2051,
+      "insulation": "project/input/policies/current/mpr_multifamily.csv",
+      "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
+      "non_cumulative": [
+        "cite",
+        "mpr"
+      ],
+      "target": "mpr_serenite_nb",
+      "policy": "subsidy_ad_valorem"
+    },
+    "cap": {
+      "start": 2019,
+      "end": 2051,
+      "insulation": "project/input/policies/current/subsidies_cap.csv",
+      "target": [
+        "mpr_serenite_high_income",
+        "mpr_serenite_low_income",
+        "mpr_multifamily",
+        "mpr",
+        "cite",
+        "cee"
+      ]
+    },
+    "reduced_vta": {
+      "start": 2019,
+      "end": 2051,
+      "value": 0.055
+    },
+    "restriction_oil": {
+      "start": 2019,
+      "end": 2051,
+      "value": "Oil fuel",
+      "policy": "restriction_energy"
+    },
+    "obligation_pb": {
+      "start": 2022,
+      "end": 2022,
+      "value": "project/input/policies/current/agenda_obligation_pb.csv",
+      "frequency": {
+        "value": [
+          0,
+          0.1,
+          0
+        ],
+        "index": [
+          "Owner-occupied",
+          "Privately rented",
+          "Social-housing"
+        ],
+        "name": "Occupancy status"
       },
-      "mpr_serenite": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/current/mpr_serenite.csv",
-        "cap": "project/input/policies/current/mpr_serenite_cap.csv",
-        "growth_insulation": null,
-        "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite_nb",
-        "policy": "subsidy_ad_valorem"
-      },
-      "mpr": {
-        "start": 2021,
-        "end": 2051,
-        "heater": "project/input/policies/current/mpr_heater.csv",
-        "growth_heater": null,
-        "insulation": "project/input/policies/current/mpr_insulation.csv",
-        "growth_insulation": null,
-        "bonus": "project/input/policies/current/mpr_bonus.csv"
-      },
-      "mpr_multifamily": {
-        "start": 2021,
-        "end": 2051,
-        "insulation": "project/input/policies/current/mpr_multifamily.csv",
-        "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
-        "non_cumulative": ["cite", "mpr"],
-        "target": "mpr_serenite_nb",
-        "policy": "subsidy_ad_valorem"
-      },
-      "cap": {
-        "start": 2019,
-        "end": 2051,
-        "insulation": "project/input/policies/current/subsidies_cap.csv",
-        "target": ["mpr_serenite_high_income", "mpr_serenite_low_income", "mpr_multifamily", "mpr", "cite", "cee"]
-      },
-      "reduced_vta": {
-        "start": 2019,
-        "end": 2051,
-        "value": 0.055
-      },
-      "restriction_oil": {
-        "start": 2019,
-        "end": 2051,
-        "value": "Oil fuel",
-        "policy": "restriction_energy"
-      },
-      "obligation_pb": {
-        "start": 2022,
-        "end": 2022,
-        "value": "project/input/policies/current/agenda_obligation_pb.csv",
-        "frequency": {"value": [0, 0.1, 0],
-                    "index": ["Owner-occupied", "Privately rented", "Social-housing"],
-                    "name": "Occupancy status"},
-        "intensive": "market_share",
-        "minimum_performance": "D",
-        "policy": "obligation"
-      }
+      "intensive": "market_share",
+      "minimum_performance": "D",
+      "policy": "obligation"
+    },
+    "zero_interest_loan": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "zero_interest_loan",
+      "cost_max": 10000,
+      "gest": "insulation",
+      "value": 0.0
     }
+  }
 }

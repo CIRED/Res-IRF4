@@ -1,64 +1,14 @@
 {
   "sensitivity": {
-    "activated": false,
+    "activated": true,
     "current_policies": true,
-    "no_policy": false,
-    "prices_constant": false,
-    "constant": false,
-    "policies": {
-      "Ambitious": "project/input/policies/proposals/policies_ambitious.json",
-      "CCC": {
-        "file": "project/input/policies/proposals/policies_ambitious.json",
-        "obligation_po": {
-          "start": 2022,
-          "end": 2051,
-          "value": "project/input/policies/current/agenda_obligation_pb.csv",
-          "frequency": {
-            "value": [
-              0.1,
-              0,
-              0.1
-            ],
-            "index": [
-              "Owner-occupied",
-              "Privately rented",
-              "Social-housing"
-            ],
-            "name": "Occupancy status"
-          },
-          "intensive": "market_share",
-          "minimum_performance": "D",
-          "policy": "obligation"
-        }
-      },
-      "CCCNoSub": {
-        "file": "project/input/policies/current/policies_ref.json",
-        "obligation_po": {
-          "start": 2022,
-          "end": 2051,
-          "value": "project/input/policies/current/agenda_obligation_pb.csv",
-          "frequency": {
-            "value": [
-              0.1,
-              0,
-              0.1
-            ],
-            "index": [
-              "Owner-occupied",
-              "Privately rented",
-              "Social-housing"
-            ],
-            "name": "Occupancy status"
-          },
-          "intensive": "market_share",
-          "minimum_performance": "D",
-          "policy": "obligation"
-        }
-      }
-    }
+    "no_policy": null,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null
 },
   "Reference": {
-    "end": 2021,
+    "end": 2025,
     "step": 1,
     "full_output": true,
     "start": 2018,

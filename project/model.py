@@ -442,9 +442,10 @@ def res_irf(config, path):
         logger.info('Reading input')
         inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
 
-        policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
-        if policies_calibration:
-            make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
+        if False:
+            policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
+            if policies_calibration:
+                make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
         if policies_heater + policies_insulation:
             make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
 

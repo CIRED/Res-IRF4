@@ -126,6 +126,9 @@ def run(path=None, folder=None):
                 configuration['PriceConstant']['simple']['prices_constant'] = True
 
             if config_sensitivity.get('energy_prices') is not None:
+                if isinstance(config_sensitivity['energy_prices'], str):
+                    config_sensitivity['energy_prices'] = get_json(config_sensitivity['energy_prices'])
+
                 for key, item in config_sensitivity['energy_prices'].items():
                     configuration[key] = copy.deepcopy(configuration['Reference'])
                     configuration[key]['macro']['energy_prices'] = copy.deepcopy(item)
