@@ -9,9 +9,9 @@
     "energy_prices": "project/input/macro/energy_prices_scenarios.json"
   },
   "Reference": {
-    "end": 2025,
+    "end": 2051,
     "step": 1,
-    "full_output": true,
+    "output": "consumption",
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
@@ -127,8 +127,8 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
-      "no_policy": false,
+      "current_policies": false,
+      "no_policy": true,
       "income": false,
       "prices_constant": false,
       "heating_system": {

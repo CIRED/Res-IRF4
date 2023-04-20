@@ -343,7 +343,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         'consumption_ini': parsed_inputs['consumption_ini'],
         'supply': parsed_inputs['supply'],
         'premature_replacement': parsed_inputs['premature_replacement'],
-        'full_output': config['full_output']
+        'output': config['output']
     }
     return inputs_dynamic
 
@@ -351,7 +351,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
 def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_insulation, p_heater, p_insulation, flow_built, year,
                    post_inputs,  ms_heater=None,  calib_intensive=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
-                   exogenous_social=None, full_output=True, premature_replacement=None, supply=None):
+                   exogenous_social=None, output_details='full', premature_replacement=None, supply=None):
     """Update stock vintage due to renovation, demolition and construction.
 
 
@@ -372,7 +372,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
-    if full_output:
+    if output_details == 'full':
         buildings.consumption_before_retrofit = buildings.store_consumption(prices_before)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation,
                                             policies_heater=p_heater,
@@ -405,15 +405,23 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
         buildings.add_flows([flow_built])
 
     buildings.logger.info('Writing output')
-    if full_output:
+    if output_details == 'full':
+        buildings.logger.debug('Full output')
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
-
-    else:
-        buildings.logger.debug('Simplified output')
+    elif output_details == 'cost_benefit':
+        buildings.logger.debug('Cost-benefit output')
         stock = buildings.simplified_stock().rename(year)
-        # output = buildings.heat_consumption_energy.rename(year) / 10 ** 9
-        # output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-        output = buildings.parse_output_run_simple(prices, post_inputs, step, taxes=taxes)
+        output = buildings.parse_output_run_cba(prices, post_inputs, step, taxes=taxes)
+    elif output_details == 'consumption':
+        buildings.logger.debug('Consumption output')
+        stock = buildings.simplified_stock().rename(year)
+        output = buildings.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True)
+        output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+        temp = prices.T
+        temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
+        output = pd.concat((output, temp), axis=0).rename(year)
+    else:
+        raise NotImplemented('output_details should be full, cost_benefit or consumption')
 
     return buildings, stock, output
 
@@ -456,7 +464,7 @@ def res_irf(config, path):
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
 
-        if config.get('full_output'):
+        if config['output'] == 'full':
             plot_thermal_insulation(buildings.stock, save=os.path.join(buildings.path_ini, 'thermal_insulation.png'))
             _stock = buildings.simplified_stock(energy_level=True)
             _stock = _stock.groupby(
@@ -528,7 +536,7 @@ def res_irf(config, path):
                                              district_heating=inputs.get('district_heating'),
                                              demolition_rate=inputs_dynamics['demolition_rate'],
                                              exogenous_social=inputs.get('exogenous_social'),
-                                             full_output=config.get('full_output'),
+                                             output_details=config['output'],
                                              climate=config.get('climate'),
                                              prices_before=prices_before,
                                              step=step,
@@ -538,7 +546,7 @@ def res_irf(config, path):
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
-            if year == 2019 and config.get('full_output'):
+            if year == buildings.first_year + 1 and config['output'] == 'full':
                 compare_results(o, buildings.path)
 
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
@@ -561,19 +569,15 @@ def res_irf(config, path):
 
         if path is not None:
             buildings.logger.info('Dumping output in {}'.format(path))
+
             if buildings.memory:
                 pd.DataFrame(buildings.memory).to_csv(os.path.join(path, 'memory.csv'))
-            if not config.get('full_output'):
-                # for price elasticity calculation
-                temp = energy_prices.T
-                temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
-                output = pd.concat((output, temp), axis=0)
-                output = output.sort_index(axis=1)
 
-            output.round(3).to_csv(os.path.join(path, 'output.csv'))
-            if config.get('full_output'):
+            if config['output'] == 'full':
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 plot_scenario(output, stock, buildings)
+
+            output.round(3).to_csv(os.path.join(path, 'output.csv'))
 
         return os.path.basename(os.path.normpath(path)), output, stock
 

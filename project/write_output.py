@@ -724,7 +724,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
             if save:
                 if cofp:
-                    waterfall_chart(temp, title=title,
+                    waterfall_chart(- temp, title=title,
                                     save=os.path.join(save, 'npv_{}_cofp.png'.format(s.lower().replace(' ', '_'))),
                                     colors=resources_data['colors'])
 
@@ -732,13 +732,13 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                     save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
                                     colors=resources_data['colors'])"""
                 else:
-                    waterfall_chart(temp, title=title,
+                    waterfall_chart(- temp, title=title,
                                     save=os.path.join(save, 'npv_{}_no_cofp.png'.format(s.lower().replace(' ', '_'))),
                                     colors=resources_data['colors'])
 
             npv[title] = temp
 
-        npv = pd.DataFrame(npv)
+        npv = - pd.DataFrame(npv)
         if save:
             if cofp:
                 assessment_scenarios(npv.T, save=os.path.join(save, 'npv_cofp.png'.lower().replace(' ', '_')), colors=resources_data['colors'])

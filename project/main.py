@@ -213,7 +213,7 @@ def run(path=None, folder=None):
         # stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
-        if configuration.get('Reference').get('full_output'):
+        if configuration.get('Reference').get('output') == 'full':
             plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
             config_policies = get_json('project/input/policies/cba_inputs.json')
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:

@@ -60,7 +60,7 @@
   "Reference": {
     "end": 2021,
     "step": 1,
-    "full_output": true,
+    "output": "full",
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {

@@ -4921,7 +4921,7 @@ class AgentBuildings(ThermalBuildings):
         stock = stock.rename(self.year)
         return stock, output
 
-    def parse_output_run_simple(self, prices, inputs, step, taxes=None):
+    def parse_output_run_cba(self, prices, inputs, step, taxes=None):
         output = dict()
 
         # investment
