@@ -1,14 +1,15 @@
 {
   "sensitivity": {
     "activated": false,
-    "current_policies": true,
-    "no_policy": null,
-    "prices_constant": null,
-    "constant": null,
-    "policies": null
+    "current_policies": false,
+    "no_policy": true,
+    "prices_constant": false,
+    "constant": false,
+    "policies": false,
+    "remove_policies": ["cee", "cite", "mpr", "reduced_vta", "mpr_serenite", "mpr_multifamily"]
 },
   "Reference": {
-    "end": 2021,
+    "end": 2031,
     "step": 1,
     "output": "full",
     "start": 2018,
@@ -19,6 +20,7 @@
       "saving_rate": 0.025,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
+      "method": "I4CE",
       "debt_income_ratio": 0.05,
       "constraint_liquidity": false
     },
@@ -125,7 +127,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": false,
@@ -144,4 +146,5 @@
       "no_natural_replacement": false
     }
   }
+
 }

@@ -1285,6 +1285,7 @@ class AgentBuildings(ThermalBuildings):
         cost
         subsidies
         financing_cost
+        policies: list
 
         Returns
         -------
@@ -1294,39 +1295,66 @@ class AgentBuildings(ThermalBuildings):
         cost_total, cost_financing, amount_debt, amount_saving, discount = cost, None, None, None, None
         to_pay = cost - subsidies
 
+        financing_options = {'debt': {'price': financing_cost['interest_rate'],
+                                      'max': None,
+                                      'duration': financing_cost['duration'],
+                                      'type': 'debt'
+                                      },
+                             'saving': {'price': financing_cost['saving_rate'],
+                                        'max': financing_cost['upfront_max'],
+                                        'duration': financing_cost['duration'],
+                                        'type': 'saving'
+                                        },
+                             }
+
+        # only work with one zero-interest-loan
         if policies:
-            policy = policies[0]
+            for policy in policies:
+                financing_options.update({policy.name: {'price': policy.value,
+                                                        'max': policy.cost_max,
+                                                        'duration': policy.duration,
+                                                        'type': 'debt'}})
+
+        # sort financing_options by price
+        financing_options = {k: v for k, v in sorted(financing_options.items(), key=lambda item: item[1]['price'])}
 
         if financing_cost is not None and self.financing_cost:
 
-            if self.financing_cost['method'] == 'MENFIS':
-                share_debt = financing_cost['share_debt'][0] + to_pay * financing_cost['share_debt'][1]
-                cost_debt = financing_cost['interest_rate'] * share_debt * to_pay * financing_cost['duration']
-                cost_saving = (financing_cost['saving_rate'] * reindex_mi(financing_cost['factor_saving_rate'],
-                                                                          to_pay.index) * (
-                                       (1 - share_debt) * to_pay).T).T * financing_cost['duration']
-                cost_financing = cost_debt + cost_saving
+            remaining = to_pay.copy()
+            rslt = {}
+            cost_financing, debt_reimbursement = DataFrame(0, index=to_pay.index, columns=to_pay.columns), DataFrame(0, index=to_pay.index, columns=to_pay.columns)
+            for key, item in financing_options.items():
+                if item['max'] is not None:
+                    c_max = reindex_mi(item['max'], remaining.index)
+                    if isinstance(c_max, Series):
+                        c_max = concat([c_max] * remaining.shape[1], keys=to_pay.columns, axis=1)
+                    amount = remaining.where(remaining < c_max, c_max)
+                else:
+                    amount = remaining
 
-                amount_debt = share_debt * to_pay
-                amount_saving = (1 - share_debt) * to_pay
+                if item['type'] == 'debt':
+                    if item['price'] == 0:
+                        reimbursement = amount / item['duration']
+                    else:
+                        reimbursement = calculate_annuities(amount, lifetime=item['duration'], discount_rate=item['price'])
+                    print(key, reimbursement.sum().sum().round(0) / 10**6)
+                    debt_reimbursement += reimbursement
 
-                # discount_factor = (1 - (1 + discount) ** -30) / 30
-            elif self.financing_cost['method'] == 'I4CE':
-                upfront_max = reindex_mi(financing_cost['upfront_max'], to_pay.index)
-                amount_debt = (to_pay.T - upfront_max).T
-                amount_debt = amount_debt.where(amount_debt > 0, 0)
-                amount_saving = to_pay - amount_debt
+                cost_financing += amount * item['price'] * item['duration']
+                rslt.update({key: amount.copy()})
+                remaining -= amount
 
-                assert ((upfront_max - amount_saving.T).T.fillna(0) >= 0).all().all(), 'Saving sup to upfront max'
+            assert remaining.sum().sum().round(0) == 0, 'Not all cost have been financed'
+            assert allclose(sum(rslt.values()), to_pay), 'Not all cost have been financed'
 
-                cost_financing = financing_cost['interest_rate'] * amount_debt + (reindex_mi(financing_cost['saving_rate'], amount_saving.index) * amount_saving.T).T
-                cost_financing *= financing_cost['duration']
+            share = {k: i / to_pay for k, i in rslt.items()}
 
-                share_debt = amount_debt / to_pay
-            else:
-                raise NotImplemented('Financing method not implemented')
+            assert allclose(sum(share.values()).round(2), DataFrame(1, index=to_pay.index, columns=to_pay.columns)), 'Share problem'
+            discount = sum([share[k] * financing_options[k]['price'] for k in rslt.keys()])
 
-            discount = financing_cost['interest_rate'] * share_debt + ((1 - share_debt).T * reindex_mi(financing_cost['factor_saving_rate'] * financing_cost['saving_rate'], share_debt.index)).T
+            amount_debt = sum([rslt[k] for k in financing_options.keys() if financing_options[k]['type'] == 'debt'])
+            amount_saving = sum([rslt[k] for k in financing_options.keys() if financing_options[k]['type'] == 'saving'])
+            assert allclose(amount_debt + amount_saving, to_pay), 'Not all cost have been financed'
 
             cost_total = cost + cost_financing
 

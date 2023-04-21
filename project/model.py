@@ -149,6 +149,7 @@ def config2inputs(config=None, building_stock=None, end=None):
 
     if config['simple'].get('current_policies'):
         for name, policy in config['policies'].items():
+            # remove policies that start after calibration
             if policy['start'] > config['start'] + 1:
                 policy['end'] = policy['start']
 
@@ -157,6 +158,15 @@ def config2inputs(config=None, building_stock=None, end=None):
 
             if policy.get('growth_insulation'):
                 policy['growth_insulation'] = None
+
+            for k in policy.keys():
+                if isinstance(policy[k], dict):
+                    if policy[k].get('start') is not None:
+                        if policy[k]['start'] > config['start'] + 1:
+                            policy[k]['end'] = policy[k]['start']
+                        if policy[k]['end'] > policy[k]['start']:
+                            policy[k]['end'] = config['end']
+
             config['policies'][name] = policy
 
     if config.get('policies') is not None:

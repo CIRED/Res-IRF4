@@ -45,7 +45,7 @@ class PublicPolicy:
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
                  new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None,
-                 bonus=False, social_housing=False):
+                 bonus=False, social_housing=False, duration=None):
         self.name = name
         self.start = start
         self.end = end
@@ -64,6 +64,7 @@ class PublicPolicy:
         self.min_performance = min_performance
         self.bonus = bonus
         self.social_housing = social_housing
+        self.duration = duration
 
     def __repr__(self):
         return self.name
@@ -394,7 +395,7 @@ def read_policies(config):
         # data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         return [
                 PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                             cost_max=data.get('cost_max'), gest='insulation')]
+                             cost_max=data.get('cost_max'), gest='insulation', duration=data['duration'])]
 
     def read_reduced_vta(data):
         l = list()
@@ -480,7 +481,6 @@ def read_policies(config):
     def read_regulation(data):
         return [PublicPolicy(data['name'], data['start'], data['end'], None, 'regulation', gest=data['gest'])]
 
-
     read = {'mpr': read_mpr, 'mpr_new': read_mpr,
             'mpr_serenite': read_mpr_serenite,
             'mpr_serenite_high_income': read_mpr_serenite,
@@ -498,7 +498,7 @@ def read_policies(config):
         else:
             if item.get('policy') == 'subsidy_ad_valorem':
                 list_policies += read_ad_valorem(item)
-            if item.get('policy') == 'zero_interest_loan':
+            elif item.get('policy') == 'zero_interest_loan':
                 list_policies += read_zil(item)
             elif item.get('policy') == 'premature_heater':
                 list_policies += premature_heater(item)

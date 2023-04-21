@@ -6,22 +6,24 @@
     "prices_constant": false,
     "constant": false,
     "policies": false,
-    "assessment": ["cite", "cee", "mpr", "mpr_serenite"],
+    "assessment": ["cite", "cee", "mpr", "mpr_serenite", "mpr_multifamily", "reduced_vta"],
     "test": ["cite", "cee", "mpr", "mpr_serenite", "mpr_multifamily", "reduced_vta"]
 },
   "Reference": {
-    "end": 2031,
+    "end": 2051,
     "step": 1,
-    "full_output": true,
+    "output": "full",
     "start": 2018,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
       "activated": true,
-      "interest_rate": 0.04,
+      "interest_rate": 0.05,
       "saving_rate": 0.025,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
-      "method": "MENFIS"
+      "method": "I4CE",
+      "debt_income_ratio": 0.05,
+      "constraint_liquidity": false
     },
     "supply": {
       "activated_insulation": false,
@@ -32,11 +34,6 @@
     "renovation": {
       "endogenous": true,
       "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
-      "scale_old": {
-        "name": "freeriders",
-        "target_policies": "cite",
-        "target_freeriders": 0.7
-      },
       "scale": {
         "name": "standard_deviation",
         "deviation": 0.0297
@@ -61,7 +58,11 @@
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
       "premature_replacement": null,
-      "information_rate": 0.333
+      "information_rate": 0.333,
+      "scale": {
+        "target_hp": 0.95,
+        "subsidies_hp": 1
+      }
     },
     "district_heating":null,
     "exogenous_social": null,
@@ -70,7 +71,7 @@
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
-      "performance_insulation": "project/input/technical/performance_insulation.csv",
+      "performance_insulation": "project/input/technical/performance_insulation_renovation.csv",
       "carbon_emission": "project/input/technical/carbon_emission.csv",
       "technical_progress": {
         "insulation": {
@@ -99,7 +100,8 @@
       "construction": true,
       "flow_construction": "project/input/macro/flow_construction_ame2021.csv",
       "income": "project/input/macro/income.csv",
-      "energy_prices": "project/input/macro/energy_prices_ht_ame2021.csv",
+      "energy_prices": {"ini": "project/input/macro/energy_prices_ht_ame2021.csv",
+        "rate": {"Electricity": 0.0135, "Natural gas": 0.0268, "Wood fuel": 0.0127, "Oil fuel": 0.0173, "Heating": 0}},
       "energy_taxes": "project/input/macro/energy_taxes_ame2021.csv",
       "energy_vta": "project/input/macro/energy_vta.csv",
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
@@ -120,7 +122,7 @@
     "implicit_discount_rate": "project/input/revealed_data/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies":  "project/input/policies/current/policies_ref.json",
+    "policies": "project/input/policies/current/policies_ref.json",
     "simple": {
       "quintiles": true,
       "surface": false,

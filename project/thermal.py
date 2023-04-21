@@ -390,7 +390,7 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     ratio_surface: pd.Series
     efficiency: pd.Series
     index: pd.MultiIndex or pd.Index
-        Should include Housing type and Energy.
+        Should include Housing type and Heating system.
     th_bridging: {'Minimal', 'Low', 'Medium', 'High'}
     vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}
     infiltration: {'Minimal', 'Low', 'Medium', 'High'}
@@ -626,10 +626,6 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
 def heat_intensity(budget):
     return -0.191 * budget.apply(log) + 0.1105
 
-
-def price_elasticity(consumption, income, price):
-    rslt = -0.191 / (consumption / income) * (1 / heat_intensity)
-    return
 
 
 if __name__ == '__main__':
