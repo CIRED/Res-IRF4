@@ -1,12 +1,57 @@
 {
   "sensitivity": {
-    "activated": false,
-    "current_policies": false,
-    "no_policy": true,
-    "prices_constant": false,
-    "constant": false,
-    "policies": false,
-    "remove_policies": ["cee", "cite", "mpr", "reduced_vta", "mpr_serenite", "mpr_multifamily"]
+    "activated": true,
+    "current_policies": null,
+    "no_policy": null,
+    "prices_constant": null,
+    "constant": null,
+    "add_policies": null,
+    "policies": {
+      "Prop50MWh": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "sub_proportional": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": "insulation",
+          "value": 50,
+          "proportional": "MWh_cumac"
+        }
+      },
+      "Prop100MWh": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "sub_proportional": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": "insulation",
+          "value": 100,
+          "proportional": "MWh_cumac"
+        }
+      },
+      "Prop500tCO2": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "sub_proportional": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": "insulation",
+          "value": 500,
+          "proportional": "tCO2_cumac"
+        }
+      },
+      "Prop1000tCO2": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "sub_proportional": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": "insulation",
+          "value": 1000,
+          "proportional": "tCO2_cumac"
+        }
+      }
+    }
 },
   "Reference": {
     "end": 2031,
@@ -20,7 +65,6 @@
       "saving_rate": 0.025,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
-      "method": "I4CE",
       "debt_income_ratio": 0.05,
       "constraint_liquidity": false
     },
@@ -128,7 +172,7 @@
       "ratio_surface": false,
       "stock": false,
       "current_policies": false,
-      "no_policy": false,
+      "no_policy": true,
       "income": false,
       "prices_constant": false,
       "heating_system": {
@@ -146,5 +190,4 @@
       "no_natural_replacement": false
     }
   }
-
 }

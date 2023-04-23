@@ -1,14 +1,24 @@
 {
   "sensitivity": {
     "activated": false,
-    "current_policies": true,
+    "current_policies": null,
     "no_policy": null,
     "prices_constant": null,
     "constant": null,
-    "policies": null
+    "add_policies": {
+      "zero_interest_loan": {
+        "start": 2020,
+        "end": 2051,
+        "policy": "zero_interest_loan",
+        "cost_max": 10000,
+        "gest": "insulation",
+        "value": 0.0,
+        "duration": 10
+    }
+    }
 },
   "Reference": {
-    "end": 2021,
+    "end": 2041,
     "step": 1,
     "output": "full",
     "start": 2018,
@@ -119,13 +129,13 @@
     "implicit_discount_rate": "project/input/revealed_data/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/current/policies_ref.json",
+    "policies": "project/input/policies/proposals/policies_carbon_vsc_recycling.json",
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": false,

@@ -305,7 +305,9 @@ def parse_policies(config):
         if 'file' in config['policies'].keys():
             policies = get_json(config['policies']['file'])
             del config['policies']['file']
-            config['policies'].update(policies['policies'])
+            # do not replace
+            policies = {k: i for k, i in policies['policies'].items() if k not in config['policies'].keys()}
+            config['policies'].update(policies)
 
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
@@ -315,6 +317,7 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
 def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
                    'subsidy_ad_valorem': 'Subsidy, ad valorem',
+                   'subsidy_proportional': 'Subsidy, proportional',
                    'bonus': 'Subsidy, bonus',
                    'obligation': 'Retrofitting obligation',
                    'premature_heater': 'Premature replacement',

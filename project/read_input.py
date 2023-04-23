@@ -45,7 +45,7 @@ class PublicPolicy:
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
                  new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None,
-                 bonus=False, social_housing=False, duration=None):
+                 bonus=False, social_housing=False, duration=None, recycling=None, proportional=None):
         self.name = name
         self.start = start
         self.end = end
@@ -65,6 +65,9 @@ class PublicPolicy:
         self.bonus = bonus
         self.social_housing = social_housing
         self.duration = duration
+        self.recycling = recycling
+        self.proportional = proportional
+
 
     def __repr__(self):
         return self.name
@@ -202,9 +205,9 @@ def read_policies(config):
             bonus_worst = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
 
             l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_best, 'bonus', gest='insulation',
-                                  target='bonus_best'))
+                                  target='reach_best'))
             l.append(PublicPolicy('mpr', data['start'], data['end'], bonus_worst, 'bonus', gest='insulation',
-                                  target='bonus_worst'))
+                                  target='out_worst'))
 
         l.append(PublicPolicy('mpr', data['start'], data['end'], heater, 'subsidy_target', gest='heater'))
         l.append(PublicPolicy('mpr', data['start'], data['end'], insulation, 'subsidy_target', gest='insulation',
@@ -299,11 +302,17 @@ def read_policies(config):
                              target=data.get('target'))]
 
     def read_carbon_tax(data):
-        tax = get_pandas(data['tax'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+        tax = get_series(data['tax'], header=None)
         emission = get_pandas(data['emission'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        tax = (tax * emission).fillna(0) / 10 ** 6
+        tax = (tax * emission.T).T.fillna(0) / 10 ** 6
         tax = tax.loc[(tax != 0).any(axis=1)]
-        return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax')]
+
+        recycling = None
+        if data.get('recycling') is not None:
+            recycling = get_series(data['recycling'], header=0)
+
+        return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax',
+                             recycling=recycling)]
 
     def read_cite(data):
         """Creates the income tax credit PublicPolicy instance.
@@ -411,12 +420,14 @@ def read_policies(config):
 
         value = data['value']
         if isinstance(value, str):
-            value = get_pandas(data['value'])
-            value = value.set_index(list(value.columns[:-1])).squeeze().rename(None)
+            value = get_series(data['value'])
+            """value = get_pandas(data['value'])
+            value = value.set_index(list(value.columns[:-1])).squeeze().rename(None)"""
 
         by = 'index'
         if data.get('index') is not None:
-            mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            mask = get_series(data['index'], header=0)
+            # mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
             value *= mask
 
         if data.get('columns') is not None:
@@ -429,7 +440,8 @@ def read_policies(config):
             by = 'columns'
 
         if data.get('growth'):
-            growth = get_pandas(data['growth'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            # growth = get_pandas(data['growth'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            growth = get_series(data['growth'], header=None)
             value = {k: i * value for k, i in growth.items()}
 
         name = 'sub_ad_valorem'
@@ -440,13 +452,41 @@ def read_policies(config):
                               gest=data['gest'], by=by, target=data.get('target')))
         return l
 
+    def read_proportional(data):
+        l = list()
+
+        value = data['value']
+        if isinstance(value, str):
+            value = get_series(data['value'])
+
+        by = 'index'
+        if data.get('index') is not None:
+            mask = get_series(data['index'], header=0)
+            # mask = get_pandas(data['index'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
+            value *= mask
+
+        if data.get('growth'):
+            # growth = get_pandas(data['growth'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+            growth = get_series(data['growth'], header=None)
+            value = {k: i * value for k, i in growth.items()}
+
+        name = 'sub_proportional'
+        if data.get('name') is not None:
+            name = data['name']
+
+        proportional = 'MWh_cumac' # tCO2_cumac
+        if data.get('proportional') is not None:
+            proportional = data['proportional']
+
+        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_proportional',
+                              gest=data['gest'], by=by, target=data.get('target'), proportional=proportional))
+        return l
+
     def restriction_energy(data):
-        # value = pd.Series(data['value']).rename_axis('Energy')
         return [PublicPolicy(data['name'], data['start'], data['end'], data['value'],
                              'restriction_energy', gest='heater', target=data.get('target'))]
 
     def restriction_heater(data):
-        # value = pd.Series(data['value']).rename_axis('Heating system')
         return [PublicPolicy(data['name'], data['start'], data['end'], data['value'],
                              'restriction_heater', gest='heater', target=data.get('target'))]
 
@@ -498,6 +538,8 @@ def read_policies(config):
         else:
             if item.get('policy') == 'subsidy_ad_valorem':
                 list_policies += read_ad_valorem(item)
+            elif item.get('policy') == 'subsidy_proportional':
+                list_policies += read_proportional(item)
             elif item.get('policy') == 'zero_interest_loan':
                 list_policies += read_zil(item)
             elif item.get('policy') == 'premature_heater':

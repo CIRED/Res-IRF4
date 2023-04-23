@@ -4,7 +4,8 @@
       "start": 2018,
       "end": 2051,
       "tax": "project/input/policies/current/carbon_tax.csv",
-      "emission": "project/input/policies/current/carbon_tax_emission.csv"
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": null
     },
     "cite": {
       "start": 2019,
@@ -112,15 +113,6 @@
       "intensive": "market_share",
       "minimum_performance": "D",
       "policy": "obligation"
-    },
-    "zero_interest_loan": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "zero_interest_loan",
-      "cost_max": 10000,
-      "gest": "insulation",
-      "value": 0.0,
-      "duration": 10
     }
   }
 }

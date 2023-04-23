@@ -4,12 +4,11 @@
       "start": 2018,
       "end": 2020,
       "tax": "project/input/policies/current/carbon_tax.csv",
-      "emission": "project/input/policies/current/carbon_tax_emission.csv",
-      "recycling": null
+      "emission": "project/input/policies/current/carbon_tax_emission.csv"
     },
     "cite": {
       "start": 2019,
-      "end": 2020,
+      "end": 2021,
       "heater": "project/input/policies/current/cite_heater_sf.csv",
       "insulation": "project/input/policies/current/cite_insulation_sf.csv",
       "cap": 4800,
@@ -17,7 +16,7 @@
     },
     "cee": {
       "start": 2018,
-      "end": 2020,
+      "end": 2051,
       "cumac_heater": "project/input/policies/current/cumac_heater.csv",
       "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
       "bonus_insulation": {
@@ -28,7 +27,7 @@
       "bonus_heater": {
         "value": "project/input/policies/current/cee_bonus_heater.csv",
         "start": 2020,
-        "end": 2020
+        "end": 2051
       },
       "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
       "policy": "subsidy_targeted",

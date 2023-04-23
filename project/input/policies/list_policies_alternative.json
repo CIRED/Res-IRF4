@@ -26,6 +26,13 @@
     "value": 0,
     "growth": "project/input/policies/coupling/subsidies_insulation_global_renovation_simple.csv"
   },
+  "sub_proportional": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "subsidy_proportional",
+        "gest": "insulation",
+        "value": 7
+      },
   "landlord": {
     "start": 2020,
     "end": 2051,

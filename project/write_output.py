@@ -164,18 +164,18 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     make_plots(dict_df, y_name, loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
                save=os.path.join(path, 'distributive_effect.png'))
 
-    y_label = 'Distribution in the population (Million households)'
-    cbar_title = 'Energy expenditures on income ratio\n'
-
-    make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
-                           cbar_format=lambda y, _: '{:.0%}'.format(y),
-                           save=os.path.join(path, 'distributive_ratio_expenditures.png')
-                           )
-    dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total_std'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
-    make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
-                           cbar_format=lambda y, _: '{:.0%}'.format(y),
-                           save=os.path.join(path, 'distributive_ratio_expenditures_standard.png')
-                           )
+    if False:
+        y_label = 'Distribution in the population (Million households)'
+        cbar_title = 'Energy expenditures on income ratio\n'
+        make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
+                               cbar_format=lambda y, _: '{:.0%}'.format(y),
+                               save=os.path.join(path, 'distributive_ratio_expenditures.png')
+                               )
+        dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total_std'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
+        make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
+                               cbar_format=lambda y, _: '{:.0%}'.format(y),
+                               save=os.path.join(path, 'distributive_ratio_expenditures_standard.png')
+                               )
 
     df = output.loc[['Retrofit measures {} (Thousand households)'.format(i) for i in resources_data['index']['Count']], :].T
     df.dropna(inplace=True)
@@ -220,10 +220,8 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
 
         subset = subsidies.copy()
 
-        # temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')) for i in ]
         temp = ['Cee tax (Billion euro)', 'Carbon tax (Billion euro)']
         taxes_expenditures = output.loc[[i for i in temp if i in output.index], :]
-        #taxes_expenditures = taxes_expenditures.loc[['{} (Billion euro)'.format(i) for i in ['Cee tax', 'Carbon tax'] if i in output.index], :]
 
         if not taxes_expenditures.empty:
             subset = pd.concat((subsidies, -taxes_expenditures), axis=0)
@@ -434,15 +432,36 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
     x_name = 'Stock (Million households)'
     dict_rslt = dict()
-
     for year in years:
         for key, item in result.items():
-            s, r = item.loc[stock, year].set_axis(levels, axis=0), item.loc[ratio, year].set_axis(levels, axis=0)
-            dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
-
+            if year in item.columns:
+                s, r = item.loc[stock, year].set_axis(levels, axis=0), item.loc[ratio, year].set_axis(levels, axis=0)
+                dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
         make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
                    hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_{}.png'.format(year)),
                    colors=colors)
+
+    # TODO: factorize code
+    levels = ['Housing type', 'Occupancy status', 'Income tenant']
+    levels = list(product(*[resources_data['index'][i] for i in levels]))
+
+    years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
+    years = list(set(years))
+    years = [y for y in years if y in result['Reference'].columns]
+    ratio = ['Ratio expenditure std {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
+    stock = ['Stock {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
+    y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
+    x_name = 'Stock (Million households)'
+    dict_rslt = dict()
+    for year in years:
+        for key, item in result.items():
+            if year in item.columns:
+                s, r = item.loc[stock, year].set_axis(levels, axis=0), item.loc[ratio, year].set_axis(levels, axis=0)
+                dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
+        make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
+                   hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_standard_{}.png'.format(year)),
+                   colors=colors)
+
 
     # graph line plot 2D comparison
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',

@@ -1,15 +1,64 @@
 {
   "sensitivity": {
-    "activated": true,
-    "current_policies": false,
-    "no_policy": true,
+    "activated": false,
+    "current_policies": true,
+    "no_policy": false,
     "prices_constant": false,
     "constant": false,
-    "policies": false,
-    "remove_policies": ["cee", "cite", "mpr", "reduced_vta", "mpr_serenite", "mpr_multifamily"]
+    "policies": {
+      "Ambitious": "project/input/policies/proposals/policies_ambitious.json",
+      "CCC": {
+        "file": "project/input/policies/proposals/policies_ambitious.json",
+        "obligation_po": {
+          "start": 2022,
+          "end": 2051,
+          "value": "project/input/policies/current/agenda_obligation_pb.csv",
+          "frequency": {
+            "value": [
+              0.1,
+              0,
+              0.1
+            ],
+            "index": [
+              "Owner-occupied",
+              "Privately rented",
+              "Social-housing"
+            ],
+            "name": "Occupancy status"
+          },
+          "intensive": "market_share",
+          "minimum_performance": "D",
+          "policy": "obligation"
+        }
+      },
+      "CCCNoSub": {
+        "file": "project/input/policies/current/policies_ref.json",
+        "obligation_po": {
+          "start": 2022,
+          "end": 2051,
+          "value": "project/input/policies/current/agenda_obligation_pb.csv",
+          "frequency": {
+            "value": [
+              0.1,
+              0,
+              0.1
+            ],
+            "index": [
+              "Owner-occupied",
+              "Privately rented",
+              "Social-housing"
+            ],
+            "name": "Occupancy status"
+          },
+          "intensive": "market_share",
+          "minimum_performance": "D",
+          "policy": "obligation"
+        }
+      }
+    }
 },
   "Reference": {
-    "end": 2031,
+    "end": 2021,
     "step": 1,
     "output": "full",
     "start": 2018,
@@ -20,7 +69,6 @@
       "saving_rate": 0.025,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
-      "method": "I4CE",
       "debt_income_ratio": 0.05,
       "constraint_liquidity": false
     },

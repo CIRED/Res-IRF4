@@ -1,12 +1,30 @@
 {
   "sensitivity": {
-    "activated": true,
-    "current_policies": false,
-    "no_policy": true,
-    "prices_constant": false,
-    "constant": false,
-    "policies": false,
-    "remove_policies": ["cee", "cite", "mpr", "reduced_vta", "mpr_serenite", "mpr_multifamily"]
+    "activated": false,
+    "current_policies": null,
+    "no_policy": null,
+    "prices_constant": null,
+    "constant": null,
+    "add_policies": {
+      "EPTZ": {
+        "start": 2020,
+        "end": 2051,
+        "policy": "zero_interest_loan",
+        "cost_max": 10000,
+        "gest": "insulation",
+        "value": 0.0,
+        "duration": 10
+      },
+      "KfW": {
+        "start": 2020,
+        "end": 2051,
+        "policy": "zero_interest_loan",
+        "cost_max": 100000,
+        "gest": "insulation",
+        "value": 0.0,
+        "duration": 30
+      }
+    }
 },
   "Reference": {
     "end": 2031,
@@ -20,7 +38,6 @@
       "saving_rate": 0.025,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
-      "method": "I4CE",
       "debt_income_ratio": 0.05,
       "constraint_liquidity": false
     },

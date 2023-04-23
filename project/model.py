@@ -379,24 +379,38 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
         prices_before = prices
 
     buildings.year = year
+
+    # bill rebate - taxes revenues recycling
+    bill_rebate, bill_rebate_before = 0, 0
+    for t in [t for t in taxes if t.recycling is not None]:
+        if year - 1 in buildings.taxes_revenues.keys():
+            target = (buildings.stock * reindex_mi(t.recycling, buildings.stock.index)).sum()
+            bill_rebate = t.recycling * buildings.taxes_revenues[year - 1][t.name] * 10**9 / target
+            buildings.bill_rebate.update({year: bill_rebate})
+
+        if year - 1 in buildings.bill_rebate.keys():
+            bill_rebate_before = buildings.bill_rebate[year - 1]
+
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
     if output_details == 'full':
-        buildings.consumption_before_retrofit = buildings.store_consumption(prices_before)
+        buildings.consumption_before_retrofit = buildings.store_consumption(prices_before, bill_rebate=bill_rebate_before)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation,
+                                            financing_cost=financing_cost,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,
                                             calib_renovation=calib_renovation,
                                             calib_intensive=calib_intensive,
                                             ms_heater=ms_heater,
+                                            premature_replacement=premature_replacement,
                                             district_heating=district_heating,
-                                            financing_cost=financing_cost,
                                             step=step,
                                             exogenous_social=exogenous_social,
-                                            premature_replacement=premature_replacement,
                                             supply=supply,
-                                            carbon_value=post_inputs['carbon_value_kwh'].loc[year, :])
+                                            carbon_value=post_inputs['carbon_value_kwh'].loc[year, :],
+                                            carbon_content=post_inputs['carbon_emission'].loc[year, :],
+                                            bill_rebate=bill_rebate)
 
     if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
@@ -417,19 +431,17 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     buildings.logger.info('Writing output')
     if output_details == 'full':
         buildings.logger.debug('Full output')
-        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes)
+        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
+                                                   bill_rebate=bill_rebate)
     elif output_details == 'cost_benefit':
         buildings.logger.debug('Cost-benefit output')
         stock = buildings.simplified_stock().rename(year)
-        output = buildings.parse_output_run_cba(prices, post_inputs, step, taxes=taxes)
+        output = buildings.parse_output_run_cba(prices, post_inputs, step=step, taxes=taxes, bill_rebate=bill_rebate)
     elif output_details == 'consumption':
         buildings.logger.debug('Consumption output')
         stock = buildings.simplified_stock().rename(year)
-        output = buildings.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True)
-        output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
-        temp = prices.T
-        temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
-        output = pd.concat((output, temp), axis=0).rename(year)
+        output = buildings.parse_output_consumption(prices, bill_rebate=bill_rebate)
+
     else:
         raise NotImplemented('output_details should be full, cost_benefit or consumption')
 
@@ -578,16 +590,18 @@ def res_irf(config, path):
                     }, file)
 
         if path is not None:
-            buildings.logger.info('Dumping output in {}'.format(path))
+            buildings.logger.info('Writing output in {}'.format(path))
 
             if buildings.memory:
                 pd.DataFrame(buildings.memory).to_csv(os.path.join(path, 'memory.csv'))
 
+            output.round(3).to_csv(os.path.join(path, 'output.csv'))
+            buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
+
             if config['output'] == 'full':
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+                buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)
-
-            output.round(3).to_csv(os.path.join(path, 'output.csv'))
 
         return os.path.basename(os.path.normpath(path)), output, stock
 

@@ -113,6 +113,9 @@ def run(path=None, folder=None):
                     temp = {'policies': item}
                     parse_policies(temp)
                     configuration[key]['policies'] = temp['policies']
+                    # do not copy Reference simple
+                    configuration[key]['simple']['no_policy'] = False
+                    configuration[key]['simple']['current_policies'] = False
 
             if config_sensitivity.get('remove_policies') is not None:
                 for key in config_sensitivity['remove_policies']:
@@ -120,6 +123,18 @@ def run(path=None, folder=None):
                     configuration[s] = copy.deepcopy(configuration['Reference'])
                     if key in configuration[s]['policies'].keys():
                         configuration[s]['policies'][key]['end'] = configuration[s]['start'] + 2
+                    # do not copy Reference simple
+                    configuration[key]['simple']['no_policy'] = False
+                    configuration[key]['simple']['current_policies'] = False
+
+            if config_sensitivity.get('add_policies') is not None:
+                for key, item in config_sensitivity['add_policies'].items():
+                    s = 'Add{}'.format(key.capitalize().replace('_', ''))
+                    configuration[s] = copy.deepcopy(configuration['Reference'])
+                    configuration[s]['policies'].update({key: item})
+                    # do not copy Reference simple
+                    configuration[key]['simple']['no_policy'] = False
+                    configuration[key]['simple']['current_policies'] = False
 
             if config_sensitivity.get('prices_constant') is not None:
                 configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
