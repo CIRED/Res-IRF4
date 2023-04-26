@@ -14,6 +14,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author Lucas Vivier <vivier@centre-cired.fr>
+import numpy as np
+from matplotlib.patches import Patch
 
 import numpy as np
 import pandas as pd
@@ -569,6 +571,7 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04):
         pass
 
 
+
 def save_fig(fig, save=None, bbox_inches='tight'):
     if save is not None:
         fig.savefig(save, bbox_inches=bbox_inches)
@@ -659,6 +662,59 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x)
     if legend:
         format_legend(ax, loc=loc, left=left)
+    save_fig(fig, save=save)
+
+
+def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title=None, format_y=lambda y, _: y):
+
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+
+    # pivot the data based on categories and stacks
+    df = data.pivot_table(values=y, index=[cat, x], columns=stack,
+                          dropna=False, aggfunc='sum').fillna(0)
+    ncat = data[cat].nunique()
+    nx = data[x].nunique()
+    nstack = data[stack].nunique()
+    range_x = np.arange(nx)
+    width = 0.8 / ncat  # width of each bar
+
+    hatches = [None, '/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+    cats = {}
+    for i, c in enumerate(data[cat].unique()):
+        # iterate over categories, i.e., Scenario
+        # calculate the location of each bar
+        loc_x = (0.5 + i - ncat / 2) * width + range_x
+        bottom = 0
+        hatch = hatches[i]
+        cats.update({c: hatch})
+        for j, s in enumerate(data[stack].unique()):
+            # iterate over stacks, i.e., Policies
+            # obtain the height of each stack of a bar
+            height = df.loc[c][s].values
+
+            # plot the bar, you can customize the color yourself
+            ax.bar(x=loc_x, height=height, bottom=bottom, width=width, color=palette[s], zorder=10, hatch=hatch)
+            # change the bottom attribute to achieve a stacked barplot
+            bottom += height
+
+    # make xlabel
+    ax.set_xticks(range_x)
+    ax.set_xticklabels(data[x].unique(), rotation=0)
+    ax.set_ylabel(y)
+    # make legend
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
+
+    format_ax(ax, title=y_label, xinteger=False, format_y=format_y)
+    ax.set(xlabel=None, ylabel=None)
+
+    leg1 = ax.legend([Patch(hatch=hatch, facecolor='white', edgecolor='black') for _, hatch in cats.items()], list(cats.keys()),
+                     loc='upper left', bbox_to_anchor=(1, 1), frameon=False, shadow=False, title=cat)
+    ax.add_artist(leg1)
+
+    ax.legend([Patch(facecolor=palette[i]) for i in palette.keys()], list(palette.keys()),
+              loc='center left', bbox_to_anchor=(1, 0.5), frameon=False, shadow=False, title=stack)
+
     save_fig(fig, save=save)
 
 

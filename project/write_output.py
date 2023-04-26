@@ -22,6 +22,7 @@ import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots, make_distribution_plot, format_table, make_swarmplot, select
+from project.utils import stack_catplot
 from PIL import Image
 from itertools import product
 
@@ -156,6 +157,8 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
+    # distributive impact
+    # TODO: Clean this part
     levels = ['Housing type', 'Occupancy status', 'Income tenant']
     idx = list(product(*[resources_data['index'][i] for i in levels]))
     ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
@@ -170,14 +173,13 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    save=os.path.join(path, 'ratio_expenditures.png'))
 
     make_swarmplot(df_relative, 'Evolution rate of energy to income ratio (%)', hue='Income tenant', colors=resources_data['colors'],
-                   hue_order=resources_data['index']['Income tenant'][::-1], format_y=lambda y, _: '{:.2%}'.format(y),
+                   hue_order=resources_data['index']['Income tenant'][::-1], format_y=lambda y, _: '{:.0%}'.format(y),
                    save=os.path.join(path, 'ratio_expenditures_diff_income.png'))
 
     make_swarmplot(df_relative, 'Evolution rate of energy to income ratio (%)', hue='Occupancy status', colors=resources_data['colors'],
-                   hue_order=resources_data['index']['Occupancy status'][::-1], format_y=lambda y, _: '{:.2%}'.format(y),
+                   hue_order=resources_data['index']['Occupancy status'][::-1], format_y=lambda y, _: '{:.0%}'.format(y),
                    save=os.path.join(path, 'ratio_expenditures_diff_occupancy.png'))
 
-    # distributive impact
     if False:
         y_name = 'Ratio energy expenditures - renovation and bill (%)'
         x_name = 'Stock (Million households)'
@@ -254,21 +256,28 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
         resources_data['colors'].update(dict(zip(color, sns.color_palette(n_colors=len(color)))))
         subset = subset.sort_index(axis=1)
 
-        historic = [i for i in subset.columns if i in resources_data['public_policies_2019'].index ]
-        historic = resources_data['public_policies_2019'].loc[historic]
+        historic = resources_data['policies_hist'].loc[:, [i for i in subset.columns if i in resources_data['policies_hist'].columns]] / 1000
+
         if not subset.empty:
             if historic is not None:
-                fig, ax = plt.subplots(1, 2, figsize=(12.8, 9.6), gridspec_kw={'width_ratios': [1, 5]}, sharey=True)
-                subset.index = subset.index.astype(int)
-                subset.plot.area(ax=ax[1], stacked=True, color=resources_data['colors'], linewidth=0)
-                historic.T.plot.bar(ax=ax[0], stacked=True, color=resources_data['colors'], legend=False, width=1.5, rot=0)
-                ax[0] = format_ax(ax[0], y_label='Billion euro', xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
-                ax[1] = format_ax(ax[1], xinteger=True, format_y=lambda y, _: '{:.0f}'.format(y), ymin=None)
-                subset.sum(axis=1).rename('Total').plot(ax=ax[1], color='black')
-                format_legend(ax[1], loc='left', left=1.2)
-                ax[0].set_title('Realized')
-                ax[1].set_title('Model results')
-                save_fig(fig, save=os.path.join(path, 'policies_validation.png'))
+
+                if 'Mpr multifamily' in subset.columns and 'Mpr serenite' in subset.columns:
+                    subset['Mpr serenite'] += subset['Mpr multifamily']
+
+                df = format_table(subset.rename_axis('Policies', axis=1).T, name='Years')
+                df = df[df['Policies'].isin(historic.columns)]
+                df_historic = format_table(historic.rename_axis('Policies', axis=1).T, name='Years')
+                df = pd.concat((df, df_historic), axis=0, keys=['Model', 'Realized'], names=['Source']).reset_index('Source')
+                df.reset_index(drop=True, inplace=True)
+
+                yrs = [str(i) for i in subset.index if i in resources_data['policies_hist'].index]
+                df = df[df['Years'].isin(yrs)]
+
+                palette = {s: resources_data['colors'][s] for s in df['Policies'].unique()}
+                stack_catplot(x='Years', y='Data', cat='Source', stack='Policies', data=df, palette=palette,
+                              y_label='Policies amount (Billion euro)',
+                              save=os.path.join(path, 'policies_validation.png'),
+                              format_y=lambda y, _: '{:.0f}'.format(y))
 
                 make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
                                colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
@@ -321,15 +330,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                        format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.2,
                        colors=['darkred', 'darkgrey', 'darkgreen'])
 
-    subset = output.loc[['Balance Tenant private - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
-    subset.dropna(how='any', inplace=True)
-    subset.columns = resources_data['index']['Income tenant']
-    if not subset.empty:
-        make_plot(subset, 'Balance Tenant private (euro per year)',
-                  save=os.path.join(path, 'balance_tenant.png'),
-                  format_y=lambda y, _: '{:.0f}'.format(y),
-                  colors=resources_data['colors'], ymin=None)
-
+    # balance
     subset = output.loc[['Balance Tenant private - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
     subset.dropna(how='any', inplace=True)
     subset.columns = resources_data['index']['Income tenant']

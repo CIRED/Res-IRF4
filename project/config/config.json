@@ -14,7 +14,7 @@
     }
   },
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "scale_heater": [
       {
         "option": "price_elasticity",
@@ -31,10 +31,10 @@
     ]
   },
   "Reference": {
-    "end": 2025,
+    "end": 2023,
     "step": 1,
     "output": "full",
-    "start": 2018,
+    "start": 2017,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
       "activated": true,
@@ -75,7 +75,7 @@
       "information_rate": 0.333,
       "scale": {
         "option": "price_elasticity",
-        "target": -0.8
+        "target": -1.2
       }
     },
     "technical": {

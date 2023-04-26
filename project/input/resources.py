@@ -46,9 +46,11 @@ resources_data['retrofit_hist'] = {k: DataFrame({2019: item}).T / 10 ** 3 for k,
 retrofit_comparison = get_pandas('project/input/resources_dir/retrofit_comparison_resirf3.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
 resources_data['retrofit_comparison'] = retrofit_comparison
 
-resources_data['public_policies_2019'] = DataFrame([1.88, 1.05, 0, 1.32, 0.56, 0.5],
+"""resources_data['public_policies_2019'] = DataFrame([1.88, 1.05, 0, 1.32, 0.56, 0.5],
                                                    index=['Cee', 'Cite', 'Mpr', 'Reduced vta', 'Zero interest loan', 'Mpr serenite'],
-                                                   columns=[2019])
+                                                   columns=[2019])"""
+resources_data['policies_hist'] = get_pandas('project/input/resources_dir/hist_policies.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
+
 
 calibration_data = get_pandas('project/input/resources_dir/data_ceren.csv', lambda x: read_csv(x, index_col=[0]).squeeze())
 resources_data['data_calibration'] = calibration_data

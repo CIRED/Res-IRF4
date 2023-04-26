@@ -1,14 +1,14 @@
 {
   "policies": {
     "carbon_tax": {
-      "start": 2017,
+      "start": 2018,
       "end": 2051,
       "tax": "project/input/policies/current/carbon_tax.csv",
       "emission": "project/input/policies/current/carbon_tax_emission.csv",
       "recycling": null
     },
     "cite": {
-      "start": 2018,
+      "start": 2019,
       "end": 2021,
       "heater": "project/input/policies/current/cite_heater_sf.csv",
       "insulation": "project/input/policies/current/cite_insulation_sf.csv",
@@ -16,18 +16,18 @@
       "policy": "subsidy_ad_valorem"
     },
     "cee": {
-      "start": 2017,
+      "start": 2018,
       "end": 2051,
       "cumac_heater": "project/input/policies/current/cumac_heater.csv",
       "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
       "bonus_insulation": {
         "value": "project/input/policies/current/cee_bonus_insulation.csv",
-        "start": 2019,
+        "start": 2020,
         "end": 2021
       },
       "bonus_heater": {
         "value": "project/input/policies/current/cee_bonus_heater.csv",
-        "start": 2019,
+        "start": 2020,
         "end": 2051
       },
       "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
@@ -36,7 +36,7 @@
       "growth": null
     },
     "mpr_serenite": {
-      "start": 2018,
+      "start": 2019,
       "end": 2051,
       "insulation": "project/input/policies/current/mpr_serenite.csv",
       "cap": "project/input/policies/current/mpr_serenite_cap.csv",
@@ -70,7 +70,7 @@
       "policy": "subsidy_ad_valorem"
     },
     "cap": {
-      "start": 2018,
+      "start": 2019,
       "end": 2051,
       "insulation": "project/input/policies/current/subsidies_cap.csv",
       "target": [
@@ -83,19 +83,19 @@
       ]
     },
     "reduced_vta": {
-      "start": 2018,
+      "start": 2019,
       "end": 2051,
       "value": 0.055
     },
     "restriction_oil": {
-      "start": 2018,
+      "start": 2019,
       "end": 2051,
       "value": "Oil fuel",
       "policy": "restriction_energy"
     },
     "obligation_pb": {
       "start": 2022,
-      "end": 2051,
+      "end": 2022,
       "value": "project/input/policies/current/agenda_obligation_pb.csv",
       "frequency": {
         "value": [
