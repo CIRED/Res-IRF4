@@ -228,6 +228,11 @@ def select(df, dict_levels):
         return df.loc[idx]
 
 
+def format_table(df, name='Years'):
+    df = df.rename_axis(name, axis=1).stack().squeeze().rename('Data').reset_index().astype({name: str})
+    return df
+
+
 def find_discount_rate(factor, lifetime=30):
     discount = fsolve(lambda x: factor - (1 - (1 + x) ** -lifetime) / x, np.array([0.01] * factor.shape[0]))
     return pd.Series(discount, index=factor.index)
@@ -654,6 +659,18 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x)
     if legend:
         format_legend(ax, loc=loc, left=left)
+    save_fig(fig, save=save)
+
+
+def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=lambda y, _: y,
+                   save=None, name='Years'):
+    df = format_table(df, name=name)
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    sns.swarmplot(data=df, x=name, y='Data', hue=hue, palette=colors, ax=ax, hue_order=hue_order)
+    format_ax(ax, title=y_label, format_y=format_y, xinteger=False, ymin=None, ymax=None)
+    format_legend(ax, loc='left', left=1.2)
+    ax.set(xlabel=None, ylabel=None)
+
     save_fig(fig, save=save)
 
 

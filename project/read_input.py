@@ -401,10 +401,15 @@ def read_policies(config):
                              target=True, cost_min=data['min'], cost_max=data_max, gest='insulation', new=data['new'])]
 
     def read_zil(data):
+        l = list()
+        if isinstance(data['gest'], str):
+            data['gest'] = [data['gest']]
+        for gest in data['gest']:
+            l.append(PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
+                                  cost_max=data.get('cost_max'), gest=gest, duration=data['duration']))
+
         # data_max = get_pandas(data['max'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-        return [
-                PublicPolicy('zero_interest_loan', data['start'], data['end'], data['value'], 'zero_interest_loan',
-                             cost_max=data.get('cost_max'), gest='insulation', duration=data['duration'])]
+        return l
 
     def read_reduced_vta(data):
         l = list()
@@ -448,8 +453,11 @@ def read_policies(config):
         if data.get('name') is not None:
             name = data['name']
 
-        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_valorem',
-                              gest=data['gest'], by=by, target=data.get('target')))
+        if isinstance(data['gest'], str):
+            data['gest'] = [data['gest']]
+        for gest in data['gest']:
+            l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_valorem',
+                                  gest=gest, by=by, target=data.get('target')))
         return l
 
     def read_proportional(data):
@@ -478,8 +486,12 @@ def read_policies(config):
         if data.get('proportional') is not None:
             proportional = data['proportional']
 
-        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_proportional',
-                              gest=data['gest'], by=by, target=data.get('target'), proportional=proportional))
+        if isinstance(data['gest'], str):
+            data['gest'] = [data['gest']]
+        for gest in data['gest']:
+            l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_proportional',
+                                  gest=gest, by=by, target=data.get('target'), proportional=proportional))
+
         return l
 
     def restriction_energy(data):
@@ -603,23 +615,21 @@ def read_inputs(config, other_inputs=generic_input):
     energy_taxes = get_pandas(config['macro']['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
     inputs.update({'energy_taxes': energy_taxes.loc[:config['end'], :]})
 
-    energy_vta = get_pandas(config['macro']['energy_vta'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-    inputs.update({'energy_vta': energy_vta})
+    inputs.update({'energy_vta': get_series(config['macro']['energy_vta'], header=None)})
 
-    cost_heater = get_pandas(config['technical']['cost_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-    inputs.update({'cost_heater': cost_heater})
+    inputs.update({'cost_heater': get_series(config['technical']['cost_heater'], header=[0])})
 
-    efficiency = get_pandas(config['technical']['efficiency'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-    inputs.update({'efficiency': efficiency})
+    inputs.update({'efficiency': get_series(config['technical']['efficiency'], header=None)})
 
-    lifetime_heater = get_pandas(config['technical']['lifetime_heater'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename(None)
-    inputs.update({'lifetime_heater': lifetime_heater})
+    inputs.update({'lifetime_heater': get_series(config['technical']['lifetime_heater'], header=[0])})
 
-    cost_insulation = get_pandas(config['technical']['cost_insulation'], lambda x: pd.read_csv(x, index_col=[0]).squeeze().rename(None))
-    inputs.update({'cost_insulation': cost_insulation})
+    inputs.update({'cost_insulation': get_series(config['technical']['cost_insulation'], header=[0])})
 
-    performance_insulation = get_pandas(config['technical']['performance_insulation'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze()).rename(None)
-    inputs.update({'performance_insulation': performance_insulation.to_dict()})
+    inputs.update({'lifetime_insulation': config['technical']['lifetime_insulation']})
+
+    inputs.update({'performance_insulation_renovation': get_series(config['technical']['performance_insulation_renovation'], header=None).to_dict()})
+
+    inputs.update({'performance_insulation_construction': get_series(config['technical']['performance_insulation_construction'], header=None).to_dict()})
 
     bill_saving_preferences = get_pandas(config['macro']['preferences_saving'],
                                          lambda x: pd.read_csv(x, index_col=[0]))
@@ -639,27 +649,51 @@ def read_inputs(config, other_inputs=generic_input):
 
     ms_heater = get_pandas(config['switch_heater']['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
     ms_heater.columns.set_names('Heating system final', inplace=True)
-    inputs.update({'ms_heater': ms_heater})
+    calibration_heater = {
+        'ms_heater': ms_heater,
+        'scale': config['switch_heater']['scale']
+    }
+    inputs.update({'calibration_heater': calibration_heater})
 
-    if config.get('district_heating') is not None:
-        district_heating = get_pandas(config['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
+    if config['switch_heater'].get('district_heating') is not None:
+        district_heating = get_pandas(config['switch_heater']['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
         inputs.update({'district_heating': district_heating})
 
     calibration_renovation = None
     if config['renovation']['endogenous']:
-        df = get_pandas(config['renovation']['renovation_rate_ini'])
-        renovation_rate_ini = df.set_index(list(df.columns[:-1])).squeeze().rename(None).round(decimals=3)
+        renovation_rate_ini = get_series(config['renovation']['renovation_rate_ini']).round(decimals=3)
         scale_calibration = config['renovation']['scale']
-        calibration_renovation = {'renovation_rate_ini': renovation_rate_ini, 'scale': scale_calibration,
-                                  'threshold_indicator': config['renovation'].get('threshold')}
+        ms_insulation_ini = get_pandas(config['renovation']['ms_insulation']['ms_insulation_ini'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
+        minimum_performance = config['renovation']['ms_insulation']['minimum_performance']
+
+        calibration_renovation = {'renovation_rate_ini': renovation_rate_ini,
+                                  'scale': scale_calibration,
+                                  'threshold_indicator': config['renovation'].get('threshold'),
+                                  'ms_insulation_ini': ms_insulation_ini,
+                                  'minimum_performance': minimum_performance}
     inputs.update({'calibration_renovation': calibration_renovation})
 
-    calibration_intensive = None
+    """calibration_intensive = None
     if config['renovation']['ms_insulation']['endogenous']:
         ms_insulation_ini = get_pandas(config['renovation']['ms_insulation']['ms_insulation_ini'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
         minimum_performance = config['renovation']['ms_insulation']['minimum_performance']
         calibration_intensive = {'ms_insulation_ini': ms_insulation_ini, 'minimum_performance': minimum_performance}
-    inputs.update({'calibration_intensive': calibration_intensive})
+    inputs.update({'calibration_intensive': calibration_intensive})"""
+
+    if config['renovation'].get('exogenous_social'):
+        exogenous_social = get_pandas(config['renovation'],
+                                      lambda x: pd.read_csv(x, index_col=[0, 1]))
+        exogenous_social.columns = exogenous_social.columns.astype(int)
+
+        inputs.update({'exogenous_social': exogenous_social})
+
+    temp = None
+    if config['renovation'].get('rational_behavior') is not None:
+        if config['renovation']['rational_behavior']['activated']:
+            temp = {'calibration': config['renovation']['rational_behavior']['calibration'],
+                    'social': config['renovation']['rational_behavior']['social'],
+                    }
+    inputs.update({'rational_behavior': temp})
 
     if config['macro'].get('population') is not None:
         population = get_pandas(config['macro']['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
@@ -747,26 +781,13 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'traditional_material': config['technical']['footprint']['Traditional material']})
     inputs.update({'bio_material': config['technical']['footprint']['Bio material']})
 
-    if config.get('exogenous_social'):
-        exogenous_social = get_pandas(config['exogenous_social'],
-                                      lambda x: pd.read_csv(x, index_col=[0, 1]))
-        exogenous_social.columns = exogenous_social.columns.astype(int)
-
-        inputs.update({'exogenous_social': exogenous_social})
-
     if config['macro'].get('use_subsidies'):
         temp = get_pandas(config['macro']['use_subsidies'], lambda x: pd.read_csv(x, index_col=[0]).squeeze())
         inputs.update({'use_subsidies': temp})
     else:
         inputs.update({'use_subsidies': pd.Series(dtype=float)})
 
-    temp = None
-    if config['renovation'].get('rational_behavior') is not None:
-        if config['renovation']['rational_behavior']['activated']:
-            temp = {'calibration': config['renovation']['rational_behavior']['calibration'],
-                    'social': config['renovation']['rational_behavior']['social'],
-                    }
-    inputs.update({'rational_behavior': temp})
+
 
     if 'implicit_discount_rate' in config.keys():
         inputs['implicit_discount_rate'] = get_series(config['implicit_discount_rate'])
@@ -888,7 +909,7 @@ def parse_inputs(inputs, taxes, config, stock):
     construction = (reindex_mi(construction, ms_heater_built.index).T * ms_heater_built).T
     construction = construction.loc[(construction != 0).any(axis=1)]
 
-    performance_insulation = pd.concat([pd.Series(inputs['performance_insulation'])] * construction.shape[0], axis=1,
+    performance_insulation = pd.concat([pd.Series(inputs['performance_insulation_construction'])] * construction.shape[0], axis=1,
                                        keys=construction.index).T
 
     parsed_inputs['flow_built'] = pd.concat((construction, performance_insulation), axis=1).set_index(

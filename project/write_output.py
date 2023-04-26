@@ -21,7 +21,7 @@ import os
 import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots, make_distribution_plot
+    assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots, make_distribution_plot, format_table, make_swarmplot, select
 from PIL import Image
 from itertools import product
 
@@ -156,13 +156,34 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
-    # distributive impact
-    y_name = 'Ratio energy expenditures - renovation and bill (%)'
-    x_name = 'Stock (Million households)'
+    levels = ['Housing type', 'Occupancy status', 'Income tenant']
+    idx = list(product(*[resources_data['index'][i] for i in levels]))
+    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
+    df = output.loc[ratio, :].dropna(axis=1, how='all').set_axis(pd.MultiIndex.from_tuples(idx, names=levels))
+    start = min(df.columns)
 
-    dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
-    make_plots(dict_df, y_name, loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
-               save=os.path.join(path, 'distributive_effect.png'))
+    df_relative = (df.T - df.loc[:, start]).T / df
+    df_relative.drop(start, axis=1, inplace=True)
+
+    make_swarmplot(df, 'Energy to income ratio (%)', hue='Income tenant', colors=resources_data['colors'],
+                   hue_order=resources_data['index']['Income tenant'][::-1], format_y=lambda y, _: '{:.0%}'.format(y),
+                   save=os.path.join(path, 'ratio_expenditures.png'))
+
+    make_swarmplot(df_relative, 'Evolution rate of energy to income ratio (%)', hue='Income tenant', colors=resources_data['colors'],
+                   hue_order=resources_data['index']['Income tenant'][::-1], format_y=lambda y, _: '{:.2%}'.format(y),
+                   save=os.path.join(path, 'ratio_expenditures_diff_income.png'))
+
+    make_swarmplot(df_relative, 'Evolution rate of energy to income ratio (%)', hue='Occupancy status', colors=resources_data['colors'],
+                   hue_order=resources_data['index']['Occupancy status'][::-1], format_y=lambda y, _: '{:.2%}'.format(y),
+                   save=os.path.join(path, 'ratio_expenditures_diff_occupancy.png'))
+
+    # distributive impact
+    if False:
+        y_name = 'Ratio energy expenditures - renovation and bill (%)'
+        x_name = 'Stock (Million households)'
+        dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
+        make_plots(dict_df, y_name, loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
+                   save=os.path.join(path, 'distributive_effect.png'))
 
     if False:
         y_label = 'Distribution in the population (Million households)'
@@ -422,15 +443,65 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
     # graph distributive impact
     levels = ['Housing type', 'Occupancy status', 'Income tenant']
-    levels = list(product(*[resources_data['index'][i] for i in levels]))
+    idx = list(product(*[resources_data['index'][i] for i in levels]))
 
     years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
     years = list(set(years))
     years = [y for y in years if y in result['Reference'].columns]
-    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
+
+    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
+
+    idx = pd.MultiIndex.from_tuples(idx, names=levels)
+    dict_rslt = {k: i.loc[ratio, :].set_axis(idx, axis=0).dropna(axis=1, how='all') for k, i in result.items()}
+
+    start = min(dict_rslt['Reference'].columns)
+    ini = pd.DataFrame({k: i.loc[:, start] for k, i in dict_rslt.items() if start in i.columns})
+
+    for year in years:
+        df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
+        make_swarmplot(df, 'Energy to income ratio {} (%)'.format(year), hue='Income tenant', colors=resources_data['colors'],
+                       hue_order=resources_data['index']['Income tenant'][::-1],
+                       format_y=lambda y, _: '{:.0%}'.format(y),
+                       save=os.path.join(folder_img, 'ratio_expenditures_swarmplot_{}.png'.format(year)), name='Scenario')
+
+        # > 0 positive means households are loosing money compare to ref
+        rate = ((df.T - df.loc[:, 'Reference']) / df.loc[:, 'Reference']).T
+        rate = rate.loc[:, [i for i in rate.columns if i != 'Reference']]
+        rate = select(rate, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+        rate = format_table(rate, name='Scenarios')
+        rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
+
+
+        """f = sns.relplot(
+            data=rate, x="Income tenant", y="Data",
+            col="Decision maker", hue="Scenarios", style="Scenarios",
+            kind="line"
+        )
+        f.set_title({'col_name'})"""
+
+        # > 0 positive means households are loosing money compare to ini
+        diff = (df - ini) / ini
+        make_swarmplot(diff, 'Evolution rate energy to income ratio {} (%)'.format(year, start), hue='Income tenant',
+                       colors=resources_data['colors'],
+                       hue_order=resources_data['index']['Income tenant'][::-1],
+                       format_y=lambda y, _: '{:.0%}'.format(y),
+                       save=os.path.join(folder_img, 'evolution_rate_ini_eir_income_{}.png'.format(year)), name='Scenario')
+
+        make_swarmplot(diff, 'Evolution rate energy to income ratio {} (%)'.format(year, start), hue='Occupancy status', colors=resources_data['colors'],
+                       hue_order=resources_data['index']['Occupancy status'][::-1],
+                       format_y=lambda y, _: '{:.0%}'.format(y),
+                       save=os.path.join(folder_img, 'evolution_rate_ini_eir_occupancy_{}.png'.format(year)), name='Scenario')
+
+    levels = ['Housing type', 'Occupancy status', 'Income tenant']
+    levels = list(product(*[resources_data['index'][i] for i in levels]))
+    years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
+    years = list(set(years))
+    years = [y for y in years if y in result['Reference'].columns]
     stock = ['Stock {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
     y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
     x_name = 'Stock (Million households)'
+
+    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
     dict_rslt = dict()
     for year in years:
         for key, item in result.items():
@@ -441,15 +512,6 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                    hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_{}.png'.format(year)),
                    colors=colors)
 
-    # TODO: factorize code
-    levels = ['Housing type', 'Occupancy status', 'Income tenant']
-    levels = list(product(*[resources_data['index'][i] for i in levels]))
-
-    years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
-    years = list(set(years))
-    years = [y for y in years if y in result['Reference'].columns]
-    ratio = ['Ratio expenditure std {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
-    stock = ['Stock {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
     y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
     x_name = 'Stock (Million households)'
     dict_rslt = dict()
@@ -461,7 +523,6 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
                    hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_standard_{}.png'.format(year)),
                    colors=colors)
-
 
     # graph line plot 2D comparison
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
@@ -565,11 +626,11 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             'n_columns': 2}],
         'Rate {} (%)': [{
             'groupby': 'Decision maker',
-            'format_y': lambda y, _: '{:,.1%}'.format(y),
+            'format_y': lambda y, _: '{:,.0%}'.format(y),
             'n_columns': 2}],
         'Rate Single-family - Owner-occupied {} (%)': [{
             'groupby': 'Income owner',
-            'format_y': lambda y, _: '{:,.1%}'.format(y),
+            'format_y': lambda y, _: '{:,.0%}'.format(y),
             'n_columns': 5}],
         'Retrofit': [{
             'variables': ['Switch decarbonize (Thousand households)',
@@ -1010,37 +1071,38 @@ def compare_results(output, path):
     df.round(1).to_csv(os.path.join(path, 'validation.csv'))
 
 
-def make_summary(path):
+def make_summary(path, option='input'):
 
+
+    images = []
     # 1. reference - input
-    path_reference = os.path.join(path, 'Reference')
-    images_ini = ['ini/stock.png', 'ini/thermal_insulation.png', 'energy_prices.png', 'cost_curve_insulation.png', 'policy_scenario.png']
-    images_ini += ['calibration/result_policies_assessment.png']
-    images_ini = [os.path.join(path_reference, i) for i in images_ini]
+    if option == 'input':
+        path_reference = os.path.join(path, 'Reference')
 
-    # 2. result - reference
-    path_reference_result = os.path.join(path_reference, 'img')
-    images_reference = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png',
-                        'investment.png', 'financing_households.png', 'policies_validation.png']
-    images_reference = [os.path.join(path_reference_result, i) for i in images_reference]
+        temp = ['ini/stock.png', 'ini/thermal_insulation.png', 'energy_prices.png', 'cost_curve_insulation.png', 'policy_scenario.png']
+        temp += ['calibration/result_policies_assessment.png']
+        images = [os.path.join(path_reference, i) for i in temp]
+
+        # 2. result - reference
+        path_reference_result = os.path.join(path_reference, 'img')
+        temp = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png',
+                            'investment.png', 'financing_households.png', 'policies_validation.png']
+        images += [os.path.join(path_reference_result, i) for i in temp]
+
+    path_policies = os.path.join(path, 'policies')
+    temp = ['npv_cofp.png']
+    images += [os.path.join(path_policies, i) for i in temp]
 
     # 3. result - compare
     path_compare = os.path.join(path, 'img')
-    images_compare = ['renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
-                      'consumption_energy.png', 'investment_total.png', 'subsidies_total.png',
-                      'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',
-                      'retrofit_decarbonize_options.png'
-                      ]
-    images_compare = [os.path.join(path_compare, i) for i in images_compare]
+    temp = ['renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
+            'consumption_energy.png', 'investment_total.png', 'subsidies_total.png',
+            'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',
+            'retrofit_decarbonize_options.png'
+            ]
+    images += [os.path.join(path_compare, i) for i in temp]
 
-    path_policies = os.path.join(path, 'policies')
-    image_policies = ['npv_cofp.png']
-    image_policies = [os.path.join(path_policies, i) for i in image_policies]
-
-    # Appendix
-    images_appendix = [os.path.join(path_reference, 'stock_performance.png'),
-                       os.path.join(path_reference, 'ini/heating_intensity.png')]
-    images = [i for i in images_ini + images_reference + images_compare + image_policies if os.path.isfile(i)]
+    images = [i for i in images if os.path.isfile(i)]
 
     images = [Image.open(img) for img in images]
     new_images = []
@@ -1050,7 +1112,7 @@ def make_summary(path):
         background.paste(png, mask=png.split()[3])  # 3 is the alpha channel
         new_images.append(background)
 
-    pdf_path = os.path.join(path, 'summary_run.pdf')
+    pdf_path = os.path.join(path, 'summary.pdf')
 
     new_images[0].save(
         pdf_path, 'PDF', resolution=100.0, save_all=True, append_images=new_images[1:]

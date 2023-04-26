@@ -1,0 +1,14 @@
+{
+  "policies": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "sub_proportional": {
+          "start": 2020,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": ["insulation", "heater"],
+          "value": 1,
+          "proportional": "tCO2_cumac",
+          "growth": "project/input/policies/carbon_value.csv"
+        }
+  }
+}

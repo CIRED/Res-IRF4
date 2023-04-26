@@ -6,7 +6,7 @@
         "end": 2051,
         "policy": "zero_interest_loan",
         "cost_max": 100000,
-        "gest": "insulation",
+        "gest": ["insulation", "heater"],
         "value": 0.0,
         "duration": 30
       }
