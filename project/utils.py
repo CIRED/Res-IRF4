@@ -306,15 +306,16 @@ def deciles2quintiles_dict(inputs):
 
 def parse_policies(config):
     # configuration[key]
-    if isinstance(config['policies'], str):
-        config['policies'] = get_json(config['policies'])['policies']
-    elif isinstance(config['policies'], dict):
-        if 'file' in config['policies'].keys():
-            policies = get_json(config['policies']['file'])
-            del config['policies']['file']
-            # do not replace
-            policies = {k: i for k, i in policies['policies'].items() if k not in config['policies'].keys()}
-            config['policies'].update(policies)
+    if config.get('policies') is not None:
+        if isinstance(config['policies'], str):
+            config['policies'] = get_json(config['policies'])['policies']
+        elif isinstance(config['policies'], dict):
+            if 'file' in config['policies'].keys():
+                policies = get_json(config['policies']['file'])
+                del config['policies']['file']
+                # do not replace
+                policies = {k: i for k, i in policies['policies'].items() if k not in config['policies'].keys()}
+                config['policies'].update(policies)
 
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):

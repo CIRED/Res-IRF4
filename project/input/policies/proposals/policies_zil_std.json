@@ -2,7 +2,7 @@
   "policies": {
     "file": "project/input/policies/current/policies_ref.json",
     "zero_interest_loan": {
-        "start": 2020,
+        "start": 2019,
         "end": 2051,
         "policy": "zero_interest_loan",
         "cost_max": 10000,

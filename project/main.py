@@ -26,7 +26,7 @@ import re
 import argparse
 
 from project.write_output import plot_compare_scenarios, indicator_policies, make_summary
-from project.model import res_irf
+from project.model import res_irf, prepare_config
 from project.utils import get_json, parse_policies
 
 LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
@@ -57,7 +57,7 @@ def run(path=None, folder=None):
         configuration = path
 
     for key in [k for k in configuration.keys() if k not in ['assessment', 'scenarios', 'sensitivity']]:
-        parse_policies(configuration[key])
+        configuration[key] = prepare_config(configuration[key])
 
     policy_name = None
     prefix = ''
@@ -66,6 +66,9 @@ def run(path=None, folder=None):
             config_policies = configuration['assessment']
             config_policies = {key: item for key, item in config_policies.items() if item is not None}
             policy_name = configuration['assessment']['Policy name']
+            end = configuration['Reference']['policies'][policy_name]['end']
+            configuration['Reference']['end'] = end
+
             prefix = policy_name
 
             if config_policies['AP-1']:
@@ -123,8 +126,8 @@ def run(path=None, folder=None):
                     if key in configuration[s]['policies'].keys():
                         configuration[s]['policies'][key]['end'] = configuration[s]['start'] + 2
                     # do not copy Reference simple
-                    configuration[key]['simple']['no_policy'] = False
-                    configuration[key]['simple']['current_policies'] = False
+                    configuration[s]['simple']['no_policy'] = False
+                    configuration[s]['simple']['current_policies'] = False
 
             if config_scenarios.get('add_policies') is not None:
                 for key, item in config_scenarios['add_policies'].items():
@@ -132,8 +135,8 @@ def run(path=None, folder=None):
                     configuration[s] = copy.deepcopy(configuration['Reference'])
                     configuration[s]['policies'].update({key: item})
                     # do not copy Reference simple
-                    configuration[key]['simple']['no_policy'] = False
-                    configuration[key]['simple']['current_policies'] = False
+                    configuration[s]['simple']['no_policy'] = False
+                    configuration[s]['simple']['current_policies'] = False
 
             if config_scenarios.get('prices_constant') is not None:
                 configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])

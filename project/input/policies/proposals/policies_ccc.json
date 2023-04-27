@@ -1,8 +1,8 @@
 {
   "policies": {
     "file": "project/input/policies/current/policies_calibration.json",
-    "obligation_pb": {
-      "start": 2022,
+    "obligation": {
+      "start": 2020,
       "end": 2051,
       "value": "project/input/policies/current/agenda_obligation_pb.csv",
       "frequency": {
@@ -23,7 +23,7 @@
       "policy": "obligation"
     },
     "ccc_insulation": {
-      "start": 2022,
+      "start": 2020,
       "end": 2051,
       "policy": "subsidy_ad_valorem",
       "target": "global_renovation",
@@ -31,7 +31,7 @@
       "value": "project/input/policies/sub_sichel.csv"
     },
     "ccc_heater": {
-      "start": 2022,
+      "start": 2020,
       "end": 2051,
       "policy": "subsidy_ad_valorem",
       "columns": "project/input/policies/target/target_heat_pump.csv",

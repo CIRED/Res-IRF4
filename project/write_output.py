@@ -157,49 +157,6 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                    format_y=lambda y, _: '{:.0f}'.format(y),
                    colors=resources_data['colors'], loc='left', left=1.25)
 
-    # distributive impact
-    # TODO: Clean this part
-    levels = ['Housing type', 'Occupancy status', 'Income tenant']
-    idx = list(product(*[resources_data['index'][i] for i in levels]))
-    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
-    df = output.loc[ratio, :].dropna(axis=1, how='all').set_axis(pd.MultiIndex.from_tuples(idx, names=levels))
-    start = min(df.columns)
-
-    df_relative = (df.T - df.loc[:, start]).T / df
-    df_relative.drop(start, axis=1, inplace=True)
-
-    make_swarmplot(df, 'Energy to income ratio (%)', hue='Income tenant', colors=resources_data['colors'],
-                   hue_order=resources_data['index']['Income tenant'][::-1], format_y=lambda y, _: '{:.0%}'.format(y),
-                   save=os.path.join(path, 'ratio_expenditures.png'))
-
-    make_swarmplot(df_relative, 'Evolution rate of energy to income ratio (%)', hue='Income tenant', colors=resources_data['colors'],
-                   hue_order=resources_data['index']['Income tenant'][::-1], format_y=lambda y, _: '{:.0%}'.format(y),
-                   save=os.path.join(path, 'ratio_expenditures_diff_income.png'))
-
-    make_swarmplot(df_relative, 'Evolution rate of energy to income ratio (%)', hue='Occupancy status', colors=resources_data['colors'],
-                   hue_order=resources_data['index']['Occupancy status'][::-1], format_y=lambda y, _: '{:.0%}'.format(y),
-                   save=os.path.join(path, 'ratio_expenditures_diff_occupancy.png'))
-
-    if False:
-        y_name = 'Ratio energy expenditures - renovation and bill (%)'
-        x_name = 'Stock (Million households)'
-        dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
-        make_plots(dict_df, y_name, loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
-                   save=os.path.join(path, 'distributive_effect.png'))
-
-    if False:
-        y_label = 'Distribution in the population (Million households)'
-        cbar_title = 'Energy expenditures on income ratio\n'
-        make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
-                               cbar_format=lambda y, _: '{:.0%}'.format(y),
-                               save=os.path.join(path, 'distributive_ratio_expenditures.png')
-                               )
-        dict_df = {y: cumulated_plot(i['stock'].rename(x_name) / 10 ** 6, i['ratio_total_std'].rename(y_name), plot=False) for y, i in buildings.expenditure_store.items()}
-        make_distribution_plot(dict_df, y_label, cbar_title, format_y=lambda y, _: '{:.0f}'.format(y),
-                               cbar_format=lambda y, _: '{:.0%}'.format(y),
-                               save=os.path.join(path, 'distributive_ratio_expenditures_standard.png')
-                               )
-
     df = output.loc[['Retrofit measures {} (Thousand households)'.format(i) for i in resources_data['index']['Count']], :].T
     df.dropna(inplace=True)
     df.columns = resources_data['index']['Count']
@@ -460,10 +417,28 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
     for year in years:
         df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
-        make_swarmplot(df, 'Energy to income ratio {} (%)'.format(year), hue='Income tenant', colors=resources_data['colors'],
+        """make_swarmplot(df, 'Energy to income ratio {} (%)'.format(year), hue='Income tenant', colors=resources_data['colors'],
                        hue_order=resources_data['index']['Income tenant'][::-1],
                        format_y=lambda y, _: '{:.0%}'.format(y),
-                       save=os.path.join(folder_img, 'ratio_expenditures_swarmplot_{}.png'.format(year)), name='Scenario')
+                       save=os.path.join(folder_img, 'ratio_expenditures_swarmplot_{}.png'.format(year)), name='Scenario')"""
+
+        data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+        data = format_table(data, name='Scenarios')
+        data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
+
+        from project.utils import format_ax
+
+        fig = sns.relplot(
+            data=data, x='Income tenant', y='Data',
+            col='Decision maker', hue='Scenarios', style='Scenarios',
+            kind='line'
+        )
+        for k, ax in fig.axes_dict.items():
+            ax.set(xlabel=None, ylabel=None)
+            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
+            ax.set_title(k, fontsize=15)
+
+        fig.savefig(os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)), bbox_inches='tight')
 
         # > 0 positive means households are loosing money compare to ref
         rate = ((df.T - df.loc[:, 'Reference']) / df.loc[:, 'Reference']).T
@@ -472,58 +447,35 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         rate = format_table(rate, name='Scenarios')
         rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
 
-
-        """f = sns.relplot(
-            data=rate, x="Income tenant", y="Data",
-            col="Decision maker", hue="Scenarios", style="Scenarios",
-            kind="line"
+        fig = sns.relplot(
+            data=rate, x='Income tenant', y='Data',
+            col='Decision maker', hue='Scenarios', style='Scenarios',
+            kind='line'
         )
-        f.set_title({'col_name'})"""
+        for k, ax in fig.axes_dict.items():
+            ax.set(xlabel=None, ylabel=None)
+            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
+            ax.set_title(k, fontsize=15)
+
+        fig.savefig(os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)), bbox_inches='tight')
 
         # > 0 positive means households are loosing money compare to ini
         diff = (df - ini) / ini
-        make_swarmplot(diff, 'Evolution rate energy to income ratio {} (%)'.format(year, start), hue='Income tenant',
-                       colors=resources_data['colors'],
-                       hue_order=resources_data['index']['Income tenant'][::-1],
-                       format_y=lambda y, _: '{:.0%}'.format(y),
-                       save=os.path.join(folder_img, 'evolution_rate_ini_eir_income_{}.png'.format(year)), name='Scenario')
+        diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+        diff = format_table(diff, name='Scenarios')
+        diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
 
-        make_swarmplot(diff, 'Evolution rate energy to income ratio {} (%)'.format(year, start), hue='Occupancy status', colors=resources_data['colors'],
-                       hue_order=resources_data['index']['Occupancy status'][::-1],
-                       format_y=lambda y, _: '{:.0%}'.format(y),
-                       save=os.path.join(folder_img, 'evolution_rate_ini_eir_occupancy_{}.png'.format(year)), name='Scenario')
+        fig = sns.relplot(
+            data=diff, x='Income tenant', y='Data',
+            col='Decision maker', hue='Scenarios', style='Scenarios',
+            kind='line'
+        )
+        for k, ax in fig.axes_dict.items():
+            ax.set(xlabel=None, ylabel=None)
+            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
+            ax.set_title(k, fontsize=15)
 
-    levels = ['Housing type', 'Occupancy status', 'Income tenant']
-    levels = list(product(*[resources_data['index'][i] for i in levels]))
-    years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
-    years = list(set(years))
-    years = [y for y in years if y in result['Reference'].columns]
-    stock = ['Stock {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
-    y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
-    x_name = 'Stock (Million households)'
-
-    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in levels]
-    dict_rslt = dict()
-    for year in years:
-        for key, item in result.items():
-            if year in item.columns:
-                s, r = item.loc[stock, year].set_axis(levels, axis=0), item.loc[ratio, year].set_axis(levels, axis=0)
-                dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
-        make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
-                   hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_{}.png'.format(year)),
-                   colors=colors)
-
-    y_name = 'Ratio energy expenditures - renovation and bill {} (%)'
-    x_name = 'Stock (Million households)'
-    dict_rslt = dict()
-    for year in years:
-        for key, item in result.items():
-            if year in item.columns:
-                s, r = item.loc[stock, year].set_axis(levels, axis=0), item.loc[ratio, year].set_axis(levels, axis=0)
-                dict_rslt[key] = cumulated_plot(s.rename(x_name) / 10 ** 6, r.rename(y_name), plot=False)
-        make_plots(dict_rslt, y_name.format(year), loc='left', left=1.1, format_y=lambda y, _: '{:.0%}'.format(y),
-                   hlines=0.08, save=os.path.join(folder_img, 'ratio_expenditures_standard_{}.png'.format(year)),
-                   colors=colors)
+        fig.savefig(os.path.join(folder_img, 'energy_income_ratio_rate_ini_{}.png'.format(year)), bbox_inches='tight')
 
     # graph line plot 2D comparison
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
@@ -573,7 +525,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                  'Efficiency insulation (euro/kWh standard)': {'name': 'efficiency_insulation.png',
                                                                'format_y': lambda y, _: '{:,.2f}'.format(y)},
                  'Efficiency subsidies insulation (euro/kWh standard)': {'name': 'efficiency_subsidies_insulation.png',
-                                                                         'format_y': lambda y, _: '{:,.2f}'.format(y)},
+                                                                         'format_y': lambda y, _: '{:,.3f}'.format(y)},
                  'Consumption standard saving insulation (%)': {'name': 'consumption_saving_insulation.png',
                                                                 'format_y': lambda y, _: '{:,.1%}'.format(y)},
                  }
@@ -1074,7 +1026,6 @@ def compare_results(output, path):
 
 def make_summary(path, option='input'):
 
-
     images = []
     # 1. reference - input
     if option == 'input':
@@ -1096,10 +1047,11 @@ def make_summary(path, option='input'):
 
     # 3. result - compare
     path_compare = os.path.join(path, 'img')
-    temp = ['renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
+    temp = ['energy_income_ratio_rate_2030.png', 'energy_income_ratio_rate_ini_2030.png',
+            'renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
             'consumption_energy.png', 'investment_total.png', 'subsidies_total.png',
             'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',
-            'retrofit_decarbonize_options.png'
+            'retrofit_decarbonize_options.png',
             ]
     images += [os.path.join(path_compare, i) for i in temp]
 

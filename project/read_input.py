@@ -656,8 +656,8 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'calibration_heater': calibration_heater})
 
     if config['switch_heater'].get('district_heating') is not None:
-        district_heating = get_pandas(config['switch_heater']['district_heating'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())
-        inputs.update({'district_heating': district_heating})
+        district_heating = get_series(config['switch_heater']['district_heating'], header=None)
+        inputs.update({'flow_district_heating': district_heating.diff().fillna(0)})
 
     calibration_renovation = None
     if config['renovation']['endogenous']:
@@ -672,13 +672,6 @@ def read_inputs(config, other_inputs=generic_input):
                                   'ms_insulation_ini': ms_insulation_ini,
                                   'minimum_performance': minimum_performance}
     inputs.update({'calibration_renovation': calibration_renovation})
-
-    """calibration_intensive = None
-    if config['renovation']['ms_insulation']['endogenous']:
-        ms_insulation_ini = get_pandas(config['renovation']['ms_insulation']['ms_insulation_ini'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None).round(decimals=3))
-        minimum_performance = config['renovation']['ms_insulation']['minimum_performance']
-        calibration_intensive = {'ms_insulation_ini': ms_insulation_ini, 'minimum_performance': minimum_performance}
-    inputs.update({'calibration_intensive': calibration_intensive})"""
 
     if config['renovation'].get('exogenous_social'):
         exogenous_social = get_pandas(config['renovation'],
@@ -771,7 +764,7 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'carbon_value': carbon_value.loc[idx]})
 
     carbon_emission = get_pandas(config['technical']['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
-    inputs.update({'carbon_emission': carbon_emission.loc[idx, :]})
+    inputs.update({'carbon_emission': carbon_emission.loc[idx, :] * 1000})
 
     footprint_built = get_pandas(config['technical']['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
     inputs.update({'footprint_built': footprint_built})
@@ -786,8 +779,6 @@ def read_inputs(config, other_inputs=generic_input):
         inputs.update({'use_subsidies': temp})
     else:
         inputs.update({'use_subsidies': pd.Series(dtype=float)})
-
-
 
     if 'implicit_discount_rate' in config.keys():
         inputs['implicit_discount_rate'] = get_series(config['implicit_discount_rate'])

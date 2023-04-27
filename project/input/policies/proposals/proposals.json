@@ -1,0 +1,9 @@
+{
+    "policies": {
+      "CCC": "project/input/policies/proposals/policies_ccc.json",
+      "CarbonTaxRecycling": "project/input/policies/proposals/policies_carbon_vsc_recycling.json",
+      "ZilKfW": "project/input/policies/proposals/policies_zil_ambitious.json",
+      "ProportionalMWh": "project/input/policies/proposals/policies_proportional.json",
+      "ProportionalCO2": "project/input/policies/proposals/policies_proportional_CO2.json"
+    }
+}

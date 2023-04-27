@@ -6,6 +6,7 @@ import json
 from importlib import resources
 from pickle import load, dump
 import psutil
+from copy import deepcopy
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
@@ -56,7 +57,22 @@ def get_config() -> dict:
             return json.load(file)['Reference']
 
 
-def config2inputs(config=None, building_stock=None, end=None):
+def prepare_config(config):
+    # read parameters for master file
+    if 'file' in config.keys():
+        temp = deepcopy(config)
+        path = config['file']
+        with open(path) as file:
+            config = json.load(file)
+        config.update(temp)
+        del config['file']
+
+    # read policies
+    parse_policies(config)
+    return config
+
+
+def config2inputs(config=None):
     """Create main Python object from configuration file.
 
     Parameters
@@ -74,18 +90,13 @@ def config2inputs(config=None, building_stock=None, end=None):
     if config is None:
         config = get_config()
 
-    if building_stock is not None:
-        config['building_stock'] = building_stock
-
-    if end is not None:
-        config['end'] = end
+    config = prepare_config(config)
 
     year = config['start']
     stock = read_stock(config)
     inputs = read_inputs(config)
 
-    if config.get('policies') is not None:
-        parse_policies(config)
+    # parse_policies(config)
 
     if config['simple'].get('heating_system'):
         replace = config['simple']['heating_system']
@@ -100,7 +111,7 @@ def config2inputs(config=None, building_stock=None, end=None):
         to_drop = []
         if 'Heating-District heating' in config['simple']['heating_system'].keys():
             if config['simple']['heating_system']['Heating-District heating'] is None:
-                inputs['district_heating'] = None
+                inputs['flow_district_heating'] = None
                 to_drop += ['Heating-District heating']
         """to_replace = [k for k, i in replace.items() if i not in inputs['ms_heater'].columns and i is not None]
         if to_replace:
@@ -191,7 +202,7 @@ def config2inputs(config=None, building_stock=None, end=None):
         stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
                                                                                 policies_insulation, inputs)
 
-    return inputs, stock, year, policies_heater, policies_insulation, taxes
+    return config, inputs, stock, year, policies_heater, policies_insulation, taxes
 
 
 def deciles2quintiles(stock, policies_heater, policies_insulation, inputs):
@@ -257,7 +268,7 @@ def select_post_inputs(parsed_inputs):
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
 
-def get_inputs(path=None, config=None, variables=None, building_stock=None):
+def get_inputs(path=None, config=None, variables=None):
     """Initialize thermal buildings object based on input dictionnary.
 
     Parameters
@@ -268,7 +279,6 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
         If config is None use configuration file of Reference scenario
     variables: list, optional
         'buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh', 'health_cost'
-    building_stock
 
     Returns
     -------
@@ -278,7 +288,7 @@ def get_inputs(path=None, config=None, variables=None, building_stock=None):
         variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh',
                      'health_cost', 'income']
 
-    inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, building_stock=building_stock)
+    config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': inputs_dynamics['buildings'],
               'income': inputs['income'],
@@ -352,6 +362,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         'cost_heater': parsed_inputs['cost_heater'],
         'lifetime_heater': parsed_inputs['lifetime_heater'],
         'calibration_heater': parsed_inputs['calibration_heater'],
+        'flow_district_heating': parsed_inputs['flow_district_heating'],
         'cost_insulation': parsed_inputs['cost_insulation'],
         'lifetime_insulation': parsed_inputs['lifetime_insulation'],
         'calibration_renovation': parsed_inputs['calibration_renovation'],
@@ -479,7 +490,7 @@ def res_irf(config, path):
     logger = create_logger(path)
     try:
         logger.info('Reading input')
-        inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+        config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
 
         if False:
             policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
@@ -547,6 +558,10 @@ def res_irf(config, path):
             if isinstance(f_built, pd.DataFrame):
                 f_built = f_built.sum(axis=1).rename(year)
 
+            flow_district_heating = None
+            if inputs_dynamics['flow_district_heating'] is not None:
+                flow_district_heating = inputs_dynamics['flow_district_heating'].loc[year]
+
             if technical_progress is not None:
                 if technical_progress.get('insulation') is not None:
                     inputs_dynamics['cost_insulation'] *= (1 + technical_progress['insulation'].loc[year])**step
@@ -564,7 +579,7 @@ def res_irf(config, path):
                                              premature_replacement=inputs_dynamics['premature_replacement'],
                                              financing_cost=inputs_dynamics['financing_cost'],
                                              supply=inputs_dynamics['supply'],
-                                             district_heating=inputs.get('district_heating'),
+                                             district_heating=flow_district_heating,
                                              demolition_rate=inputs_dynamics['demolition_rate'],
                                              exogenous_social=inputs.get('exogenous_social'),
                                              output_details=config['output'],
@@ -690,7 +705,7 @@ def calibration_res_irf(path, config=None):
     logger = create_logger(path)
     try:
         logger.info('Reading input')
-        inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+        config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
         inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config, logger=logger)
         buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']
 
@@ -722,7 +737,7 @@ def calibration_res_irf(path, config=None):
         output = pd.concat((output, o), axis=1)
         output.to_csv(os.path.join(buildings.path, 'output_calibration.csv'))
 
-        if year == 2019:
+        if year == buildings.first_year +1 :
             compare_results(o, buildings.path)
 
         calibration = {

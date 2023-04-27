@@ -2,7 +2,7 @@
   "policies": {
         "file": "project/input/policies/current/policies_calibration.json",
         "sub_proportional": {
-          "start": 2020,
+          "start": 2019,
           "end": 2051,
           "policy": "subsidy_proportional",
           "gest": ["insulation", "heater"],

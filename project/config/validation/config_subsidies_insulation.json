@@ -1,5 +1,5 @@
 {
-  "sensitivity": {
+  "scenarios": {
     "activated": true,
     "current_policies": null,
     "no_policy": null,
@@ -9,7 +9,7 @@
       "Uniform": {
         "file": "project/input/policies/current/policies_calibration.json",
         "ad_valorem": {
-          "start": 2020,
+          "start": 2019,
           "end": 2051,
           "value": 0.5,
           "policy": "subsidy_ad_valorem",
@@ -19,7 +19,7 @@
       "GlobalRenovation": {
         "file": "project/input/policies/current/policies_calibration.json",
         "ad_valorem": {
-          "start": 2020,
+          "start": 2019,
           "end": 2051,
           "value": 0.5,
           "policy": "subsidy_ad_valorem",
@@ -30,7 +30,7 @@
       "LowIncomeGlobalRenovation": {
         "file": "project/input/policies/current/policies_calibration.json",
         "ad_valorem": {
-          "start": 2020,
+          "start": 2019,
           "end": 2051,
           "value": 0.5,
           "policy": "subsidy_ad_valorem",
@@ -42,7 +42,7 @@
       "OutWorst": {
         "file": "project/input/policies/current/policies_calibration.json",
         "ad_valorem": {
-          "start": 2020,
+          "start": 2019,
           "end": 2051,
           "value": 0.5,
           "policy": "subsidy_ad_valorem",
@@ -54,7 +54,7 @@
       "ReachBest": {
         "file": "project/input/policies/current/policies_calibration.json",
         "ad_valorem": {
-          "start": 2020,
+          "start": 2019,
           "end": 2051,
           "value": 0.5,
           "policy": "subsidy_ad_valorem",
@@ -65,11 +65,11 @@
       }
     }
 },
-"Reference": {
+  "Reference": {
     "end": 2031,
     "step": 1,
     "output": "full",
-    "start": 2018,
+    "start": 2017,
     "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
     "financing_cost": {
       "activated": true,
@@ -80,53 +80,47 @@
       "debt_income_ratio": 0.05,
       "constraint_liquidity": false
     },
-    "supply": {
-      "activated_insulation": false,
-      "markup_insulation": 1.2,
-      "activated_heater": false,
-      "markup_heater": 1.2
-    },
     "renovation": {
       "endogenous": true,
-      "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini_agg.csv",
+      "exogenous_social": null,
+      "renovation_rate_ini": "project/input/revealed_data/renovation_rate_ini.csv",
       "scale": {
-        "name": "standard_deviation",
-        "deviation": 0.0297
+        "option": "price_elasticity",
+        "target": -0.5
       },
-      "exogenous": {
-        "number": 700000,
-        "target": "worst"
-      },
-      "expected_utility": "log_sum",
       "ms_insulation": {
-        "endogenous": true,
         "ms_insulation_ini": "project/input/revealed_data/market_share_insulation_ini.csv",
         "minimum_performance": null
-    },
+      },
       "rational_behavior": {
         "activated": false,
         "social": false,
         "calibration": true
+      },
+      "exogenous": {
+        "number": 700000,
+        "target": "worst"
       }
     },
     "switch_heater": {
+      "district_heating": null,
       "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
       "premature_replacement": null,
       "information_rate": 0.333,
       "scale": {
-        "target_hp": 0.95,
-        "subsidies_hp": 1
+        "option": "price_elasticity",
+        "target": -1.2
       }
     },
-    "district_heating":null,
-    "exogenous_social": null,
     "technical": {
       "cost_heater": "project/input/technical/cost_heater.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
+      "lifetime_insulation": 1,
       "cost_insulation": "project/input/technical/cost_insulation.csv",
-      "performance_insulation": "project/input/technical/performance_insulation_renovation.csv",
+      "performance_insulation_renovation": "project/input/technical/performance_insulation_renovation.csv",
+      "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",
       "carbon_emission": "project/input/technical/carbon_emission.csv",
       "technical_progress": {
         "insulation": {
@@ -155,8 +149,16 @@
       "construction": true,
       "flow_construction": "project/input/macro/flow_construction_ame2021.csv",
       "income": "project/input/macro/income.csv",
-      "energy_prices": {"ini": "project/input/macro/energy_prices_ht_ame2021.csv",
-        "rate": {"Electricity": 0.0135, "Natural gas": 0.0268, "Wood fuel": 0.0127, "Oil fuel": 0.0173, "Heating": 0}},
+      "energy_prices": {
+        "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
+        "rate": {
+          "Electricity": 0.0135,
+          "Natural gas": 0.0268,
+          "Wood fuel": 0.0127,
+          "Oil fuel": 0.0173,
+          "Heating": 0
+        }
+      },
       "energy_taxes": "project/input/macro/energy_taxes_ame2021.csv",
       "energy_vta": "project/input/macro/energy_vta.csv",
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
@@ -177,14 +179,16 @@
     "implicit_discount_rate": "project/input/revealed_data/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
-    "policies": "project/input/policies/current/policies_ref.json",
+    "policies": {
+      "file": "project/input/policies/current/policies_calibration.json"
+    },
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "current_policies": false,
-      "no_policy": true,
+      "no_policy": false,
       "income": false,
       "prices_constant": false,
       "heating_system": {
