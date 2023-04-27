@@ -47,12 +47,6 @@ def ini_res_irf(config=None, path=None):
     if not os.path.isdir(path):
         os.mkdir(path)
 
-    """if not os.path.isdir(path):
-        try:
-            os.mkdir(path)
-        except:
-            pass"""
-
     config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
     buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']
@@ -112,7 +106,7 @@ def ini_res_irf(config=None, path=None):
                                      )
 
     output = pd.concat((output, o), axis=1)
-    output.to_csv(os.path.join(buildings.path, 'output_ini.csv'))
+    output.round(3).to_csv(os.path.join(buildings.path, 'output_ini.csv'))
 
     return buildings, inputs_dynamics, policies_heater, policies_insulation
 
@@ -196,6 +190,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                  ):
 
     # initialize policies
+
     if sub_heater is not None:
         if sub_heater.get('policy') == 'subsidy_ad_valorem' and sub_heater.get('value') != 0:
             policies_heater += read_ad_valorem(sub_heater)
@@ -296,20 +291,26 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     sub_heater = {'name': 'sub_heater',
                   'start': start,
                   'end': end,
-                  'value': 0.1,
+                  'value': 0,
                   'policy': 'subsidy_ad_valorem',
                   'gest': 'heater',
                   'columns': 'project/input/policies/target/target_heat_pump.csv',
+                  'proportional': None
                   }
     target = None
     sub_insulation = {'name': 'sub_insulation',
                       'start': start,
                       'end': end,
-                      'value': 0.1,
+                      'value': 0,
                       'policy': 'subsidy_ad_valorem',
                       'gest': 'insulation',
-                      'target': target
+                      'target': target,
+                      'proportional': None
                       }
+
+    # 'subsidy_proportional'
+    # proportional = 'MWh_cumac'  # tCO2_cumac
+
     concat_output, concat_stock = DataFrame(), DataFrame()
     output, stock, consumption = simu_res_irf(buildings, start, end,
                                               inputs_dynamics['energy_prices'], inputs_dynamics['taxes'],
@@ -334,7 +335,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
 
     concat_output = concat((concat_output, output), axis=1)
 
-    concat_output.to_csv(os.path.join(buildings.path, 'output.csv'))
+    concat_output.round(3).to_csv(os.path.join(buildings.path, 'output.csv'))
     concat_stock = concat((concat_stock, stock), axis=1)
 
     plot_scenario(concat_output, concat_stock, buildings)
@@ -342,6 +343,6 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    _config = 'project/config/coupling/config.json'
+    # _config = 'project/config/coupling/config.json'
     _config = 'project/config/config.json'
     run_simu(output_consumption=False, start=2019, end=2025, config=_config)
