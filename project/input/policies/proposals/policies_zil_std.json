@@ -1,6 +1,6 @@
 {
   "policies": {
-    "file": "project/input/policies/current/policies_ref.json",
+    "file": "project/input/policies/current/policies_calibration.json",
     "zero_interest_loan": {
         "start": 2019,
         "end": 2051,

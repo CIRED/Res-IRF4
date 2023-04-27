@@ -10,7 +10,7 @@ from copy import deepcopy
 # imports from ResIRF
 from project.model import config2inputs, initialize, stock_turnover, calibration_res_irf
 from project.read_input import PublicPolicy
-from project.utils import make_plot, make_plots
+from project.utils import get_series
 from project.input.resources import resources_data
 from project.write_output import plot_scenario
 
@@ -117,96 +117,96 @@ def ini_res_irf(config=None, path=None):
     return buildings, inputs_dynamics, policies_heater, policies_insulation
 
 
-def create_subsidies(sub_insulation, sub_design, start, end):
-    """
+def read_ad_valorem(data):
+    l = list()
 
-    Parameters
-    ----------
-    sub_insulation
-    sub_design: {'very_low_income', 'low_income', 'wall', 'natural_gas', 'fossil', 'global_renovation',
-    'global_renovation_low_income', 'mpr_serenite', 'bonus_best', 'bonus_worst'}
-    start
-    end
+    value = data['value']
+    if isinstance(value, str):
+        value = get_series(data['value'])
 
-    Returns
-    -------
+    by = 'index'
+    if data.get('index') is not None:
+        mask = get_series(data['index'], header=0)
+        value *= mask
 
-    """
+    if data.get('columns') is not None:
+        mask = get_series(data['columns'], header=0)
+        if isinstance(value, (float, int)):
+            value *= mask
+        else:
+            value = value.to_frame().dot(mask.to_frame().T)
+        by = 'columns'
 
-    low_income_index = pd.Index(['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10'], name='Income owner')
-    energy_index = pd.Index(['Electricity-Heat pump water', 'Electricity-Heat pump air',
-                             'Electricity-Performance boiler',
-                             'Natural gas-Performance boiler', 'Natural gas-Standard boiler',
-                             'Oil fuel-Performance boiler', 'Oil fuel-Standard boiler',
-                             'Wood fuel-Performance boiler', 'Wood fuel-Standard boiler'], name='Heating system')
+    if data.get('growth'):
+        growth = get_series(data['growth'], header=None)
+        value = {k: i * value for k, i in growth.items()}
 
-    target = None
-    if sub_design == 'very_low_income':
-        sub_insulation = pd.Series([sub_insulation, sub_insulation,
-                                    0, 0, 0, 0, 0, 0, 0, 0],
-                                   index=low_income_index)
+    name = 'sub_ad_valorem'
+    if data.get('name') is not None:
+        name = data['name']
 
-    if sub_design == 'low_income':
-        sub_insulation = pd.Series([sub_insulation, sub_insulation, sub_insulation, sub_insulation,
-                                    0, 0, 0, 0, 0, 0],
-                                   index=low_income_index)
+    if isinstance(data['gest'], str):
+        data['gest'] = [data['gest']]
 
-    if sub_design == 'natural_gas':
-        sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, 0, 0, 0, 0],
-                                   index=energy_index)
-
-    if sub_design == 'fossil':
-        sub_insulation = pd.Series([0, 0, 0, sub_insulation, sub_insulation, sub_insulation, sub_insulation, 0, 0],
-                                   index=energy_index)
-
-    if sub_design == 'electricity':
-        sub_insulation = pd.Series([sub_insulation, sub_insulation, sub_insulation, 0, 0, 0, 0, 0, 0],
-                                   index=energy_index)
-
-    if sub_design == 'global_renovation':
-        target = 'global_renovation'
-
-    if sub_design == 'global_renovation_low_income':
-        target = 'global_renovation_low_income'
-
-    if sub_design == 'best_efficiency':
-        target = 'best_efficiency'
-
-    if sub_design == 'best_efficiency_fg':
-        target = 'best_efficiency_fg'
-
-    if sub_design == 'global_renovation_fg':
-        target = 'global_renovation_fg'
-
-    if sub_design == 'global_renovation_fge':
-        target = 'global_renovation_fge'
-
-    if sub_design == 'efficiency_100':
-        target = 'efficiency_100'
-
-    policy = PublicPolicy('sub_insulation_optim', start, end, sub_insulation, 'subsidy_ad_valorem',
-                          gest='insulation', target=target)
-
-    return policy
+    for gest in data['gest']:
+        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_valorem',
+                              gest=gest, by=by, target=data.get('target')))
+    return l
 
 
-def simu_res_irf(buildings, sub_heater, sub_insulation, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 lifetime_heater, lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation, sub_design, financing_cost,
-                 climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
+def read_proportional(data):
+    l = list()
+
+    value = data['value']
+    if isinstance(value, str):
+        value = get_series(data['value'])
+
+    by = 'index'
+    if data.get('index') is not None:
+        mask = get_series(data['index'], header=0)
+        value *= mask
+
+    if data.get('growth'):
+        growth = get_series(data['growth'], header=None)
+        value = {k: i * value for k, i in growth.items()}
+
+    name = 'sub_proportional'
+    if data.get('name') is not None:
+        name = data['name']
+
+    proportional = 'MWh_cumac'  # tCO2_cumac
+    if data.get('proportional') is not None:
+        proportional = data['proportional']
+
+    if isinstance(data['gest'], str):
+        data['gest'] = [data['gest']]
+    for gest in data['gest']:
+        l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_proportional',
+                              gest=gest, by=by, target=data.get('target'), proportional=proportional))
+
+    return l
+
+
+def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_insulation,
+                 lifetime_heater, lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
+                 financing_cost,
+                 sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, output_details='full', technical_progress=None,
                  premature_replacement=None, flow_district_heating=None, exogenous_social=None
                  ):
+
     # initialize policies
     if sub_heater is not None:
-        sub_heater = Series([sub_heater, sub_heater],
-                            index=Index(['Electricity-Heat pump water', 'Electricity-Heat pump air'],
-                                        name='Heating system final'))
-        policies_heater.append(PublicPolicy('sub_heater_optim', start, end, sub_heater, 'subsidy_ad_valorem',
-                                            gest='heater', by='columns'))  # heating policy during considered years
+        if sub_heater.get('policy') == 'subsidy_ad_valorem' and sub_heater.get('value') != 0:
+            policies_heater += read_ad_valorem(sub_heater)
+        elif sub_heater.get('policy') == 'subsidy_proportional' and sub_heater.get('value') != 0:
+            policies_heater += read_proportional(sub_heater)
 
     if sub_insulation is not None:
-        policy = create_subsidies(sub_insulation, sub_design, start, end)
-        policies_insulation.append(policy)  # insulation policy during considered years
+        if sub_insulation.get('policy') == 'subsidy_ad_valorem' and sub_insulation.get('value') != 0:
+            policies_insulation += read_ad_valorem(sub_insulation)
+        elif sub_insulation.get('policy') == 'subsidy_proportional' and sub_insulation.get('value') != 0:
+            policies_insulation += read_proportional(sub_insulation)
 
     output, stock, consumption, prices = dict(), dict(), None, None
     s = None
@@ -287,23 +287,43 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     return result
 
 
-def run_simu(config, output_consumption=False, start=2020, end=2021, sub_design=None):
+def run_simu(config, output_consumption=False, start=2019, end=2021):
 
     path = os.path.join('project', 'output', 'ResIRF')
 
     buildings, inputs_dynamics, policies_heater, policies_insulation = ini_res_irf(path=path, config=config)
 
-    sub_heater, sub_insulation = 0, 0
+    sub_heater = {'name': 'sub_heater',
+                  'start': start,
+                  'end': end,
+                  'value': 0.1,
+                  'policy': 'subsidy_ad_valorem',
+                  'gest': 'heater',
+                  'columns': 'project/input/policies/target/target_heat_pump.csv',
+                  }
+    target = None
+    sub_insulation = {'name': 'sub_insulation',
+                      'start': start,
+                      'end': end,
+                      'value': 0.1,
+                      'policy': 'subsidy_ad_valorem',
+                      'gest': 'insulation',
+                      'target': target
+                      }
     concat_output, concat_stock = DataFrame(), DataFrame()
-    output, stock, consumption = simu_res_irf(buildings, sub_heater, sub_insulation, start, end,
+    output, stock, consumption = simu_res_irf(buildings, start, end,
                                               inputs_dynamics['energy_prices'], inputs_dynamics['taxes'],
                                               inputs_dynamics['cost_heater'], inputs_dynamics['cost_insulation'],
                                               inputs_dynamics['lifetime_heater'], inputs_dynamics['lifetime_insulation'],
                                               inputs_dynamics['flow_built'],
                                               inputs_dynamics['post_inputs'],
                                               policies_heater,
-                                              policies_insulation, sub_design, inputs_dynamics['financing_cost'],
-                                              climate=2006, smooth=False,
+                                              policies_insulation,
+                                              inputs_dynamics['financing_cost'],
+                                              sub_heater=sub_heater,
+                                              sub_insulation=sub_insulation,
+                                              climate=2006,
+                                              smooth=False,
                                               efficiency_hour=False,
                                               demolition_rate=inputs_dynamics['demolition_rate'],
                                               output_consumption=output_consumption,
@@ -323,4 +343,5 @@ def run_simu(config, output_consumption=False, start=2020, end=2021, sub_design=
 if __name__ == '__main__':
     # test_design_subsidies()
     _config = 'project/config/coupling/config.json'
-    run_simu(output_consumption=False, start=2019, end=2022, sub_design='global_renovation', config=_config)
+    _config = 'project/config/config.json'
+    run_simu(output_consumption=False, start=2019, end=2025, config=_config)

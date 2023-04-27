@@ -405,12 +405,17 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     bill_rebate, bill_rebate_before = 0, 0
     for t in [t for t in taxes if t.recycling is not None]:
         if year - 1 in buildings.taxes_revenues.keys():
-            target = (buildings.stock * reindex_mi(t.recycling, buildings.stock.index)).sum()
-            bill_rebate = t.recycling * buildings.taxes_revenues[year - 1][t.name] * 10**9 / target
-            buildings.bill_rebate.update({year: bill_rebate})
+            if t.name in buildings.taxes_revenues[year - 1].index:
+                if isinstance(t.recycling, pd.Series):
+                    target = (buildings.stock * reindex_mi(t.recycling, buildings.stock.index)).sum().round(0)
+                    factor = t.recycling / target
+                else:
+                    factor = 1 / buildings.stock.sum()
+                bill_rebate = factor * buildings.taxes_revenues[year - 1][t.name] * 10**9
+                buildings.bill_rebate.update({year: bill_rebate})
 
-        if year - 1 in buildings.bill_rebate.keys():
-            bill_rebate_before = buildings.bill_rebate[year - 1]
+            if year - 1 in buildings.bill_rebate.keys():
+                bill_rebate_before = buildings.bill_rebate[year - 1]
 
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])

@@ -33,7 +33,8 @@
       "exogenous": {
         "number": 700000,
         "target": "worst"
-      }
+      },
+      "lifetime_insulation": 1
     },
     "switch_heater": {
       "district_heating": "project/input/macro/district_heating.csv",
@@ -50,7 +51,6 @@
       "cost_heater": "project/input/technical/cost_heater.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
-      "lifetime_insulation": 1,
       "cost_insulation": "project/input/technical/cost_insulation.csv",
       "performance_insulation_renovation": "project/input/technical/performance_insulation_renovation.csv",
       "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",

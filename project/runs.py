@@ -39,6 +39,7 @@ if __name__ == '__main__':
 
     if args.directory is not None:
         configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
+        configs = sorted(configs)
 
     if args.assessment is not None:
         configs = []
@@ -46,7 +47,7 @@ if __name__ == '__main__':
         with open(args.assessment) as file:
             configuration = load(file)
 
-        policies = configuration['sensitivity']['assessment']
+        policies = configuration['scenarios']['assessment']
 
         t = datetime.today().strftime('%Y%m%d_%H%M%S')
         folder = os.path.join(os.path.join('project', 'output'), 'assessment_{}'.format(t))

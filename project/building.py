@@ -1876,7 +1876,7 @@ class AgentBuildings(ThermalBuildings):
         stock: Series
         prices: Series
         cost_heater: Series
-        ms_heater: DataFrame, optional
+        calib_heater: DataFrame, optional
         policies_heater: list
 
         Returns
@@ -4639,14 +4639,15 @@ class AgentBuildings(ThermalBuildings):
                 annuities_cumulated = sum([self.expenditure_store[y]['annuities'] for y in years])
                 annuities_cumulated += annuities_year
 
-                #
                 consumption_std = reindex_mi(self.consumption_heating(full_output=False), self.stock.index)
-                consumption_std *= reindex_mi(self._surface, self.stock.index) * self.stock
-                energy_exp_std = self.energy_bill(prices, consumption_std, bill_rebate=bill_rebate)
+                consumption_std *= reindex_mi(self._surface, self.stock.index)
+                energy_exp_std = self.energy_bill(prices, consumption_std, bill_rebate=0)
+                energy_exp_std *= self.stock
                 energy_exp_std = energy_exp_std.groupby(lvls).sum()
 
-                consumption = self.consumption_actual(prices) * self.stock
+                consumption = self.consumption_actual(prices, bill_rebate=bill_rebate)
                 energy_exp = self.energy_bill(prices, consumption, bill_rebate=bill_rebate)
+                energy_exp *= self.stock
                 energy_exp = energy_exp.groupby(lvls).sum()
 
                 s = self.stock.groupby(lvls).sum()

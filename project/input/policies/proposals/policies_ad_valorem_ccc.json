@@ -1,0 +1,21 @@
+{
+  "policies": {
+    "file": "project/input/policies/current/policies_calibration.json",
+    "ad_valorem_insulation": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_ad_valorem",
+      "target": "global_renovation",
+      "gest": "insulation",
+      "value": "project/input/policies/sub_sichel.csv"
+    },
+    "ad_valorem_heater": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_ad_valorem",
+      "columns": "project/input/policies/target/target_heat_pump.csv",
+      "gest": "heater",
+      "value": "project/input/policies/sub_sichel.csv"
+    }
+  }
+}

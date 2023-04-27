@@ -614,7 +614,6 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         for info in infos:
             details_graphs(result, var, info, folder_img, colors=colors)
 
-
     # TODO: uncertainty plot to work on
     if False:
         if 'Reference' in result.keys() and len(result.keys()) > 1 and config_sensitivity is not None:
@@ -797,7 +796,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     # Getting inputs needed
     energy_prices = pd.read_csv(cba_inputs['energy_prices'], index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
     carbon_value = pd.read_csv(cba_inputs['carbon_value'], index_col=[0], header=None).squeeze()  # euro/tCO2
-    carbon_emission = pd.read_csv(cba_inputs['carbon_emission'], index_col=[0]) * 10 ** 3  # unit: gCO2/ kWh to tCO2/ TWh
+    carbon_emission = pd.read_csv(cba_inputs['carbon_emission'], index_col=[0]) * 10 ** 6  # unit: kgCO2/kWh to tCO2/TWh
     # euro/tCO2 * tCO2/TWh  = euro/TWh
     carbon_emission_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_emission_value.dropna(how='all', inplace=True)
@@ -1049,7 +1048,7 @@ def make_summary(path, option='input'):
     path_compare = os.path.join(path, 'img')
     temp = ['energy_income_ratio_rate_2030.png', 'energy_income_ratio_rate_ini_2030.png',
             'renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
-            'consumption_energy.png', 'investment_total.png', 'subsidies_total.png',
+            'consumption_energy.png', 'emission.png', 'investment_total.png', 'subsidies_total.png',
             'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',
             'retrofit_decarbonize_options.png',
             ]
