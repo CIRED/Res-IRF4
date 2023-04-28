@@ -78,9 +78,6 @@ def config2inputs(config=None):
     Parameters
     ----------
     config: dict
-    building_stock: str, optional
-        Path to other building stock than reference.
-    end: int, optional
 
     Returns
     -------

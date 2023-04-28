@@ -4929,17 +4929,18 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
                 output.update(temp.T / 10 ** 6 / step)
 
-                temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
-                temp.index = temp.index.map(lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                output.update(temp.T)
+                if self.year in self.expenditure_store.keys():
+                    temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
+                    temp.index = temp.index.map(lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                    output.update(temp.T)
 
-                temp = self.expenditure_store[self.year]['ratio_total'].copy()
-                temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                output.update(temp.T)
+                    temp = self.expenditure_store[self.year]['ratio_total'].copy()
+                    temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                    output.update(temp.T)
 
-                temp = self.expenditure_store[self.year]['stock'].copy()
-                temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                output.update(temp.T)
+                    temp = self.expenditure_store[self.year]['stock'].copy()
+                    temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                    output.update(temp.T)
 
                 # benefits
                 consumption_saving_ee = (_consumption_saved_actual_insulation + self._heater_store['consumption_saved_actual'])
@@ -5169,18 +5170,24 @@ class AgentBuildings(ThermalBuildings):
             self.coefficient_global = coefficient_global
             self.coefficient_heater = coefficient_heater
 
-        if constant_heater is not None:
-            self.constant_heater = constant_heater
+        if rational_hidden_cost is not None:
+            self.rational_hidden_cost = rational_hidden_cost
 
-        if constant_insulation_intensive is not None:
-            self.constant_insulation_intensive = constant_insulation_intensive.dropna()
+        else:
+            if constant_heater is not None:
+                self.constant_heater = constant_heater
 
-        if constant_insulation_extensive is not None:
-            self.constant_insulation_extensive = constant_insulation_extensive.dropna()
+            if constant_insulation_intensive is not None:
+                self.constant_insulation_intensive = constant_insulation_intensive.dropna()
 
-        self.apply_scale(scale_heater, gest='heater')
-        self.apply_scale(scale_insulation, gest='insulation')
-        self.rational_hidden_cost = rational_hidden_cost
+            if constant_insulation_extensive is not None:
+                self.constant_insulation_extensive = constant_insulation_extensive.dropna()
+
+            if scale_heater is not None:
+                self.apply_scale(scale_heater, gest='heater')
+
+            if scale_insulation is not None:
+                self.apply_scale(scale_insulation, gest='insulation')
         self.number_firms_insulation, self.number_firms_heater = number_firms_insulation, number_firms_heater
 
     def remove_calibration(self):

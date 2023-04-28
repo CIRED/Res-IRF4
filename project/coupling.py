@@ -345,6 +345,6 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    # _config = 'project/config/coupling/config.json'
-    _config = 'project/config/config.json'
+    _config = 'project/config/coupling/config.json'
+    # _config = 'project/config/config.json'
     run_simu(output_consumption=False, start=2019, end=2025, config=_config)
