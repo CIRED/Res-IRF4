@@ -1,7 +1,7 @@
 {
   "policies": {
     "carbon_tax": {
-      "start": 2018,
+      "start": 2017,
       "end": 2019,
       "tax": "project/input/policies/current/carbon_tax.csv",
       "emission": "project/input/policies/current/carbon_tax_emission.csv",
@@ -16,7 +16,7 @@
       "policy": "subsidy_ad_valorem"
     },
     "cee": {
-      "start": 2018,
+      "start": 2017,
       "end": 2019,
       "cumac_heater": "project/input/policies/current/cumac_heater.csv",
       "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",

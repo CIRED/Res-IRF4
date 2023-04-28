@@ -422,7 +422,6 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 def find_certificate(primary_consumption):
     """Returns energy performance certificate from A to G.
 
-
     Parameters
     ----------
     primary_consumption: float or pd.Series or pd.DataFrame
@@ -623,9 +622,11 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
     return primary_heat_consumption, certificate(primary_heat_consumption)
 
 
-def heat_intensity(budget):
-    return -0.191 * budget.apply(log) + 0.1105
-
+def heat_intensity(budget, method='v4'):
+    if method == 'v3':
+        return -0.191 * budget.apply(log) + 0.1105
+    elif method == 'v4':
+        return 0.3564 * budget**(-0.244)
 
 
 if __name__ == '__main__':

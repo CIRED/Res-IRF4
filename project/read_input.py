@@ -45,7 +45,8 @@ class PublicPolicy:
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
                  new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None,
-                 bonus=False, social_housing=False, duration=None, recycling=None, proportional=None):
+                 bonus=False, social_housing=False, duration=None, recycling=None, proportional=None,
+                 recycling_ini=None):
         self.name = name
         self.start = start
         self.end = end
@@ -66,8 +67,8 @@ class PublicPolicy:
         self.social_housing = social_housing
         self.duration = duration
         self.recycling = recycling
+        self.recycling_ini = recycling_ini
         self.proportional = proportional
-
 
     def __repr__(self):
         return self.name
@@ -300,7 +301,7 @@ def read_policies(config):
                 recycling = data['recycling']
 
         return [PublicPolicy('carbon_tax', data['start'], data['end'], tax.loc[data['start']:data['end']-1, :], 'tax',
-                             recycling=recycling)]
+                             recycling=recycling, recycling_ini=data.get('recycling_ini'))]
 
     def read_cite(data):
         """Creates the income tax credit PublicPolicy instance.

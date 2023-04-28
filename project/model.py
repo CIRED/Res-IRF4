@@ -404,24 +404,34 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     # bill rebate - taxes revenues recycling
     bill_rebate, bill_rebate_before = 0, 0
     for t in [t for t in taxes if t.recycling is not None]:
-        if year - 1 in buildings.taxes_revenues.keys():
-            if t.name in buildings.taxes_revenues[year - 1].index:
-                if isinstance(t.recycling, pd.Series):
-                    target = (buildings.stock * reindex_mi(t.recycling, buildings.stock.index)).sum().round(0)
-                    factor = t.recycling / target
-                else:
-                    factor = 1 / buildings.stock.sum()
-                bill_rebate = factor * buildings.taxes_revenues[year - 1][t.name] * 10**9
-                buildings.bill_rebate.update({year: bill_rebate})
 
-            if year - 1 in buildings.bill_rebate.keys():
-                bill_rebate_before = buildings.bill_rebate[year - 1]
+        recycling_revenue = None
+        if t.recycling_ini is not None:
+            recycling_revenue = t.recycling_ini
+        elif year - 1 in buildings.taxes_revenues.keys():
+            if t.name in buildings.taxes_revenues[year - 1].index:
+                recycling_revenue = buildings.taxes_revenues[year - 1][t.name] * 10**9
+        else:
+            continue
+
+        if isinstance(t.recycling, pd.Series):
+            target = (buildings.stock * reindex_mi(t.recycling, buildings.stock.index)).sum().round(0)
+            factor = t.recycling / target
+        else:
+            factor = 1 / buildings.stock.sum()
+
+        bill_rebate = factor * recycling_revenue
+        buildings.bill_rebate.update({year: bill_rebate})
+
+    if year - 1 in buildings.bill_rebate.keys():
+        bill_rebate_before = buildings.bill_rebate[year - 1]
 
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
     if output_details == 'full':
-        buildings.consumption_before_retrofit = buildings.store_consumption(prices_before, bill_rebate=bill_rebate_before)
+        buildings.consumption_before_retrofit = buildings.store_consumption(prices_before,
+                                                                            bill_rebate=bill_rebate_before)
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation, lifetime_insulation,
                                             financing_cost=financing_cost,
                                             policies_heater=p_heater,
@@ -527,7 +537,8 @@ def res_irf(config, path):
         else:
             buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], inputs_dynamics['consumption_ini'])
 
-        s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'])
+        s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
+                                          taxes=taxes)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 

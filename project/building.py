@@ -629,19 +629,25 @@ class ThermalBuildings:
                           save=os.path.join(self.path_ini, 'budget_share_ini.png'),
                           palette=self._resources_data['colors'], kde=True)
 
+                # df = pd.concat((budget_share, heating_intensity), keys=['budget', 'intensity'], axis=1)
+                # df.plot(x='budget', y='intensity', kind='scatter')
+
                 # short-term energy price elasticity
-                prices_reindex = prices.reindex(self.to_energy(budget_share)).set_axis(budget_share.index)
+                """prices_reindex = prices.reindex(self.to_energy(budget_share)).set_axis(budget_share.index)
                 price_elasticity = (-0.191 / heating_intensity) * (budget_share / prices_reindex)
+                df = pd.concat((price_elasticity, budget_share, heating_intensity), keys=['price_elasticity', 'budget', 'intensity'], axis=1)
+                df.sort_values('price_elasticity', inplace=True)
+
                 df = pd.concat((price_elasticity, self.stock), axis=1, keys=['Price elasticity', 'Stock'])
                 df = df.reset_index('Income tenant')
                 make_hist(df, 'Price elasticity', 'Income tenant', 'Housing (Million)',
                           format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                          save=os.path.join(self.path_ini, 'price_elasticity_short_term_ini.png'),
+                          save=os.path.join(self.path_ini, 'energy_price_elasticity_short_term_ini.png'),
                           palette=self._resources_data['colors'], kde=True)
                 price_elasticity_average = (price_elasticity * self.stock).sum() / self.stock.sum()
                 self.info.update({'price_elasticity_average': price_elasticity_average})
-                price_elasticity.groupby(['Income tenant']).describe().to_csv(os.path.join(self.path_ini, 'price_elasticity_income_short_term_ini.csv'))
-                self.add_energy(price_elasticity).groupby(['Energy']).describe().to_csv(os.path.join(self.path_ini, 'price_elasticity_energy_short_term_ini.csv'))
+                price_elasticity.groupby(['Income tenant']).describe().to_csv(os.path.join(self.path_ini, 'energy_price_elasticity_income_short_term_ini.csv'))
+                self.add_energy(price_elasticity).groupby(['Energy']).describe().to_csv(os.path.join(self.path_ini, 'energy_price_elasticity_energy_short_term_ini.csv'))"""
             except:
                 pass
 
@@ -2903,12 +2909,8 @@ class AgentBuildings(ThermalBuildings):
 
             if social:
                 _discount = discount_social
-            discount_factor = (1 - (1 + _discount) ** -10) / _discount
 
             # subsidies do not change market-share
-            """npv = - _cost_total + _bill_saved * discount_factor + _subsidies_total
-            if social:
-                npv = - _cost_total + (_bill_saved + _carbon_saved) * discount_social + _subsidies_total"""
             _bill_saved[_bill_saved == 0] = float('nan')
 
             ratio = (_cost_total - _subsidies_total) / _bill_saved
@@ -2922,9 +2924,6 @@ class AgentBuildings(ThermalBuildings):
 
             ratio = best_option['criteria']
             ratio = ratio[ratio >= 0]
-            """_consumption_saved = best_npv['consumption_saved'] * _stock
-            x = concat((npv, _consumption_saved), axis=1, keys=['npv', 'consumption_saved']).sort_values('npv', ascending=False)
-            x['consumption_saved'] = x['consumption_saved'].cumsum() / 10**6"""
 
             if calibration:
                 if self.rational_hidden_cost is None:
@@ -4226,6 +4225,38 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
 
+        # energy expenditures : do we really need it ?
+        prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)
+        coefficient_heater = reindex_mi(self.coefficient_heater, consumption_calib.index)
+        energy_expenditure = consumption_calib * coefficient_heater * prices_reindex
+        energy_expenditure += consumption_calib * (1 - coefficient_heater) * prices.loc['Wood fuel']
+
+        output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
+
+        # TODO: add rebate - decomposition of energy_expenditures and rebate
+        energy_expenditure = energy_expenditure.groupby('Income tenant').sum()
+        temp = energy_expenditure.loc[self._resources_data['index']['Income tenant']]
+        temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
+        output.update(temp.T / 10 ** 9)
+
+        # taxes expenditures
+        if taxes is not None:
+            taxes_expenditures = dict()
+            total_taxes = Series(0, index=prices.index)
+            for tax in taxes:
+                if self.year in tax.value.index:
+                    if tax.name not in self.taxes_list:
+                        self.taxes_list += [tax.name]
+                    amount = tax.value.loc[self.year, :] * consumption_energy
+                    taxes_expenditures[tax.name] = amount
+                    total_taxes += amount
+            taxes_expenditures = DataFrame(taxes_expenditures).sum()
+            self.taxes_revenues.update({self.year: taxes_expenditures.copy()})
+            taxes_expenditures.index = taxes_expenditures.index.map(
+                lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
+            output.update((taxes_expenditures / step).T)
+            output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / step
+
         if self.year > self.first_year:
             levels = [i for i in self._replaced_by.index.names if
                       i not in ['Heater replacement', 'Heating system final']]
@@ -4342,8 +4373,8 @@ class AgentBuildings(ThermalBuildings):
             renovation = replaced_by_grouped.sum().sum()
             output['Retrofit (Thousand households)'] = (renovation + self._only_heater.sum()) / 10 ** 3 / step
             output['Renovation (Thousand households)'] = renovation / 10 ** 3 / step
-            output['Markup insulation'] = self._markup_insulation_store
-            output['Markup heater'] = self._markup_heater_store
+            # output['Markup insulation'] = self._markup_insulation_store
+            # output['Markup heater'] = self._markup_heater_store
 
             output['Renovation obligation (Thousand households)'] = 0
             if self._flow_obligation:
@@ -4385,6 +4416,7 @@ class AgentBuildings(ThermalBuildings):
             condition = condition_decarbonizing(temp)
             output['Insulation (Thousand households)'] = temp[~condition].sum() / 10**3
             output['Insulation and switch decarbonize (Thousand households)'] = temp[condition].sum() / 10**3
+            output['Decarbonize measures (Thousand households)'] = output['Switch decarbonize (Thousand households)'] + output['Insulation (Thousand households)'] + output['Insulation and switch decarbonize (Thousand households)']
 
             temp = self._replaced_by.groupby(['Housing type', 'Occupancy status']).sum()
             temp = (temp.sum(axis=1) / self._stock_ref.groupby(temp.index.names).sum()).dropna()
@@ -4746,19 +4778,6 @@ class AgentBuildings(ThermalBuildings):
                     lambda x: 'Balance standard Tenant private - {} (euro/year.household)'.format(x))
                 output.update(temp.T)
 
-            # energy expenditures : do we really need it ?
-            prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)
-            coefficient_heater = reindex_mi(self.coefficient_heater, consumption_calib.index)
-            energy_expenditure = consumption_calib * coefficient_heater * prices_reindex
-            energy_expenditure += consumption_calib * (1 - coefficient_heater) * prices.loc['Wood fuel']
-
-            output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
-
-            # TODO: add rebate - decomposition of energy_expenditures and rebate
-            energy_expenditure = energy_expenditure.groupby('Income tenant').sum()
-            temp = energy_expenditure.loc[self._resources_data['index']['Income tenant']]
-            temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
-            output.update(temp.T / 10 ** 9)
 
             # economic state impact
             output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
@@ -4776,23 +4795,6 @@ class AgentBuildings(ThermalBuildings):
                                                                              'Investment total WT (Billion euro)'] * 10 ** 6 / (
                                                                                      output[
                                                                                          'Retrofit (Thousand households)'] * 10 ** 3)
-
-            if taxes is not None:
-                taxes_expenditures = dict()
-                total_taxes = Series(0, index=prices.index)
-                for tax in taxes:
-                    if self.year in tax.value.index:
-                        if tax.name not in self.taxes_list:
-                            self.taxes_list += [tax.name]
-                        amount = tax.value.loc[self.year, :] * consumption_energy
-                        taxes_expenditures[tax.name] = amount
-                        total_taxes += amount
-                taxes_expenditures = DataFrame(taxes_expenditures).sum()
-                self.taxes_revenues.update({self.year: taxes_expenditures.copy()})
-                taxes_expenditures.index = taxes_expenditures.index.map(
-                    lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
-                output.update((taxes_expenditures / step).T)
-                output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / step
 
             # co-benefit
             if 'Embodied energy Wall (TWh PE)' in output.keys():
