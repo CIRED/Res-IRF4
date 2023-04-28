@@ -294,7 +294,6 @@ class ThermalBuildings:
         freq
         climate
         smooth
-        temp_indoor
         full_output: bool, default False
         efficiency_hour
         level_heater: {'Heating system', 'Heating system final'}
@@ -801,7 +800,7 @@ class ThermalBuildings:
 
         return temp_optimal
 
-    def store_consumption(self, prices, bill_rebate=0):
+    def store_consumption(self, prices, carbon_content, bill_rebate=0):
         """Store energy consumption.
 
 
@@ -810,6 +809,8 @@ class ThermalBuildings:
         Parameters
         ----------
         prices
+        carbon_content
+        bill_rebate
         """
         output = dict()
         temp = self.consumption_agg(freq='year', standard=True, existing=True, energy=True)
@@ -820,8 +821,12 @@ class ThermalBuildings:
         temp = self.consumption_agg(prices=prices, freq='year', standard=False, climate=None, smooth=False,
                                     existing=True, energy=True, bill_rebate=bill_rebate)
         output.update({'Consumption (TWh)': temp.sum()})
+        emission = (temp * carbon_content).sum() / 10 ** 3
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp)
+
+        output.update({'Emission (MtCO2)': emission})
+
         return output
 
 
@@ -3634,7 +3639,7 @@ class AgentBuildings(ThermalBuildings):
         else:
             renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
-        if self.year == self.first_year + 1:
+        if self.year == self.first_year + 1 and self.rational_behavior is None:
 
             market_failures = Series(0, index=self.hidden_cost.index)
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
@@ -4257,6 +4262,13 @@ class AgentBuildings(ThermalBuildings):
             output.update((taxes_expenditures / step).T)
             output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / step
 
+        output['Carbon value (Billion euro)'] = (consumption_energy * carbon_value_kwh).sum()
+        output['Health cost (Billion euro)'], o = self.health_cost(inputs)
+        self.store_over_years.update({self.year: {'Health cost (Billion euro)': output['Health cost (Billion euro)'],
+                                                  }
+        })
+        output.update(o)
+
         if self.year > self.first_year:
             levels = [i for i in self._replaced_by.index.names if
                       i not in ['Heater replacement', 'Heating system final']]
@@ -4271,12 +4283,16 @@ class AgentBuildings(ThermalBuildings):
             replaced_by_grouped = self._replaced_by.groupby(levels).sum()
             # consumption saving
             if self.consumption_before_retrofit is not None:
-                # do not consider coefficient
                 consumption_before_retrofit = self.consumption_before_retrofit
-                consumption_after_retrofit = self.store_consumption(prices, bill_rebate=bill_rebate)
+                consumption_after_retrofit = self.store_consumption(prices, inputs['carbon_emission'].loc[self.year, :],
+                                                                    bill_rebate=bill_rebate)
                 temp = {'{} saving (TWh/year)'.format(k.split(' (TWh)')[0]): consumption_before_retrofit[k] -
                                                                              consumption_after_retrofit[k]
-                        for k in consumption_before_retrofit.keys()}
+                        for k in consumption_before_retrofit.keys() if 'TWh' in k}
+                output.update(temp)
+                temp = {'{} saving (MtCO2/year)'.format(k.split(' (MtCO2)')[0]): consumption_before_retrofit[k] -
+                                                                             consumption_after_retrofit[k]
+                        for k in consumption_before_retrofit.keys() if 'MtCO2' in k}
                 output.update(temp)
 
             consumption_saved_insulation = (
@@ -4296,17 +4312,12 @@ class AgentBuildings(ThermalBuildings):
 
             # self.apply_calibration(consumption_saved_actual_insulation.sum(axis=1)).sum() / 10 ** 9
 
-            output.update({
-                              'Consumption standard saving insulation (TWh/year)': consumption_saved_insulation.sum().sum() / 10 ** 9})
-            _consumption_saved_actual_insulation = self.apply_calibration(
-                consumption_saved_actual_insulation.sum(axis=1))
-            output.update(
-                {'Consumption saving insulation (TWh/year)': _consumption_saved_actual_insulation.sum() / 10 ** 9})
-            _consumption_saved_no_rebound_insulation = self.apply_calibration(
-                consumption_saved_no_rebound_insulation.sum(axis=1))
-            output.update({
-                              'Consumption saving no rebound insulation (TWh/year)': _consumption_saved_no_rebound_insulation.sum() / 10 ** 9})
-            output['Rebound insulation (TWh/year)'] = rebound_insulation.sum() / 10 ** 9
+            output.update({'Consumption standard saving insulation (TWh/year)': consumption_saved_insulation.sum().sum() / 10 ** 9})
+            _consumption_saved_actual_insulation = self.apply_calibration(consumption_saved_actual_insulation.sum(axis=1))
+            output.update({'Consumption saving insulation (TWh/year)': _consumption_saved_actual_insulation.sum() / 10 ** 9})
+            _consumption_saved_no_rebound_insulation = self.apply_calibration(consumption_saved_no_rebound_insulation.sum(axis=1))
+            output.update({'Consumption saving no rebound insulation (TWh/year)': _consumption_saved_no_rebound_insulation.sum() / 10 ** 9})
+            output.update({'Rebound insulation (TWh/year)': rebound_insulation.sum() / 10 ** 9})
 
             output['Performance gap (% standard)'] = output['Consumption saving insulation (TWh/year)'] / output[
                 'Consumption standard saving insulation (TWh/year)']
@@ -4357,8 +4368,7 @@ class AgentBuildings(ThermalBuildings):
             rebound_heater.index = rebound_heater.index.map(lambda x: 'Rebound heater {} (TWh/year)'.format(x))
             output.update(rebound_heater.T / 10 ** 9)
 
-            consumption_saved_price_constant = _consumption_saved_actual_insulation + self._heater_store[
-                'consumption_saved_actual']
+            consumption_saved_price_constant = _consumption_saved_actual_insulation + self._heater_store['consumption_saved_actual']
             output['Consumption saving prices constant (TWh/year)'] = consumption_saved_price_constant.sum() / 10 ** 9
             output['Consumption saving prices effect (TWh/year)'] = round(
                 output['Consumption saving (TWh/year)'] - output['Consumption saving prices constant (TWh/year)'], 3)
@@ -4815,17 +4825,15 @@ class AgentBuildings(ThermalBuildings):
                     self.year]
                 output['Carbon footprint (MtCO2)'] = output['Carbon footprint renovation (MtCO2)'] + output[
                     'Carbon footprint construction (MtCO2)']
+                output['Carbon value indirect renovation (Billion euro)'] = output['Carbon footprint renovation (MtCO2)'] * \
+                                                                 inputs['carbon_value'].loc[self.year] / 10 ** 3 / step
                 output['Carbon value indirect (Billion euro)'] = output['Carbon footprint (MtCO2)'] * \
                                                                  inputs['carbon_value'].loc[self.year] / 10 ** 3 / step
-
-            output['Carbon value (Billion euro)'] = (consumption_energy * carbon_value_kwh).sum()
-            output['Health cost (Billion euro)'], o = self.health_cost(inputs)
-            output.update(o)
 
             output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output[
                 'Taxes expenditure (Billion euro)']
             output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
-                'Subsidies insulation (Billion euro)'] + o['Health expenditure (Billion euro)']
+                'Subsidies insulation (Billion euro)'] + output['Health expenditure (Billion euro)']
             output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output[
                 'Expenditure state (Billion euro)']
 
@@ -4933,6 +4941,24 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
                 output.update(temp.T)
 
+                # benefits
+                consumption_saving_ee = (_consumption_saved_actual_insulation + self._heater_store['consumption_saved_actual'])
+                consumption_saving_ee = (consumption_saving_ee * prices).sum()  / 10**9
+                output['CBA Consumption saving EE (Billion euro)'] = consumption_saving_ee
+                output['CBA Thermal comfort EE (Billion euro)'] = output['Thermal comfort EE (Billion euro)']
+                output['CBA Emission direct'] = (output['Emission saving (MtCO2/year)'] * inputs['carbon_value'].loc[self.year]) / 10**3
+                output['CBA benefits (Billion euro)'] = output['CBA Consumption saving EE (Billion euro)'] + output['CBA Thermal comfort EE (Billion euro)'] + output['CBA Emission direct']
+
+                # cost
+                output['CBA Thermal loss prices (Billion euro)'] = output['Thermal loss prices (Billion euro)']
+                output['CBA Annuities insulation (Billion euro)'] = output['Annuities insulation (Billion euro/year)']
+                output['CBA Annuities heater (Billion euro)'] = output['Annuities heater (Billion euro/year)']
+                output['CBA Carbon Emission indirect (Billion euro)'] = output['Carbon value indirect renovation (Billion euro)']
+                output['CBA cost (Billion euro)'] = output['CBA Annuities heater (Billion euro)'] + output['CBA Annuities insulation (Billion euro)'] + output['CBA Carbon Emission indirect (Billion euro)']+ output['CBA Thermal loss prices (Billion euro)']
+
+                # cost-benefits analysis
+                output['Cost-benefits analysis (Billion euro)'] = output['CBA benefits (Billion euro)'] - output['CBA cost (Billion euro)']
+
                 if False:
                     level = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Income owner', 'Occupancy status', 'Heating system']
                     temp = self._replaced_by.groupby(level).sum()
@@ -4986,9 +5012,6 @@ class AgentBuildings(ThermalBuildings):
                     total_taxes += amount
 
             output['Taxes expenditure (Billion euro)'] = DataFrame(taxes_expenditures).sum().sum() / step
-            """taxes_expenditures.index = taxes_expenditures.index.map(
-                lambda x: '{} (Billion euro)'.format(x.capitalize().replace('_', ' ').replace('Cee', 'Cee tax')))
-            output.update((taxes_expenditures / step).T)"""
 
         output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output['Taxes expenditure (Billion euro)']
         output['Expenditure state (Billion euro)'] = output['Subsidies (Billion euro)'] + output['Health expenditure (Billion euro)']

@@ -382,7 +382,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                    p_heater, p_insulation, flow_built, year,
                    post_inputs,  calib_heater=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
-                   exogenous_social=None, output_details='full', premature_replacement=None, supply=None):
+                   exogenous_social=None, output_details='full', premature_replacement=None, supply=None,
+                   carbon_content=None):
     """Update stock vintage due to renovation, demolition and construction.
 
 
@@ -431,7 +432,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     buildings.logger.info('Calculation retrofit')
     if output_details == 'full':
         buildings.consumption_before_retrofit = buildings.store_consumption(prices_before,
+                                                                            post_inputs['carbon_emission'].loc[year, :],
                                                                             bill_rebate=bill_rebate_before)
+    if carbon_content is None:
+        carbon_content = post_inputs['carbon_emission'].loc[year, :]
+
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation, lifetime_insulation,
                                             financing_cost=financing_cost,
                                             policies_heater=p_heater,
@@ -444,7 +449,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             exogenous_social=exogenous_social,
                                             supply=supply,
                                             carbon_value=post_inputs['carbon_value_kwh'].loc[year, :],
-                                            carbon_content=post_inputs['carbon_emission'].loc[year, :],
+                                            carbon_content=carbon_content,
                                             bill_rebate=bill_rebate)
 
     if memory:

@@ -186,11 +186,10 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                  financing_cost,
                  sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
                  output_consumption=False, output_details='full', technical_progress=None,
-                 premature_replacement=None, flow_district_heating=None, exogenous_social=None
+                 premature_replacement=None, flow_district_heating=None, exogenous_social=None, carbon_content=None
                  ):
 
     # initialize policies
-
     if sub_heater is not None:
         if sub_heater.get('policy') == 'subsidy_ad_valorem' and sub_heater.get('value') != 0:
             policies_heater += read_ad_valorem(sub_heater)
@@ -229,6 +228,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                                          demolition_rate=demolition_rate,
                                          exogenous_social=exogenous_social,
                                          output_details=output_details,
+                                         carbon_content=carbon_content
                                          )
         output.update({year: o})
         if output_details == 'full':
@@ -250,7 +250,8 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
 
 
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                   lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost, sub_design=None):
+                   lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost,
+                   sub_design=None):
 
     sub_insulation = [i / 10 for i in range(0, 11, 2)]
     _len = len(sub_insulation)
@@ -330,7 +331,8 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               output_consumption=output_consumption,
                                               technical_progress=inputs_dynamics['technical_progress'],
                                               premature_replacement=inputs_dynamics['premature_replacement'],
-                                              output_details='full'
+                                              output_details='full',
+                                              carbon_content=None
                                               )
 
     concat_output = concat((concat_output, output), axis=1)

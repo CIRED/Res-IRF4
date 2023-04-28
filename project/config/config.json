@@ -32,7 +32,7 @@
   },
   "Reference": {
     "file":"project/config/reference.json",
-    "end": 2020,
+    "end": 2025,
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"
     },
@@ -44,7 +44,7 @@
       "current_policies": true,
       "no_policy": false,
       "income": false,
-      "prices_constant": true,
+      "prices_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
