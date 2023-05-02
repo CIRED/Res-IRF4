@@ -486,7 +486,7 @@ def make_sensitivity_tables(table_result, path):
 
 
 def format_ax(ax, y_label=None, title=None, format_x=None,
-              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True):
+              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None):
     """
 
     Parameters
@@ -521,6 +521,11 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
         t = title.split(' (')[0]
         unit = title.split(' (')[1].split(')')[0]
         ax.set_title('{}\n{}'.format(t, unit), loc='left')
+
+    if xmin is not None:
+        ax.set_xlim(xmin=xmin)
+        _, x_max = ax.get_xlim()
+        ax.set_xlim(xmax=x_max * 1.1)
 
     if ymin is not None:
         ax.set_ylim(ymin=0)
@@ -570,7 +575,6 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04):
 
     except AttributeError:
         pass
-
 
 
 def save_fig(fig, save=None, bbox_inches='tight'):
@@ -719,6 +723,25 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
     save_fig(fig, save=save)
 
 
+def make_scatter_plot(df, x, y, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
+                      save=None, xmin=None):
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    df.plot(x=x, y=y, kind='scatter', ax=ax, s=17, c='colors')
+
+    for k, v in df.iterrows():
+        ax.annotate(k, (v[x], v[y]),
+                    xytext=(10, -5), textcoords='offset points',
+                    family='sans-serif', fontsize=15, color='darkslategrey')
+
+    if hlines is not None:
+        ax.axhline(y=hlines, linewidth=1, color='grey')
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=None, xmin=xmin)
+    ax.set(ylabel=None)
+
+    save_fig(fig, save=save)
+
+
 def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=lambda y, _: y,
                    save=None, name='Years'):
     df = format_table(df, name=name)
@@ -729,6 +752,21 @@ def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=
     ax.set(xlabel=None, ylabel=None)
 
     save_fig(fig, save=save)
+
+
+def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None):
+
+    fig = sns.relplot(
+        data=df, x=x, y=y,
+        col=col, hue=hue, style=hue,
+        kind='line', palette=palette
+    )
+    for k, ax in fig.axes_dict.items():
+        ax.set(xlabel=None, ylabel=None)
+        format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
+        ax.set_title(k, fontsize=15)
+
+    save_fig(fig.figure, save=save)
 
 
 def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None,
@@ -902,7 +940,8 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
     save_fig(fig, save=save)
 
 
-def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, offset=1):
+def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, offset=1,
+                         ymin=0, hline=None, lineplot=None, rotation=90, loc='left', left=1.04, xmin=None):
     """Make stackedbar plot.
 
     Parameters
@@ -913,7 +952,7 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     format_y: function
     save: str, optional
     """
-    df.index = df.index.astype(int)
+    df.index = df.index.astype(str)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     if colors is None:
@@ -921,9 +960,18 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     else:
         df.plot(ax=ax, kind='bar', stacked=True, color=colors, linewidth=0)
 
-    ax = format_ax(ax, y_label=y_label, format_y=format_y, ymin=0, xinteger=True)
-    format_legend(ax, ncol=ncol, offset=offset)
-    save_fig(fig, save=save, bbox_inches=None)
+    if hline is not None:
+        ax.axhline(y=hline, linewidth=1, color='grey')
+
+    if lineplot is not None:
+        lineplot.index = lineplot.index.astype(str)
+        lineplot.plot(ax=ax, kind='line', color='black', marker='*')
+        # lineplot.rename('data').reset_index().plot(ax=ax, kind='scatter', x='index', y='data')
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
+    format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
+    save_fig(fig, save=save)
 
 
 def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):

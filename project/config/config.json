@@ -1,17 +1,11 @@
 {
   "scenarios": {
-    "activated": false,
-    "current_policies": null,
-    "no_policy": null,
-    "prices_constant": null,
+    "activated": true,
+    "current_policies": true,
+    "no_policy": true,
+    "prices_constant": true,
     "constant": null,
-    "policies": {
-      "CCC": "project/input/policies/proposals/policies_ccc.json",
-      "CarbonTaxRecycling": "project/input/policies/proposals/policies_carbon_vsc_recycling.json",
-      "ZilKfW": "project/input/policies/proposals/policies_zil_ambitious.json",
-      "ProportionalMWh": "project/input/policies/proposals/policies_proportional.json",
-      "ProportionalCO2": "project/input/policies/proposals/policies_proportional_CO2.json"
-    }
+    "policies": null
   },
   "sensitivity": {
     "activated": false,
@@ -32,7 +26,7 @@
   },
   "Reference": {
     "file":"project/config/reference.json",
-    "end": 2025,
+    "end": 2031,
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"
     },
@@ -41,7 +35,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": false,
@@ -49,7 +43,6 @@
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
         "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water",
         "Heating-District heating": null,
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"

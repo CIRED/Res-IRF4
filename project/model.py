@@ -380,7 +380,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                    post_inputs,  calib_heater=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
                    exogenous_social=None, output_details='full', premature_replacement=None, supply=None,
-                   carbon_content=None):
+                   carbon_content=None, carbon_content_before=None):
     """Update stock vintage due to renovation, demolition and construction.
 
 
@@ -429,10 +429,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     buildings.logger.info('Calculation retrofit')
     if output_details == 'full':
         buildings.consumption_before_retrofit = buildings.store_consumption(prices_before,
-                                                                            post_inputs['carbon_emission'].loc[year, :],
+                                                                            carbon_content_before,
                                                                             bill_rebate=bill_rebate_before)
-    if carbon_content is None:
-        carbon_content = post_inputs['carbon_emission'].loc[year, :]
 
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, lifetime_heater, cost_insulation, lifetime_insulation,
                                             financing_cost=financing_cost,
@@ -565,10 +563,14 @@ def res_irf(config, path):
             step = len(yrs)
 
             prices = energy_prices.loc[year, :]
+            carbon_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
+
             if year > config['start']:
                 prices_before = energy_prices.loc[year - 1, :]
+                carbon_content_before = inputs_dynamics['post_inputs']['carbon_emission'].loc[year - 1, :]
             else:
                 prices_before = prices
+                carbon_content_before = carbon_content
 
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
@@ -603,6 +605,8 @@ def res_irf(config, path):
                                              output_details=config['output'],
                                              climate=config.get('climate'),
                                              prices_before=prices_before,
+                                             carbon_content=carbon_content,
+                                             carbon_content_before=carbon_content_before,
                                              step=step,
                                              )
 
@@ -650,61 +654,6 @@ def res_irf(config, path):
     except Exception as e:
         logger.exception(e)
         raise e
-
-
-def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False, consumption_before=None):
-    """Create cost curve.
-
-    Parameters
-    ----------
-    consumption_before
-    consumption_saved
-    cost_insulation
-    percent: bool, default True
-    marginal: bool, default False
-
-    Returns
-    -------
-
-    """
-
-    insulation = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
-                  'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
-    insulation = pd.MultiIndex.from_frame(pd.DataFrame(insulation))
-
-    consumption_saved = consumption_saved.loc[:, insulation]
-    cost_insulation = cost_insulation.loc[:, insulation]
-
-    cost_efficiency = cost_insulation / consumption_saved
-
-    x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved')
-    y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
-    c = (x * y).rename('Cost (Billion euro)') / 10**9
-    df = pd.concat((x, y, c), axis=1)
-
-    # sort by marginal cost
-    df.sort_values(y.name, inplace=True)
-
-    if percent is True:
-        if consumption_before is None:
-            raise AttributeError
-        df[x.name] = x / consumption_before.sum()
-        # x.name = '{} (%/initial)'.format(x.name)
-    else:
-        df[x.name] /= 10**9
-        # x.name = '{} (TWh/an)'.format(x.name)
-
-    if marginal is False:
-        df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
-        df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
-        df.dropna(inplace=True)
-        df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
-    else:
-        df.dropna(inplace=True)
-        df[y.name] = df[y.name].round(1)
-        df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
-        df = df.set_index(x.name)[y.name]
-    return df
 
 
 def calibration_res_irf(path, config=None):
@@ -778,7 +727,62 @@ def calibration_res_irf(path, config=None):
         raise e
 
 
-def social_planner(aggregation_archetype=None, climate=2006, smooth=False, building_stock='medium_3', freq='hour',
+def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False, consumption_before=None):
+    """Create cost curve.
+
+    Parameters
+    ----------
+    consumption_before
+    consumption_saved
+    cost_insulation
+    percent: bool, default True
+    marginal: bool, default False
+
+    Returns
+    -------
+
+    """
+
+    insulation = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
+                  'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
+    insulation = pd.MultiIndex.from_frame(pd.DataFrame(insulation))
+
+    consumption_saved = consumption_saved.loc[:, insulation]
+    cost_insulation = cost_insulation.loc[:, insulation]
+
+    cost_efficiency = cost_insulation / consumption_saved
+
+    x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved')
+    y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
+    c = (x * y).rename('Cost (Billion euro)') / 10**9
+    df = pd.concat((x, y, c), axis=1)
+
+    # sort by marginal cost
+    df.sort_values(y.name, inplace=True)
+
+    if percent is True:
+        if consumption_before is None:
+            raise AttributeError
+        df[x.name] = x / consumption_before.sum()
+        # x.name = '{} (%/initial)'.format(x.name)
+    else:
+        df[x.name] /= 10**9
+        # x.name = '{} (TWh/an)'.format(x.name)
+
+    if marginal is False:
+        df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
+        df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
+        df.dropna(inplace=True)
+        df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
+    else:
+        df.dropna(inplace=True)
+        df[y.name] = df[y.name].round(1)
+        df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
+        df = df.set_index(x.name)[y.name]
+    return df
+
+
+def social_planner(aggregation_archetype=None, climate=2006, smooth=False, freq='hour',
                    percent=True, marginal=False, hourly_profile=None):
     """Function used when coupling with power system model.
 
@@ -798,8 +802,7 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, build
     -------
 
     """
-    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'],
-                               building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_sdes2018_{}.csv'.format(building_stock)))
+    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'])
     buildings = resirf_inputs['buildings']
     energy_prices = resirf_inputs['energy_prices']
     cost_insulation = resirf_inputs['cost_insulation']

@@ -22,7 +22,7 @@ import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
     assessment_scenarios, format_ax, format_legend, save_fig, make_uncertainty_plot, reverse_dict, cumulated_plot, make_plots, make_distribution_plot, format_table, make_swarmplot, select
-from project.utils import stack_catplot
+from project.utils import stack_catplot, make_relplot, make_stackedbar_plot, make_scatter_plot
 from PIL import Image
 from itertools import product
 
@@ -191,61 +191,126 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                        format_y=lambda y, _: '{:.0f}'.format(y),
                        colors=resources_data['colors'], loc='left', left=1.25)
 
-    # graph subsidies
-    try:
-        non_subsidies = ['subsidies_cap', 'obligation']
-        temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies + ['reduced_vta'] if i not in non_subsidies]
-        subsidies = output.loc[[i for i in temp if i in output.index], :]
-        subsidies = subsidies.loc[~(subsidies == 0).all(axis=1)]
+    # emission saving
+    variables = {
+        'Emission saving prices (MtCO2/year)': 'Prices induced',
+        'Emission saving heater (MtCO2/year)': 'Switch heater induced',
+        'Emission saving insulation (MtCO2/year)': 'Insulation induced',
+        'Emission saving carbon content (MtCO2/year)': 'Carbon content'}
+    colors = {
+        'Prices induced': 'grey',
+        'Switch heater induced': 'royalblue',
+        'Insulation induced': 'firebrick',
+        'Carbon content': 'forestgreen',
+    }
+    df = output.loc[variables.keys(), :].dropna(axis=1, how='all').rename_axis('Attribute', axis=0)
+    df = df.cumsum(axis=1).round(3)
+    df = df.rename(index=variables)
+    make_stackedbar_plot(df.T, 'Emission saving (MtCO2)', ncol=2, ymin=None, format_y=lambda y, _: '{:.0f}'.format(y),
+                         colors=colors, save=os.path.join(path, 'emission_saving_decomposition.png'), left=1.2)
+    # consumption saving
+    variables = {
+        'CBA Consumption saving EE (TWh)': 'Energy efficiency induced',
+        'CBA Consumption saving prices (TWh)': 'Prices induced',
+        'CBA Rebound EE (TWh)': 'Rebound effect'
+    }
+    colors = {
+        'Energy efficiency induced': 'firebrick',
+        'Prices induced': 'grey',
+        'Rebound effect': 'black'
+    }
+    df = output.loc[variables.keys(), :].dropna(axis=1, how='all').rename_axis('Attribute', axis=0)
+    df = df.cumsum(axis=1).round(3)
+    df = df.rename(index=variables)
+    lineplot = df.loc[['Energy efficiency induced', 'Prices induced']].sum().rename('Total')
+    make_stackedbar_plot(df.T, 'Consumption saving (TWh)', ncol=2, ymin=None, format_y=lambda y, _: '{:.0f}'.format(y),
+                         colors=colors, save=os.path.join(path, 'consumption_saving_decomposition.png'), left=1.2,
+                         lineplot=lineplot)
 
-        subset = subsidies.copy()
+    # total running cost
+    variables = {'Cost energy (Billion euro)': 'Energy expenditure',
+                 'Thermal comfort (Billion euro)': 'Comfort',
+                 'Cost emission (Billion euro)': 'Direct emission',
+                 'Cost heath (Billion euro)': 'Health cost',
+                 'Cost heater (Billion euro)': 'Annuities heater',
+                 'Cost insulation (Billion euro)': 'Annuities insulation'}
+    df = output.loc[variables.keys(), :].dropna(axis=1, how='all').rename_axis('Attribute', axis=0)
+    df = df.rename(index=variables)
+    lineplot = df.sum().rename('Total')
+    make_stackedbar_plot(df.T, 'Running cost (Billion euro)', ncol=2, ymin=None, format_y=lambda y, _: '{:.0f}'.format(y),
+                         colors=resources_data['colors'], save=os.path.join(path, 'running_cost.png'), left=1.2,
+                         lineplot=lineplot)
 
-        temp = ['Cee tax (Billion euro)', 'Carbon tax (Billion euro)']
-        taxes_expenditures = output.loc[[i for i in temp if i in output.index], :]
+    # cost-benefit analysis
+    variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
+                 'CBA Consumption saving prices (Billion euro)': 'Saving price',
+                 'CBA Thermal comfort EE (Billion euro)': 'Comfort EE',
+                 'CBA Emission direct (Billion euro)': 'Direct emission',
+                 'CBA Thermal loss prices (Billion euro)': 'Comfort prices',
+                 'CBA Annuities heater (Billion euro)': 'Annuities heater',
+                 'CBA Annuities insulation (Billion euro)': 'Annuities insulation',
+                 'CBA Carbon Emission indirect (Billion euro)': 'Indirect emission',
+                 'CBA Health cost (Billion euro)': 'Health cost'
+    }
+    df = output.loc[variables.keys(), :].dropna(axis=1, how='all').rename_axis('Attribute', axis=0)
+    df = df.rename(index=variables)
+    lineplot = output.loc['Cost-benefits analysis (Billion euro)', :].dropna()
+    make_stackedbar_plot(df.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None, format_y=lambda y, _: '{:.1f}'.format(y),
+                         hline=0, lineplot=lineplot, colors=resources_data['colors'],
+                         save=os.path.join(path, 'cost_benefit_analysis.png'), left=1.2)
 
-        if not taxes_expenditures.empty:
-            subset = pd.concat((subsidies, -taxes_expenditures), axis=0)
+    # subsidies
+    non_subsidies = ['subsidies_cap', 'obligation']
+    temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies + ['reduced_vta'] if i not in non_subsidies]
+    subsidies = output.loc[[i for i in temp if i in output.index], :]
+    subsidies = subsidies.loc[~(subsidies == 0).all(axis=1)]
 
-        subset.fillna(0, inplace=True)
-        subset = subset.loc[:, (subset != 0).any(axis=0)].T
-        subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
-        color = [i for i in subset.columns if i not in resources_data['colors']]
-        resources_data['colors'].update(dict(zip(color, sns.color_palette(n_colors=len(color)))))
-        subset = subset.sort_index(axis=1)
+    subset = subsidies.copy()
 
-        historic = resources_data['policies_hist'].loc[:, [i for i in subset.columns if i in resources_data['policies_hist'].columns]] / 1000
+    temp = ['Cee tax (Billion euro)', 'Carbon tax (Billion euro)']
+    taxes_expenditures = output.loc[[i for i in temp if i in output.index], :]
 
-        if not subset.empty:
-            if historic is not None:
+    if not taxes_expenditures.empty:
+        subset = pd.concat((subsidies, -taxes_expenditures), axis=0)
 
-                if 'Mpr multifamily' in subset.columns and 'Mpr serenite' in subset.columns:
-                    subset['Mpr serenite'] += subset['Mpr multifamily']
+    subset.fillna(0, inplace=True)
+    subset = subset.loc[:, (subset != 0).any(axis=0)].T
+    subset.columns = [c.split(' (Billion euro)')[0].capitalize().replace('_', ' ') for c in subset.columns]
+    color = [i for i in subset.columns if i not in resources_data['colors']]
+    resources_data['colors'].update(dict(zip(color, sns.color_palette(n_colors=len(color)))))
+    subset = subset.sort_index(axis=1)
 
-                df = format_table(subset.rename_axis('Policies', axis=1).T, name='Years')
-                df = df[df['Policies'].isin(historic.columns)]
-                df_historic = format_table(historic.rename_axis('Policies', axis=1).T, name='Years')
-                df = pd.concat((df, df_historic), axis=0, keys=['Model', 'Realized'], names=['Source']).reset_index('Source')
-                df.reset_index(drop=True, inplace=True)
+    historic = resources_data['policies_hist'].loc[:, [i for i in subset.columns if i in resources_data['policies_hist'].columns]] / 1000
 
-                yrs = [str(i) for i in subset.index if i in resources_data['policies_hist'].index]
-                df = df[df['Years'].isin(yrs)]
+    if not subset.empty:
+        if historic is not None:
 
-                palette = {s: resources_data['colors'][s] for s in df['Policies'].unique()}
-                stack_catplot(x='Years', y='Data', cat='Source', stack='Policies', data=df, palette=palette,
-                              y_label='Policies amount (Billion euro)',
-                              save=os.path.join(path, 'policies_validation.png'),
-                              format_y=lambda y, _: '{:.0f}'.format(y))
+            if 'Mpr multifamily' in subset.columns and 'Mpr serenite' in subset.columns:
+                subset['Mpr serenite'] += subset['Mpr multifamily']
 
-                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
-                               colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                               loc='left', left=1.2)
+            df = format_table(subset.rename_axis('Policies', axis=1).T, name='Years')
+            df = df[df['Policies'].isin(historic.columns)]
+            df_historic = format_table(historic.rename_axis('Policies', axis=1).T, name='Years')
+            df = pd.concat((df, df_historic), axis=0, keys=['Model', 'Realized'], names=['Source']).reset_index('Source')
+            df.reset_index(drop=True, inplace=True)
 
-            else:
-                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
-                               colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                               scatter=historic, loc='left', left=1.2)
-    except KeyError:
-        print('Policies graphic impossible because lack of subsidy color')
+            yrs = [str(i) for i in subset.index if i in resources_data['policies_hist'].index and i != buildings.first_year]
+            df = df[df['Years'].isin(yrs)]
+
+            palette = {s: resources_data['colors'][s] for s in df['Policies'].unique()}
+            stack_catplot(x='Years', y='Data', cat='Source', stack='Policies', data=df, palette=palette,
+                          y_label='Policies amount (Billion euro)',
+                          save=os.path.join(path, 'policies_validation.png'),
+                          format_y=lambda y, _: '{:.0f}'.format(y))
+
+            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
+                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                           loc='left', left=1.2)
+
+        else:
+            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
+                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                           scatter=historic, loc='left', left=1.2)
 
     # graph public finance
     subset = output.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
@@ -309,27 +374,6 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
 
 def plot_compare_scenarios(result, folder, quintiles=None):
     """Grouped scenarios output.
-
-    Renovation expenditure discounted (Billion euro)
-    Subsidies expenditure discounted (Billion euro)
-    Cumulated consumption discounted (TWh)
-    Cumulated emission discounted (MtCO2)
-    Health expenditure discounted (Billion euro)
-    Carbon social expenditure discounted (Billion euro)
-    Energy expenditure discounted (Billion euro)
-    Cumulated emission (MtCO2) - 2030
-    Energy poverty (Thousand) - 2030
-    Stock low-efficient (Thousand) - 2030
-    Consumption conventional (TWh) - 2030
-    Consumption actual (TWh) - 2030
-    Emission (MtCO2) - 2030
-    Cumulated emission (MtCO2) - 2050
-    Energy poverty (Thousand) - 2050
-    Stock low-efficient (Thousand) - 2050
-    Stock efficient (Thousand) - 2050
-    Consumption conventional (TWh) - 2050
-    Consumption actual (TWh) - 2050
-    Emission (MtCO2) - 2050
 
     Parameters
     ----------
@@ -399,6 +443,158 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     if not os.path.isdir(folder_img):
         os.mkdir(folder_img)
 
+    # ini
+    emission_ini = result.get('Reference').loc['Emission (MtCO2)', :].iloc[0]
+    consumption_ini = result.get('Reference').loc['Consumption (TWh)', :].iloc[0]
+
+    # graph emission saving
+    variables = {
+                 'Emission saving heater (MtCO2/year)': 'Switch heater',
+                 'Emission saving insulation (MtCO2/year)': 'Insulation',
+                 'Emission saving prices (MtCO2/year)': 'Prices',
+                  'Emission saving carbon content (MtCO2/year)': 'Carbon content',
+                 }
+    colors_temp = {'Carbon content': 'forestgreen',
+                   'Prices': 'grey',
+                   'Switch heater': 'royalblue',
+                   'Insulation': 'firebrick'
+                   }
+    df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
+    df = df.rename(index=variables)
+    df /= emission_ini
+    make_stackedbar_plot(df.T, 'Emission saving (% of initial emission {:.0f} MtCO2)'.format(emission_ini), ncol=2, ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
+                         colors=colors_temp, save=os.path.join(folder_img, 'emission_saving_decomposition.png'),
+                         rotation=20, left=1.2)
+    emission_saving = df.sum()
+
+    # consumption saving
+    variables = {
+        'CBA Consumption saving EE (TWh)': 'Energy efficiency',
+        'CBA Consumption saving prices (TWh)': 'Prices',
+        'CBA Rebound EE (TWh)': 'Rebound'
+    }
+    colors_temp = {
+        'Energy efficiency': 'firebrick',
+        'Prices': 'grey',
+        'Rebound': 'black'
+    }
+    df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
+    df = df.rename(index=variables)
+    df /= consumption_ini
+    make_stackedbar_plot(df.T, 'Consumption saving (% of initial emission {:.0f} TWh)'.format(consumption_ini), ncol=2,
+                         ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
+                         colors=colors_temp, save=os.path.join(folder_img, 'consumption_saving_decomposition.png'),
+                         rotation=20,  left=1.2)
+    consumption_saving = df.loc[['Energy efficiency', 'Prices']].sum()
+
+    # graph running cost
+    variables = {'Cost energy (Billion euro)': 'Energy expenditure',
+                 'Thermal comfort (Billion euro)': 'Comfort',
+                 'Cost emission (Billion euro)': 'Direct emission',
+                 'Cost heath (Billion euro)': 'Health cost',
+                 'Cost heater (Billion euro)': 'Annuities heater',
+                 'Cost insulation (Billion euro)': 'Annuities insulation'}
+    df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
+    df = df.rename(index=variables)
+    cost_total = df.sum(axis=0).rename('Total')
+    make_stackedbar_plot(df.T, 'Running cost (Billion euro)', ncol=3, ymin=None,
+                         format_y=lambda y, _: '{:.1f}'.format(y),
+                         hline=0, lineplot=cost_total, colors=resources_data['colors'],
+                         save=os.path.join(folder_img, 'running_cost.png'), offset=1.3, rotation=20, left=1.3)
+
+    diff = (df.T - df['Reference']).T.drop('Reference', axis=1)
+    if not diff.empty:
+        cost_diff_total = diff.sum(axis=0).rename('Total')
+        make_stackedbar_plot(diff.T, 'Running cost compare to Reference (Billion euro)', ncol=3, ymin=None,
+                             format_y=lambda y, _: '{:.1f}'.format(y),
+                             hline=0, lineplot=cost_diff_total, colors=resources_data['colors'],
+                             save=os.path.join(folder_img, 'running_cost_comparison.png'), offset=1.3, rotation=20,
+                             left=1.3)
+
+        df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors)), axis=1,
+                       keys=['Consumption saving (TWh)',
+                             'Emission saving (MtCO2)',
+                             'Running cost (Billion euro)',
+                             'Running cost diff (Billion euro)',
+                             'colors'
+                             ])
+
+        make_scatter_plot(df, 'Consumption saving (TWh)', 'Running cost diff (Billion euro)',
+                          'Running cost (Billion euro)',
+                          hlines=0,
+                          format_x=lambda x, _: '{:.1%}'.format(x), xmin=0,
+                          format_y=lambda y, _: '{:.1f}'.format(y),
+                          save=os.path.join(folder_img, 'running_cost_consumption.png'),
+                          )
+
+        make_scatter_plot(df, 'Emission saving (MtCO2)', 'Running cost diff (Billion euro)',
+                          'Running cost (Billion euro)',
+                          hlines=0,
+                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_y=lambda y, _: '{:.1f}'.format(y),
+                          save=os.path.join(folder_img, 'running_cost_emission.png')
+                          )
+
+    # graph ACB
+    variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
+                 'CBA Consumption saving prices (Billion euro)': 'Saving price',
+                 'CBA Thermal comfort EE (Billion euro)': 'Comfort EE',
+                 'CBA Emission direct (Billion euro)': 'Direct emission',
+                 'CBA Thermal loss prices (Billion euro)': 'Comfort prices',
+                 'CBA Annuities heater (Billion euro)': 'Annuities heater',
+                 'CBA Annuities insulation (Billion euro)': 'Annuities insulation',
+                 'CBA Carbon Emission indirect (Billion euro)': 'Indirect emission',
+                 'CBA Health cost (Billion euro)': 'Health cost'
+                 }
+    df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
+    df = df.rename(index=variables)
+    cba_total = df.sum(axis=0).rename('Total')
+    make_stackedbar_plot(df.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
+                         format_y=lambda y, _: '{:.1f}'.format(y),
+                         hline=0, lineplot=cba_total, colors=resources_data['colors'],
+                         save=os.path.join(folder_img, 'cost_benefit_analysis.png'), offset=1.3, rotation=20, left=1.3)
+
+    diff = (df.T - df['Reference']).T.drop('Reference', axis=1)
+    if not diff.empty:
+        cba_diff_total = diff.sum(axis=0).rename('Total')
+        make_stackedbar_plot(diff.T, 'Cost-benefits analysis compare to Reference (Billion euro)', ncol=3, ymin=None,
+                             format_y=lambda y, _: '{:.1f}'.format(y),
+                             hline=0, lineplot=cba_diff_total, colors=resources_data['colors'],
+                             save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), offset=1.3, rotation=20,
+                             left=1.3)
+
+        df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors)), axis=1,
+                       keys=['Consumption saving (TWh)',
+                             'Emission saving (MtCO2)',
+                             'CBA (Billion euro)',
+                             'CBA diff (Billion euro)',
+                             'colors'
+                             ])
+
+        make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
+                          'Cost benefit analysis (Billion euro)',
+                          hlines=0,
+                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_y=lambda y, _: '{:.1f}'.format(y),
+                          save=os.path.join(folder_img, 'cba_consumption.png'), xmin=0
+                          )
+
+        make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
+                          'Consumption saving (TWh)',
+                          hlines=0,
+                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_y=lambda y, _: '{:.0f}'.format(y),
+                          save=os.path.join(folder_img, 'energy_efficiency_gap.png'),  xmin=0
+                          )
+
+        make_scatter_plot(df, 'Emission saving (MtCO2)', 'CBA diff (Billion euro)',
+                          'Cost benefit analysis (Billion euro)',
+                          hlines=0,
+                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_y=lambda y, _: '{:.1f}'.format(y),
+                          save=os.path.join(folder_img, 'cba_emission.png'),  xmin=0
+                          )
+
     # graph distributive impact
     levels = ['Housing type', 'Occupancy status', 'Income tenant']
     idx = list(product(*[resources_data['index'][i] for i in levels]))
@@ -417,28 +613,13 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
     for year in years:
         df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
-        """make_swarmplot(df, 'Energy to income ratio {} (%)'.format(year), hue='Income tenant', colors=resources_data['colors'],
-                       hue_order=resources_data['index']['Income tenant'][::-1],
-                       format_y=lambda y, _: '{:.0%}'.format(y),
-                       save=os.path.join(folder_img, 'ratio_expenditures_swarmplot_{}.png'.format(year)), name='Scenario')"""
 
         data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
         data = format_table(data, name='Scenarios')
         data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
 
-        from project.utils import format_ax
-
-        fig = sns.relplot(
-            data=data, x='Income tenant', y='Data',
-            col='Decision maker', hue='Scenarios', style='Scenarios',
-            kind='line'
-        )
-        for k, ax in fig.axes_dict.items():
-            ax.set(xlabel=None, ylabel=None)
-            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
-            ax.set_title(k, fontsize=15)
-
-        fig.savefig(os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)), bbox_inches='tight')
+        make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)))
 
         # > 0 positive means households are loosing money compare to ref
         rate = ((df.T - df.loc[:, 'Reference']) / df.loc[:, 'Reference']).T
@@ -447,17 +628,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         rate = format_table(rate, name='Scenarios')
         rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
 
-        fig = sns.relplot(
-            data=rate, x='Income tenant', y='Data',
-            col='Decision maker', hue='Scenarios', style='Scenarios',
-            kind='line'
-        )
-        for k, ax in fig.axes_dict.items():
-            ax.set(xlabel=None, ylabel=None)
-            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
-            ax.set_title(k, fontsize=15)
-
-        fig.savefig(os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)), bbox_inches='tight')
+        make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)))
 
         # > 0 positive means households are loosing money compare to ini
         diff = (df - ini) / ini
@@ -465,17 +637,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         diff = format_table(diff, name='Scenarios')
         diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
 
-        fig = sns.relplot(
-            data=diff, x='Income tenant', y='Data',
-            col='Decision maker', hue='Scenarios', style='Scenarios',
-            kind='line'
-        )
-        for k, ax in fig.axes_dict.items():
-            ax.set(xlabel=None, ylabel=None)
-            format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
-            ax.set_title(k, fontsize=15)
-
-        fig.savefig(os.path.join(folder_img, 'energy_income_ratio_rate_ini_{}.png'.format(year)), bbox_inches='tight')
+        make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)))
 
     # graph line plot 2D comparison
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
@@ -621,9 +784,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                                resources_data['consumption_total_hist'],
                                                resources_data['consumption_total_objectives']),
                          'Emission (MtCO2)': ('emission_uncertainty.png', lambda y, _: '{:,.0f}'.format(y)),
-                         'Retrofit at least 1 EPC (Thousand households)': (
-                             'retrofit_jump_comparison_uncertainty.png', lambda y, _: '{:,.0f}'.format(y),
-                             resources_data['retrofit_comparison'])
+
                          }
             for variable, infos in variables.items():
                 temp = pd.DataFrame({scenario: output.loc[variable, :] for scenario, output in result.items()})
@@ -1037,7 +1198,7 @@ def make_summary(path, option='input'):
         # 2. result - reference
         path_reference_result = os.path.join(path_reference, 'img')
         temp = ['stock_performance.png', 'consumption_heater_saving.png', 'emission.png',
-                            'investment.png', 'financing_households.png', 'policies_validation.png']
+                'investment.png', 'financing_households.png', 'policies_validation.png']
         images += [os.path.join(path_reference_result, i) for i in temp]
 
     path_policies = os.path.join(path, 'policies')
@@ -1046,7 +1207,11 @@ def make_summary(path, option='input'):
 
     # 3. result - compare
     path_compare = os.path.join(path, 'img')
-    temp = ['energy_income_ratio_rate_2030.png', 'energy_income_ratio_rate_ini_2030.png',
+    temp = ['cost_benefit_analysis_comparison.png',
+            'cba_consumption.png', 'cba_emission.png',
+            'running_cost_comparison.png', 'running_cost_consumption.png'
+            'consumption_saving_decomposition.png', 'emission_saving_decomposition.png',
+            'energy_income_ratio_rate_2030.png',
             'renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
             'consumption_energy.png', 'emission.png', 'investment_total.png', 'subsidies_total.png',
             'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',

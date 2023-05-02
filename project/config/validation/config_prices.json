@@ -1,5 +1,5 @@
 {
-  "scenarios": {
+  "sensitivity": {
     "activated": true,
     "current_policies": null,
     "no_policy": null,

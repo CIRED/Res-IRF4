@@ -198,8 +198,8 @@ def run(path=None, folder=None):
                     values = [values]
                 for v in values:
                     name = str(v['target']).replace('.', '')
-                    configuration['Scale{}'.format(name)] = copy.deepcopy(configuration['Reference'])
-                    configuration['Scale{}'.format(name)]['renovation']['scale'] = v
+                    configuration['ScaleInsulation{}'.format(name)] = copy.deepcopy(configuration['Reference'])
+                    configuration['ScaleInsulation{}'.format(name)]['renovation']['scale'] = v
 
             if config_sensitivity.get('scale_heater') is not None:
                 values = config_sensitivity['scale_heater']
@@ -207,8 +207,8 @@ def run(path=None, folder=None):
                     values = [values]
                 for v in values:
                     name = str(v['target']).replace('.', '')
-                    configuration['Scale{}'.format(name)] = copy.deepcopy(configuration['Reference'])
-                    configuration['Scale{}'.format(name)]['switch_heater']['scale'] = v
+                    configuration['ScaleHeater{}'.format(name)] = copy.deepcopy(configuration['Reference'])
+                    configuration['ScaleHeater{}'.format(name)]['switch_heater']['scale'] = v
 
             if config_sensitivity.get('deviation') is not None:
                 values = config_sensitivity['deviation']

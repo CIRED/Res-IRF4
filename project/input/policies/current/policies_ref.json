@@ -42,7 +42,7 @@
       "cap": "project/input/policies/current/mpr_serenite_cap.csv",
       "growth_insulation": null,
       "non_cumulative": [
-        "cite",
+        "cee",
         "mpr"
       ],
       "target": "mpr_serenite_nb",

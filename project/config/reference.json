@@ -10,7 +10,7 @@
       "saving_rate": 0.025,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
-      "debt_income_ratio": 0.05,
+      "debt_income_ratio": 0.1,
       "constraint_liquidity": true
     },
     "renovation": {

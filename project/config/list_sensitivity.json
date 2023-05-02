@@ -2,11 +2,14 @@
   "sensitivity": {
     "activated": true,
     "lifetime_insulation": [
-      2,
-      5,
+      1,
       10
     ],
     "scale_renovation": [
+      {
+        "option": "price_elasticity",
+        "target": -0.1
+      },
       {
         "option": "price_elasticity",
         "target": -0.8
@@ -14,25 +17,22 @@
       {
         "option": "price_elasticity",
         "target": -1
-      },
-      {
-        "option": "price_elasticity",
-        "target": -1.2
       }
     ],
     "scale_heater": [
       {
         "option": "price_elasticity",
-        "target": -1.2
+        "target": -0.5
       },
       {
         "option": "price_elasticity",
-        "target": -1.5
+        "target": -1
       },
       {
         "option": "price_elasticity",
         "target": -2
       }
-    ]
+    ],
+    "energy_prices": "project/input/macro/energy_prices_scenarios.json"
   }
 }
