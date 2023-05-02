@@ -724,9 +724,18 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
 
 
 def make_scatter_plot(df, x, y, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
-                      save=None, xmin=None):
+                      save=None, xmin=None, col_size=None, leg_title=None, col_colors=None):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-    df.plot(x=x, y=y, kind='scatter', ax=ax, s=17, c='colors')
+
+    if col_size is not None:
+        smallest_size, biggest_size = 100, 400
+        relative_size = list(df[col_size])
+        s_min, s_max = min(relative_size), max(relative_size)
+        size = [smallest_size + (biggest_size - smallest_size) / (s_max - s_min) * (s - s_min) for s in relative_size]
+        scatter = ax.scatter(x=df[x], y=df[y], s=size, c=df[col_colors])
+
+    else:
+        df.plot(x=x, y=y, kind='scatter', ax=ax, s=17, c='colors')
 
     for k, v in df.iterrows():
         ax.annotate(k, (v[x], v[y]),
@@ -738,6 +747,16 @@ def make_scatter_plot(df, x, y, y_label, hlines=None, format_y=lambda y, _: y, f
 
     ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=None, xmin=xmin)
     ax.set(ylabel=None)
+
+    if col_size is not None:
+        kw = dict(prop="sizes", num=4,
+                  func=lambda s: s_min + (s - smallest_size) * (s_max - s_min) / (biggest_size - smallest_size))
+
+        if leg_title is None:
+            leg_title = col_size
+
+        ax.legend(*scatter.legend_elements(**kw), title=leg_title, loc='upper left', bbox_to_anchor=(1, 0.5),
+                  frameon=False)
 
     save_fig(fig, save=save)
 

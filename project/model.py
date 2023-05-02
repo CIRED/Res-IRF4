@@ -396,6 +396,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
 
     if prices_before is None:
         prices_before = prices
+    if carbon_content_before is None:
+        carbon_content_before = carbon_content
 
     buildings.year = year
 
@@ -688,6 +690,7 @@ def calibration_res_irf(path, config=None):
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
         f_built = inputs_dynamics['flow_built'].loc[:, year]
+        carbon_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
 
         buildings, s, o = stock_turnover(buildings, prices, taxes,
                                          inputs_dynamics['cost_heater'], inputs_dynamics['lifetime_heater'],
@@ -699,12 +702,13 @@ def calibration_res_irf(path, config=None):
                                          demolition_rate=inputs_dynamics['demolition_rate'],
                                          supply=inputs_dynamics['supply'],
                                          premature_replacement=inputs_dynamics['premature_replacement'],
+                                         carbon_content=carbon_content
                                          )
 
         output = pd.concat((output, o), axis=1)
         output.to_csv(os.path.join(buildings.path, 'output_calibration.csv'))
 
-        if year == buildings.first_year +1 :
+        if year == buildings.first_year + 1:
             compare_results(o, buildings.path)
 
         calibration = {

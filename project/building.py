@@ -1482,14 +1482,14 @@ class AgentBuildings(ThermalBuildings):
                         raise NotImplemented('Error by should be index or columns')
 
             elif policy.policy == 'subsidy_proportional':
-                consumption_saved_cumac = self.to_cumac(consumption_saved)
-                consumption_saved_cumac[consumption_saved_cumac < 0] = 0
                 # reindex_mi(cost_insulation, index) / consumption_saved_cumac
                 if policy.proportional == 'tCO2_cumac':
                     emission_saved_cumac = self.to_cumac(emission_saved) / 10**3
                     emission_saved_cumac[emission_saved_cumac < 0] = 0
                     value = value * emission_saved_cumac
                 elif policy.proportional == 'MWh_cumac':
+                    consumption_saved_cumac = self.to_cumac(consumption_saved)
+                    consumption_saved_cumac[consumption_saved_cumac < 0] = 0
                     value = value * consumption_saved_cumac
                 else:
                     raise NotImplemented
@@ -4827,10 +4827,8 @@ class AgentBuildings(ThermalBuildings):
                 'VTA insulation (Billion euro)']
             output['Investment total WT (Billion euro)'] = output['Investment total (Billion euro)'] - output[
                 'VTA (Billion euro)']
-            output['Investment total WT / households (Thousand euro)'] = output[
-                                                                             'Investment total WT (Billion euro)'] * 10 ** 6 / (
-                                                                                     output[
-                                                                                         'Retrofit (Thousand households)'] * 10 ** 3)
+            output['Investment total WT / households (Thousand euro)'] = output['Investment total WT (Billion euro)'] * 10 ** 6 / (
+                                                                                     output['Retrofit (Thousand households)'] * 10 ** 3)
 
             # co-benefit
             if 'Embodied energy Wall (TWh PE)' in output.keys():
@@ -4964,12 +4962,23 @@ class AgentBuildings(ThermalBuildings):
                     temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
                     output.update(temp.T)
 
+                self.store_over_years[self.year].update(
+                    {'Annuities heater (Billion euro/year)': output['Annuities heater (Billion euro/year)'],
+                     'Annuities insulation (Billion euro/year)': output['Annuities insulation (Billion euro/year)'],
+                     })
+                years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities heater (Billion euro/year)' in self.store_over_years[y].keys()]
+                annuities_heater_cumulated = sum([self.store_over_years[y]['Annuities heater (Billion euro/year)'] for y in years])
+
+                years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities insulation (Billion euro/year)' in self.store_over_years[y].keys()]
+                annuities_insulation_cumulated = sum(
+                    [self.store_over_years[y]['Annuities insulation (Billion euro/year)'] for y in years])
+
                 output['Cost energy (Billion euro)'] = output['Energy expenditures wt (Billion euro)']
                 output['Cost emission (Billion euro)'] = (output['Emission (MtCO2)'] * carbon_value) / 10**3
                 output['Cost heath (Billion euro)'] = output['Health cost (Billion euro)']
                 output['Thermal comfort (Billion euro)'] = - output['Thermal comfort EE (Billion euro)'] + output['Thermal loss prices (Billion euro)']
-                output['Cost heater (Billion euro)'] = output['Annuities heater (Billion euro/year)']
-                output['Cost insulation (Billion euro)'] = output['Annuities insulation (Billion euro/year)']
+                output['Cost heater (Billion euro)'] = annuities_heater_cumulated
+                output['Cost insulation (Billion euro)'] = annuities_insulation_cumulated
                 variables = ['Cost energy (Billion euro)', 'Cost emission (Billion euro)', 'Cost heath (Billion euro)',
                              'Thermal comfort (Billion euro)', 'Cost heater (Billion euro)', 'Cost insulation (Billion euro)']
                 output['Running cost (Billion euro)'] = sum([output[i] for i in variables])

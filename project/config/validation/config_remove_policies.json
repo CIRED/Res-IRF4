@@ -19,7 +19,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
       "income": false,
       "prices_constant": false,

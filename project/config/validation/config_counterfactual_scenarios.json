@@ -5,11 +5,12 @@
     "no_policy": true,
     "prices_constant": true,
     "constant": null,
-    "policies": null
+    "policies": null,
+    "remove_policies": ["obligation"]
 },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2051,
+    "end": 2031,
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"
     },

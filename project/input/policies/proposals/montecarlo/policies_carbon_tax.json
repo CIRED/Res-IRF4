@@ -1,0 +1,23 @@
+{
+  "CarbonTaxVSC": {
+    "file": "project/input/policies/current/policies_calibration.json",
+    "carbon_tax": {
+      "start": 2017,
+      "end": 2051,
+      "tax": "project/input/policies/carbon_value.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": null
+    }
+  },
+  "CarbonTaxVSCRecyclingLowIncome": {
+    "file": "project/input/policies/current/policies_calibration.json",
+    "carbon_tax": {
+      "start": 2017,
+      "end": 2051,
+      "tax": "project/input/policies/carbon_value.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": "project/input/policies/target/low_income_tenant.csv",
+      "recycling_ini": 2000000000
+    }
+  }
+}

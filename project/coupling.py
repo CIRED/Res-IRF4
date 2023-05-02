@@ -85,6 +85,7 @@ def ini_res_irf(config=None, path=None):
     p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
     p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
     f_built = inputs_dynamics['flow_built'].loc[:, year]
+    c_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
 
     flow_district_heating = None
     if inputs_dynamics['flow_district_heating'] is not None:
@@ -102,7 +103,8 @@ def ini_res_irf(config=None, path=None):
                                      district_heating=flow_district_heating,
                                      demolition_rate=inputs_dynamics['demolition_rate'],
                                      exogenous_social=inputs.get('exogenous_social'),
-                                     output_details=config['output']
+                                     output_details=config['output'],
+                                     carbon_content=c_content
                                      )
 
     output = pd.concat((output, o), axis=1)
@@ -209,6 +211,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
         f_built = flow_built.loc[:, year]
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
+        c_content = carbon_content.loc[year, :]
 
         if technical_progress is not None:
             if technical_progress.get('insulation') is not None:
@@ -228,7 +231,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                                          demolition_rate=demolition_rate,
                                          exogenous_social=exogenous_social,
                                          output_details=output_details,
-                                         carbon_content=carbon_content
+                                         carbon_content=c_content
                                          )
         output.update({year: o})
         if output_details == 'full':
@@ -312,6 +315,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     # 'subsidy_proportional'
     # proportional = 'MWh_cumac'  # tCO2_cumac
 
+
     concat_output, concat_stock = DataFrame(), DataFrame()
     output, stock, consumption = simu_res_irf(buildings, start, end,
                                               inputs_dynamics['energy_prices'], inputs_dynamics['taxes'],
@@ -332,7 +336,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               technical_progress=inputs_dynamics['technical_progress'],
                                               premature_replacement=inputs_dynamics['premature_replacement'],
                                               output_details='full',
-                                              carbon_content=None
+                                              carbon_content=inputs_dynamics['post_inputs']['carbon_emission']
                                               )
 
     concat_output = concat((concat_output, output), axis=1)

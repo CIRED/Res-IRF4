@@ -449,11 +449,11 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
     # graph emission saving
     variables = {
-                 'Emission saving heater (MtCO2/year)': 'Switch heater',
-                 'Emission saving insulation (MtCO2/year)': 'Insulation',
-                 'Emission saving prices (MtCO2/year)': 'Prices',
-                  'Emission saving carbon content (MtCO2/year)': 'Carbon content',
-                 }
+        'Emission saving heater (MtCO2/year)': 'Switch heater',
+        'Emission saving insulation (MtCO2/year)': 'Insulation',
+        'Emission saving prices (MtCO2/year)': 'Prices',
+        'Emission saving carbon content (MtCO2/year)': 'Carbon content',
+    }
     colors_temp = {'Carbon content': 'forestgreen',
                    'Prices': 'grey',
                    'Switch heater': 'royalblue',
@@ -488,12 +488,14 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     consumption_saving = df.loc[['Energy efficiency', 'Prices']].sum()
 
     # graph running cost
+    subsidies_total = pd.Series({k: i.loc['Subsidies total (Billion euro)', :].sum() for k, i in  result.items()})
     variables = {'Cost energy (Billion euro)': 'Energy expenditure',
                  'Thermal comfort (Billion euro)': 'Comfort',
                  'Cost emission (Billion euro)': 'Direct emission',
                  'Cost heath (Billion euro)': 'Health cost',
                  'Cost heater (Billion euro)': 'Annuities heater',
                  'Cost insulation (Billion euro)': 'Annuities insulation'}
+
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
     cost_total = df.sum(axis=0).rename('Total')
@@ -511,13 +513,15 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                              save=os.path.join(folder_img, 'running_cost_comparison.png'), offset=1.3, rotation=20,
                              left=1.3)
 
-        df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors)), axis=1,
+        df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors), subsidies_total), axis=1,
                        keys=['Consumption saving (TWh)',
                              'Emission saving (MtCO2)',
                              'Running cost (Billion euro)',
                              'Running cost diff (Billion euro)',
-                             'colors'
+                             'colors',
+                             'Subsidies (Billion euro)'
                              ])
+        df.dropna(inplace=True)
 
         make_scatter_plot(df, 'Consumption saving (TWh)', 'Running cost diff (Billion euro)',
                           'Running cost (Billion euro)',
@@ -525,6 +529,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                           format_x=lambda x, _: '{:.1%}'.format(x), xmin=0,
                           format_y=lambda y, _: '{:.1f}'.format(y),
                           save=os.path.join(folder_img, 'running_cost_consumption.png'),
+                          col_colors='colors',
+                          col_size='Subsidies (Billion euro)'
                           )
 
         make_scatter_plot(df, 'Emission saving (MtCO2)', 'Running cost diff (Billion euro)',
@@ -532,7 +538,9 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                           hlines=0,
                           format_x=lambda x, _: '{:.1%}'.format(x),
                           format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(folder_img, 'running_cost_emission.png')
+                          save=os.path.join(folder_img, 'running_cost_emission.png'),
+                          col_colors='colors',
+                          col_size='Subsidies (Billion euro)'
                           )
 
     # graph ACB
@@ -546,6 +554,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                  'CBA Carbon Emission indirect (Billion euro)': 'Indirect emission',
                  'CBA Health cost (Billion euro)': 'Health cost'
                  }
+
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
     cba_total = df.sum(axis=0).rename('Total')
@@ -563,36 +572,44 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                              save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), offset=1.3, rotation=20,
                              left=1.3)
 
-        df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors)), axis=1,
+        df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors), subsidies_total), axis=1,
                        keys=['Consumption saving (TWh)',
                              'Emission saving (MtCO2)',
                              'CBA (Billion euro)',
                              'CBA diff (Billion euro)',
-                             'colors'
+                             'colors',
+                             'Subsidies (Billion euro)'
                              ])
+        df.dropna(inplace=True)
 
         make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
                           'Cost benefit analysis (Billion euro)',
                           hlines=0,
-                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_x=lambda x, _: '{:.1%}'.format(x), xmin=0,
                           format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(folder_img, 'cba_consumption.png'), xmin=0
+                          save=os.path.join(folder_img, 'cba_consumption.png'),
+                          col_colors='colors',
+                          col_size='Subsidies (Billion euro)'
                           )
 
         make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
                           'Consumption saving (TWh)',
                           hlines=0,
-                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_x=lambda x, _: '{:.1%}'.format(x), xmin=0,
                           format_y=lambda y, _: '{:.0f}'.format(y),
-                          save=os.path.join(folder_img, 'energy_efficiency_gap.png'),  xmin=0
+                          save=os.path.join(folder_img, 'energy_efficiency_gap.png'),
+                          col_colors='colors',
+                          col_size='Subsidies (Billion euro)'
                           )
 
         make_scatter_plot(df, 'Emission saving (MtCO2)', 'CBA diff (Billion euro)',
                           'Cost benefit analysis (Billion euro)',
                           hlines=0,
-                          format_x=lambda x, _: '{:.1%}'.format(x),
+                          format_x=lambda x, _: '{:.1%}'.format(x), xmin=0,
                           format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(folder_img, 'cba_emission.png'),  xmin=0
+                          save=os.path.join(folder_img, 'cba_emission.png'),
+                          col_colors='colors',
+                          col_size='Subsidies (Billion euro)'
                           )
 
     # graph distributive impact
@@ -1209,7 +1226,7 @@ def make_summary(path, option='input'):
     path_compare = os.path.join(path, 'img')
     temp = ['cost_benefit_analysis_comparison.png',
             'cba_consumption.png', 'cba_emission.png',
-            'running_cost_comparison.png', 'running_cost_consumption.png'
+            'running_cost_comparison.png', 'running_cost_consumption.png', 'running_cost_emission.png',
             'consumption_saving_decomposition.png', 'emission_saving_decomposition.png',
             'energy_income_ratio_rate_2030.png',
             'renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
