@@ -355,6 +355,9 @@ def parse_policies(config):
 
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
+    if isinstance(discount_rate, pd.Series):
+        if (discount_rate == 0).any():
+            print('ok')
     # TODO: use https://stackoverflow.com/questions/38886512/how-to-deal-with-divide-by-zero-with-pandas-dataframes-when-manipulating-colum
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 
@@ -764,15 +767,19 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
                       save=None, xmin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
+    colors = None
+    if col_colors is not None:
+        colors = df[col_colors]
+
     if col_size is not None:
         smallest_size, biggest_size = 100, 400
         relative_size = list(df[col_size])
         s_min, s_max = min(relative_size), max(relative_size)
         size = [smallest_size + (biggest_size - smallest_size) / (s_max - s_min) * (s - s_min) for s in relative_size]
-        scatter = ax.scatter(x=df[x], y=df[y], s=size, c=df[col_colors])
+        scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
 
     else:
-        df.plot(x=x, y=y, kind='scatter', ax=ax, s=17, c='colors')
+        ax.scatter(x=df[x], y=df[y], s=17, c=colors)
 
     if annotate:
         for k, v in df.iterrows():

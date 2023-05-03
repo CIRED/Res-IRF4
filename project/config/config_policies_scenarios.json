@@ -1,10 +1,10 @@
 {
   "policies_scenarios": {
-    "activated": false,
+    "activated": true,
     "file": "project/input/policies/proposals/variant_current_policies/montecarlo/policies_scenarios.json"},
   "Reference": {
     "file":"project/config/reference.json",
-    "end": 2021,
+    "end": 2023,
     "simple": {
       "detailed_output": false,
       "quintiles": true,

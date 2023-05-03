@@ -81,6 +81,8 @@
     "macro": {
       "construction": true,
       "flow_construction": "project/input/macro/flow_construction_ame2021.csv",
+      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
+      "demolition_rate": 0.0035,
       "income": "project/input/macro/income.csv",
       "energy_prices": {
         "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
@@ -94,9 +96,7 @@
       },
       "energy_taxes": "project/input/macro/energy_taxes_ame2021.csv",
       "energy_vta": "project/input/macro/energy_vta.csv",
-      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
       "income_rate": 0.012,
-      "demolition_rate": 0.0035,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
       "consumption_ini": "project/input/revealed_data/consumption_ini.csv",
       "preferences_heater": "project/input/revealed_data/stated_preferences_heater.csv",

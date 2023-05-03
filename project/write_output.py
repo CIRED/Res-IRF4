@@ -595,16 +595,6 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                           col_size='Subsidies (Billion euro)'
                           )
 
-        make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
-                          'Consumption saving (TWh)', 'Consumption saving (TWh)',
-                          hlines=0,
-                          format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                          format_y=lambda y, _: '{:.0f}'.format(y),
-                          save=os.path.join(folder_img, 'energy_efficiency_gap.png'),
-                          col_colors='colors',
-                          col_size='Subsidies (Billion euro)'
-                          )
-
         make_scatter_plot(df, 'Emission saving (MtCO2)', 'CBA diff (Billion euro)',
                           'Emission saving (MtCO2)', 'Cost benefit analysis (Billion euro)',
                           hlines=0,
@@ -661,17 +651,22 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                      palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)))
 
     # graph line plot 2D comparison
+    consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
+    if result['Reference'].loc['Consumption Heating (TWh)', :].iloc[0] == 0:
+        consumption_total_hist.drop('Heating', axis=1, inplace=True)
+    consumption_total_hist = consumption_total_hist.sum(axis=1)
+
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
                                        'format_y': lambda y, _: '{:,.0f}'.format(y),
-                                       'exogenous': resources_data['consumption_total_hist'],
-                                       'scatter': resources_data['consumption_total_objectives']},
+                                       'exogenous': consumption_total_hist
+                                       },
                  'Consumption standard (TWh)': {'name': 'consumption_standard.png',
                                                 'format_y': lambda y, _: '{:,.0f}'.format(y)},
                  'Heating intensity (%)': {'name': 'heating_intensity.png',
                                            'format_y': lambda y, _: '{:,.0%}'.format(y)},
                  'Emission (MtCO2)': {'name': 'emission.png',
-                                      'format_y': lambda y, _: '{:,.0f}'.format(y),
-                                      'scatter': resources_data['emissions_total_objectives']},
+                                      'format_y': lambda y, _: '{:,.0f}'.format(y)
+                                      },
                  'Stock Heat pump (Million)': {'name': 'stock_heat_pump.png',
                                                'format_y': lambda y, _: '{:,.1f}'.format(y)},
                  'Energy poverty (Million)': {'name': 'energy_poverty.png',
@@ -825,7 +820,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                       scatter=scatter, columns=columns)
 
 
-def plit_compare_scenarios_simple(result, folder, quintiles=None):
+def plot_compare_scenarios_simple(result, folder, quintiles=None):
 
     if quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
@@ -839,12 +834,10 @@ def plit_compare_scenarios_simple(result, folder, quintiles=None):
     emission_ini = result.get('Reference').loc['Emission (MtCO2)', :].iloc[0]
     consumption_ini = result.get('Reference').loc['Consumption (TWh)', :].iloc[0]
 
-    df = pd.Series({k: i.loc['Emission saving (MtCO2/year)', :].sum() for k, i in result.items()}).round(3)
-    emission_saving = df.sum()
+    emission_saving = pd.Series({k: i.loc['Emission saving (MtCO2/year)', :].sum() for k, i in result.items()}).round(3)
     emission_saving /= emission_ini
 
-    df = pd.Series({k: i.loc['Consumption saving (TWh)', :].sum() for k, i in result.items()}).round(3)
-    consumption_saving = df.sum()
+    consumption_saving = pd.Series({k: i.loc['Consumption saving (TWh/year)', :].sum() for k, i in result.items()}).round(3)
     consumption_saving /= consumption_ini
 
     # graph running cost
@@ -865,31 +858,35 @@ def plit_compare_scenarios_simple(result, folder, quintiles=None):
 
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
-    cba_total = df.sum(axis=0).rename('Total')
-    make_stackedbar_plot(df.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
-                         format_y=lambda y, _: '{:.1f}'.format(y),
-                         hline=0, lineplot=cba_total, colors=resources_data['colors'],
-                         save=os.path.join(folder_img, 'cost_benefit_analysis.png'), offset=1.3, rotation=20, left=1.3)
 
     diff = (df.T - df['Reference']).T.drop('Reference', axis=1)
     if not diff.empty:
         cba_diff_total = diff.sum(axis=0).rename('Total')
 
-        df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, subsidies_total), axis=1,
+        df = pd.concat((consumption_saving, emission_saving, cba_diff_total, subsidies_total), axis=1,
                        keys=['Consumption saving (TWh)',
                              'Emission saving (MtCO2)',
-                             'CBA (Billion euro)',
                              'CBA diff (Billion euro)',
                              'Subsidies (Billion euro)'
                              ])
         df.dropna(inplace=True)
+        df.to_csv(os.path.join(folder_img, 'result.csv'))
 
         make_scatter_plot(df, 'Emission saving (MtCO2)', 'CBA diff (Billion euro)',
-                          'Emission saving (MtCO2)', 'Cost benefit analysis (Billion euro)',
+                          'Emission saving (MtCO2)', 'Cost-benefit analysis (Billion euro)',
                           hlines=0,
                           format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
                           format_y=lambda y, _: '{:.1f}'.format(y),
                           save=os.path.join(folder_img, 'cba_emission.png'),
+                          annotate=False,
+                          col_size='Subsidies (Billion euro)'
+                          )
+        make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
+                          'Consumption saving (TWh)', 'Cost-benefit analysis (Billion euro)',
+                          hlines=0,
+                          format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                          format_y=lambda y, _: '{:.1f}'.format(y),
+                          save=os.path.join(folder_img, 'cba_consumption.png'),
                           annotate=False,
                           col_size='Subsidies (Billion euro)'
                           )
@@ -1206,47 +1203,48 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                     index=effectiveness_scenarios).T
 
         # Selecting years with corresponding objectives and calculating the % of objective accomplished
-        for y in resources_data['consumption_total_objectives'].index:
-            if y in comparison_results_energy.index:
-                indicator.loc['Consumption reduction {} (TWh) '.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                 comparison_results_energy.loc[y]).T
+        if False:
+            for y in resources_data['consumption_total_objectives'].index:
+                if y in comparison_results_energy.index:
+                    indicator.loc['Consumption reduction {} (TWh) '.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                                     comparison_results_energy.loc[y]).T
 
-                indicator.loc['Consumption reduction Obj {} (TWh)'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                    resources_data['consumption_total_objectives'].loc[y]).T
+                    indicator.loc['Consumption reduction Obj {} (TWh)'.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                                        resources_data['consumption_total_objectives'].loc[y]).T
 
-                indicator.loc['Percentage of {} consumption objective (%)'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                            comparison_results_energy.loc[y]).T / (
-                                                                                            comparison_results_energy.iloc[0] -
-                                                                                            resources_data['consumption_total_objectives'].loc[y]).T
+                    indicator.loc['Percentage of {} consumption objective (%)'.format(y), :] = (comparison_results_energy.iloc[0] -
+                                                                                                comparison_results_energy.loc[y]).T / (
+                                                                                                comparison_results_energy.iloc[0] -
+                                                                                                resources_data['consumption_total_objectives'].loc[y]).T
 
-        for y in resources_data['emissions_total_objectives'] .index:
-            if y in comparison_results_emissions.index:
-                indicator.loc['Emission reduction {} (MtCO2) '.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                comparison_results_emissions.loc[y]).T
+            for y in resources_data['emissions_total_objectives'].index:
+                if y in comparison_results_emissions.index:
+                    indicator.loc['Emission reduction {} (MtCO2) '.format(y), :] = (comparison_results_emissions.iloc[0] -
+                                                                                    comparison_results_emissions.loc[y]).T
 
-                indicator.loc['Emission reduction Obj {} (MtCO2)'.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                   resources_data['emissions_total_objectives'] .loc[y]).T
+                    indicator.loc['Emission reduction Obj {} (MtCO2)'.format(y), :] = (comparison_results_emissions.iloc[0] -
+                                                                                       resources_data['emissions_total_objectives'] .loc[y]).T
 
-                indicator.loc['Percentage of {} emission objective (%)'.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                         comparison_results_emissions.loc[y]).T / (
-                                                                                         comparison_results_emissions.iloc[0] -
-                                                                                         resources_data['emissions_total_objectives'] .loc[y]).T
-        # low_eff_var = 'Stock low-efficient (Million)'
-        # Objective is zero in 2030 - introduce it in params to make it resilient
-        comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
-                                                   for s in effectiveness_scenarios], index=effectiveness_scenarios).T
-        for y in resources_data['low_eff_objectives'].index:
-            if y in comparison_results_low_eff.index:
-                indicator.loc['Low-efficient stock reduction {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                             comparison_results_low_eff.loc[y]).T
+                    indicator.loc['Percentage of {} emission objective (%)'.format(y), :] = (comparison_results_emissions.iloc[0] -
+                                                                                             comparison_results_emissions.loc[y]).T / (
+                                                                                             comparison_results_emissions.iloc[0] -
+                                                                                             resources_data['emissions_total_objectives'] .loc[y]).T
+            # low_eff_var = 'Stock low-efficient (Million)'
+            # Objective is zero in 2030 - introduce it in params to make it resilient
+            comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
+                                                       for s in effectiveness_scenarios], index=effectiveness_scenarios).T
+            for y in resources_data['low_eff_objectives'].index:
+                if y in comparison_results_low_eff.index:
+                    indicator.loc['Low-efficient stock reduction {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                                 comparison_results_low_eff.loc[y]).T
 
-                indicator.loc['Low-efficient stock reduction objective {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                                       resources_data['low_eff_objectives'].loc[y]).T
+                    indicator.loc['Low-efficient stock reduction objective {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                                           resources_data['low_eff_objectives'].loc[y]).T
 
-                indicator.loc['Percentage of {} low-efficient objective (%) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                               comparison_results_low_eff.loc[y]).T / (
-                                                                                               comparison_results_low_eff.iloc[0] -
-                                                                                               resources_data['low_eff_objectives'].loc[y]).T
+                    indicator.loc['Percentage of {} low-efficient objective (%) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
+                                                                                                   comparison_results_low_eff.loc[y]).T / (
+                                                                                                   comparison_results_low_eff.iloc[0] -
+                                                                                                   resources_data['low_eff_objectives'].loc[y]).T
         # Energy poverty
         # No objective so simply showing the reduction between first and last year
         energy_poverty = pd.DataFrame([result[s].loc['Energy poverty (Million)'] for s in effectiveness_scenarios],

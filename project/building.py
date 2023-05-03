@@ -929,6 +929,7 @@ class AgentBuildings(ThermalBuildings):
         self.expenditure_store = {}
         self.taxes_revenues = {}
         self.bill_rebate = {}
+        self._balance_state_ini = None
 
     @property
     def year(self):
@@ -4841,9 +4842,9 @@ class AgentBuildings(ThermalBuildings):
             output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
                 'Subsidies insulation (Billion euro)'] + output['Health expenditure (Billion euro)']
             output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Expenditure state (Billion euro)']
-            self.store_over_years[self.year].update(
-                {'Balance state (Billion euro)': output['Balance state (Billion euro)'],
-                 })
+            if self._balance_state_ini is None:
+                self._balance_state_ini = output['Balance state (Billion euro)']
+
 
             # subsidies - details: policies amount and number of beneficiaries
             subsidies_details_renovation, subsidies_count_renovation, subsidies_average_renovation, cost_average_renovation = {}, {}, {}, {}
@@ -4963,11 +4964,11 @@ class AgentBuildings(ThermalBuildings):
 
             # cofp
             output['COFP (Billion euro)'] = 0
-            if self.year - 1 in self.store_over_years.keys():
-                if 'Balance state (Billion euro)' in self.store_over_years[self.year - 1].keys():
-                    balance = self.store_over_years[self.year]['Balance state (Billion euro)'] - self.store_over_years[self.year - 1]['Balance state (Billion euro)']
-                    if balance > 0:
-                        output['COFP (Billion euro)'] = abs(balance) * 0.2
+            balance = output['Balance state (Billion euro)'] - self._balance_state_ini
+            if balance < 0:
+                temp = abs(balance) * 0.2
+                temp = calculate_annuities(temp, lifetime=30, discount_rate=0.035)
+                output['COFP (Billion euro)'] = temp
 
             # running cost
             output['Cost energy (Billion euro)'] = output['Energy expenditures wt (Billion euro)']
@@ -5008,7 +5009,7 @@ class AgentBuildings(ThermalBuildings):
             output['CBA Annuities heater (Billion euro)'] = - output['Annuities heater (Billion euro/year)']
             temp = calculate_annuities(output['Carbon value indirect renovation (Billion euro)'], lifetime=30, discount_rate=0.035)
             output['CBA Carbon Emission indirect (Billion euro)'] = - temp
-            output['CBA COFP (Billion euro)'] = output['COFP (Billion euro)']
+            output['CBA COFP (Billion euro)'] = - output['COFP (Billion euro)']
             output['CBA cost (Billion euro)'] = output['CBA Annuities heater (Billion euro)'] + \
                                                 output['CBA Annuities insulation (Billion euro)'] + \
                                                 output['CBA Carbon Emission indirect (Billion euro)'] + \

@@ -538,10 +538,10 @@ def read_inputs(config, other_inputs=generic_input):
     else:
         raise NotImplemented
 
-    inputs.update({'energy_prices': energy_prices.loc[:config['end'], :]})
+    inputs.update({'energy_prices': energy_prices}) # .loc[:config['end'], :]
 
     energy_taxes = get_pandas(config['macro']['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
-    inputs.update({'energy_taxes': energy_taxes.loc[:config['end'], :]})
+    inputs.update({'energy_taxes': energy_taxes}) # .loc[:config['end'], :]
 
     inputs.update({'energy_vta': get_series(config['macro']['energy_vta'], header=None)})
 
@@ -741,14 +741,6 @@ def parse_inputs(inputs, taxes, config, stock):
 
     parsed_inputs = copy.deepcopy(inputs)
 
-    cost_factor = 1
-    if 'cost_factor' in config.keys():
-        cost_factor = config['cost_factor']
-
-    prices_factor = 1
-    if 'prices_factor' in config.keys():
-        prices_factor = config['prices_factor']
-
     if config['technical'].get('technical_progress') is not None:
         if 'insulation' in config['technical']['technical_progress'].keys():
             if config['technical']['technical_progress']['insulation']['activated']:
@@ -767,10 +759,6 @@ def parse_inputs(inputs, taxes, config, stock):
                 parsed_inputs['technical_progress'] = dict()
                 parsed_inputs['technical_progress']['heater'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
 
-    parsed_inputs['cost_heater'] *= cost_factor
-    parsed_inputs['cost_insulation'] *= cost_factor
-    parsed_inputs['energy_prices'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
-    parsed_inputs['energy_taxes'].loc[range(config['start'] + 2, config['end']), :] *= prices_factor
 
     if isinstance(inputs['demolition_rate'], (float, int)):
         inputs['demolition_rate'] = pd.Series(inputs['demolition_rate'], index=idx[1:])
@@ -872,6 +860,7 @@ def parse_inputs(inputs, taxes, config, stock):
     parsed_inputs['Embodied energy construction (TWh PE)'] = (parsed_inputs['Surface construction (Million m2)'] * parsed_inputs['embodied_energy_built']) / 10**3
 
     energy_prices = parsed_inputs['energy_prices'].copy()
+    parsed_inputs['energy_prices_wt'] = energy_prices.copy()
 
     energy_taxes = parsed_inputs['energy_taxes'].copy()
 

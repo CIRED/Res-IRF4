@@ -225,13 +225,13 @@ def select_post_inputs(parsed_inputs):
     vars = ['carbon_emission', 'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
             'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh', 'carbon_value',
-            'use_subsidies', 'health_cost', 'implicit_discount_rate']
+            'use_subsidies', 'health_cost', 'implicit_discount_rate', 'energy_prices_wt']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
 
 def get_inputs(path=None, config=None, variables=None):
-    """Initialize thermal buildings object based on input dictionnary.
+    """Initialize thermal buildings object based on input dictionary.
 
     Parameters
     ----------
@@ -320,6 +320,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
     inputs_dynamic = {
         'buildings': buildings,
         'energy_prices': parsed_inputs['energy_prices'],
+        'energy_prices_wt': parsed_inputs['energy_prices_wt'],
         'taxes': parsed_inputs['taxes'],
         'post_inputs': post_inputs,
         'cost_heater': parsed_inputs['cost_heater'],

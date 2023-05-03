@@ -25,7 +25,7 @@ from datetime import datetime
 import re
 import argparse
 
-from project.write_output import plot_compare_scenarios, indicator_policies, make_summary
+from project.write_output import plot_compare_scenarios, indicator_policies, make_summary, plot_compare_scenarios_simple
 from project.model import res_irf, prepare_config
 from project.utils import get_json, parse_policies
 
@@ -66,7 +66,7 @@ def run(path=None, folder=None):
     prefix = ''
     if 'policies_scenarios' in configuration.keys():
         if configuration['policies_scenarios']['activated']:
-            output_compare = 'simple'
+            # output_compare = 'simple'
             prefix = 'policies_scenarios'
             config_policies = get_json(configuration['policies_scenarios']['file'])
             for key, item in config_policies.items():
@@ -279,16 +279,14 @@ def run(path=None, folder=None):
         # stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
+        config_policies = get_json('project/input/policies/cba_inputs.json')
         if configuration.get('Reference').get('output') == 'full' and output_compare == 'full':
             plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
-            config_policies = get_json('project/input/policies/cba_inputs.json')
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
                 indicator_policies(result, folder, config_policies, policy_name=policy_name)
             make_summary(folder, option='comparison')
         elif output_compare == 'simple':
-            config_policies = get_json('project/input/policies/cba_inputs.json')
-            if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
-                indicator_policies(result, folder, config_policies, policy_name=policy_name)
+            plot_compare_scenarios_simple(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
