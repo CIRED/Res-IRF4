@@ -35,6 +35,8 @@ LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(messag
 def run(path=None, folder=None):
     start = time()
 
+    output_compare = 'full'
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', default=os.path.join('project', 'config', 'test', 'config.json'), help='path config file')
 
@@ -56,11 +58,25 @@ def run(path=None, folder=None):
     else:
         configuration = path
 
-    for key in [k for k in configuration.keys() if k not in ['assessment', 'scenarios', 'sensitivity']]:
+    for key in [k for k in configuration.keys() if k not in ['assessment', 'scenarios', 'sensitivity',
+                                                             'policies_scenarios']]:
         configuration[key] = prepare_config(configuration[key])
 
     policy_name = None
     prefix = ''
+    if 'policies_scenarios' in configuration.keys():
+        if configuration['policies_scenarios']['activated']:
+            output_compare = 'simple'
+            prefix = 'policies_scenarios'
+            config_policies = get_json(configuration['policies_scenarios']['file'])
+            for key, item in config_policies.items():
+                configuration[key] = copy.deepcopy(configuration['Reference'])
+                configuration[key]['simple']['no_policy'] = False
+                configuration[key]['simple']['current_policies'] = False
+                configuration[key]['policies'] = copy.deepcopy(item)
+
+        del configuration['policies_scenarios']
+
     if 'assessment' in configuration.keys():
         if configuration['assessment']['activated']:
             config_policies = configuration['assessment']
@@ -256,19 +272,23 @@ def run(path=None, folder=None):
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logger.debug('Launching processes')
-        with Pool() as pool:
+        with Pool(6) as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}
         # stocks = {i[0]: i[2] for i in results}
 
         logger.debug('Parsing results')
-        if configuration.get('Reference').get('output') == 'full':
+        if configuration.get('Reference').get('output') == 'full' and output_compare == 'full':
             plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
             config_policies = get_json('project/input/policies/cba_inputs.json')
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
                 indicator_policies(result, folder, config_policies, policy_name=policy_name)
             make_summary(folder, option='comparison')
+        elif output_compare == 'simple':
+            config_policies = get_json('project/input/policies/cba_inputs.json')
+            if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
+                indicator_policies(result, folder, config_policies, policy_name=policy_name)
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

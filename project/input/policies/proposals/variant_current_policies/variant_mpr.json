@@ -1,0 +1,20 @@
+{
+  "mpr": {
+    "start": 2021,
+    "end": 2051,
+    "heater": "project/input/policies/current/mpr_heater.csv",
+    "growth_heater": null,
+    "insulation": "project/input/policies/current/mpr_insulation.csv",
+    "growth_insulation": null,
+    "bonus": "project/input/policies/current/mpr_bonus.csv"
+  },
+  "mpr_high": {
+    "start": 2021,
+    "end": 2051,
+    "heater": "project/input/policies/current/mpr_heater.csv",
+    "growth_heater": "project/input/policies/proposals/variant_current_policies/growth_mpr_heater.csv",
+    "insulation": "project/input/policies/current/mpr_insulation.csv",
+    "growth_insulation": "project/input/policies/proposals/variant_current_policies/growth_mpr_insulation.csv",
+    "bonus": "project/input/policies/current/mpr_bonus.csv"
+  }
+}

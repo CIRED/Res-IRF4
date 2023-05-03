@@ -252,7 +252,12 @@ def read_policies(config):
 
     def read_cee(data):
         l = list()
-        cee_value = get_series(data['value'], header=None)
+        if isinstance(data['value'], str):
+            cee_value = get_series(data['value'], header=None)
+        elif isinstance(data['value'], (int, float)):
+            cee_value = pd.Series(data['value'], index=range(data['start'], data['end'] + 1))
+        else:
+            raise NotImplemented
 
         cee_start = cee_value.loc[data['start']]
 
@@ -346,8 +351,8 @@ def read_policies(config):
 
     def read_ad_valorem(data):
         l = list()
-
         value = data['value']
+
         if isinstance(value, str):
             value = get_series(data['value'])
 
@@ -451,16 +456,16 @@ def read_policies(config):
     def read_regulation(data):
         return [PublicPolicy(data['name'], data['start'], data['end'], None, 'regulation', gest=data['gest'])]
 
-    read = {'mpr': read_mpr, 'mpr_new': read_mpr,
-            'mpr_serenite': read_mpr_serenite,
+    read = {'mpr': read_mpr, 'mpr_variant': read_mpr,
+            'mpr_serenite': read_mpr_serenite, 'mpr_serenite_variant': read_mpr_serenite,
             'mpr_serenite_high_income': read_mpr_serenite,
             'mpr_serenite_low_income': read_mpr_serenite,
-            'mpr_multifamily': read_mpr_serenite,
-            'cee': read_cee,
-            'cap': read_cap,
-            'carbon_tax': read_carbon_tax,
+            'mpr_multifamily': read_mpr_serenite, 'mpr_serenite_multifamily_variant': read_mpr_serenite,
+            'cee': read_cee, 'cee_variant': read_cee,
+            'cap': read_cap, 'cap_variant': read_cee,
+            'carbon_tax': read_carbon_tax, 'carbon_tax_variant': read_carbon_tax,
             'cite': read_cite,
-            'reduced_vta': read_reduced_vta,
+            'reduced_vta': read_reduced_vta, 'reduced_vta_variant': read_reduced_vta,
             'zero_interest_loan': read_zil}
 
     list_policies = list()

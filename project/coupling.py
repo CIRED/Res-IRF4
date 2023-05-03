@@ -17,7 +17,7 @@ from project.write_output import plot_scenario
 ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 
 
-def ini_res_irf(config=None, path=None):
+def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     """Initialize and calibrate Res-IRF.
 
     Parameters
@@ -48,7 +48,7 @@ def ini_res_irf(config=None, path=None):
         os.mkdir(path)
 
     config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
-    inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
+    inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config, level_logger=level_logger)
     buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']
 
     # calibration
@@ -56,7 +56,7 @@ def ini_res_irf(config=None, path=None):
         with open(config['calibration'], "rb") as file:
             calibration = load(file)
     else:
-        calibration = calibration_res_irf(path, config=config)
+        calibration = calibration_res_irf(path, config=config, level_logger=level_logger)
 
     buildings.calibration_exogenous(**calibration)
 
@@ -92,8 +92,10 @@ def ini_res_irf(config=None, path=None):
         flow_district_heating = inputs_dynamics['flow_district_heating'].loc[year]
 
     buildings, _, o = stock_turnover(buildings, prices, taxes,
-                                     inputs_dynamics['cost_heater'], inputs_dynamics['lifetime_heater'],
-                                     inputs_dynamics['cost_insulation'], inputs_dynamics['lifetime_insulation'],
+                                     inputs_dynamics['cost_heater'],
+                                     inputs_dynamics['lifetime_heater'],
+                                     inputs_dynamics['cost_insulation'],
+                                     inputs_dynamics['lifetime_insulation'],
                                      p_heater, p_insulation, f_built, year,
                                      inputs_dynamics['post_inputs'],
                                      calib_renovation=inputs_dynamics['calibration_renovation'],
@@ -290,7 +292,8 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
 
     path = os.path.join('project', 'output', 'ResIRF')
 
-    buildings, inputs_dynamics, policies_heater, policies_insulation = ini_res_irf(path=path, config=config)
+    buildings, inputs_dynamics, policies_heater, policies_insulation = ini_res_irf(path=path, config=config,
+                                                                                   level_logger='WARNING')
 
     sub_heater = {'name': 'sub_heater',
                   'start': start,
@@ -314,7 +317,6 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
 
     # 'subsidy_proportional'
     # proportional = 'MWh_cumac'  # tCO2_cumac
-
 
     concat_output, concat_stock = DataFrame(), DataFrame()
     output, stock, consumption = simu_res_irf(buildings, start, end,

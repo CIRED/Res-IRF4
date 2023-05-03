@@ -16,11 +16,12 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 import numpy as np
 from matplotlib.patches import Patch
-
+import os
 import numpy as np
 import pandas as pd
 from math import floor, ceil
 import seaborn as sns
+import logging
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import Normalize
@@ -57,6 +58,7 @@ plt.rc('lines', lw=3) # 3.5
 plt.rc('axes', lw=2, edgecolor=COLOR) # 3.5
 
 STYLES = ['-', '--', ':', 's-', 'o-', '^-', '*-', 's-', 'o-', '^-', '*-'] * 10
+LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
 
 
 def size_dict(dict_vars, n=30, display=True):
@@ -135,6 +137,38 @@ def timing(f):
         return result
     return wrap
 
+
+def create_logger(path=None, level='DEBUG'):
+    """Create logger for one run.
+
+    Parameters
+    ----------
+    path: str
+
+    Returns
+    -------
+    Logger
+    """
+    if path is None:
+        name = ''
+    else:
+        name = path.split('/')[-1].lower()
+
+    logger = logging.getLogger('log_{}'.format(name))
+    logger.setLevel(level)
+    logger.propagate = False
+    # remove existing handlers
+    logger.handlers.clear()
+    # consoler handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
+    logger.addHandler(console_handler)
+    # file handler
+    if path is not None:
+        file_handler = logging.FileHandler(os.path.join(path, 'log.log'))
+        file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
+        logger.addHandler(file_handler)
+    return logger
 
 def reverse_dict(data):
     flipped = defaultdict(dict)
@@ -317,8 +351,11 @@ def parse_policies(config):
                 policies = {k: i for k, i in policies['policies'].items() if k not in config['policies'].keys()}
                 config['policies'].update(policies)
 
+        config['policies'] = {k: i for k, i in config['policies'].items() if i}
+
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
+    # TODO: use https://stackoverflow.com/questions/38886512/how-to-deal-with-divide-by-zero-with-pandas-dataframes-when-manipulating-colum
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 
 
@@ -723,8 +760,8 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
     save_fig(fig, save=save)
 
 
-def make_scatter_plot(df, x, y, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
-                      save=None, xmin=None, col_size=None, leg_title=None, col_colors=None):
+def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
+                      save=None, xmin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     if col_size is not None:
@@ -737,16 +774,17 @@ def make_scatter_plot(df, x, y, y_label, hlines=None, format_y=lambda y, _: y, f
     else:
         df.plot(x=x, y=y, kind='scatter', ax=ax, s=17, c='colors')
 
-    for k, v in df.iterrows():
-        ax.annotate(k, (v[x], v[y]),
-                    xytext=(10, -5), textcoords='offset points',
-                    family='sans-serif', fontsize=15, color='darkslategrey')
+    if annotate:
+        for k, v in df.iterrows():
+            ax.annotate(k, (v[x], v[y]),
+                        xytext=(10, -5), textcoords='offset points',
+                        family='sans-serif', fontsize=15, color='darkslategrey')
 
     if hlines is not None:
         ax.axhline(y=hlines, linewidth=1, color='grey')
 
     ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=None, xmin=xmin)
-    ax.set(ylabel=None)
+    ax.set(xlabel=x_label, ylabel=None)
 
     if col_size is not None:
         kw = dict(prop="sizes", num=4,

@@ -75,17 +75,20 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 resources_data=None):
+                 resources_data=None, detailed_output=True):
 
         if isinstance(stock, MultiIndex):
             stock = Series(index=stock, dtype=float)
 
+        if detailed_output is None:
+            detailed_output = True
+        self.detailed_output = detailed_output
         self._resources_data = resources_data
 
         self._efficiency = efficiency
         self._ratio_surface = ratio_surface
         self.path, self.path_ini, self.path_calibration = path, None, None
-        if path is not None:
+        if path is not None and detailed_output:
             self.path_calibration = os.path.join(path, 'calibration')
             if not os.path.isdir(self.path_calibration):
                 os.mkdir(self.path_calibration)
@@ -627,26 +630,6 @@ class ThermalBuildings:
                           format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
                           save=os.path.join(self.path_ini, 'budget_share_ini.png'),
                           palette=self._resources_data['colors'], kde=True)
-
-                # df = pd.concat((budget_share, heating_intensity), keys=['budget', 'intensity'], axis=1)
-                # df.plot(x='budget', y='intensity', kind='scatter')
-
-                # short-term energy price elasticity
-                """prices_reindex = prices.reindex(self.to_energy(budget_share)).set_axis(budget_share.index)
-                price_elasticity = (-0.191 / heating_intensity) * (budget_share / prices_reindex)
-                df = pd.concat((price_elasticity, budget_share, heating_intensity), keys=['price_elasticity', 'budget', 'intensity'], axis=1)
-                df.sort_values('price_elasticity', inplace=True)
-
-                df = pd.concat((price_elasticity, self.stock), axis=1, keys=['Price elasticity', 'Stock'])
-                df = df.reset_index('Income tenant')
-                make_hist(df, 'Price elasticity', 'Income tenant', 'Housing (Million)',
-                          format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                          save=os.path.join(self.path_ini, 'energy_price_elasticity_short_term_ini.png'),
-                          palette=self._resources_data['colors'], kde=True)
-                price_elasticity_average = (price_elasticity * self.stock).sum() / self.stock.sum()
-                self.info.update({'price_elasticity_average': price_elasticity_average})
-                price_elasticity.groupby(['Income tenant']).describe().to_csv(os.path.join(self.path_ini, 'energy_price_elasticity_income_short_term_ini.csv'))
-                self.add_energy(price_elasticity).groupby(['Energy']).describe().to_csv(os.path.join(self.path_ini, 'energy_price_elasticity_energy_short_term_ini.csv'))"""
             except:
                 pass
 
@@ -728,7 +711,7 @@ class ThermalBuildings:
                                     axis=1)
                 validation['Error'] = (validation['Calcul'] - validation['Data']) / validation['Data']
 
-            if self.path is not None:
+            if self.path_calibration is not None:
                 validation.round(2).to_csv(os.path.join(self.path_calibration, 'validation_stock.csv'))
 
     @staticmethod
@@ -868,14 +851,16 @@ class AgentBuildings(ThermalBuildings):
                  performance_insulation_renovation, path=None, year=2018,
                  endogenous=True, exogenous=None, expected_utility=None,
                  logger=None, calib_scale=True,
-                 quintiles=None, financing_cost=True, rational_behavior=None, resources_data=None
+                 quintiles=None, financing_cost=True, rational_behavior=None, resources_data=None,
+                 detailed_output=True
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
-                         resources_data=resources_data)
+                         resources_data=resources_data, detailed_output=detailed_output)
 
         if logger is None:
             logger = logging.getLogger()
         self.logger = logger
+
         self.memory = {}
         self.quintiles = quintiles
         if self.quintiles:
@@ -3643,7 +3628,7 @@ class AgentBuildings(ThermalBuildings):
         else:
             renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
-        if self.year == self.first_year + 1 and self.rational_behavior is None:
+        if self.year == self.first_year + 1 and self.rational_behavior is None and self.path_calibration is not None:
 
             market_failures = Series(0, index=self.hidden_cost.index)
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
@@ -4856,6 +4841,9 @@ class AgentBuildings(ThermalBuildings):
             output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
                 'Subsidies insulation (Billion euro)'] + output['Health expenditure (Billion euro)']
             output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Expenditure state (Billion euro)']
+            self.store_over_years[self.year].update(
+                {'Balance state (Billion euro)': output['Balance state (Billion euro)'],
+                 })
 
             # subsidies - details: policies amount and number of beneficiaries
             subsidies_details_renovation, subsidies_count_renovation, subsidies_average_renovation, cost_average_renovation = {}, {}, {}, {}
@@ -4949,84 +4937,94 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
                 output.update(temp.T / 10 ** 6 / step)
 
-                if self.year in self.expenditure_store.keys():
-                    temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
-                    temp.index = temp.index.map(lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                    output.update(temp.T)
+            if self.year in self.expenditure_store.keys():
+                temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
+                temp.index = temp.index.map(lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
-                    temp = self.expenditure_store[self.year]['ratio_total'].copy()
-                    temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                    output.update(temp.T)
+                temp = self.expenditure_store[self.year]['ratio_total'].copy()
+                temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
-                    temp = self.expenditure_store[self.year]['stock'].copy()
-                    temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                    output.update(temp.T)
+                temp = self.expenditure_store[self.year]['stock'].copy()
+                temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
-                self.store_over_years[self.year].update(
-                    {'Annuities heater (Billion euro/year)': output['Annuities heater (Billion euro/year)'],
-                     'Annuities insulation (Billion euro/year)': output['Annuities insulation (Billion euro/year)'],
-                     })
-                years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities heater (Billion euro/year)' in self.store_over_years[y].keys()]
-                annuities_heater_cumulated = sum([self.store_over_years[y]['Annuities heater (Billion euro/year)'] for y in years])
+            self.store_over_years[self.year].update(
+                {'Annuities heater (Billion euro/year)': output['Annuities heater (Billion euro/year)'],
+                 'Annuities insulation (Billion euro/year)': output['Annuities insulation (Billion euro/year)'],
+                 })
+            years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities heater (Billion euro/year)' in self.store_over_years[y].keys()]
+            annuities_heater_cumulated = sum([self.store_over_years[y]['Annuities heater (Billion euro/year)'] for y in years])
 
-                years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities insulation (Billion euro/year)' in self.store_over_years[y].keys()]
-                annuities_insulation_cumulated = sum(
-                    [self.store_over_years[y]['Annuities insulation (Billion euro/year)'] for y in years])
+            years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities insulation (Billion euro/year)' in self.store_over_years[y].keys()]
+            annuities_insulation_cumulated = sum(
+                [self.store_over_years[y]['Annuities insulation (Billion euro/year)'] for y in years])
 
-                output['Cost energy (Billion euro)'] = output['Energy expenditures wt (Billion euro)']
-                output['Cost emission (Billion euro)'] = (output['Emission (MtCO2)'] * carbon_value) / 10**3
-                output['Cost heath (Billion euro)'] = output['Health cost (Billion euro)']
-                output['Thermal comfort (Billion euro)'] = - output['Thermal comfort EE (Billion euro)'] + output['Thermal loss prices (Billion euro)']
-                output['Cost heater (Billion euro)'] = annuities_heater_cumulated
-                output['Cost insulation (Billion euro)'] = annuities_insulation_cumulated
-                variables = ['Cost energy (Billion euro)', 'Cost emission (Billion euro)', 'Cost heath (Billion euro)',
-                             'Thermal comfort (Billion euro)', 'Cost heater (Billion euro)', 'Cost insulation (Billion euro)']
-                output['Running cost (Billion euro)'] = sum([output[i] for i in variables])
+            # cofp
+            output['COFP (Billion euro)'] = 0
+            if self.year - 1 in self.store_over_years.keys():
+                if 'Balance state (Billion euro)' in self.store_over_years[self.year - 1].keys():
+                    balance = self.store_over_years[self.year]['Balance state (Billion euro)'] - self.store_over_years[self.year - 1]['Balance state (Billion euro)']
+                    if balance > 0:
+                        output['COFP (Billion euro)'] = abs(balance) * 0.2
 
-                consumption_saving_ee = (_consumption_saved_actual_insulation + self._heater_store['consumption_saved_actual'])
+            # running cost
+            output['Cost energy (Billion euro)'] = output['Energy expenditures wt (Billion euro)']
+            output['Cost emission (Billion euro)'] = (output['Emission (MtCO2)'] * carbon_value) / 10**3
+            output['Cost heath (Billion euro)'] = output['Health cost (Billion euro)']
+            output['Loss thermal comfort (Billion euro)'] = - output['Thermal comfort EE (Billion euro)'] + output['Thermal loss prices (Billion euro)']
+            output['Cost heater (Billion euro)'] = annuities_heater_cumulated
+            output['Cost insulation (Billion euro)'] = annuities_insulation_cumulated
+            variables = ['Cost energy (Billion euro)', 'Cost emission (Billion euro)', 'Cost heath (Billion euro)',
+                         'Loss thermal comfort (Billion euro)', 'Cost heater (Billion euro)',
+                         'Cost insulation (Billion euro)']
+            output['Running cost (Billion euro)'] = sum([output[i] for i in variables])
 
-                output['CBA Consumption saving (TWh)'] = output['Consumption saving (TWh/year)']
-                output['CBA Consumption saving EE (TWh)'] = consumption_saving_ee.sum() / 10**9
-                output['CBA Consumption saving prices (TWh)'] = output['Consumption saving prices effect (TWh/year)']
-                output['CBA Rebound EE (TWh)'] = output['Rebound EE (TWh/year)']
+            consumption_saving_ee = (_consumption_saved_actual_insulation + self._heater_store['consumption_saved_actual'])
 
-                # benefits
-                consumption_saving_ee = (consumption_saving_ee * prices_wt).sum() / 10**9
-                output['CBA Consumption saving EE (Billion euro)'] = consumption_saving_ee
-                output['CBA Consumption saving prices (Billion euro)'] = output['Consumption saving prices (Billion euro)']
-                output['CBA Thermal comfort EE (Billion euro)'] = output['Thermal comfort EE (Billion euro)']
-                output['CBA Emission direct (Billion euro)'] = (output['Emission saving (MtCO2/year)'] * carbon_value) / 10**3
-                output['CBA Health cost (Billion euro)'] = self.store_over_years[self.year - 1]['Health cost (Billion euro)'] - self.store_over_years[self.year]['Health cost (Billion euro)']
+            output['CBA Consumption saving (TWh)'] = output['Consumption saving (TWh/year)']
+            output['CBA Consumption saving EE (TWh)'] = consumption_saving_ee.sum() / 10**9
+            output['CBA Consumption saving prices (TWh)'] = output['Consumption saving prices effect (TWh/year)']
+            output['CBA Rebound EE (TWh)'] = output['Rebound EE (TWh/year)']
 
-                output['CBA benefits (Billion euro)'] = output['CBA Consumption saving EE (Billion euro)'] + \
-                                                        output['CBA Consumption saving prices (Billion euro)'] + \
-                                                        output['CBA Thermal comfort EE (Billion euro)'] + \
-                                                        output['CBA Emission direct (Billion euro)'] + \
-                                                        output['CBA Health cost (Billion euro)']
+            # cost-benefits analysis
+            consumption_saving_ee = (consumption_saving_ee * prices_wt).sum() / 10**9
+            output['CBA Consumption saving EE (Billion euro)'] = consumption_saving_ee
+            output['CBA Consumption saving prices (Billion euro)'] = output['Consumption saving prices (Billion euro)']
+            output['CBA Thermal comfort EE (Billion euro)'] = output['Thermal comfort EE (Billion euro)']
+            output['CBA Emission direct (Billion euro)'] = (output['Emission saving (MtCO2/year)'] * carbon_value) / 10**3
+            output['CBA Health cost (Billion euro)'] = self.store_over_years[self.year - 1]['Health cost (Billion euro)'] - self.store_over_years[self.year]['Health cost (Billion euro)']
 
-                # cost
-                output['CBA Thermal loss prices (Billion euro)'] = - output['Thermal loss prices (Billion euro)']
-                output['CBA Annuities insulation (Billion euro)'] = - output['Annuities insulation (Billion euro/year)']
-                output['CBA Annuities heater (Billion euro)'] = - output['Annuities heater (Billion euro/year)']
-                temp = calculate_annuities(output['Carbon value indirect renovation (Billion euro)'], lifetime=30, discount_rate=0.035)
-                output['CBA Carbon Emission indirect (Billion euro)'] = - temp
-                output['CBA cost (Billion euro)'] = output['CBA Annuities heater (Billion euro)'] + \
-                                                    output['CBA Annuities insulation (Billion euro)'] + \
-                                                    output['CBA Carbon Emission indirect (Billion euro)'] + \
-                                                    output['CBA Thermal loss prices (Billion euro)']
+            output['CBA benefits (Billion euro)'] = output['CBA Consumption saving EE (Billion euro)'] + \
+                                                    output['CBA Consumption saving prices (Billion euro)'] + \
+                                                    output['CBA Thermal comfort EE (Billion euro)'] + \
+                                                    output['CBA Emission direct (Billion euro)'] + \
+                                                    output['CBA Health cost (Billion euro)']
 
-                # cost-benefits analysis
-                output['Cost-benefits analysis (Billion euro)'] = output['CBA benefits (Billion euro)'] + output['CBA cost (Billion euro)']
+            # cost
+            output['CBA Thermal loss prices (Billion euro)'] = - output['Thermal loss prices (Billion euro)']
+            output['CBA Annuities insulation (Billion euro)'] = - output['Annuities insulation (Billion euro/year)']
+            output['CBA Annuities heater (Billion euro)'] = - output['Annuities heater (Billion euro/year)']
+            temp = calculate_annuities(output['Carbon value indirect renovation (Billion euro)'], lifetime=30, discount_rate=0.035)
+            output['CBA Carbon Emission indirect (Billion euro)'] = - temp
+            output['CBA COFP (Billion euro)'] = output['COFP (Billion euro)']
+            output['CBA cost (Billion euro)'] = output['CBA Annuities heater (Billion euro)'] + \
+                                                output['CBA Annuities insulation (Billion euro)'] + \
+                                                output['CBA Carbon Emission indirect (Billion euro)'] + \
+                                                output['CBA Thermal loss prices (Billion euro)'] + output['CBA COFP (Billion euro)']
 
-                if False:
-                    level = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Income owner', 'Occupancy status', 'Heating system']
-                    temp = self._replaced_by.groupby(level).sum()
-                    s = self._stock_ref.groupby(level).sum()
-                    proba_insulation_measures = (temp.T / s).T.dropna()
-                    path_output_special = os.path.join(self.path, 'output_special')
-                    if not os.path.isdir(path_output_special):
-                        os.mkdir(path_output_special)
-                    proba_insulation_measures.to_csv(os.path.join(path_output_special, 'proba_insulation_measures_{}.csv'.format(self.year)))
+            output['Cost-benefits analysis (Billion euro)'] = output['CBA benefits (Billion euro)'] + output['CBA cost (Billion euro)']
+
+            if False:
+                level = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Income owner', 'Occupancy status', 'Heating system']
+                temp = self._replaced_by.groupby(level).sum()
+                s = self._stock_ref.groupby(level).sum()
+                proba_insulation_measures = (temp.T / s).T.dropna()
+                path_output_special = os.path.join(self.path, 'output_special')
+                if not os.path.isdir(path_output_special):
+                    os.mkdir(path_output_special)
+                proba_insulation_measures.to_csv(os.path.join(path_output_special, 'proba_insulation_measures_{}.csv'.format(self.year)))
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)

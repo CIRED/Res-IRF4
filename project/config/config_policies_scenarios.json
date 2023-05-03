@@ -1,45 +1,18 @@
 {
-  "scenarios": {
+  "policies_scenarios": {
     "activated": false,
-    "current_policies": true,
-    "no_policy": true,
-    "prices_constant": true,
-    "constant": null,
-    "policies": null,
-    "add_policies": null,
-    "remove_policies": null,
-    "policies_scenarios": null
-  },
-  "sensitivity": {
-    "activated": false,
-    "scale_heater": [
-      {
-        "option": "price_elasticity",
-        "target": -1.2
-      },
-      {
-        "option": "price_elasticity",
-        "target": -1.5
-      },
-      {
-        "option": "price_elasticity",
-        "target": -2
-      }
-    ]
-  },
+    "file": "project/input/policies/proposals/variant_current_policies/montecarlo/policies_scenarios.json"},
   "Reference": {
     "file":"project/config/reference.json",
-    "end": 2019,
-    "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
-    },
+    "end": 2021,
     "simple": {
+      "detailed_output": false,
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
       "current_policies": false,
-      "no_policy": false,
+      "no_policy": true,
       "income": false,
       "prices_constant": false,
       "heating_system": {
@@ -54,6 +27,10 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
+    },
+    "policies": {
+      "file": "project/input/policies/current/policies_calibration.json"
+    },
+    "calibration": "project/input/calibration/calibration.pkl"
   }
 }

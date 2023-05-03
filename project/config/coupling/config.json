@@ -14,7 +14,7 @@
         "minimum_performance": null
       },
       "rational_behavior": {
-        "activated": true,
+        "activated": false,
         "social": true,
         "calibration": true
       },

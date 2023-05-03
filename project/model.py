@@ -12,43 +12,8 @@ from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
 from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies
+from project.utils import create_logger
 from project.input.resources import resources_data
-
-
-LOG_FORMATTER = '%(asctime)s - %(process)s - %(name)s - %(levelname)s - %(message)s'
-
-
-def create_logger(path=None):
-    """Create logger for one run.
-
-    Parameters
-    ----------
-    path: str
-
-    Returns
-    -------
-    Logger
-    """
-    if path is None:
-        name = ''
-    else:
-        name = path.split('/')[-1].lower()
-
-    logger = logging.getLogger('log_{}'.format(name))
-    logger.setLevel('DEBUG')
-    logger.propagate = False
-    # remove existing handlers
-    logger.handlers.clear()
-    # consoler handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
-    logger.addHandler(console_handler)
-    # file handler
-    if path is not None:
-        file_handler = logging.FileHandler(os.path.join(path, 'log.log'))
-        file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
-        logger.addHandler(file_handler)
-    return logger
 
 
 def get_config() -> dict:
@@ -302,7 +267,7 @@ def get_inputs(path=None, config=None, variables=None):
     return output
 
 
-def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
+def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, level_logger='DEBUG'):
     """Create main Python objects read by model.
 
     Parameters
@@ -328,7 +293,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
         dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
     if logger is None:
-        logger = create_logger(path)
+        logger = create_logger(path=path, level=level_logger)
     logger.info('Creating AgentBuildings object')
 
     if path is not None:
@@ -345,7 +310,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None):
                                quintiles=config['simple']['quintiles'],
                                financing_cost=config.get('financing_cost'),
                                rational_behavior=parsed_inputs['rational_behavior'],
-                               resources_data=resources_data)
+                               resources_data=resources_data,
+                               detailed_output=config['simple'].get('detailed_output'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -469,7 +435,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if output_details == 'full':
         buildings.logger.debug('Full output')
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
-                                                   bill_rebate=bill_rebate)
+                                                   bill_rebate=bill_rebate, detailed_output=buildings.detailed_output)
     elif output_details == 'cost_benefit':
         buildings.logger.debug('Cost-benefit output')
         stock = buildings.simplified_stock().rename(year)
@@ -485,7 +451,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     return buildings, stock, output
 
 
-def res_irf(config, path):
+def res_irf(config, path, level_logger='DEBUG'):
     """Res-IRF model.
 
     Parameters
@@ -494,6 +460,7 @@ def res_irf(config, path):
         Scenario-specific input
     path: str
         Scenario-specific output path
+    level_logger: str
 
     Returns
     -------
@@ -504,7 +471,7 @@ def res_irf(config, path):
     """
 
     os.mkdir(path)
-    logger = create_logger(path)
+    logger = create_logger(path=path, level=level_logger)
     try:
         logger.info('Reading input')
         config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
@@ -523,7 +490,7 @@ def res_irf(config, path):
         output, stock = pd.DataFrame(), pd.DataFrame()
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
 
-        if config['output'] == 'full':
+        if config['output'] == 'full' and buildings.path_ini is not None:
             plot_thermal_insulation(buildings.stock, save=os.path.join(buildings.path_ini, 'thermal_insulation.png'))
             _stock = buildings.simplified_stock(energy_level=True)
             _stock = _stock.groupby(
@@ -616,7 +583,7 @@ def res_irf(config, path):
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
-            if year == buildings.first_year + 1 and config['output'] == 'full':
+            if year == buildings.first_year + 1 and config['output'] == 'full' and buildings.path_ini is not None:
                 compare_results(o, buildings.path)
 
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
@@ -646,7 +613,7 @@ def res_irf(config, path):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
-            if config['output'] == 'full':
+            if config['output'] == 'full' and buildings.detailed_output:
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)
@@ -658,7 +625,7 @@ def res_irf(config, path):
         raise e
 
 
-def calibration_res_irf(path, config=None):
+def calibration_res_irf(path, config=None, level_logger='DEBUG'):
     """Calibrate Res-IRF and returns calibrated parameters.
     Function is useful for running multiple scenarios with the same calibration.
     Typical example is for sensitivity analysis or elasticity calculation.
@@ -666,12 +633,13 @@ def calibration_res_irf(path, config=None):
     ----------
     config
     path
+    level_logger
     Returns
     -------
     """
     if not os.path.isdir(path):
         os.mkdir(path)
-    logger = create_logger(path)
+    logger = create_logger(path=path, level=level_logger)
     try:
         logger.info('Reading input')
         config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
