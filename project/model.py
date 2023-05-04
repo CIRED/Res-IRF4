@@ -164,6 +164,9 @@ def config2inputs(config=None):
         stock, policies_heater, policies_insulation, inputs = deciles2quintiles(stock, policies_heater,
                                                                                 policies_insulation, inputs)
 
+    if config['simple'].get('detailed_output') is None:
+        config['simple']['detailed_output'] = True
+
     return config, inputs, stock, year, policies_heater, policies_insulation, taxes
 
 
@@ -289,14 +292,14 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
-    if path is not None:
+    if path is not None and config['simple']['detailed_output']:
         dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
     if logger is None:
         logger = create_logger(path=path, level=level_logger)
     logger.info('Creating AgentBuildings object')
 
-    if path is not None:
+    if path is not None and config['simple']['detailed_output']:
         with open(os.path.join(path, 'config.json'), 'w') as fp:
             json.dump(config, fp)
 
@@ -472,6 +475,9 @@ def res_irf(config, path, level_logger='DEBUG'):
     """
 
     os.mkdir(path)
+    if config['simple'].get('level_logger') is not None:
+        level_logger = config['simple']['level_logger']
+
     logger = create_logger(path=path, level=level_logger)
     try:
         logger.info('Reading input')
@@ -481,7 +487,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
             if policies_calibration:
                 make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
-        if policies_heater + policies_insulation:
+        if policies_heater + policies_insulation and config['simple']['detailed_output']:
             make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
 
         inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config, logger=logger)

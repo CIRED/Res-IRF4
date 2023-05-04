@@ -698,7 +698,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                                   'format_y': lambda y, _: '{:,.0f}'.format(y)},
                  'Replacement insulation (Thousand)': {'name': 'replacement_insulation.png',
                                                        'format_y': lambda y, _: '{:,.0f}'.format(y)},
-                 'Switch heater (Thousand households)': {'name': 'switch_heater.png',
+                 'Switch Heat pump (Thousand households)': {'name': 'switch_heat_pump.png',
                                                          'format_y': lambda y, _: '{:,.0f}'.format(y)},
                  'Efficiency insulation (euro/kWh standard)': {'name': 'efficiency_insulation.png',
                                                                'format_y': lambda y, _: '{:,.2f}'.format(y)},

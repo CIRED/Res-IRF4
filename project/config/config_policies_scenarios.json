@@ -4,7 +4,7 @@
     "file": "project/input/policies/proposals/variant_current_policies/montecarlo/policies_scenarios.json"},
   "Reference": {
     "file":"project/config/reference.json",
-    "end": 2023,
+    "end": 2051,
     "simple": {
       "detailed_output": false,
       "quintiles": true,

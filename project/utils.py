@@ -362,6 +362,16 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
 
 
+def calculate_average(df, lifetime=50, discount_rate=0.032):
+    idx = range(df.index[0], df.index[0] + lifetime)
+    discount_series = pd.Series([(1 + discount_rate) ** -i for i in range(lifetime)], index=idx)
+    df = df.reindex(idx, method='pad')
+    if isinstance(df, pd.DataFrame):
+        df = (df.T * discount_series).T.sum() / discount_series.sum()
+    elif isinstance(df, pd.Series):
+        df = (df * discount_series).sum() / discount_series.sum()
+    return df
+
 def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
                    'subsidy_ad_valorem': 'Subsidy, ad valorem',

@@ -30,7 +30,7 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
     get_size, compare_bar_plot, make_sensitivity_tables, cumulated_plot, find_discount_rate
-from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots
+from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots, calculate_average
 
 import project.thermal as thermal
 
@@ -1681,6 +1681,40 @@ class AgentBuildings(ThermalBuildings):
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
             return constant
+
+        def apply_rational_choice(_consumption_saved, _subsidies_total, _cost_total, _bill_saved, _carbon_saved,
+                                  _stock, _discount=None, social=False, discount_social=0.032, calibration=False):
+
+            if social:
+                _discount = discount_social
+
+            # subsidies do not change market-share
+            _bill_saved[_bill_saved == 0] = float('nan')
+
+            ratio = (_cost_total - _subsidies_total) / _bill_saved
+            if social:
+                ratio = (_cost_total - _subsidies_total) / (_bill_saved + _carbon_saved)
+
+            best_option = AgentBuildings.find_best_option(ratio, {'consumption_saved': _consumption_saved}, func='min')
+            _market_share = DataFrame(0, index=ratio.index, columns=ratio.columns)
+            for i in _market_share.index:
+                _market_share.loc[i, best_option.loc[i, 'columns']] = 1
+
+            ratio = best_option['criteria']
+            ratio = ratio[ratio >= 0]
+
+            if calibration:
+                if self.rational_hidden_cost is None:
+                    self.rational_hidden_cost = ratio.min()
+
+            _renovation_rate = ratio.copy()
+            _renovation_rate[ratio < self.rational_hidden_cost] = 1
+            _renovation_rate[ratio >= self.rational_hidden_cost] = 0
+
+            _market_share = _market_share.loc[_renovation_rate.index, :]
+
+            return _market_share, _renovation_rate
+
 
         choice_heater = cost_heater.columns
 
@@ -3366,8 +3400,6 @@ class AgentBuildings(ThermalBuildings):
         if carbon_value is not None:
             carbon_value_before = AgentBuildings.energy_bill(carbon_value, consumption_before,
                                                              level_heater='Heating system final')
-            """carbon_value = carbon_value.reindex(self.to_energy(consumption_before)).set_axis(index)
-            carbon_value_after = (consumption_after.T * carbon_value).T"""
             carbon_value_after = AgentBuildings.energy_bill(carbon_value, consumption_after,
                                                             level_heater='Heating system final')
 
@@ -4990,11 +5022,14 @@ class AgentBuildings(ThermalBuildings):
             output['CBA Rebound EE (TWh)'] = output['Rebound EE (TWh/year)']
 
             # cost-benefits analysis
-            consumption_saving_ee = (consumption_saving_ee * prices_wt).sum() / 10**9
+            energy_wt_value = calculate_average(inputs['energy_prices_wt'].loc[self.year:], lifetime=30, discount_rate=0.035)
+            carbon_value_mean = calculate_average(inputs['carbon_value'].loc[self.year:], lifetime=30, discount_rate=0.035)
+
+            consumption_saving_ee = (consumption_saving_ee * energy_wt_value).sum() / 10**9
             output['CBA Consumption saving EE (Billion euro)'] = consumption_saving_ee
             output['CBA Consumption saving prices (Billion euro)'] = output['Consumption saving prices (Billion euro)']
             output['CBA Thermal comfort EE (Billion euro)'] = output['Thermal comfort EE (Billion euro)']
-            output['CBA Emission direct (Billion euro)'] = (output['Emission saving (MtCO2/year)'] * carbon_value) / 10**3
+            output['CBA Emission direct (Billion euro)'] = (output['Emission saving (MtCO2/year)'] * carbon_value_mean) / 10**3
             output['CBA Health cost (Billion euro)'] = self.store_over_years[self.year - 1]['Health cost (Billion euro)'] - self.store_over_years[self.year]['Health cost (Billion euro)']
 
             output['CBA benefits (Billion euro)'] = output['CBA Consumption saving EE (Billion euro)'] + \

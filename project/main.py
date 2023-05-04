@@ -66,7 +66,7 @@ def run(path=None, folder=None):
     prefix = ''
     if 'policies_scenarios' in configuration.keys():
         if configuration['policies_scenarios']['activated']:
-            # output_compare = 'simple'
+            output_compare = 'simple'
             prefix = 'policies_scenarios'
             config_policies = get_json(configuration['policies_scenarios']['file'])
             for key, item in config_policies.items():

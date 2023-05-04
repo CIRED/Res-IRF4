@@ -528,7 +528,7 @@ def read_inputs(config, other_inputs=generic_input):
         rate = Series(config['macro']['energy_prices']['rate']).rename_axis('Energy')
         if config['macro']['energy_prices'].get('factor') is not None:
             rate *= config['macro']['energy_prices']['factor']
-        temp = range(config['start'] + 1, config['end'])
+        temp = range(config['start'] + 1, 2051)
         rate = concat([(1 + rate) ** n for n in range(len(temp))], axis=1, keys=temp)
         rate = concat((pd.Series(1, index=rate.index, name=config['start']), rate), axis=1)
         energy_prices = rate.T * energy_prices
