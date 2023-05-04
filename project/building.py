@@ -1986,7 +1986,8 @@ class AgentBuildings(ThermalBuildings):
         certificate_before = reindex_mi(certificate_before, index)
 
         consumption = (reindex_mi(self._surface, consumption.index) * consumption.T).T
-        emission = AgentBuildings.energy_bill(carbon_content, consumption)
+        emission = AgentBuildings.energy_bill(carbon_content, consumption.stack(), level_heater='Heating system final')
+        emission = emission.unstack('Heating system final')
 
         consumption_saved = (consumption_before - consumption.T).T
         emission_saved = (emission_before - emission.T).T
