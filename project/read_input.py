@@ -614,7 +614,14 @@ def read_inputs(config, other_inputs=generic_input):
             temp = {'calibration': config['renovation']['rational_behavior']['calibration'],
                     'social': config['renovation']['rational_behavior']['social'],
                     }
-    inputs.update({'rational_behavior': temp})
+    inputs.update({'rational_behavior_insulation': temp})
+    temp = None
+    if config['switch_heater'].get('rational_behavior') is not None:
+        if config['switch_heater']['rational_behavior']['activated']:
+            temp = {
+                    'social': config['switch_heater']['rational_behavior']['social'],
+                    }
+    inputs.update({'rational_behavior_heater': temp})
 
     if config['macro'].get('population') is not None:
         population = get_pandas(config['macro']['population'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())

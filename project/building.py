@@ -851,7 +851,9 @@ class AgentBuildings(ThermalBuildings):
                  performance_insulation_renovation, path=None, year=2018,
                  endogenous=True, exogenous=None, expected_utility=None,
                  logger=None, calib_scale=True,
-                 quintiles=None, financing_cost=True, rational_behavior=None, resources_data=None,
+                 quintiles=None, financing_cost=True,
+                 rational_behavior_insulation=None, rational_behavior_heater=None,
+                 resources_data=None,
                  detailed_output=True
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
@@ -921,8 +923,9 @@ class AgentBuildings(ThermalBuildings):
         self.cost_rebound = None
         self.rebound = None
 
-        self.rational_behavior = rational_behavior
-        self.rational_hidden_cost = None
+        self.rational_behavior_insulation = rational_behavior_insulation
+        self.rational_hidden_cost_insulation = None
+        self.rational_behavior_heater = rational_behavior_heater
 
         self.cost_curve_heater = None
         self.store_over_years = {}
@@ -1682,40 +1685,6 @@ class AgentBuildings(ThermalBuildings):
 
             return constant
 
-        def apply_rational_choice(_consumption_saved, _subsidies_total, _cost_total, _bill_saved, _carbon_saved,
-                                  _stock, _discount=None, social=False, discount_social=0.032, calibration=False):
-
-            if social:
-                _discount = discount_social
-
-            # subsidies do not change market-share
-            _bill_saved[_bill_saved == 0] = float('nan')
-
-            ratio = (_cost_total - _subsidies_total) / _bill_saved
-            if social:
-                ratio = (_cost_total - _subsidies_total) / (_bill_saved + _carbon_saved)
-
-            best_option = AgentBuildings.find_best_option(ratio, {'consumption_saved': _consumption_saved}, func='min')
-            _market_share = DataFrame(0, index=ratio.index, columns=ratio.columns)
-            for i in _market_share.index:
-                _market_share.loc[i, best_option.loc[i, 'columns']] = 1
-
-            ratio = best_option['criteria']
-            ratio = ratio[ratio >= 0]
-
-            if calibration:
-                if self.rational_hidden_cost is None:
-                    self.rational_hidden_cost = ratio.min()
-
-            _renovation_rate = ratio.copy()
-            _renovation_rate[ratio < self.rational_hidden_cost] = 1
-            _renovation_rate[ratio >= self.rational_hidden_cost] = 0
-
-            _market_share = _market_share.loc[_renovation_rate.index, :]
-
-            return _market_share, _renovation_rate
-
-
         choice_heater = cost_heater.columns
 
         utility_bill_saving = (bill_saved.T * reindex_mi(self.preferences_heater['bill_saved'],
@@ -1900,7 +1869,7 @@ class AgentBuildings(ThermalBuildings):
     def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, calib_heater=None,
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
                            prices_before=None, supply=None, store_information=True, bill_rebate=0,
-                           carbon_content=None):
+                           carbon_content=None, carbon_value=None):
         """Function returns new building stock after heater replacement.
 
         Parameters
@@ -1915,6 +1884,28 @@ class AgentBuildings(ThermalBuildings):
         -------
         Series
         """
+
+        def apply_rational_choice(_consumption_saved, _subsidies_total, _cost_total, _bill_saved, _carbon_saved,
+                                  _stock, social=False, discount_social=0.032):
+
+            if social:
+                _discount = discount_social
+
+            # subsidies do not change market-share
+            _bill_saved[_bill_saved == 0] = float('nan')
+
+            ratio = (_cost_total - _subsidies_total) / _bill_saved
+            if social:
+                ratio = (_cost_total - _subsidies_total) / (_bill_saved + _carbon_saved)
+
+            best_option = AgentBuildings.find_best_option(ratio, {'consumption_saved': _consumption_saved}, func='min')
+            _market_share = DataFrame(0, index=ratio.index, columns=ratio.columns)
+            for i in _market_share.index:
+                _market_share.loc[i, best_option.loc[i, 'columns']] = 1
+
+            assert (_market_share.sum(axis=1) == 1).all(), 'Market-share issue'
+
+            return _market_share
 
         index = stock.index
 
@@ -2050,13 +2041,19 @@ class AgentBuildings(ThermalBuildings):
         # condition = condition & temp
 
         if self._endogenous:
-            market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_heater,
-                                                               calib_heater=calib_heater, cost_financing=cost_financing,
-                                                               condition=condition, flow_replace=flow_replace)
+            if not self.rational_behavior_heater:
+                market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_heater,
+                                                                   calib_heater=calib_heater, cost_financing=cost_financing,
+                                                                   condition=condition, flow_replace=flow_replace)
 
-            # if market_share too small remove
-            market_share[market_share < 10 ** -2] = 0
-            market_share = (market_share.T / market_share.sum(axis=1)).T
+                # if market_share too small remove
+                market_share[market_share < 10 ** -2] = 0
+                market_share = (market_share.T / market_share.sum(axis=1)).T
+            else:
+                carbon_saved = (carbon_value * emission_saved) / 10**6
+                market_share = apply_rational_choice(consumption_saved, subsidies_total, cost_heater, bill_saved,
+                                                     carbon_saved, stock, social=False,
+                                                     discount_social=0.032)
 
         else:
             market_share = self.exogenous_market_share_heater(index, cost_heater.columns)
@@ -2955,12 +2952,12 @@ class AgentBuildings(ThermalBuildings):
             ratio = ratio[ratio >= 0]
 
             if calibration:
-                if self.rational_hidden_cost is None:
-                    self.rational_hidden_cost = ratio.min()
+                if self.rational_hidden_cost_insulation is None:
+                    self.rational_hidden_cost_insulation = ratio.min()
 
             _renovation_rate = ratio.copy()
-            _renovation_rate[ratio < self.rational_hidden_cost] = 1
-            _renovation_rate[ratio >= self.rational_hidden_cost] = 0
+            _renovation_rate[ratio < self.rational_hidden_cost_insulation] = 1
+            _renovation_rate[ratio >= self.rational_hidden_cost_insulation] = 0
 
             _market_share = _market_share.loc[_renovation_rate.index, :]
 
@@ -3405,7 +3402,7 @@ class AgentBuildings(ThermalBuildings):
 
             carbon_saved = - carbon_value_after.sub(carbon_value_before, axis=0).dropna()
 
-        if self.constant_insulation_intensive is None and self.rational_behavior is None:
+        if self.constant_insulation_intensive is None and self.rational_behavior_insulation is None:
 
             calibration_renovation(stock, cost_insulation.copy(), bill_saved.copy(), subsidies_total.copy(),
                                    calib_renovation, _cost_financing=cost_financing,
@@ -3421,7 +3418,7 @@ class AgentBuildings(ThermalBuildings):
                 assess_policies(stock, subsidies_details, cost_insulation, bill_saved, subsidies_total, cost_financing,
                                 _credit_constraint=credit_constraint)
 
-        if self.rational_behavior is None:
+        if self.rational_behavior_insulation is None:
             market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total, cost_insulation,
                                                                         _stock=stock, _cost_financing=cost_financing,
                                                                         _supply=supply,
@@ -3431,8 +3428,8 @@ class AgentBuildings(ThermalBuildings):
         else:
             market_share, renovation_rate = apply_rational_choice(consumption_saved, subsidies_total, cost_insulation,
                                                                   bill_saved, carbon_saved, stock, _discount=discount,
-                                                                  social=self.rational_behavior['social'],
-                                                                  calibration=self.rational_behavior['calibration'])
+                                                                  social=self.rational_behavior_insulation['social'],
+                                                                  calibration=self.rational_behavior_insulation['calibration'])
 
         if min_performance is not None:
             certificate = reindex_mi(self._consumption_store['certificate_renovation'], market_share.index)
@@ -3661,7 +3658,7 @@ class AgentBuildings(ThermalBuildings):
         else:
             renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
-        if self.year == self.first_year + 1 and self.rational_behavior is None and self.path_calibration is not None:
+        if self.year == self.first_year + 1 and self.rational_behavior_insulation is None and self.path_calibration is not None:
 
             market_failures = Series(0, index=self.hidden_cost.index)
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
@@ -3766,7 +3763,7 @@ class AgentBuildings(ThermalBuildings):
                       policies_heater=None, policies_insulation=None, calib_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None,
                       step=1, exogenous_social=None, premature_replacement=None, prices_before=None, supply=None,
-                      carbon_value=None, bill_rebate=0, carbon_content=None):
+                      carbon_value_kwh=None, carbon_value=None, bill_rebate=0, carbon_content=None):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -3806,7 +3803,7 @@ class AgentBuildings(ThermalBuildings):
                                         calib_heater=calib_heater, step=1, financing_cost=financing_cost,
                                         district_heating=district_heating, premature_replacement=premature_replacement,
                                         prices_before=prices_before, bill_rebate=bill_rebate,
-                                        carbon_content=carbon_content)
+                                        carbon_content=carbon_content, carbon_value=carbon_value)
 
         if supply is not None:
             if supply['heater']:
@@ -3870,7 +3867,7 @@ class AgentBuildings(ThermalBuildings):
                                                                     exogenous_social=exogenous_social,
                                                                     prices_before=prices_before,
                                                                     supply=supply_insulation,
-                                                                    carbon_value=carbon_value,
+                                                                    carbon_value=carbon_value_kwh,
                                                                     carbon_content=carbon_content,
                                                                     bill_rebate=bill_rebate)
 
@@ -5236,7 +5233,7 @@ class AgentBuildings(ThermalBuildings):
 
     def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
                               scale_heater=None, constant_insulation_intensive=None, constant_insulation_extensive=None,
-                              scale_insulation=None, energy_prices=None, rational_hidden_cost=None,
+                              scale_insulation=None, energy_prices=None, rational_hidden_cost_insulation=None,
                               number_firms_insulation=None, number_firms_heater=None):
         """Function calibrating buildings object with exogenous data.
 
@@ -5252,7 +5249,7 @@ class AgentBuildings(ThermalBuildings):
         scale_insulation: float
         energy_prices: Series
             Energy prices for year y. Index are energy carriers {'Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'}.
-        rational_hidden_cost:
+        rational_hidden_cost_insulation:
         """
 
         # calibration energy consumption first year
@@ -5262,8 +5259,8 @@ class AgentBuildings(ThermalBuildings):
             self.coefficient_global = coefficient_global
             self.coefficient_heater = coefficient_heater
 
-        if rational_hidden_cost is not None:
-            self.rational_hidden_cost = rational_hidden_cost
+        if rational_hidden_cost_insulation is not None:
+            self.rational_hidden_cost_insulation = rational_hidden_cost_insulation
 
         else:
             if constant_heater is not None:
@@ -5296,7 +5293,7 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = None
         self.scale_insulation = None
 
-        self.rational_hidden_cost = None
+        self.rational_hidden_cost_insulation = None
 
     def flow_demolition(self, demolition_rate, step=1):
         """Demolition of E, F and G buildings based on their share in the mobile stock.

@@ -312,7 +312,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                logger=logger,
                                quintiles=config['simple']['quintiles'],
                                financing_cost=config.get('financing_cost'),
-                               rational_behavior=parsed_inputs['rational_behavior'],
+                               rational_behavior_insulation=parsed_inputs['rational_behavior_insulation'],
+                               rational_behavior_heater=parsed_inputs['rational_behavior_heater'],
                                resources_data=resources_data,
                                detailed_output=config['simple'].get('detailed_output'))
 
@@ -415,7 +416,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             step=step,
                                             exogenous_social=exogenous_social,
                                             supply=supply,
-                                            carbon_value=post_inputs['carbon_value_kwh'].loc[year, :],
+                                            carbon_value_kwh=post_inputs['carbon_value_kwh'].loc[year, :],
+                                            carbon_value=post_inputs['carbon_value'].loc[year],
                                             carbon_content=carbon_content,
                                             bill_rebate=bill_rebate)
 
