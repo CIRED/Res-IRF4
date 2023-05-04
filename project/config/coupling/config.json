@@ -24,6 +24,21 @@
       },
       "lifetime_insulation": 1
     },
+    "switch_heater": {
+      "district_heating": "project/input/macro/district_heating.csv",
+      "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
+      "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
+      "premature_replacement": null,
+      "information_rate": 0.333,
+      "rational_behavior": {
+        "activated": false,
+        "social": true
+      },
+      "scale": {
+        "option": "price_elasticity",
+        "target": -1.2
+      }
+    },
     "end": 2025,
     "policies": {
         "file": "project/input/policies/coupling/policies_calibration_2025.json"
