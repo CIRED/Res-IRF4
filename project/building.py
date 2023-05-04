@@ -924,7 +924,7 @@ class AgentBuildings(ThermalBuildings):
         self.rebound = None
 
         self.rational_behavior_insulation = rational_behavior_insulation
-        self.rational_hidden_cost_insulation = None
+        self.rational_hidden_cost = None
         self.rational_behavior_heater = rational_behavior_heater
 
         self.cost_curve_heater = None
@@ -2953,12 +2953,12 @@ class AgentBuildings(ThermalBuildings):
             ratio = ratio[ratio >= 0]
 
             if calibration:
-                if self.rational_hidden_cost_insulation is None:
-                    self.rational_hidden_cost_insulation = ratio.min()
+                if self.rational_hidden_cost is None:
+                    self.rational_hidden_cost = ratio.min()
 
             _renovation_rate = ratio.copy()
-            _renovation_rate[ratio < self.rational_hidden_cost_insulation] = 1
-            _renovation_rate[ratio >= self.rational_hidden_cost_insulation] = 0
+            _renovation_rate[ratio < self.rational_hidden_cost] = 1
+            _renovation_rate[ratio >= self.rational_hidden_cost] = 0
 
             _market_share = _market_share.loc[_renovation_rate.index, :]
 
@@ -5234,7 +5234,7 @@ class AgentBuildings(ThermalBuildings):
 
     def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
                               scale_heater=None, constant_insulation_intensive=None, constant_insulation_extensive=None,
-                              scale_insulation=None, energy_prices=None, rational_hidden_cost_insulation=None,
+                              scale_insulation=None, energy_prices=None, rational_hidden_cost=None,
                               number_firms_insulation=None, number_firms_heater=None):
         """Function calibrating buildings object with exogenous data.
 
@@ -5250,7 +5250,7 @@ class AgentBuildings(ThermalBuildings):
         scale_insulation: float
         energy_prices: Series
             Energy prices for year y. Index are energy carriers {'Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel'}.
-        rational_hidden_cost_insulation:
+        rational_hidden_cost:
         """
 
         # calibration energy consumption first year
@@ -5260,8 +5260,8 @@ class AgentBuildings(ThermalBuildings):
             self.coefficient_global = coefficient_global
             self.coefficient_heater = coefficient_heater
 
-        if rational_hidden_cost_insulation is not None:
-            self.rational_hidden_cost_insulation = rational_hidden_cost_insulation
+        if rational_hidden_cost is not None:
+            self.rational_hidden_cost = rational_hidden_cost
 
         else:
             if constant_heater is not None:
@@ -5294,7 +5294,7 @@ class AgentBuildings(ThermalBuildings):
         self.constant_insulation_extensive = None
         self.scale_insulation = None
 
-        self.rational_hidden_cost_insulation = None
+        self.rational_hidden_cost = None
 
     def flow_demolition(self, demolition_rate, step=1):
         """Demolition of E, F and G buildings based on their share in the mobile stock.
