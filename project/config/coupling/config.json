@@ -30,10 +30,6 @@
       "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
       "premature_replacement": null,
       "information_rate": 0.333,
-      "rational_behavior": {
-        "activated": false,
-        "social": true
-      },
       "scale": {
         "option": "price_elasticity",
         "target": -1.2

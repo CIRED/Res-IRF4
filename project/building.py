@@ -1389,7 +1389,12 @@ class AgentBuildings(ThermalBuildings):
 
             cost_total = cost + cost_financing
 
-        return cost_total, cost_financing, amount_debt, amount_saving, discount
+        subsidies = dict()
+        if policies:
+            for policy in policies:
+                subsidies.update({policy.name: rslt[policy.name] * 0.015 * financing_options[policy.name]['duration']})
+
+        return cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies
 
     def credit_constraint(self, amount_debt, financing_cost, bill_saved=None):
 
@@ -1476,6 +1481,7 @@ class AgentBuildings(ThermalBuildings):
                     emission_saved_cumac = self.to_cumac(emission_saved) / 10**3
                     emission_saved_cumac[emission_saved_cumac < 0] = 0
                     value = value * emission_saved_cumac
+                    value = value.fillna(0).loc[:, emission_saved_cumac.columns]
                 elif policy.proportional == 'MWh_cumac':
                     consumption_saved_cumac = self.to_cumac(consumption_saved)
                     consumption_saved_cumac[consumption_saved_cumac < 0] = 0
@@ -1797,7 +1803,7 @@ class AgentBuildings(ThermalBuildings):
     def store_information_heater(self, cost_heater, subsidies_total, subsidies_details, replacement, vta_heater,
                                  cost_financing, amount_debt, amount_saving, discount, consumption_saved,
                                  consumption_before, consumption_no_rebound, consumption_actual, certificate_jump,
-                                 flow_premature_replacement):
+                                 flow_premature_replacement, subsidies_loan):
         """Store information yearly heater replacement.
 
         Parameters
@@ -1825,6 +1831,7 @@ class AgentBuildings(ThermalBuildings):
                 'cost_financing': replacement * cost_financing,
                 'vta': (replacement * vta_heater).sum().sum(),
                 'subsidies': replacement * subsidies_total,
+                'subsidies_loan': replacement * subsidies_loan,
                 'debt': (replacement * amount_debt).sum(axis=1).groupby('Income owner').sum(),
                 'saving': (replacement * amount_saving).sum(axis=1).groupby('Income owner').sum(),
                 'discount': discount,
@@ -2009,10 +2016,14 @@ class AgentBuildings(ThermalBuildings):
         cost_heater = Series(1, index=index, dtype='float').to_frame().dot(cost_heater.to_frame().T)
 
         p = [p for p in policies_heater if p.policy == 'zero_interest_loan']
-        cost_total, cost_financing, amount_debt, amount_saving, discount = self.calculate_financing(
+        cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
             cost_heater,
             subsidies_total,
             financing_cost, policies=p)
+        subsidies_loan = DataFrame(0, index=cost_total.index, columns=cost_total.columns)
+        for policy in p:
+            subsidies_details.update({policy.name: subsidies[policy.name]})
+            subsidies_loan += subsidies[policy.name]
 
         if prices_before is None:
             prices_before = prices
@@ -2165,7 +2176,7 @@ class AgentBuildings(ThermalBuildings):
                                           vta_heater, cost_financing, amount_debt, amount_saving, discount,
                                           consumption_saved,
                                           consumption_before, consumption_no_rebound, consumption_actual, certificate_jump,
-                                          flow_premature_replacement)
+                                          flow_premature_replacement, subsidies_loan)
         return stock
 
     def prepare_cost_insulation(self, cost_insulation):
@@ -2494,7 +2505,6 @@ class AgentBuildings(ThermalBuildings):
             t.rename(index={idx_replace: idx_target}, inplace=True)
             _temp = concat((_temp, t)).loc[self.constant_insulation_extensive.index]
             self.constant_insulation_extensive = _temp.copy()
-
 
         subsidies_details = {}
 
@@ -3492,7 +3502,7 @@ class AgentBuildings(ThermalBuildings):
     def store_information_insulation(self, condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
                                      vta_insulation, subsidies_details, subsidies_total, consumption_saved,
                                      consumption_saved_actual, consumption_saved_no_rebound, amount_debt, amount_saving,
-                                     discount):
+                                     discount, subsidies_loan):
         """Store insulation information.
 
 
@@ -3521,6 +3531,7 @@ class AgentBuildings(ThermalBuildings):
         amount_debt: Series
         amount_saving: Series
         discount:Series
+        subsidies_loan
         """
         list_condition = [c for c in condition.keys() if c not in self._list_condition_subsidies]
         self._condition_store = {k: item for k, item in condition.items() if k in list_condition}
@@ -3533,6 +3544,7 @@ class AgentBuildings(ThermalBuildings):
             'cost_financing_households': cost_financing,
             'vta_households': vta_insulation,
             'subsidies_households': subsidies_total,
+            'subsidies_loan_households': subsidies_loan,
             'subsidies_details_households': subsidies_details,
             'cost_component': cost_insulation_raw * self.surface_insulation * (1 + tax) * self._markup_insulation_store,
             'debt_households': amount_debt,
@@ -3614,12 +3626,16 @@ class AgentBuildings(ThermalBuildings):
             certificate_before_heater, energy_saved_3uses, consumption_saved, carbon_content, calculate_condition=calculate_condition)
 
         p = [p for p in policies_insulation if p.policy == 'zero_interest_loan']
-        cost_total, cost_financing, amount_debt, amount_saving, discount = self.calculate_financing(
+        cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
             reindex_mi(cost_insulation, index),
             subsidies_total,
             financing_cost,
             policies=p
         )
+        subsidies_loan = DataFrame(0, index=cost_total.index, columns=cost_total.columns)
+        for policy in p:
+            subsidies_details.update({policy.name: subsidies[policy.name]})
+            subsidies_loan += subsidies[policy.name]
 
         energy_bill_before = AgentBuildings.energy_bill(prices, consumption_before, level_heater='Heating system final')
         energy_bill_after = AgentBuildings.energy_bill(prices, consumption_after, level_heater='Heating system final')
@@ -3756,7 +3772,7 @@ class AgentBuildings(ThermalBuildings):
             self.store_information_insulation(condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
                                               vta_insulation, subsidies_details, subsidies_total, consumption_saved,
                                               consumption_saved_actual, consumption_saved_no_rebound,
-                                              amount_debt, amount_saving, discount)
+                                              amount_debt, amount_saving, discount, subsidies_loan)
 
         return renovation_rate, market_share
 
@@ -4645,6 +4661,10 @@ class AgentBuildings(ThermalBuildings):
                 annuities_sub = calculate_annuities(output['Subsidies insulation (Billion euro)'], lifetime=lifetime, discount_rate=discount_rate)
                 output['Efficiency subsidies insulation (euro/kWh standard)'] = annuities_sub / output['Consumption standard saving insulation (TWh/year)']
 
+            subsidies_loan_insulation = (self._replaced_by * self._renovation_store['subsidies_loan_households']).groupby(levels).sum()
+            subsidies_loan_insulation = subsidies_loan_insulation.sum(axis=1)
+            output['Subsidies loan insulation (Billion euro)'] = subsidies_loan_insulation.sum() / 10 ** 9 / step
+
             debt = (self._replaced_by * self._renovation_store['debt_households']).groupby(levels).sum().sum(
                 axis=1).groupby(levels_owner).sum()
             del self._renovation_store['debt_households']
@@ -4664,6 +4684,8 @@ class AgentBuildings(ThermalBuildings):
             output['Annuities heater households (Billion euro/year)'] = annuities_heater_hh.sum().sum() / 10 ** 9 / step
 
             output['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9 / step
+            subsidies_loan_heater = self._heater_store['subsidies_loan'].sum(axis=1)
+            output['Subsidies loan heater (Billion euro)'] = subsidies_loan_heater.sum() / 10 ** 9 / step
 
             temp = self._heater_store['debt'].loc[self._resources_data['index']['Income owner']]
             output['Debt heater (Billion euro)'] = temp.sum() / 10 ** 9 / step
@@ -4672,9 +4694,13 @@ class AgentBuildings(ThermalBuildings):
             output['Saving heater (Billion euro)'] = temp.sum() / 10 ** 9 / step
 
             index = subsidies_heater.index.union(subsidies_insulation.index)
-            subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index,
-                                                                                                           fill_value=0)
+            subsidies_total = subsidies_heater.reindex(index, fill_value=0) + subsidies_insulation.reindex(index, fill_value=0)
             output['Subsidies total (Billion euro)'] = subsidies_total.sum() / 10 ** 9 / step
+
+            index = subsidies_loan_heater.index.union(subsidies_loan_insulation.index)
+            subsidies_loan_total = subsidies_loan_heater.reindex(index, fill_value=0) + subsidies_loan_insulation.reindex(index, fill_value=0)
+            output['Subsidies loan total (Billion euro)'] = subsidies_loan_total.sum() / 10 ** 9 / step
+
             output['Debt total (Billion euro)'] = output['Debt heater (Billion euro)'] + output[
                 'Debt insulation (Billion euro)']
             output['Saving total (Billion euro)'] = output['Saving heater (Billion euro)'] + output[
@@ -5066,6 +5092,13 @@ class AgentBuildings(ThermalBuildings):
 
     def parse_output_run_cba(self, prices, inputs, step=1, taxes=None, bill_rebate=0):
         output = dict()
+
+        # emission
+        emission = inputs['carbon_emission'].loc[self.year, :]
+        consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True,
+                                                  bill_rebate=bill_rebate)
+        temp = consumption_energy * emission
+        output['Emission (MtCO2)'] = temp.sum() / 10 ** 3
 
         # investment
         investment_cost = (self._replaced_by * self._renovation_store['cost_households']).sum().sum()

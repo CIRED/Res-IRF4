@@ -164,6 +164,14 @@ def read_proportional(data):
         mask = get_series(data['index'], header=0)
         value *= mask
 
+    if data.get('columns') is not None:
+        mask = get_series(data['columns'],  header=0).rename(None)
+        if isinstance(value, (float, int)):
+            value *= mask
+        else:
+            value = value.to_frame().dot(mask.to_frame().T)
+        by = 'columns'
+
     if data.get('growth'):
         growth = get_series(data['growth'], header=None)
         value = {k: i * value for k, i in growth.items()}
@@ -293,16 +301,16 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     path = os.path.join('project', 'output', 'ResIRF')
 
     buildings, inputs_dynamics, policies_heater, policies_insulation = ini_res_irf(path=path, config=config,
-                                                                                   level_logger='WARNING')
+                                                                                   level_logger='DEBUG')
 
     sub_heater = {'name': 'sub_heater',
                   'start': start,
                   'end': end,
-                  'value': 0,
-                  'policy': 'subsidy_ad_valorem',
+                  'value': 0.5,
+                  'policy': 'subsidy_proportional',
                   'gest': 'heater',
                   'columns': 'project/input/policies/target/target_heat_pump.csv',
-                  'proportional': None
+                  'proportional': 'tCO2_cumac'
                   }
     target = None
     sub_insulation = {'name': 'sub_insulation',

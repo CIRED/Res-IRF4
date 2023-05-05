@@ -397,6 +397,14 @@ def read_policies(config):
             mask = get_series(data['index'], header=0)
             value *= mask
 
+        if data.get('columns') is not None:
+            mask = get_pandas(data['columns'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename(None)
+            if isinstance(value, (float, int)):
+                value *= mask
+            else:
+                value = value.to_frame().dot(mask.to_frame().T)
+            by = 'columns'
+
         if data.get('growth'):
             growth = get_series(data['growth'], header=None)
             value = {k: i * value for k, i in growth.items()}
