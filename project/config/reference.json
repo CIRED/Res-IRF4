@@ -54,9 +54,9 @@
       "cost_insulation": "project/input/technical/cost_insulation.csv",
       "performance_insulation_renovation": "project/input/technical/performance_insulation_renovation.csv",
       "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",
-      "carbon_emission": "project/input/technical/carbon_emission.csv",
+      "carbon_emission": "project/input/technical/carbon_emission_s4.csv",
       "renewable_gas": {"file": "project/input/technical/renewable_gas.csv",
-                        "scenario": "TEND"
+                        "scenario": "NO"
       },
       "technical_progress": {
         "insulation": {
