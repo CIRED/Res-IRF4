@@ -24,17 +24,6 @@
       },
       "lifetime_insulation": 1
     },
-    "switch_heater": {
-      "district_heating": "project/input/macro/district_heating.csv",
-      "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
-      "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-      "premature_replacement": null,
-      "information_rate": 0.333,
-      "scale": {
-        "option": "price_elasticity",
-        "target": -1.2
-      }
-    },
     "end": 2025,
     "policies": {
         "file": "project/input/policies/coupling/policies_calibration_2025.json"
@@ -61,6 +50,40 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
+    },
+    "technical": {
+      "cost_heater": "project/input/technical/cost_heater.csv",
+      "efficiency": "project/input/technical/efficiency.csv",
+      "lifetime_heater": "project/input/technical/lifetime_heater.csv",
+      "cost_insulation": "project/input/technical/cost_insulation.csv",
+      "performance_insulation_renovation": "project/input/technical/performance_insulation_renovation.csv",
+      "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",
+      "carbon_emission": "project/input/technical/carbon_emission_s2.csv",
+      "renewable_gas": {"file": "project/input/technical/renewable_gas.csv",
+                        "scenario": "TEND"
+      },
+      "technical_progress": {
+        "insulation": {
+          "activated": false,
+          "start": 2020,
+          "end": 2035,
+          "value_end": -0.1
+        },
+        "heater": {
+          "activated": false,
+          "start": 2020,
+          "end": 2035,
+          "value_end": -0.2
+        }
+      },
+      "footprint": {
+        "Traditional material": 1.0,
+        "Bio material": 0.0,
+        "construction": "project/input/technical/footprint_construction.csv",
+        "renovation": "project/input/technical/footprint_renovation.csv"
+      },
+      "surface": "project/input/technical/surface.csv",
+      "ratio_surface": "project/input/technical/ratio_surface.csv"
     }
   }
 }

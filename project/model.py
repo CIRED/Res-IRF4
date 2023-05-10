@@ -225,7 +225,8 @@ def select_post_inputs(parsed_inputs):
     dict
     """
 
-    vars = ['carbon_emission', 'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
+    vars = ['carbon_emission', 'renewable_gas',
+            'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
             'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh', 'carbon_value',
             'use_subsidies', 'health_cost', 'implicit_discount_rate', 'energy_prices_wt']
@@ -315,7 +316,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                rational_behavior_insulation=parsed_inputs['rational_behavior_insulation'],
                                rational_behavior_heater=parsed_inputs['rational_behavior_heater'],
                                resources_data=resources_data,
-                               detailed_output=config['simple'].get('detailed_output'))
+                               detailed_output=config['simple'].get('detailed_output'),
+                               figures_ini=config.get('figures_ini'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -411,11 +413,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             policies_insulation=p_insulation,
                                             calib_renovation=calib_renovation,
                                             calib_heater=calib_heater,
-                                            premature_replacement=premature_replacement,
                                             district_heating=district_heating,
-                                            step=step,
                                             exogenous_social=exogenous_social,
-                                            supply=supply,
                                             carbon_value_kwh=post_inputs['carbon_value_kwh'].loc[year, :],
                                             carbon_value=post_inputs['carbon_value'].loc[year],
                                             carbon_content=carbon_content,
@@ -545,7 +544,10 @@ def res_irf(config, path, level_logger='DEBUG'):
 
             if year > config['start']:
                 prices_before = energy_prices.loc[year - 1, :]
-                carbon_content_before = inputs_dynamics['post_inputs']['carbon_emission'].loc[year - 1, :]
+                if 'Emission content (gCO2/kWh)' in buildings.store_over_years[year - 1].keys():
+                    carbon_content_before = buildings.store_over_years[year - 1]['Emission content (gCO2/kWh)']
+                else:
+                    carbon_content_before = inputs_dynamics['post_inputs']['carbon_emission'].loc[year - 1, :]
             else:
                 prices_before = prices
                 carbon_content_before = carbon_content

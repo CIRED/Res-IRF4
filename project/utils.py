@@ -355,11 +355,10 @@ def parse_policies(config):
 
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
-    if isinstance(discount_rate, pd.Series):
-        if (discount_rate == 0).any():
-            print('ok')
-    # TODO: use https://stackoverflow.com/questions/38886512/how-to-deal-with-divide-by-zero-with-pandas-dataframes-when-manipulating-colum
-    return capex * discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+    factor = discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+    if isinstance(factor, (pd.Series, pd.DataFrame)):
+        factor.fillna(1 / lifetime, inplace=True)
+    return capex * factor
 
 
 def calculate_average(df, lifetime=50, discount_rate=0.032):
@@ -371,6 +370,7 @@ def calculate_average(df, lifetime=50, discount_rate=0.032):
     elif isinstance(df, pd.Series):
         df = (df * discount_series).sum() / discount_series.sum()
     return df
+
 
 def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
@@ -1014,8 +1014,9 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
     save_fig(fig, save=save)
 
 
-def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3, offset=1,
-                         ymin=0, hline=None, lineplot=None, rotation=90, loc='left', left=1.04, xmin=None):
+def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
+                         ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
+                         scatterplot=None):
     """Make stackedbar plot.
 
     Parameters
@@ -1042,9 +1043,27 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
         lineplot.plot(ax=ax, kind='line', color='black', marker='*')
         # lineplot.rename('data').reset_index().plot(ax=ax, kind='scatter', x='index', y='data')
 
+    if scatterplot is not None:
+        scatterplot.index = scatterplot.index.astype(str)
+        scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+        scatterplot.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
+                         color='black', s=50, xlabel=None)
+
+        y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
+        for _, y in scatterplot.iterrows():
+            ax.annotate("{:,.1f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
+
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
+    ax.spines['left'].set_visible(False)
+
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
-    format_legend(ax, ncol=ncol, offset=offset, loc=loc, left=left)
+    # ax.set_xticklabels(df.index, rotation=rotation)
+
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=16)
+    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
+    ax.set(xlabel=None, ylabel=None)
+
+    format_legend(ax, loc=loc, left=left)
     save_fig(fig, save=save)
 
 
@@ -1142,7 +1161,7 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
     save_fig(fig, save=save)
 
 
-def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
+def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6), loc='left', left=1.04):
     """Compare social NPV between scenarios and one reference.
 
     Stacked bar chart.
@@ -1157,7 +1176,7 @@ def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
     -------
 
     """
-    fig, ax = plt.subplots(1, 1, figsize=figsize)
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     data = df.copy()
 
@@ -1193,11 +1212,11 @@ def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6)):
     y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
 
     for _, y in total.iterrows():
-        ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + y_range /20 ), ha="center")
+        ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + y_range / 20), ha="center")
 
     ax.set_xticklabels(data.index, rotation=0)
 
-    format_legend(ax)
+    format_legend(ax, loc=loc, left=left)
     save_fig(fig, save=save)
 
 

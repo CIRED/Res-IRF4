@@ -322,13 +322,15 @@ def read_policies(config):
 
         """
         l = list()
-        heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze()).unstack('Heating system final')
-        l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_valorem', gest='heater',
-                              cap=data['cap'], by='columns'))
-        insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
-        l.append(
-            PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_valorem', gest='insulation',
-                         cap=data['cap'], target=data.get('target')))
+        if data['heater'] is not None:
+            heater = get_pandas(data['heater'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze()).unstack('Heating system final')
+            l.append(PublicPolicy('cite', data['start'], data['end'], heater, 'subsidy_ad_valorem', gest='heater',
+                                  cap=data['cap'], by='columns'))
+        if data['insulation'] is not None:
+            insulation = get_pandas(data['insulation'], lambda x: pd.read_csv(x, index_col=[0]))
+            l.append(
+                PublicPolicy('cite', data['start'], data['end'], insulation, 'subsidy_ad_valorem', gest='insulation',
+                             cap=data['cap'], target=data.get('target')))
         return l
 
     def read_zil(data):
@@ -382,7 +384,7 @@ def read_policies(config):
 
         for gest in data['gest']:
             l.append(PublicPolicy(name, data['start'], data['end'], value, 'subsidy_ad_valorem',
-                                  gest=gest, by=by, target=data.get('target')))
+                                  gest=gest, by=by, target=data.get('target'), cap=data.get('cap')))
         return l
 
     def read_proportional(data):
@@ -472,7 +474,7 @@ def read_policies(config):
             'cee': read_cee, 'cee_variant': read_cee,
             'cap': read_cap, 'cap_variant': read_cee,
             'carbon_tax': read_carbon_tax, 'carbon_tax_variant': read_carbon_tax,
-            'cite': read_cite,
+            'cite': read_cite, 'cite_insulation': read_cite, 'cite_heater': read_cite,
             'reduced_vta': read_reduced_vta, 'reduced_vta_variant': read_reduced_vta,
             'zero_interest_loan': read_zil}
 
@@ -704,10 +706,14 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'health_cost': df})
 
     carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
-    inputs.update({'carbon_value': carbon_value.loc[idx]})
+    inputs.update({'carbon_value': carbon_value.loc[config['start']:]})
 
     carbon_emission = get_pandas(config['technical']['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
-    inputs.update({'carbon_emission': carbon_emission.loc[idx, :] * 1000})
+    inputs.update({'carbon_emission': carbon_emission.loc[config['start']:, :] * 1000})
+
+    renewable_gas = get_pandas(config['technical']['renewable_gas']['file'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
+    renewable_gas = renewable_gas.loc[:, config['technical']['renewable_gas']['scenario']]
+    inputs.update({'renewable_gas': renewable_gas.loc[config['start']:]})
 
     footprint_built = get_pandas(config['technical']['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
     inputs.update({'footprint_built': footprint_built})

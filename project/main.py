@@ -269,6 +269,10 @@ def run(path=None, folder=None):
         for key in configuration.keys():
             configuration[key]['end'] = int(args.year)
 
+    for s in configuration.keys():
+        if s != 'Reference':
+            configuration[s]['figure_ini'] = False
+
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logger.debug('Launching processes')

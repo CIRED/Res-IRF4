@@ -50,5 +50,28 @@
     "end": 2051,
     "policy": "regulation",
     "gest": "heater"
-  }
+  },
+        "OutWorst": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "ad_valorem": {
+          "start": 2019,
+          "end": 2051,
+          "value": 0.5,
+          "policy": "subsidy_ad_valorem",
+          "gest": "insulation",
+          "index": null,
+          "target": "out_worst"
+        }
+      },
+      "ReachBest": {
+        "file": "project/input/policies/current/policies_calibration.json",
+        "ad_valorem": {
+          "start": 2019,
+          "end": 2051,
+          "value": 0.5,
+          "policy": "subsidy_ad_valorem",
+          "gest": "insulation",
+          "index": null,
+          "target": "reach_best"
+        }
 }

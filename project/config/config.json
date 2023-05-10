@@ -31,17 +31,7 @@
     "file":"project/config/reference.json",
     "end": 2021,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json",
-      "zero_interest_loan": {
-        "start": 2018,
-        "end": 2051,
-        "policy": "zero_interest_loan",
-        "cost_max": 10000,
-        "gest": ["insulation", "heater"],
-        "value": 0.0,
-        "duration": 10
-      }
-    },
+      "file": "project/input/policies/current/policies_ref.json"},
     "simple": {
       "quintiles": true,
       "surface": false,
@@ -57,27 +47,13 @@
         "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
         "Heating-District heating": null,
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
       },
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "switch_heater": {
-      "district_heating": "project/input/macro/district_heating.csv",
-      "ms_heater": "project/input/revealed_data/market_share_heater_transition2050.csv",
-      "ms_heater_built": "project/input/revealed_data/market_share_heater_built.csv",
-      "premature_replacement": null,
-      "information_rate": 0.333,
-      "rational_behavior": {
-        "activated": true,
-        "social": true
-      },
-      "scale": {
-        "option": "price_elasticity",
-        "target": -1.2
-      }
     }
   }
 }

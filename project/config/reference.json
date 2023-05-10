@@ -55,6 +55,9 @@
       "performance_insulation_renovation": "project/input/technical/performance_insulation_renovation.csv",
       "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",
       "carbon_emission": "project/input/technical/carbon_emission.csv",
+      "renewable_gas": {"file": "project/input/technical/renewable_gas.csv",
+                        "scenario": "TEND"
+      },
       "technical_progress": {
         "insulation": {
           "activated": false,
@@ -138,4 +141,4 @@
       "collective_boiler": false,
       "no_natural_replacement": false
     }
-  }
+}
