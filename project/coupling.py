@@ -217,11 +217,13 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
     output, stock, consumption, prices = dict(), dict(), None, None
     s = None
     for year in range(start, end):
-        prices = energy_prices.loc[year, :]
         f_built = flow_built.loc[:, year]
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
         c_content = carbon_content.loc[year, :]
+
+        prices = energy_prices.loc[year, :]
+        prices_before = energy_prices.loc[year - 1, :]
 
         if technical_progress is not None:
             if technical_progress.get('insulation') is not None:
@@ -241,7 +243,8 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                                          demolition_rate=demolition_rate,
                                          exogenous_social=exogenous_social,
                                          output_details=output_details,
-                                         carbon_content=c_content
+                                         carbon_content=c_content,
+                                         prices_before=prices_before
                                          )
         output.update({year: o})
         if output_details == 'full':
@@ -306,7 +309,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     sub_heater = {'name': 'sub_heater',
                   'start': start,
                   'end': end,
-                  'value': 0.5,
+                  'value': 0,
                   'policy': 'subsidy_proportional',
                   'gest': 'heater',
                   'columns': 'project/input/policies/target/target_heat_pump.csv',

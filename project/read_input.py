@@ -780,7 +780,6 @@ def parse_inputs(inputs, taxes, config, stock):
                 parsed_inputs['technical_progress'] = dict()
                 parsed_inputs['technical_progress']['heater'] = Series(value, index=range(start, end + 1)).reindex(idx).fillna(0)
 
-
     if isinstance(inputs['demolition_rate'], (float, int)):
         inputs['demolition_rate'] = pd.Series(inputs['demolition_rate'], index=idx[1:])
     if inputs['demolition_rate'] is None:

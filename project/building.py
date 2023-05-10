@@ -599,20 +599,21 @@ class ThermalBuildings:
         if self.coefficient_global is None:
             consumption, certificate, consumption_3uses = self.consumption_heating(climate=climate, full_output=True)
             s = self.stock.groupby(consumption.index.names).sum()
-            df = concat((consumption_3uses, s), axis=1, keys=['Consumption', 'Stock'])
-            df = self.add_certificate(df).reset_index('Performance')
-            make_hist(df, 'Consumption', 'Performance', 'Housing (Million)',
-                      format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                      save=os.path.join(self.path_ini, 'consumption_primary_ini.png'),
-                      palette=self._resources_data['colors'],
-                      kde=True)
+            if self.path_ini is not None:
+                df = concat((consumption_3uses, s), axis=1, keys=['Consumption', 'Stock'])
+                df = self.add_certificate(df).reset_index('Performance')
+                make_hist(df, 'Consumption', 'Performance', 'Housing (Million)',
+                          format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
+                          save=os.path.join(self.path_ini, 'consumption_primary_ini.png'),
+                          palette=self._resources_data['colors'],
+                          kde=True)
 
-            df = concat((consumption, s), axis=1, keys=['Consumption', 'Stock'])
-            df = self.add_certificate(df).reset_index('Performance')
-            make_hist(df, 'Consumption', 'Performance', 'Housing (Million)',
-                      format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                      save=os.path.join(self.path_ini, 'consumption_final_ini.png'),
-                      palette=self._resources_data['colors'], kde=True)
+                df = concat((consumption, s), axis=1, keys=['Consumption', 'Stock'])
+                df = self.add_certificate(df).reset_index('Performance')
+                make_hist(df, 'Consumption', 'Performance', 'Housing (Million)',
+                          format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
+                          save=os.path.join(self.path_ini, 'consumption_final_ini.png'),
+                          palette=self._resources_data['colors'], kde=True)
 
             consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
@@ -856,11 +857,10 @@ class AgentBuildings(ThermalBuildings):
                  logger=None, calib_scale=True,
                  quintiles=None, financing_cost=True,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
-                 resources_data=None,
-                 detailed_output=True, figures_ini=None,
+                 resources_data=None, detailed_output=True, figures_ini=None,
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
-                         resources_data=resources_data, detailed_output=detailed_output)
+                         resources_data=resources_data, detailed_output=detailed_output, figures_ini=figures_ini)
 
         if logger is None:
             logger = logging.getLogger()
@@ -3174,8 +3174,9 @@ class AgentBuildings(ThermalBuildings):
                                                                               _credit_constraint=credit_constraint)
                 rslt.update({sub: (_renovation_rate * _stock).sum() / 10 ** 3})
 
-            make_plot(Series(rslt), 'Renovation function of ad valorem subsidy (Thousand households)',
-                      save=os.path.join(self.path_calibration, 'sensi_ad_valorem.png'), integer=False, legend=False)
+            if self.path_ini is not None:
+                make_plot(Series(rslt), 'Renovation function of ad valorem subsidy (Thousand households)',
+                          save=os.path.join(self.path_ini, 'sensi_ad_valorem.png'), integer=False, legend=False)
 
         def assess_sensitivity(_stock, _cost_total, _bill_saved, _subsidies_total, _cost_financing,
                                _credit_constraint=credit_constraint):
@@ -3246,14 +3247,16 @@ class AgentBuildings(ThermalBuildings):
                        'Cost': result_cost['Average cost (Thousand euro)'],
                        'Subsidies': result_subsidies['Average cost (Thousand euro)']
                        }
-            make_plots(dict_df, 'Average cost (Thousand euro)',
-                       save=os.path.join(self.path_calibration, 'sensi_average_cost.png'))
+            if self.path_ini is not None:
+                make_plots(dict_df, 'Average cost (Thousand euro)',
+                           save=os.path.join(self.path_ini, 'sensi_average_cost.png'))
             dict_df = {'Bill saving': result_bill_saved['Flow renovation (Thousand)'],
                        'Cost': result_cost['Flow renovation (Thousand)'],
                        'Subsidies': result_subsidies['Flow renovation (Thousand)']
                        }
-            make_plots(dict_df, 'Flow renovation (Thousand)',
-                       save=os.path.join(self.path_calibration, 'sensi_flow_renovation.png'))
+            if self.path_ini is not None:
+                make_plots(dict_df, 'Flow renovation (Thousand)',
+                           save=os.path.join(self.path_ini, 'sensi_flow_renovation.png'))
 
         def assess_policies(_stock, _subsidies_details, _cost_total, _bill_saved, _subsidies_total, _cost_financing,
                             _credit_constraint=None):
@@ -3335,9 +3338,9 @@ class AgentBuildings(ThermalBuildings):
                            'Intensive margin benef (%)'])})
 
             rslt = DataFrame(rslt)
-            if self.path_calibration is not None:
-                rslt.to_csv(os.path.join(self.path_calibration, 'result_policies_assessment.csv'))
-                make_sensitivity_tables(rslt, os.path.join(self.path_calibration, 'result_policies_assessment.png'))
+            if self.path_ini is not None:
+                rslt.to_csv(os.path.join(self.path_ini, 'result_policies_assessment.csv'))
+                make_sensitivity_tables(rslt, os.path.join(self.path_ini, 'result_policies_assessment.png'))
 
             return rslt
 
@@ -3424,7 +3427,7 @@ class AgentBuildings(ThermalBuildings):
                                    calib_renovation, _cost_financing=cost_financing,
                                    _credit_constraint=credit_constraint, _proba_replacement=proba_replacement)
 
-            if self.path_calibration is not None:
+            if self.path_ini is not None:
                 indicator_renovation_rate(stock, cost_insulation, bill_saved, subsidies_total, cost_financing,
                                           _credit_constraint=credit_constraint)
                 assess_sensitivity_ad_valorem(stock, cost_insulation, bill_saved, subsidies_total, cost_financing,
