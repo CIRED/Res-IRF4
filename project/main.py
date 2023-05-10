@@ -158,6 +158,10 @@ def run(path=None, folder=None):
                 configuration['PriceConstant'] = copy.deepcopy(configuration['Reference'])
                 configuration['PriceConstant']['simple']['prices_constant'] = True
 
+            if config_scenarios.get('no_natural_replacement') is not None:
+                configuration['NoNaturalReplacement'] = copy.deepcopy(configuration['Reference'])
+                configuration['NoNaturalReplacement']['simple']['no_natural_replacement'] = True
+
             if config_scenarios.get('constant') is not None:
                 configuration['Constant'] = copy.deepcopy(configuration['Reference'])
                 configuration['Constant']['simple']['prices_constant'] = True

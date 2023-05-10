@@ -348,7 +348,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               output_consumption=output_consumption,
                                               technical_progress=inputs_dynamics['technical_progress'],
                                               premature_replacement=inputs_dynamics['premature_replacement'],
-                                              output_details='cost_benefit',
+                                              output_details='full',
                                               carbon_content=inputs_dynamics['post_inputs']['carbon_emission']
                                               )
 

@@ -1,14 +1,16 @@
 {
   "scenarios": {
-    "activated": false,
-    "current_policies": true,
-    "no_policy": true,
-    "prices_constant": true,
+    "activated": true,
+    "current_policies": null,
+    "no_policy": null,
+    "prices_constant": null,
     "constant": null,
     "policies": null,
     "add_policies": null,
     "remove_policies": null,
-    "policies_scenarios": null
+    "policies_scenarios": null,
+    "no_natural_replacement": true
+
   },
   "sensitivity": {
     "activated": false,
@@ -54,37 +56,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "macro": {
-      "construction": false,
-      "flow_construction": "project/input/macro/flow_construction_ame2021.csv",
-      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
-      "demolition_rate": 0.0,
-      "income": "project/input/macro/income.csv",
-      "energy_prices": {
-        "ini": "project/input/macro/energy_prices_ht_ame2021.csv",
-        "rate": {
-          "Electricity": 0.0135,
-          "Natural gas": 0.0268,
-          "Wood fuel": 0.0127,
-          "Oil fuel": 0.0173,
-          "Heating": 0
-        }
-      },
-      "energy_taxes": "project/input/macro/energy_taxes_ame2021.csv",
-      "energy_vta": "project/input/macro/energy_vta.csv",
-      "income_rate": 0.012,
-      "rotation_rate": "project/input/macro/rotation_rate.csv",
-      "consumption_ini": "project/input/revealed_data/consumption_ini.csv",
-      "preferences_heater": "project/input/revealed_data/stated_preferences_heater.csv",
-      "preferences_insulation": "project/input/revealed_data/stated_preferences_insulation.csv",
-      "preferences_saving": "project/input/revealed_data/stated_preferences_saving.csv",
-      "population": null,
-      "surface_built": null,
-      "stock_ini": null,
-      "available_income": null,
-      "pop_housing": null,
-      "share_multi_family": null
     }
   }
 }
