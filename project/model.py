@@ -620,7 +620,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
-            if config['output'] == 'full' and buildings.detailed_output and buildings.figure:
+            if config['output'] == 'full' and buildings.detailed_output and buildings.path_ini is not None:
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)

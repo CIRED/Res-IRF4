@@ -515,10 +515,11 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         # colors
         diff = (df.T - df['Reference']).T
         if not diff.empty:
-            cost_diff_total = diff.sum(axis=0).rename('Total')
             temp = diff.drop('Reference', axis=1).T
+            cost_diff_total = temp.sum(axis=1).rename('Total')
             if not temp.empty:
-                make_stackedbar_plot(diff.drop('Reference', axis=1).T, 'Running cost compare to Reference (Billion euro)', ncol=3, ymin=None,
+                make_stackedbar_plot(diff.drop('Reference', axis=1).T,
+                                     'Running cost compare to Reference (Billion euro)', ncol=3, ymin=None,
                                      format_y=lambda y, _: '{:.0f}'.format(y),
                                      hline=0, scatterplot=cost_diff_total, colors=resources_data['colors'],
                                      save=os.path.join(folder_img, 'running_cost_comparison.png'), rotation=0,
@@ -554,7 +555,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                   col_size='Subsidies (Billion euro)'
                                   )
 
-        # graph ACB
+        # graph CBA
         variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
                      'CBA Consumption saving prices (Billion euro)': 'Saving price',
                      'CBA Thermal comfort EE (Billion euro)': 'Comfort EE',
@@ -578,8 +579,9 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
         diff = (df.T - df['Reference']).T
         if not diff.empty:
-            cba_diff_total = diff.sum(axis=0).rename('Total')
             temp = diff.drop('Reference', axis=1).T
+            cba_diff_total = temp.sum(axis=1).rename('Total')
+
             if not temp.empty:
                 make_stackedbar_plot(temp,
                                      'Cost-benefits analysis compare to Reference (Billion euro)', ncol=3, ymin=None,
@@ -644,7 +646,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
 
         make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)))
+                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)),
+                     title='Energy expenditure on income ratio in {}'.format(year))
 
         # > 0 positive means households are loosing money compare to ref
         if df.shape[1] > 1:
@@ -655,7 +658,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
 
             make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)))
+                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)),
+                         title='Energy expenditure on income ratio in {} compare to Reference'.format(year))
 
         # > 0 positive means households are loosing money compare to ini
         diff = (df - ini) / ini
@@ -664,13 +668,15 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
 
         make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)))
+                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)),
+                     title='Energy expenditure on income ratio in {} compare to Base year'.format(year)
+                     )
 
     # graph line plot 2D comparison
     consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
     if result['Reference'].loc['Consumption Heating (TWh)', :].iloc[0] == 0:
         consumption_total_hist.drop('Heating', axis=1, inplace=True)
-    consumption_total_hist = consumption_total_hist.sum(axis=1)
+    consumption_total_hist = consumption_total_hist.sum(axis=1).rename('Historic')
 
     variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
                                        'format_y': lambda y, _: '{:,.0f}'.format(y),
@@ -777,7 +783,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             'n_columns': 2}],
         'Rate Single-family - Owner-occupied {} (%)': [{
             'groupby': 'Income owner',
-            'format_y': lambda y, _: '{:,.0%}'.format(y),
+            'format_y': lambda y, _: '{:,.1%}'.format(y),
             'n_columns': 5}],
         'Retrofit': [{
             'variables': ['Switch decarbonize (Thousand households)',

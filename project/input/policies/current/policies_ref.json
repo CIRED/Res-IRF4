@@ -28,7 +28,7 @@
       "bonus_heater": {
         "value": "project/input/policies/current/cee_bonus_heater.csv",
         "start": 2019,
-        "end": 2051
+        "end": 2026
       },
       "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
       "policy": "subsidy_targeted",

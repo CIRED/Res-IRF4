@@ -5719,14 +5719,14 @@ class AgentBuildings(ThermalBuildings):
                                           'health_cost': health_cost}
         }
         options = {k: i for k, i in options.items() if
-                   k in ['Private, global renovation', 'Private, global insulation', 'Social, global renovation',
-                         'Private, all measures', 'Private implicit discount, global renovation']}
+                   k in ['Private, deep insulation', 'Private, global insulation', 'Social, deep renovation',
+                         'Private, deep renovation']}
 
         colors = {'Social, all measures': 'darkred',
                   'Social, deep renovation': 'orangered',
                   'Private, deep insulation': 'darkmagenta',
                   'Private, global insulation': 'darkblue',
-                  'Private implicit discount, global renovation': 'royalblue'
+                  'Private, deep renovation': 'royalblue'
                   }
 
         dict_rslt, dict_stats = {}, {}

@@ -829,20 +829,23 @@ def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=
     save_fig(fig, save=save)
 
 
-def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None):
+def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
+                 title=None):
 
-    fig = sns.relplot(
+    g = sns.relplot(
         data=df, x=x, y=y,
         col=col, hue=hue, style=hue,
         kind='line', palette=palette,
         col_wrap=2
     )
-    for k, ax in fig.axes_dict.items():
+    for k, ax in g.axes_dict.items():
         ax.set(xlabel=None, ylabel=None)
         format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
         ax.set_title(k, fontsize=15)
 
-    save_fig(fig.figure, save=save)
+    g.fig.suptitle(title, x=0.15, y=1.01, weight='bold', color='black', size=20)
+
+    save_fig(g.figure, save=save)
 
 
 def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=2, save=None, scatter=None, order=None,
