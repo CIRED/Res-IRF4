@@ -75,15 +75,16 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 resources_data=None, detailed_output=True, figures_ini=None):
+                 resources_data=None, detailed_output=True, figures=None):
 
         if isinstance(stock, MultiIndex):
             stock = Series(index=stock, dtype=float)
-        if figures_ini is None:
-            figures_ini = True
+        if figures is None:
+            figures = True
 
         if detailed_output is None:
             detailed_output = True
+
         self.detailed_output = detailed_output
         self._resources_data = resources_data
 
@@ -94,7 +95,7 @@ class ThermalBuildings:
             self.path_calibration = os.path.join(path, 'calibration')
             if not os.path.isdir(self.path_calibration):
                 os.mkdir(self.path_calibration)
-            if figures_ini:
+            if figures:
                 self.path_ini = os.path.join(path, 'ini')
                 if not os.path.isdir(self.path_ini):
                     os.mkdir(self.path_ini)
@@ -820,6 +821,9 @@ class ThermalBuildings:
 class AgentBuildings(ThermalBuildings):
     """Class AgentBuildings represents thermal dynamic building stock.
 
+
+
+
     Parameters:
     ----------
     stock: Series
@@ -833,19 +837,34 @@ class AgentBuildings(ThermalBuildings):
     income: Series
         Average income value by income class.
     consumption_ini: Series
+        Initial energy consumption by dwelling type.
     preferences: dict
+        Preferences parameters.
     performance_insulation: dict
+        Performance insulation parameters.
     path: str, optional
+        Path to save results.
     year: int, default: 2018
+        Year of the stock.
     demolition_rate: float, default 0.0
+        Demolition rate.
     endogenous: bool, default True
+        Enable to calculate endogenous renovation.
     number_exogenous: float or int, default 300000
+        Number of exogenous renovation.
     expected_utility: {'market_share', 'max}
     logger: default
     calib_scale: bool, default True
     full_output: None
     quintiles: bool or None, default None
     financing_cost: bool, default True
+    rational_behavior_insulation: bool, default None
+    rational_behavior_heater: bool, default None
+    resources_data: dict, default None
+    detailed_output: bool, default True
+    figures: dict, default None
+
+
 
     Attributes
     ----------
@@ -857,10 +876,10 @@ class AgentBuildings(ThermalBuildings):
                  logger=None, calib_scale=True,
                  quintiles=None, financing_cost=True,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
-                 resources_data=None, detailed_output=True, figures_ini=None,
+                 resources_data=None, detailed_output=True, figures=None,
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
-                         resources_data=resources_data, detailed_output=detailed_output, figures_ini=figures_ini)
+                         resources_data=resources_data, detailed_output=detailed_output, figures=figures)
 
         if logger is None:
             logger = logging.getLogger()
@@ -1761,7 +1780,6 @@ class AgentBuildings(ThermalBuildings):
         """Define exogenous market-share.
 
         Market-share is defined by _market_share_exogenous attribute.
-        Replacement
 
         Parameters
         ----------
@@ -1814,16 +1832,41 @@ class AgentBuildings(ThermalBuildings):
         Parameters
         ----------
         cost_heater: Series
-            Cost of each heating system (€).
+            Cost of each heating system (EUR).
         subsidies_total: DataFrame
-            Total amount of eligible subsidies by dwelling and heating system (€).
+            Total amount of eligible subsidies by dwelling and heating system (EUR).
         subsidies_details: dict
-            Amount of eligible subsidies by dwelling and heating system (€).
+            Amount of eligible subsidies by dwelling and heating system (EUR).
         replacement: Series
             Dwelling updated with a new heating system.
         vta_heater: Series
-            VTA tax of each heating system (€).
+            VTA tax of each heating system (EUR).
         flow_premature_replacement: int
+            Number of dwelling that replace their heating system before the end of its lifetime.
+        cost_financing: Series
+            Cost of financing by dwelling (EUR).
+        amount_debt: DataFrame
+            Amount of debt by dwelling and income owner (EUR).
+        amount_saving: DataFrame
+            Amount of saving by dwelling and income owner (EUR).
+        discount: float
+            Discount rate.
+        consumption_saved: DataFrame
+            Consumption saved by dwelling and heating system (kWh).
+        consumption_before: DataFrame
+            Consumption before replacement by dwelling and heating system (kWh).
+        consumption_no_rebound: DataFrame
+            Consumption after replacement without rebound effect by dwelling and heating system (kWh).
+        consumption_actual: DataFrame
+            Consumption after replacement with rebound effect by dwelling and heating system (kWh).
+        certificate_jump: DataFrame
+            Jump in EPC by dwelling and heating system (EPC).
+        subsidies_loan: DataFrame
+            Amount of eligible subsidies by dwelling and heating system (EUR).
+
+        Returns
+        -------
+        None
         """
 
         # information stored during
@@ -1882,15 +1925,29 @@ class AgentBuildings(ThermalBuildings):
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
                            prices_before=None, supply=None, store_information=True, bill_rebate=0,
                            carbon_content=None, carbon_value=None):
-        """Function returns new building stock after heater replacement.
+        """Function returns building stock updated after switching heating system.
+
 
         Parameters
         ----------
         stock: Series
         prices: Series
         cost_heater: Series
+        lifetime_heater: Series
         calib_heater: DataFrame, optional
         policies_heater: list
+        calib_heater: DataFrame, optional
+        step: int, optional
+        financing_cost: dict, optional
+        district_heating: Series, optional
+        premature_replacement: Series, optional
+        prices_before: Series, optional
+        supply: Series, optional
+        store_information: bool, optional
+        bill_rebate: float, optional
+        carbon_content: Series, optional
+        carbon_value: float, optional
+
 
         Returns
         -------
@@ -2098,7 +2155,6 @@ class AgentBuildings(ThermalBuildings):
         # adding heating system final equal to heating system because no switch
         flow_premature_replacement = 0
         if premature_replacement is not None:
-
             def premature_func(x, alpha=10 ** -3):
                 return 1 / (1 + exp(-alpha * x))
 
@@ -2110,6 +2166,7 @@ class AgentBuildings(ThermalBuildings):
             npv = npv.loc[:, [i for i in npv.columns if i in self._resources_data['index']['Heat pumps']]]
             npv = npv.dropna(axis=1, how='all')
 
+            # not implemented yet
             if supply is not None:
                 if self.number_firms_heater is None:
                     self._markup_heater_store = supply['markup_heater']
@@ -2646,6 +2703,10 @@ class AgentBuildings(ThermalBuildings):
         else:
             subsidies_total = pd.DataFrame(0, index=consumption_saved.index, columns=consumption_saved.columns)
 
+        for k in subsidies_details.keys():
+            subsidies_details[k].sort_index(inplace=True)
+
+        # cap for all subsidies
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         if subsidies_cap:
             # only one subsidy cap
@@ -2680,8 +2741,8 @@ class AgentBuildings(ThermalBuildings):
         return cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition
 
     def endogenous_renovation(self, stock, prices, subsidies_total, cost_insulation, lifetime,
-                              calib_renovation=None, min_performance=None,
-                              subsidies_details=None, cost_financing=None, supply=None, discount=None,
+                              calib_renovation=None, min_performance=None, subsidies_details=None,
+                              cost_financing=None, supply=None, discount=None,
                               carbon_value=None, credit_constraint=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
@@ -2697,10 +2758,17 @@ class AgentBuildings(ThermalBuildings):
         prices: Series
         subsidies_total: DataFrame
         cost_insulation: DataFrame
+        lifetime: Series
         stock: Series, default None
         calib_renovation: dict, optional
         min_performance: str, optional
         subsidies_details: dict, optional
+        cost_financing: DataFrame, optional
+        supply: DataFrame, optional
+        discount: float, optional
+        carbon_value: float, optional
+        credit_constraint: float, optional
+
 
         Returns
         -------
@@ -5634,18 +5702,18 @@ class AgentBuildings(ThermalBuildings):
         cost = reindex_mi(cost, consumption_saved.index)
 
         options = {
-            'Private, global renovation': {
-                'discount_rate': implicit_discount_rate,
-                'carbon_saved': None,
-                'measures': 'global_renovation'},
-            'Private, global insulation': {
+            'Private, deep insulation': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
                 'measures': 'global_insulation'},
-            'Private, all measures': {'discount_rate': implicit_discount_rate,
+            'Private, global insulation': {'discount_rate': implicit_discount_rate,
                                       'carbon_saved': None,
                                       'measures': 'full_insulation'},
-            'Social, global renovation': {'discount_rate': discount_rate,
+            'Private, deep renovation': {
+                'discount_rate': implicit_discount_rate,
+                'carbon_saved': None,
+                'measures': 'global_renovation'},
+            'Social, deep renovation': {'discount_rate': discount_rate,
                                           'carbon_saved': emission_saved_value,
                                           'measures': 'global_renovation',
                                           'health_cost': health_cost}
@@ -5655,10 +5723,9 @@ class AgentBuildings(ThermalBuildings):
                          'Private, all measures', 'Private implicit discount, global renovation']}
 
         colors = {'Social, all measures': 'darkred',
-                  'Social, global renovation': 'orangered',
-                  'Private, global insulation': 'darkmagenta',
-                  'Private, global renovation': 'cornflowerblue',
-                  'Private, all measures': 'darkblue',
+                  'Social, deep renovation': 'orangered',
+                  'Private, deep insulation': 'darkmagenta',
+                  'Private, global insulation': 'darkblue',
                   'Private implicit discount, global renovation': 'royalblue'
                   }
 

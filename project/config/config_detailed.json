@@ -1,0 +1,35 @@
+{
+  "scenarios": {
+    "activated": false,
+    "current_policies": true,
+    "no_policy": true,
+    "prices_constant": true,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "Reference": {
+    "file":"project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_ref.json"},
+    "simple": {
+      "quintiles": true,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "current_policies": false,
+      "no_policy": false,
+      "income": false,
+      "prices_constant": false,
+      "heating_system": false,
+      "insulation": false,
+      "no_heating_switch": false,
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    }
+  }
+}

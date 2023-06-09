@@ -15,7 +15,6 @@
 #
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 import numpy as np
-from matplotlib.patches import Patch
 import os
 import numpy as np
 import pandas as pd
@@ -25,6 +24,7 @@ import logging
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import Normalize
+from matplotlib.patches import Patch
 
 from scipy.optimize import fsolve
 from collections import defaultdict
@@ -169,6 +169,7 @@ def create_logger(path=None, level='DEBUG'):
         file_handler.setFormatter(logging.Formatter(LOG_FORMATTER))
         logger.addHandler(file_handler)
     return logger
+
 
 def reverse_dict(data):
     flipped = defaultdict(dict)
@@ -833,7 +834,8 @@ def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None):
     fig = sns.relplot(
         data=df, x=x, y=y,
         col=col, hue=hue, style=hue,
-        kind='line', palette=palette
+        kind='line', palette=palette,
+        col_wrap=2
     )
     for k, ax in fig.axes_dict.items():
         ax.set(xlabel=None, ylabel=None)
@@ -1158,65 +1160,6 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
         loop += 1
     labels = [string.replace(" ", "\n") for string in data.index]
     ax.set_xticklabels(labels, rotation=15)
-    save_fig(fig, save=save)
-
-
-def assessment_scenarios(df, save=None, colors=None, figsize=(12.8, 9.6), loc='left', left=1.04):
-    """Compare social NPV between scenarios and one reference.
-
-    Stacked bar chart.
-
-    Parameters
-    ----------
-    df
-    save
-    figsize
-
-    Returns
-    -------
-
-    """
-    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-
-    data = df.copy()
-
-    data.rename(index={'Energy saving': 'Energy',
-                       'Emission saving': 'Emission',
-                       'Embodied emission additional': 'Embodied emission',
-                       'Well-being benefit': 'Well-being',
-                       'Mortality reduction benefit': 'Mortality',
-                       'Cofp': 'COFP'
-                       }, inplace=True)
-
-    total = data.sum(axis=1).reset_index()
-    total.columns = ['Scenarios', 'NPV']
-
-    pd.DataFrame(total).plot(kind='scatter', x='Scenarios', y='NPV', legend=False, zorder=10, ax=ax, color='black',
-                             s=50, xlabel=None)
-
-    if colors is None:
-        data.plot(kind='bar', stacked=True, ax=ax)
-    else:
-        data.plot(kind='bar', stacked=True, ax=ax, color=colors)
-
-    plt.axhline(y=0, color='black', linestyle='--', linewidth=0.3)
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=16)
-    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
-
-    ax.xaxis.label.set_visible(False)
-    ax.yaxis.label.set_visible(False)
-    y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
-
-    for _, y in total.iterrows():
-        ax.annotate("{:,.1f} B€".format(y['NPV']), (y['Scenarios'], y['NPV'] + y_range / 20), ha="center")
-
-    ax.set_xticklabels(data.index, rotation=0)
-
-    format_legend(ax, loc=loc, left=left)
     save_fig(fig, save=save)
 
 

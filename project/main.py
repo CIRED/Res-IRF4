@@ -275,7 +275,7 @@ def run(path=None, folder=None):
 
     for s in configuration.keys():
         if s != 'Reference':
-            configuration[s]['figure_ini'] = False
+            configuration[s]['figures'] = False
 
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:

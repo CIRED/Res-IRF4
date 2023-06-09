@@ -317,7 +317,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                rational_behavior_heater=parsed_inputs['rational_behavior_heater'],
                                resources_data=resources_data,
                                detailed_output=config['simple'].get('detailed_output'),
-                               figures_ini=config.get('figures_ini'))
+                               figures=config.get('figures'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -484,10 +484,6 @@ def res_irf(config, path, level_logger='DEBUG'):
         logger.info('Reading input')
         config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
 
-        if False:
-            policies_calibration = [p for p in policies_insulation + policies_heater if p.start < config['start'] + 2]
-            if policies_calibration:
-                make_policies_tables(policies_calibration, os.path.join(path, 'policies_calibration.csv'), plot=True)
         if policies_heater + policies_insulation and config['simple']['detailed_output']:
             make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
 
@@ -624,7 +620,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
-            if config['output'] == 'full' and buildings.detailed_output:
+            if config['output'] == 'full' and buildings.detailed_output and buildings.figure:
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)
