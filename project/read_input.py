@@ -530,30 +530,30 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update(other_inputs)
 
-    if isinstance(config['macro']['energy_prices'], str):
+    if isinstance(config['energy']['energy_prices'], str):
         energy_prices = get_pandas(config['macro']['energy_prices'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Energy', axis=1))
-    elif isinstance(config['macro']['energy_prices'], dict):
-        energy_prices = get_pandas(config['macro']['energy_prices']['ini'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Energy', axis=1))
+    elif isinstance(config['energy']['energy_prices'], dict):
+        energy_prices = get_pandas(config['energy']['energy_prices']['ini'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Energy', axis=1))
         energy_prices = energy_prices.loc[config['start'], :]
-        rate = Series(config['macro']['energy_prices']['rate']).rename_axis('Energy')
-        if config['macro']['energy_prices'].get('factor') is not None:
-            rate *= config['macro']['energy_prices']['factor']
+        rate = Series(config['energy']['energy_prices']['rate']).rename_axis('Energy')
+        if config['energy']['energy_prices'].get('factor') is not None:
+            rate *= config['energy']['energy_prices']['factor']
         temp = range(config['start'] + 1, 2051)
         rate = concat([(1 + rate) ** n for n in range(len(temp))], axis=1, keys=temp)
         rate = concat((pd.Series(1, index=rate.index, name=config['start']), rate), axis=1)
         energy_prices = rate.T * energy_prices
-        if config['macro']['energy_prices'].get('shock') is not None:
-            temp = config['macro']['energy_prices']['shock']
+        if config['energy']['energy_prices'].get('shock') is not None:
+            temp = config['energy']['energy_prices']['shock']
             energy_prices.loc[temp['start']:, :] *= temp['factor']
     else:
         raise NotImplemented
 
-    inputs.update({'energy_prices': energy_prices}) # .loc[:config['end'], :]
+    inputs.update({'energy_prices': energy_prices})
 
-    energy_taxes = get_pandas(config['macro']['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
-    inputs.update({'energy_taxes': energy_taxes}) # .loc[:config['end'], :]
+    energy_taxes = get_pandas(config['energy']['energy_taxes'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating energy', axis=1))
+    inputs.update({'energy_taxes': energy_taxes})
 
-    inputs.update({'energy_vta': get_series(config['macro']['energy_vta'], header=None)})
+    inputs.update({'energy_vta': get_series(config['energy']['energy_vta'], header=None)})
 
     inputs.update({'cost_heater': get_series(config['technical']['cost_heater'], header=[0])})
 
@@ -571,18 +571,18 @@ def read_inputs(config, other_inputs=generic_input):
 
     bill_saving_preferences = get_pandas(config['macro']['preferences_saving'],
                                          lambda x: pd.read_csv(x, index_col=[0]))
-    preferences_insulation = get_pandas(config['macro']['preferences_insulation'],
+    preferences_insulation = get_pandas(config['renovation']['preferences_insulation'],
                                         lambda x: pd.read_csv(x, index_col=[0], header=None)).squeeze().to_dict()
     preferences_insulation.update({'bill_saved': bill_saving_preferences.loc[:, 'Insulation']})
 
-    preferences_heater = get_pandas(config['macro']['preferences_heater'],
+    preferences_heater = get_pandas(config['switch_heater']['preferences_heater'],
                                         lambda x: pd.read_csv(x, index_col=[0], header=None)).squeeze().to_dict()
     preferences_heater.update({'bill_saved': bill_saving_preferences.loc[:, 'Heater']})
 
     inputs.update({'preferences': {'insulation': preferences_insulation,
                                    'heater': preferences_heater}})
 
-    consumption_ini = get_pandas(config['macro']['consumption_ini'], lambda x: pd.read_csv(x, index_col=[0]).squeeze()).rename(None)
+    consumption_ini = get_series(config['macro']['consumption_ini'], header=[0])
     inputs.update({'consumption_ini': consumption_ini})
 
     ms_heater = get_pandas(config['switch_heater']['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
@@ -708,11 +708,11 @@ def read_inputs(config, other_inputs=generic_input):
     carbon_value = get_pandas(config['carbon_value'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
     inputs.update({'carbon_value': carbon_value.loc[config['start']:]})
 
-    carbon_emission = get_pandas(config['technical']['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
+    carbon_emission = get_pandas(config['energy']['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
     inputs.update({'carbon_emission': carbon_emission.loc[config['start']:, :] * 1000})
 
-    renewable_gas = get_pandas(config['technical']['renewable_gas']['file'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
-    renewable_gas = renewable_gas.loc[:, config['technical']['renewable_gas']['scenario']]
+    renewable_gas = get_pandas(config['energy']['renewable_gas']['file'], lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year'))
+    renewable_gas = renewable_gas.loc[:, config['energy']['renewable_gas']['scenario']]
     inputs.update({'renewable_gas': renewable_gas.loc[config['start']:]})
 
     footprint_built = get_pandas(config['technical']['footprint']['construction'], lambda x: pd.read_csv(x, index_col=[0]))
