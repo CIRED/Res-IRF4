@@ -41,7 +41,6 @@ class PublicPolicy:
         Year policy ends.
     value: float
     policy : {'energy_taxes', 'subsidies'}
-
     """
     def __init__(self, name, start, end, value, policy, gest=None, cap=None, target=None, cost_min=None, cost_max=None,
                  new=None, by='index', non_cumulative=None, frequency=None, intensive=None, min_performance=None,
@@ -697,9 +696,8 @@ def read_inputs(config, other_inputs=generic_input):
                                         lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'flow_construction': flow_construction})
 
-    ms_heater_built = get_pandas(config['switch_heater']['ms_heater_built'], lambda x: pd.read_csv(x, index_col=[0], header=[0]))
-    ms_heater_built.columns.set_names(['Heating system'], inplace=True)
-    ms_heater_built.index.set_names(['Housing type'], inplace=True)
+    ms_heater_built = get_series(config['switch_heater']['ms_heater_built'], header=[0])
+    ms_heater_built = ms_heater_built.unstack('Heating system').fillna(0)
     inputs.update({'ms_heater_built': ms_heater_built})
 
     df = get_pandas(config['health_cost'], lambda x: pd.read_csv(x, index_col=[0, 1]))
@@ -741,6 +739,7 @@ def read_inputs(config, other_inputs=generic_input):
 
 def parse_inputs(inputs, taxes, config, stock):
     """Macro module : run exogenous dynamic parameters.
+
 
     Parameters
     ----------

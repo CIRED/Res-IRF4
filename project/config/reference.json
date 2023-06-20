@@ -38,7 +38,7 @@
       "preferences_insulation": "project/input/investment/stated_preferences_insulation.csv"
     },
     "switch_heater": {
-      "district_heating": "project/input/energy/district_heating.csv",
+      "district_heating": "project/input/energy/district_heating_s2.csv",
       "ms_heater": "project/input/investment/market_share_heater_transition2050.csv",
       "ms_heater_built": "project/input/investment/market_share_heater_built.csv",
       "preferences_heater": "project/input/investment/stated_preferences_heater.csv",
@@ -81,7 +81,7 @@
     },
     "energy": {
       "energy_prices": {
-        "ini": "project/input/energy/energy_prices_ht_ame2021.csv",
+        "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
         "rate": {
           "Electricity": 0.0135,
           "Natural gas": 0.0268,
@@ -134,7 +134,6 @@
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
         "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
         "Electricity-Heat pump air": "Electricity-Heat pump water",
-        "Heating-District heating": null,
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },

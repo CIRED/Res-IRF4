@@ -857,10 +857,14 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     dict_df: dict
         df_dict values are pd.DataFrame (index=years, columns=scenario)
     format_y: function, optional
+        function to format y axis
     n_columns: int, default 3
     n_bins: int, default None
+        if not None, the x axis is divided in n_bins
     save: str, default None
+
     scatter: dict, default None
+        scatter keys are the same as dict_df keys, values are pd.DataFrame (index=years, columns=scenario)
     """
     list_keys = list(dict_df.keys())
     if order is not None:

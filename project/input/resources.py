@@ -23,7 +23,8 @@ resources_data = dict()
 performance_stock = get_pandas('project/input/resources_dir/performance_stock.csv', lambda x: read_csv(x, index_col=[0], header=[0]).squeeze())
 resources_data['performance_stock'] = performance_stock
 
-consumption_hist = get_pandas('project/input/resources_dir/hist_consumption.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
+consumption_hist = get_pandas('project/input/resources_dir/hist_consumption.csv', lambda x: read_csv(x, index_col=[0], header=[0])).T
+consumption_hist.index = consumption_hist.index.astype(int)
 resources_data['consumption_hist'] = {k: Series(item, name='Historic') for k, item in consumption_hist.to_dict().items()}
 
 # resources_data['consumption_total_objectives'] = Series([176, 146], index=[2030, 2050], name='Objectives')

@@ -674,6 +674,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
     # graph line plot 2D comparison
     consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
+    consumption_total_hist.index = consumption_total_hist.index.astype(int)
     if result['Reference'].loc['Consumption Heating (TWh)', :].iloc[0] == 0:
         consumption_total_hist.drop('Heating', axis=1, inplace=True)
     consumption_total_hist = consumption_total_hist.sum(axis=1).rename('Historic')
@@ -736,7 +737,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         temp = temp.interpolate(limit_area='inside')
 
         if infos.get('exogenous') is not None:
-            temp = pd.concat((temp, infos['exogenous']), axis=1)
+            temp = pd.concat((temp, infos['exogenous']), axis=1).astype(float)
             temp.sort_index(inplace=True)
 
         scatter = infos.get('scatter')

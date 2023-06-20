@@ -1557,7 +1557,7 @@ class AgentBuildings(ThermalBuildings):
         return cost_heater, vta_heater, subsidies_details, subsidies_total
 
     def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, calib_heater=None,
-                                       cost_financing=None, condition=None, flow_replace=None):
+                                       cost_financing=None, condition=None, flow_replace=None, drop_heater=None):
 
         def assess_sensitivity_hp(_utility_cost, _utility_bill_saving, _utility_financing, _utility_inertia, _condition,
                                   _flow_replace, _cost_heater):
@@ -1656,12 +1656,16 @@ class AgentBuildings(ThermalBuildings):
             option = _calib_heater['scale']['option']
             target = _calib_heater['scale']['target']
 
-            # simplify market-share
-            flow = _flow_replace.groupby(_ms_heater.index.names).sum()
-            ms = (flow * _ms_heater.T).T.groupby('Housing type').sum()
-            ms = (ms.T / ms.sum(axis=1)).T
-            ms = ms.stack()
-            ms = ms[ms > 0]
+            # simplifying market-share
+            simplify = True
+            if simplify:
+                flow = _flow_replace.groupby(_ms_heater.index.names).sum()
+                ms = (flow * _ms_heater.T).T.groupby('Housing type').sum()
+                ms = (ms.T / ms.sum(axis=1)).T
+                ms = ms.stack()
+                ms = ms[ms > 0]
+            else:
+                ms = _ms_heater.copy()
 
             ref = MultiIndex.from_tuples([('Multi-family', 'Electricity-Performance boiler'), ('Single-family', 'Electricity-Performance boiler')], names=['Housing type', 'Heating system final'])
             x0 = pd.Series(0, index=ms.index).drop(ref)
@@ -1716,6 +1720,11 @@ class AgentBuildings(ThermalBuildings):
             return constant
 
         choice_heater = cost_heater.columns
+        if drop_heater:
+            choice_heater = [i for i in choice_heater if i not in drop_heater]
+
+        if condition is not None:
+            condition = condition.loc[index, choice_heater]
 
         utility_bill_saving = (bill_saved.T * reindex_mi(self.preferences_heater['bill_saved'],
                                                          bill_saved.index)).T / 1000
@@ -1745,11 +1754,14 @@ class AgentBuildings(ThermalBuildings):
             utility *= condition
             utility.dropna(how='all', axis=1, inplace=True)
 
+        utility = utility.loc[index, :]
+
         if (self.constant_heater is None) and (calib_heater is not None):
             self.logger.info('Calibration market-share heating system')
             sub_shock = - utility_cost - utility_financing
             sub_shock.loc[:, [i for i in sub_shock.columns if i != 'Electricity-Heat pump water']] = 0
             utility_shock = - utility_subsidies + sub_shock
+            utility_shock = utility_shock.loc[index, :]
 
             if condition is not None:
                 utility_shock *= condition
@@ -1944,10 +1956,9 @@ class AgentBuildings(ThermalBuildings):
         prices_before: Series, optional
         supply: Series, optional
         store_information: bool, optional
-        bill_rebate: float, optional
         carbon_content: Series, optional
         carbon_value: float, optional
-
+        bill_rebate: float, optional
 
         Returns
         -------
@@ -2019,6 +2030,20 @@ class AgentBuildings(ThermalBuildings):
             ~condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
         condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
         condition = condition.droplevel('Performance')
+
+        # technical restriction - heat pump can only be switch with heat pump
+        idx = condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps'])
+        condition.loc[idx, [i for i in condition.columns if i not in self._resources_data['index']['Heat pumps']]] = False
+
+        # technical restriction - direct electric cannot switch to fossil
+        fossil_boilers = ['Natural gas-Performance boiler', 'Oil fuel-Performance boiler']
+        idx = condition.index.get_level_values('Heating system') == 'Electricity-Performance boiler'
+        condition.loc[idx, [i for i in condition.columns if i in fossil_boilers]] = False
+
+        # technical restriction - wood boiler can only be switch with wood boiler
+        wood_boilers = ['Wood fuel-Performance boiler', 'Wood fuel-Performance boiler']
+        idx = condition.index.get_level_values('Heating system').isin(wood_boilers)
+        condition.loc[idx, [i for i in condition.columns if i not in wood_boilers]] = False
 
         if False:
             # only dwelling fuel with natural gas can get natural gas
@@ -2114,13 +2139,26 @@ class AgentBuildings(ThermalBuildings):
         # temp = self.credit_constraint(amount_debt, financing_cost)
         # condition = condition & temp
 
+        # district heating are automatically excluded from endogenous market share
+        index_endogenous = index
+        if 'Heating-District heating' in flow_replace.index.get_level_values('Heating system'):
+            flow_replace_sum = flow_replace.sum()
+            replace_district_heating = select(flow_replace, {'Heating system': 'Heating-District heating'})
+            flow_replace = flow_replace.drop('Heating-District heating', level='Heating system')
+            assert round(flow_replace_sum, 0) == round(flow_replace.sum() + replace_district_heating.sum(), 0), 'Error in flow replace'
+
+            index_endogenous = index.drop(replace_district_heating.index)
+
         if self._endogenous:
             if not self.rational_behavior_heater:
-                market_share = self.endogenous_market_share_heater(index, bill_saved, subsidies_total, cost_heater,
-                                                                   calib_heater=calib_heater, cost_financing=cost_financing,
-                                                                   condition=condition, flow_replace=flow_replace)
+                market_share = self.endogenous_market_share_heater(index_endogenous, bill_saved,
+                                                                   subsidies_total, cost_heater,
+                                                                   calib_heater=calib_heater,
+                                                                   cost_financing=cost_financing,
+                                                                   condition=condition, flow_replace=flow_replace,
+                                                                   drop_heater=['Heating-District heating'])
 
-                # if market_share too small remove
+                # to reduce number of combination if market_shares for one technology is too small it is removed
                 market_share[market_share < 10 ** -2] = 0
                 market_share = (market_share.T / market_share.sum(axis=1)).T
             else:
@@ -2134,16 +2172,27 @@ class AgentBuildings(ThermalBuildings):
 
         assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
 
+        # first considering the case where the heating system is replaced by district heating
         if district_heating is not None:
             temp = flow_replace[self.to_energy(flow_replace).isin(['Natural gas', 'Oil fuel'])]
             temp = select(temp, {'Housing type': 'Multi-family'})
             to_district_heating = district_heating * temp / temp.sum()
-            to_district_heating = to_district_heating.reindex(index).fillna(0)
+            to_district_heating = to_district_heating.reindex(flow_replace.index).fillna(0)
             flow_replace = flow_replace - to_district_heating
 
         replacement = (market_share.T * flow_replace).T
+
         if district_heating is not None:
+            # adding heating system switching to district heating
+            to_district_heating = concat((to_district_heating, replace_district_heating), axis=0)
             replacement = concat((replacement, to_district_heating.rename('Heating-District heating')), axis=1)
+
+        assert_almost_equal(replacement.sum().sum(), flow_replace_sum, decimal=0)
+
+        # indicator
+        temp = replacement.fillna(0).groupby(['Housing type', 'Heating system']).sum()
+        temp = (temp.T / temp.sum(axis=1)).T
+
         replacement = replacement.groupby(replacement.columns, axis=1).sum()
         replacement.columns.names = ['Heating system final']
 
@@ -2229,6 +2278,8 @@ class AgentBuildings(ThermalBuildings):
                                       name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
         stock = concat((stock.reorder_levels(stock_replacement.index.names), stock_replacement),
                        axis=0, keys=[False, True], names=['Heater replacement'])
+        stock.sort_index(inplace=True)
+
         assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
 
@@ -2716,6 +2767,7 @@ class AgentBuildings(ThermalBuildings):
             cap = (reindex_mi(cost_insulation, index).T * subsidies_cap).T
             over_cap = subsidies_total > cap
             subsidies_details['over_cap'] = (subsidies_total - cap)[over_cap].fillna(0)
+            subsidies_details['over_cap'].sort_index(inplace=True)
             remaining = subsidies_details['over_cap'].copy()
 
             for policy_name in policies_target:

@@ -20,10 +20,16 @@ ENERGY = ['Electricity', 'Natural gas', 'Oil fuel', 'Wood fuel']
 def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     """Initialize and calibrate Res-IRF.
 
+
     Parameters
     ----------
     path
     config: str
+        Path to the configuration file.
+    path: str
+        Path to the output folder.
+    level_logger: str, optional, default 'DEBUG'
+        Level of the logger.
 
     Returns
     -------
