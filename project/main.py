@@ -275,7 +275,8 @@ def run(path=None, folder=None):
 
     for s in configuration.keys():
         if s != 'Reference':
-            configuration[s]['figures'] = False
+            # to change after tests
+            configuration[s]['figures'] = True
 
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:

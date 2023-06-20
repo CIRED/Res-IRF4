@@ -1,5 +1,5 @@
 {
-    "end": 2026,
+    "end": 2051,
     "step": 1,
     "output": "full",
     "start": 2017,
@@ -19,7 +19,7 @@
       "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "price_elasticity",
-        "target": -1.2
+        "target": -1
       },
       "ms_insulation": {
         "ms_insulation_ini": "project/input/investment/market_share_insulation_ini.csv",
@@ -97,7 +97,7 @@
                         "scenario": "NO"
       }
   },
-  "macro": {
+    "macro": {
       "construction": true,
       "flow_construction": "project/input/macro/flow_construction_ame2021.csv",
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",

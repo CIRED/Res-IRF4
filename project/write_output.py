@@ -785,7 +785,12 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         'Rate Single-family - Owner-occupied {} (%)': [{
             'groupby': 'Income owner',
             'format_y': lambda y, _: '{:,.1%}'.format(y),
-            'n_columns': 5}],
+            'n_columns': 5},
+            {
+                'groupby': 'Performance',
+                'format_y': lambda y, _: '{:,.1%}'.format(y),
+                'n_columns': 5},
+        ],
         'Retrofit': [{
             'variables': ['Switch decarbonize (Thousand households)',
                           'Insulation (Thousand households)',

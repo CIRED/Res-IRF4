@@ -4634,6 +4634,14 @@ class AgentBuildings(ThermalBuildings):
             temp.index = temp.index.map(lambda x: 'Rate Single-family - Owner-occupied {} (%)'.format(x))
             output.update(temp.T)
 
+            temp = self.add_certificate(self._replaced_by).set_axis(self._replaced_by.columns, axis=1)
+            s = self.add_certificate(self._stock_ref)
+            temp = temp.groupby(['Occupancy status', 'Housing type', 'Performance']).sum()
+            temp = (temp.sum(axis=1) / s.groupby(temp.index.names).sum()).dropna()
+            temp = temp.xs('Owner-occupied', level='Occupancy status').xs('Single-family', level='Housing type')
+            temp.index = temp.index.map(lambda x: 'Rate Single-family - Owner-occupied {} (%)'.format(x))
+            output.update(temp.T)
+
             certificate_jump = self._heater_store['certificate_jump'].stack()
             temp = {}
             for i in unique(certificate_jump):

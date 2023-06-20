@@ -69,7 +69,9 @@ if __name__ == '__main__':
                 "AP-2040": True,
                 "AP-2050": True
             }
-            del _config['sensitivity']
+            del _config['scenarios']
+            if 'sensitivity' in _config.keys():
+                del _config['sensitivity']
             configs += [_config]
 
     for c in configs:
