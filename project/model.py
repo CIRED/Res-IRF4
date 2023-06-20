@@ -5,7 +5,7 @@ from time import time
 import json
 from importlib import resources
 from pickle import load, dump
-import psutil
+# import psutil
 from copy import deepcopy
 
 from project.building import AgentBuildings
@@ -420,11 +420,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                                             carbon_content=carbon_content,
                                             bill_rebate=bill_rebate)
 
-    if memory:
+    """if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
                        'AgentBuildings': '{:.1f} MiB'.format(get_size(buildings) / 10 ** 6)}
         memory_dict.update(size_dict(memory_object(buildings), n=50, display=False))
-        buildings.memory.update({year: memory_dict})
+        buildings.memory.update({year: memory_dict})"""
 
     buildings.add_flows([flow_retrofit])
 

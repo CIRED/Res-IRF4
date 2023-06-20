@@ -270,15 +270,19 @@ def read_policies(config):
         bonus_heater = concat([bonus_heater] * len(cee_heater.index), keys=cee_heater.index)
         bonus_heater = bonus_heater.reindex(cee_heater.columns, axis=1).fillna(0)
         end = min(data['bonus_heater']['end'], data['end'])
-        l.append(PublicPolicy('cee', data['bonus_heater']['start'], end, bonus_heater, 'bonus', gest='heater'))
+        l.append(PublicPolicy('cee', data['bonus_heater']['start'], end, bonus_heater, 'bonus', gest='heater',
+                              social_housing=True))
 
-        bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))#.unstack('Heating system'))
+        bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))
         # cee_insulation = bonus_insulation + cee_insulation.rename(None)
         end = min(data['bonus_heater']['end'], data['end'])
-        l.append(PublicPolicy('cee', data['bonus_insulation']['start'], end, bonus_insulation, 'bonus', gest='insulation'))
+        l.append(PublicPolicy('cee', data['bonus_insulation']['start'], end, bonus_insulation, 'bonus',
+                              gest='insulation', social_housing=True))
 
-        l.append(PublicPolicy('cee', data['start'], data['end'], cee_heater, 'subsidy_target', gest='heater'))
-        l.append(PublicPolicy('cee', data['start'], data['end'], cee_insulation, 'subsidy_target', gest='insulation'))
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_heater, 'subsidy_target', gest='heater',
+                              social_housing=True))
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_insulation, 'subsidy_target', gest='insulation',
+                              social_housing=True))
 
         coefficient_obligation = get_pandas(data['coefficient_obligation'], lambda x: pd.read_csv(x, index_col=[0])).rename_axis('Energy', axis=1)
         cee_tax = (coefficient_obligation.T * cee_value).T / 1000
