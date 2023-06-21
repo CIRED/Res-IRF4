@@ -922,7 +922,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                        keys=['Consumption saving (%)',
                              'Emission saving (%)',
                              'CBA diff (Billion euro per year)',
-                             'Investment (Billion euro)'
+                             'Investment (Billion euro)',
                              'Subsidies (Billion euro)',
                              'Energy poverty (Million)',
                              'Heat pump (Million)',

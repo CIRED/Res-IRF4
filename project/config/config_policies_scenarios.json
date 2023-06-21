@@ -5,30 +5,6 @@
   "Reference": {
     "file":"project/config/reference.json",
     "end": 2036,
-    "simple": {
-      "detailed_output": false,
-      "quintiles": true,
-      "surface": false,
-      "ratio_surface": false,
-      "stock": false,
-      "current_policies": true,
-      "no_policy": true,
-      "income": false,
-      "prices_constant": false,
-      "heating_system": {
-        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
-        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
-        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water",
-        "Heating-District heating": null,
-        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
-      },
-      "insulation": false,
-      "no_heating_switch": false,
-      "collective_boiler": false,
-      "no_natural_replacement": false
-    },
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"
     },

@@ -2716,13 +2716,7 @@ class AgentBuildings(ThermalBuildings):
             else:
                 sub_non_cumulative.update({policy: value.copy()})
 
-        for policy, value in sub_non_cumulative.items():
-            for policy_compare in policy.non_cumulative:
-                if policy_compare in subsidies_details.keys():
-                    comp = reindex_mi(subsidies_details[policy_compare], value.index)
-                    subsidies_details[policy_compare] = comp.where(comp > value, 0)
-                    subsidies_details[policy.name] = value.where(value > comp, 0)
-
+        # adding bonus subsidies (subsidies have been calculated before)
         subsidies_bonus = [p for p in policies_insulation if p.policy == 'bonus']
         for policy in subsidies_bonus:
             if policy.target is not None:
@@ -2748,6 +2742,24 @@ class AgentBuildings(ThermalBuildings):
             else:
                 subsidies_details[policy.name] = value.copy()
 
+        # for non cumulative subsidies, we compare the value of the subsidies with the sum of non cumulative subsidies
+        for policy, value in sub_non_cumulative.items():
+            compare = sum([subsidies_details[p] for p in policy.non_cumulative if p in subsidies_details.keys()])
+            if isinstance(compare, DataFrame):
+                value = reindex_mi(value, compare.index)
+                subsidies_details[policy.name] = value.where(value > compare, 0)
+                for p in policy.non_cumulative:
+                    if p in subsidies_details.keys():
+                        subsidies_details[p] = subsidies_details[p].where(compare > value, 0)
+            else:
+                subsidies_details[policy.name] = value
+
+            """for policy_compare in policy.non_cumulative:
+                if policy_compare in subsidies_details.keys():
+                    comp = reindex_mi(subsidies_details[policy_compare], value.index)
+                    subsidies_details[policy_compare] = comp.where(comp > value, 0)
+                    subsidies_details[policy.name] = value.where(value > comp, 0)"""
+
         subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']]
         if subsidies_total:
             subsidies_total = sum(subsidies_total)
@@ -2757,7 +2769,7 @@ class AgentBuildings(ThermalBuildings):
         for k in subsidies_details.keys():
             subsidies_details[k].sort_index(inplace=True)
 
-        # cap for all subsidies
+        # overall cap for cumulated amount of subsidies
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
         if subsidies_cap:
             # only one subsidy cap
@@ -3748,6 +3760,9 @@ class AgentBuildings(ThermalBuildings):
 
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = cost_insulation.T.multiply(self._surface, level='Housing type').T
+
+        if self.year == 2019:
+            print('ok')
 
         cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition = self.apply_subsidies_insulation(
             index, policies_insulation, cost_insulation, surface, certificate_after, certificate_before,
