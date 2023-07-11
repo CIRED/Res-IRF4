@@ -192,7 +192,7 @@ def run(path=None, folder=None):
 
                 for key, item in config_sensitivity['energy_prices'].items():
                     configuration[key] = copy.deepcopy(configuration['Reference'])
-                    configuration[key]['macro']['energy_prices'] = copy.deepcopy(item)
+                    configuration[key]['energy']['energy_prices'] = copy.deepcopy(item)
 
             if config_sensitivity.get('building_stock') is not None:
                 values = config_sensitivity['building_stock']
@@ -230,15 +230,6 @@ def run(path=None, folder=None):
                     configuration['ScaleHeater{}'.format(name)] = copy.deepcopy(configuration['Reference'])
                     configuration['ScaleHeater{}'.format(name)]['switch_heater']['scale'] = v
 
-            if config_sensitivity.get('deviation') is not None:
-                values = config_sensitivity['deviation']
-                if values:
-                    if isinstance(values, (float, int)):
-                        values = [values]
-                    for v in values:
-                        configuration['Deviation{:.0f}'.format(v * 100)] = copy.deepcopy(configuration['Reference'])
-                        configuration['Deviation{:.0f}'.format(v * 100)]['renovation']['scale']['deviation'] = v
-
             if config_sensitivity.get('step') is not None:
                 values = config_sensitivity['step']
                 for v in values:
@@ -247,6 +238,26 @@ def run(path=None, folder=None):
                     configuration[name]['step'] = int(v)
 
         del configuration['sensitivity']
+
+    if 'uncertainty' in configuration.keys():
+        if configuration['uncertainty']['activated']:
+            prefix = 'uncertainty'
+            config_uncertainty = {k: i for k, i in configuration['uncertainty'].items() if k != 'activated'}
+            keys, values = zip(*config_uncertainty.items())
+            from itertools import product
+            permutations_scenarios = [dict(zip(keys, v)) for v in product(*values)]
+            for k, scenarios in enumerate(permutations_scenarios):
+                scenario_name = 'S{}'.format(k)
+                configuration[scenario_name] = copy.deepcopy(configuration['Reference'])
+                for scenario_input, value in scenarios.items():
+                    if scenario_input == 'energy_prices_factor':
+                        configuration[scenario_name]['energy']['energy_prices']['factor'] = value
+                    if scenario_input == 'carbon_emission':
+                        configuration[scenario_name]['energy']['carbon_emission'] = value
+                    if scenario_input == 'scale_renovation':
+                        configuration[scenario_name]['renovation']['scale'] = value
+
+        del configuration['uncertainty']
 
     t = datetime.today().strftime('%Y%m%d_%H%M%S')
 

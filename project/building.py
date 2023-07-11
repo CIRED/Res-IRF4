@@ -3154,6 +3154,12 @@ class AgentBuildings(ThermalBuildings):
                     factor = renovation_worst / renovation_best
                     rslt = append(rslt, _target - factor)
 
+                elif _option == 'share_fg':
+                    flow_renovation = self.add_certificate(flow_renovation).groupby('Performance').sum()
+                    renovation_worst = flow_renovation[[i for i in flow_renovation.index if i >= 'F']].sum()
+                    factor = renovation_worst / flow_renovation.sum()
+                    rslt = append(rslt, _target - factor)
+
                 elif _option == 'price_elasticity':
                     _ms_full = (_ms.T * _rate).T
                     _price_elasticity = self.preferences_insulation['cost'] * _scale * _cost_total / 1000 * (1 - _ms_full)
@@ -3226,6 +3232,14 @@ class AgentBuildings(ThermalBuildings):
                                                                           _credit_constraint=_credit_constraint)
 
             flow = _renovation_rate * _stock
+
+            """temp = self.add_certificate(flow).groupby('Performance').sum()
+            renovation_worst = temp[[i for i in temp.index if i >= 'F']].sum()
+            factor = renovation_worst / temp.sum()
+            s = self.add_certificate(_stock).groupby('Performance').sum()
+            stock_worst = s[[i for i in s.index if i >= 'F']].sum()
+            factor = stock_worst / s.sum()"""
+
             rate = flow.groupby(renovation_rate_ini.index.names).sum() / _stock.groupby(
                 renovation_rate_ini.index.names).sum()
             compare_rate = concat((rate.rename('Calculated'), renovation_rate_ini.rename('Observed')),
@@ -3264,7 +3278,8 @@ class AgentBuildings(ThermalBuildings):
             scale_insulation = Series(self.scale_insulation, self.discount_rate.index)
             preference_cost = Series(self.preferences_insulation['cost'], self.discount_rate.index)
             preference_sub = Series(self.preferences_insulation['subsidy'], self.discount_rate.index)
-            temp = concat((scale_insulation, self.preferences_insulation['bill_saved'], preference_cost, preference_sub, self.discount_factor, self.discount_rate),
+            temp = concat((scale_insulation, self.preferences_insulation['bill_saved'], preference_cost, preference_sub,
+                           self.discount_factor, self.discount_rate),
                           axis=1, keys=['Scale', 'Bill saved', 'Coeff cost', 'Coeff sub', 'Discount factor', 'Discount rate'])
             temp.to_csv(os.path.join(self.path_calibration, 'coefficient_insulation.csv'))
 
@@ -3276,9 +3291,9 @@ class AgentBuildings(ThermalBuildings):
             # export hidden cost for each renovation work type that result from calibration
             self.hidden_cost_insulation.to_csv(os.path.join(self.path_calibration, 'hidden_cost_insulation.csv'))
 
-            ms_full = (_market_share.T * _renovation_rate).T
 
             # TODO: Clean this part
+            ms_full = (_market_share.T * _renovation_rate).T
             price_elasticity = self.preferences_insulation['cost'] * _cost_total / 1000 * (1 - ms_full)
             price_elasticity = (price_elasticity * _market_share).sum(axis=1)
             df = price_elasticity.groupby(['Housing type', 'Occupancy status', 'Income owner']).describe()
@@ -3761,8 +3776,6 @@ class AgentBuildings(ThermalBuildings):
         cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
         cost_insulation = cost_insulation.T.multiply(self._surface, level='Housing type').T
 
-        if self.year == 2019:
-            print('ok')
 
         cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition = self.apply_subsidies_insulation(
             index, policies_insulation, cost_insulation, surface, certificate_after, certificate_before,
@@ -5527,7 +5540,8 @@ class AgentBuildings(ThermalBuildings):
         health_cost_total = Series(health_cost).sum()
         return health_cost_total, health_cost
 
-    def marginal_abatement_cost(self, consumption_saved, emission_saved, cost_insulation, stock, prices, certificate_after, lifetime=30,
+    def marginal_abatement_cost(self, consumption_saved, emission_saved, cost_insulation, stock, prices,
+                                certificate_after, lifetime=30,
                                 discount_rate=0.05, measures='global_renovation', plot=False, carbon_saved=None,
                                 health_cost=None):
 

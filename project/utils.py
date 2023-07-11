@@ -786,8 +786,11 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
         smallest_size, biggest_size = 100, 400
         relative_size = list(df[col_size])
         s_min, s_max = min(relative_size), max(relative_size)
-        size = [smallest_size + (biggest_size - smallest_size) / (s_max - s_min) * (s - s_min) for s in relative_size]
-        scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
+        if s_min == s_max:
+            col_size = None
+        else:
+            size = [smallest_size + (biggest_size - smallest_size) / (s_max - s_min) * (s - s_min) for s in relative_size]
+            scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
 
     else:
         ax.scatter(x=df[x], y=df[y], s=17, c=colors)
@@ -1148,7 +1151,7 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
     min = data.min()
     neg_offset, pos_offset = max / 10, max / 50
     plot_offset = int(max / 15)
-    ax.set_ylim(top=max + max/3, bottom=min + min/3 )
+    ax.set_ylim(top=max + max/3, bottom=min + min/3)
 
     # Start label loop
     loop = 0

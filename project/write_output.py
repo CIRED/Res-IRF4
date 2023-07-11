@@ -450,6 +450,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     # ini
     emission_ini = result.get('Reference').loc['Emission (MtCO2)', :].iloc[0]
     consumption_ini = result.get('Reference').loc['Consumption (TWh)', :].iloc[0]
+    start = result.get('Reference').columns[0]
+    end = result.get('Reference').columns[-1]
 
     # graph emission saving
     variables = {
@@ -466,7 +468,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
     df /= emission_ini
-    make_stackedbar_plot(df.T, 'Emission saving (% of initial emission {:.0f} MtCO2)'.format(emission_ini), ncol=2, ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
+    make_stackedbar_plot(df.T, 'Emission saving to {} (% of initial emission {} - {:.0f} MtCO2)'.format(end, start, emission_ini), ncol=2, ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
                          colors=colors_temp, save=os.path.join(folder_img, 'emission_saving_decomposition.png'),
                          rotation=20, left=1.2)
     emission_saving = df.sum()
@@ -485,7 +487,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
     df /= consumption_ini
-    make_stackedbar_plot(df.T, 'Consumption saving (% of initial emission {:.0f} TWh)'.format(consumption_ini), ncol=2,
+    make_stackedbar_plot(df.T, 'Consumption saving to {} (% of initial emission {} - {:.0f} TWh)'.format(end, start, consumption_ini),
+                         ncol=2,
                          ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
                          colors=colors_temp, save=os.path.join(folder_img, 'consumption_saving_decomposition.png'),
                          rotation=20,  left=1.2)
@@ -506,7 +509,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
         df = df.rename(index=variables)
         cost_total = df.sum(axis=0).rename('Total')
-        make_stackedbar_plot(df.T, 'Running cost (Billion euro)', ncol=3, ymin=None,
+        make_stackedbar_plot(df.T, 'Running cost to {} (Billion euro)'.format(end), ncol=3, ymin=None,
                              format_y=lambda y, _: '{:.0f}'.format(y),
                              hline=0, scatterplot=cost_total, colors=resources_data['colors'],
                              save=os.path.join(folder_img, 'running_cost.png'),
@@ -514,46 +517,46 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
         # colors
         diff = (df.T - df['Reference']).T
-        if not diff.empty:
-            temp = diff.drop('Reference', axis=1).T
-            cost_diff_total = temp.sum(axis=1).rename('Total')
-            if not temp.empty:
-                make_stackedbar_plot(diff.drop('Reference', axis=1).T,
-                                     'Running cost compare to Reference (Billion euro)', ncol=3, ymin=None,
-                                     format_y=lambda y, _: '{:.0f}'.format(y),
-                                     hline=0, scatterplot=cost_diff_total, colors=resources_data['colors'],
-                                     save=os.path.join(folder_img, 'running_cost_comparison.png'), rotation=0,
-                                     left=1.3)
+        if not diff.empty and diff.shape[1] > 1:
+            cost_diff_total = diff.T.sum(axis=1).rename('Total')
+            make_stackedbar_plot(diff.drop('Reference', axis=1).T,
+                                 'Running cost compare to Reference to {} (Billion euro)'.format(end), ncol=3, ymin=None,
+                                 format_y=lambda y, _: '{:.0f}'.format(y),
+                                 hline=0, scatterplot=cost_diff_total, colors=resources_data['colors'],
+                                 save=os.path.join(folder_img, 'running_cost_comparison.png'), rotation=0,
+                                 left=1.3)
 
-                df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors), subsidies_total), axis=1,
-                               keys=['Consumption saving (TWh)',
-                                     'Emission saving (MtCO2)',
-                                     'Running cost (Billion euro)',
-                                     'Running cost diff (Billion euro)',
-                                     'colors',
-                                     'Subsidies (Billion euro)'
-                                     ])
-                df.dropna(inplace=True)
+            df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors), subsidies_total), axis=1,
+                           keys=['Consumption saving (TWh)',
+                                 'Emission saving (MtCO2)',
+                                 'Running cost (Billion euro)',
+                                 'Running cost diff (Billion euro)',
+                                 'colors',
+                                 'Subsidies (Billion euro)'
+                                 ])
+            df.dropna(inplace=True)
 
-                make_scatter_plot(df, 'Consumption saving (TWh)', 'Running cost diff (Billion euro)',
-                                  'Consumption saving (TWh)', 'Running cost (Billion euro)',
-                                  hlines=0,
-                                  format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                                  format_y=lambda y, _: '{:.1f}'.format(y),
-                                  save=os.path.join(folder_img, 'running_cost_consumption.png'),
-                                  col_colors='colors',
-                                  col_size='Subsidies (Billion euro)'
-                                  )
+            make_scatter_plot(df, 'Consumption saving (TWh)', 'Running cost diff (Billion euro)',
+                              'Consumption saving to {} (TWh)'.format(end),
+                              'Running cost to {} (Billion euro)'.format(end),
+                              hlines=0,
+                              format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                              format_y=lambda y, _: '{:.1f}'.format(y),
+                              save=os.path.join(folder_img, 'running_cost_consumption.png'),
+                              col_colors='colors',
+                              col_size='Subsidies (Billion euro)'
+                              )
 
-                make_scatter_plot(df, 'Emission saving (MtCO2)', 'Running cost diff (Billion euro)',
-                                  'Emission saving (MtCO2)', 'Running cost (Billion euro)',
-                                  hlines=0,
-                                  format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                                  format_y=lambda y, _: '{:.1f}'.format(y),
-                                  save=os.path.join(folder_img, 'running_cost_emission.png'),
-                                  col_colors='colors',
-                                  col_size='Subsidies (Billion euro)'
-                                  )
+            make_scatter_plot(df, 'Emission saving (MtCO2)', 'Running cost diff (Billion euro)',
+                              'Emission saving to {}(MtCO2)'.format(end),
+                              'Running cost to {} (Billion euro)'.format(end),
+                              hlines=0,
+                              format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                              format_y=lambda y, _: '{:.1f}'.format(y),
+                              save=os.path.join(folder_img, 'running_cost_emission.png'),
+                              col_colors='colors',
+                              col_size='Subsidies (Billion euro)'
+                              )
 
         # graph CBA
         variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
@@ -578,47 +581,48 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                              rotation=0, left=1.3)
 
         diff = (df.T - df['Reference']).T
-        if not diff.empty:
-            temp = diff.drop('Reference', axis=1).T
-            cba_diff_total = temp.sum(axis=1).rename('Total')
+        if not diff.empty and diff.shape[1] > 1:
+            cba_diff_total = diff.T.sum(axis=1).rename('Total')
 
-            if not temp.empty:
-                make_stackedbar_plot(temp,
-                                     'Cost-benefits analysis compare to Reference (Billion euro)', ncol=3, ymin=None,
-                                     format_y=lambda y, _: '{:.0f}'.format(y),
-                                     hline=0, scatterplot=cba_diff_total, colors=resources_data['colors'],
-                                     save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), rotation=0,
-                                     left=1.3)
+            make_stackedbar_plot(diff.drop('Reference', axis=1).T,
+                                 'Cost-benefits analysis compare to Reference to {} (Billion euro)'.format(end),
+                                 ncol=3, ymin=None,
+                                 format_y=lambda y, _: '{:.0f}'.format(y),
+                                 hline=0, scatterplot=cba_diff_total, colors=resources_data['colors'],
+                                 save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), rotation=0,
+                                 left=1.3)
 
-                df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors), subsidies_total), axis=1,
-                               keys=['Consumption saving (TWh)',
-                                     'Emission saving (MtCO2)',
-                                     'CBA (Billion euro)',
-                                     'CBA diff (Billion euro)',
-                                     'colors',
-                                     'Subsidies (Billion euro)'
-                                     ])
-                df.dropna(inplace=True)
+            df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors), subsidies_total), axis=1,
+                           keys=['Consumption saving (TWh)',
+                                 'Emission saving (MtCO2)',
+                                 'CBA (Billion euro)',
+                                 'CBA diff (Billion euro)',
+                                 'colors',
+                                 'Subsidies (Billion euro)'
+                                 ])
+            df.dropna(inplace=True)
 
-                make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
-                                  'Consumption saving (TWh)', 'Cost benefit analysis (Billion euro)',
-                                  hlines=0,
-                                  format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                                  format_y=lambda y, _: '{:.1f}'.format(y),
-                                  save=os.path.join(folder_img, 'cba_consumption.png'),
-                                  col_colors='colors',
-                                  col_size='Subsidies (Billion euro)'
-                                  )
+            make_scatter_plot(df, 'Consumption saving (TWh)', 'CBA diff (Billion euro)',
+                              'Consumption saving to {} (TWh)'.format(end),
+                              'Cost benefit analysis to {} (Billion euro)'.format(end),
+                              hlines=0,
+                              format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                              format_y=lambda y, _: '{:.1f}'.format(y),
+                              save=os.path.join(folder_img, 'cba_consumption.png'),
+                              col_colors='colors',
+                              col_size='Subsidies (Billion euro)'
+                              )
 
-                make_scatter_plot(df, 'Emission saving (MtCO2)', 'CBA diff (Billion euro)',
-                                  'Emission saving (MtCO2)', 'Cost benefit analysis (Billion euro)',
-                                  hlines=0,
-                                  format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                                  format_y=lambda y, _: '{:.1f}'.format(y),
-                                  save=os.path.join(folder_img, 'cba_emission.png'),
-                                  col_colors='colors',
-                                  col_size='Subsidies (Billion euro)'
-                                  )
+            make_scatter_plot(df, 'Emission saving (MtCO2)', 'CBA diff (Billion euro)',
+                              'Emission saving to {} (MtCO2)'.format(end),
+                              'Cost benefit analysis to {} (Billion euro)'.format(end),
+                              hlines=0,
+                              format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                              format_y=lambda y, _: '{:.1f}'.format(y),
+                              save=os.path.join(folder_img, 'cba_emission.png'),
+                              col_colors='colors',
+                              col_size='Subsidies (Billion euro)'
+                              )
     except KeyError:
         pass
 
@@ -908,56 +912,47 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
 
-    diff = (df.T - df['Reference']).T # .drop('Reference', axis=1)
-    if not diff.empty:
-        cba_diff_total = diff.sum(axis=0).rename('Total')
+    diff = (df.T - df['Reference']).T
 
-        df = pd.concat((consumption_saving_percent,
-                        emission_saving_percent,
-                        cba_diff_total,
-                        investment_total,
-                        subsidies_total,
-                        energy_poverty,
-                        heat_pump),
-                       keys=['Consumption saving (%)',
-                             'Emission saving (%)',
-                             'CBA diff (Billion euro per year)',
-                             'Investment (Billion euro)',
-                             'Subsidies (Billion euro)',
-                             'Energy poverty (Million)',
-                             'Heat pump (Million)',
-                             ],
-                       axis=1)
-        df.dropna(inplace=True)
-        df.to_csv(os.path.join(folder_img, 'result.csv'))
+    cba_diff_total = diff.sum(axis=0).rename('Total')
 
-        make_scatter_plot(df, 'Emission saving (%)', 'CBA diff (Billion euro per year)',
-                          'Emission saving (%)', 'Cost-benefit analysis (Billion euro per year)',
-                          hlines=0,
-                          format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                          format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(folder_img, 'cba_emission.png'),
-                          annotate=False,
-                          col_size='Energy poverty (Million)'
-                          )
-        make_scatter_plot(df, 'Emission saving (%)', 'CBA diff (Billion euro per year)',
-                          'Emission saving (%)', 'Cost-benefit analysis (Billion euro per year)',
-                          hlines=0,
-                          format_x=lambda x, _: '{:.0%}'.format(x),
-                          format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(folder_img, 'cba_emission_test.png'),
-                          annotate=False,
-                          col_size='Energy poverty (Million)'
-                          )
-        make_scatter_plot(df, 'Consumption saving (%)', 'CBA diff (Billion euro per year)',
-                          'Consumption saving (%)', 'Cost-benefit analysis (Billion euro per year)',
-                          hlines=0,
-                          format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                          format_y=lambda y, _: '{:.1f}'.format(y),
-                          save=os.path.join(folder_img, 'cba_consumption.png'),
-                          annotate=False,
-                          col_size='Energy poverty (Million)'
-                          )
+    df = pd.concat((consumption_saving_percent,
+                    emission_saving_percent,
+                    cba_diff_total,
+                    investment_total,
+                    subsidies_total,
+                    energy_poverty,
+                    heat_pump),
+                   keys=['Consumption saving (%)',
+                         'Emission saving (%)',
+                         'CBA diff (Billion euro per year)',
+                         'Investment (Billion euro)',
+                         'Subsidies (Billion euro)',
+                         'Energy poverty (Million)',
+                         'Heat pump (Million)',
+                         ],
+                   axis=1)
+    df.dropna(inplace=True)
+    df.to_csv(os.path.join(folder_img, 'result.csv'))
+
+    make_scatter_plot(df, 'Emission saving (%)', 'CBA diff (Billion euro per year)',
+                      'Emission saving (%)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      col_size='Energy poverty (Million)',
+                      save=os.path.join(folder_img, 'cba_emission.png')
+                      )
+    make_scatter_plot(df, 'Emission saving (%)', 'CBA diff (Billion euro per year)',
+                      'Emission saving (%)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:.0%}'.format(x),
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      col_size='Energy poverty (Million)',
+                      save=os.path.join(folder_img, 'cba_consumption.png')
+                      )
 
 
 def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None):

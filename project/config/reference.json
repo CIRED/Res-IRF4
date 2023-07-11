@@ -18,8 +18,8 @@
       "exogenous_social": null,
       "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
-        "option": "price_elasticity",
-        "target": -1
+        "option": "share_fg",
+        "target": 0.31
       },
       "ms_insulation": {
         "ms_insulation_ini": "project/input/investment/market_share_insulation_ini.csv",
