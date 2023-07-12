@@ -7,7 +7,12 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "mpr_serenite"
+      "cite",
+      "cee",
+      "mpr",
+      "mpr_serenite",
+      "mpr_multifamily",
+      "reduced_vta"
     ],
     "test": [
       "cite",
