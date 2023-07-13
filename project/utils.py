@@ -793,7 +793,7 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
             scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
 
     else:
-        ax.scatter(x=df[x], y=df[y], s=17, c=colors)
+        ax.scatter(x=df[x], y=df[y], s=30, c=colors)
 
     if annotate:
         for k, v in df.iterrows():

@@ -859,7 +859,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
     ----------
     result: dict
     folder: str
-    quintiles: pd.DataFrame
+    quintiles: bool, default None
 
     Returns
     -------
@@ -893,8 +893,12 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
     subsidies_total += subsidies_loan_total
 
     investment_total = pd.Series({k: i.loc['Investment total WT (Billion euro)', :].sum() for k, i in result.items()})
-    energy_poverty = pd.Series({k: i.loc['Energy poverty (Million)', end] for k, i in result.items()})
+    emission = pd.Series({k: i.loc['Emission (MtCO2)', :].sum() for k, i in result.items()})
+
     heat_pump = pd.Series({k: i.loc['Stock Heat pump (Million)', end] for k, i in result.items()})
+    energy_poverty = pd.Series({k: i.loc['Energy poverty (Million)', end] for k, i in result.items()})
+    stock_low_efficient = pd.Series({k: i.loc['Stock low-efficient (Million)', end] for k, i in result.items()})
+    renovation = pd.Series({k: i.loc['Renovation (Thousand households)', :].sum() for k, i in result.items()})
 
     # graph ACB
     variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
@@ -908,12 +912,9 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                  'CBA Health cost (Billion euro)': 'Health cost',
                  'CBA COFP (Billion euro)': 'COFP'
                  }
-
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
-
     diff = (df.T - df['Reference']).T
-
     cba_diff_total = diff.sum(axis=0).rename('Total')
 
     df = pd.concat((consumption_saving_percent,
@@ -922,7 +923,10 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                     investment_total,
                     subsidies_total,
                     energy_poverty,
-                    heat_pump),
+                    heat_pump,
+                    emission,
+                    stock_low_efficient,
+                    renovation),
                    keys=['Consumption saving (%)',
                          'Emission saving (%)',
                          'CBA diff (Billion euro per year)',
@@ -930,6 +934,9 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                          'Subsidies (Billion euro)',
                          'Energy poverty (Million)',
                          'Heat pump (Million)',
+                         'Cumulated emission (MtCO2)',
+                         'Stock low efficient (Million)',
+                         'Renovation (Thousand households)'
                          ],
                    axis=1)
     df.dropna(inplace=True)
@@ -944,8 +951,8 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                       col_size='Energy poverty (Million)',
                       save=os.path.join(folder_img, 'cba_emission.png')
                       )
-    make_scatter_plot(df, 'Emission saving (%)', 'CBA diff (Billion euro per year)',
-                      'Emission saving (%)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+    make_scatter_plot(df, 'Consumption saving (%)', 'CBA diff (Billion euro per year)',
+                      'Consumption saving (%)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
                       hlines=0,
                       format_x=lambda x, _: '{:.0%}'.format(x),
                       format_y=lambda y, _: '{:.1f}'.format(y),
@@ -953,7 +960,45 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                       col_size='Energy poverty (Million)',
                       save=os.path.join(folder_img, 'cba_consumption.png')
                       )
-
+    make_scatter_plot(df, 'Investment (Billion euro)', 'CBA diff (Billion euro per year)',
+                      'Investment (Billion euro)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:,.0f}'.format(x),
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      save=os.path.join(folder_img, 'cba_investment.png')
+                      )
+    make_scatter_plot(df, 'Subsidies (Billion euro)', 'CBA diff (Billion euro per year)',
+                      'Subsidies (Billion euro)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:,.0f}'.format(x),
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      save=os.path.join(folder_img, 'cba_subsidies.png')
+                      )
+    make_scatter_plot(df, 'Cumulated emission (MtCO2)', 'Investment (Billion euro)',
+                      'Cumulated emission (MtCO2)', 'Investment to {} (Billion euro)'.format(end),
+                      format_x=lambda x, _: '{:,.0f}'.format(x),
+                      format_y=lambda y, _: '{:.0f}'.format(y),
+                      annotate=False,
+                      save=os.path.join(folder_img, 'investment_cumulated_emission.png')
+                      )
+    make_scatter_plot(df, 'Cumulated emission (MtCO2)', 'CBA diff (Billion euro per year)',
+                      'Cumulated emission (MtCO2)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:,.0f}'.format(x),
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      save=os.path.join(folder_img, 'cba_cumulated_emission.png')
+                      )
+    make_scatter_plot(df, 'Energy poverty (Million)', 'CBA diff (Billion euro per year)',
+                      'Energy poverty (Million)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:,.0f}'.format(x),
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      save=os.path.join(folder_img, 'cba_energy_poverty.png')
+                      )
 
 def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None):
 

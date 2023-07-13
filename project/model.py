@@ -474,6 +474,7 @@ def res_irf(config, path, level_logger='DEBUG'):
     pd.DataFrame
         Detailed results
     """
+    start_run = time()
 
     os.mkdir(path)
     if config['simple'].get('level_logger') is not None:
@@ -626,6 +627,8 @@ def res_irf(config, path, level_logger='DEBUG'):
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)
+
+        buildings.logger.info('Run time Res-IRF: {:,.1f} minutes.'.format(round((time() - start_run) / 60, 2)))
 
         return os.path.basename(os.path.normpath(path)), output, stock
 

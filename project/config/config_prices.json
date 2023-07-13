@@ -1,0 +1,16 @@
+{
+  "sensitivity": {
+    "activated": true,
+    "current_policies": null,
+    "no_policy": null,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "energy_prices": "project/input/energy/energy_prices_scenarios.json"
+  },
+  "Reference": {
+    "file":"project/config/reference.json",
+    "end": 2021,
+    "output": "consumption"
+  }
+}

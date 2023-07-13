@@ -87,7 +87,7 @@
           "Natural gas": 0.0268,
           "Wood fuel": 0.0127,
           "Oil fuel": 0.0173,
-          "Heating": 0
+          "Heating": 0.0127
         }
       },
       "energy_taxes": "project/input/energy/energy_taxes_ame2021.csv",

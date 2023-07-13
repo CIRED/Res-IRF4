@@ -452,8 +452,8 @@ class ThermalBuildings:
         prices: Series
         consumption: Series or None, optional
             kWh/building.a
-        store: bool, default False
-            Store calculation in object attributes.
+        full_output: bool, default False
+        bill_rebate: float, default 0
 
         Returns
         -------
@@ -472,18 +472,6 @@ class ThermalBuildings:
                                                                     full_output=True, bill_rebate=bill_rebate)
         consumption = consumption * heating_intensity
 
-        """heating_intensity, budget_share = None, None
-        energy_bill = AgentBuildings.energy_bill(prices, consumption)
-        if isinstance(energy_bill, Series):
-            budget_share = energy_bill / reindex_mi(self._income_tenant, index)
-            heating_intensity = thermal.heat_intensity(budget_share)
-            consumption *= heating_intensity
-        elif isinstance(energy_bill, DataFrame):
-            budget_share = (energy_bill.T / reindex_mi(self._income_tenant, index)).T
-            heating_intensity = thermal.heat_intensity(budget_share)
-            consumption = heating_intensity * consumption"""
-
-        # consumption.equals(c)
         if full_output is False:
             return consumption
         else:
@@ -1713,7 +1701,7 @@ class AgentBuildings(ThermalBuildings):
                               agg.stack() / 10 ** 3, wtp.stack()),
                              axis=1, keys=['constant', 'no_calibration', 'calcul', 'observed', 'thousand', 'wtp']).round(decimals=3)
 
-            if self.path is not None:
+            if self.path_calibration is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
             return constant
@@ -1775,8 +1763,9 @@ class AgentBuildings(ThermalBuildings):
             utility_bill_saving *= self.scale_heater
             utility_financing *= self.scale_heater
             utility_inertia *= self.scale_heater
-            assess_sensitivity_hp(utility_cost, utility_bill_saving, utility_financing, utility_inertia, condition,
-                                  flow_replace, cost_heater)
+            if self.path_calibration:
+                assess_sensitivity_hp(utility_cost, utility_bill_saving, utility_financing, utility_inertia, condition,
+                                      flow_replace, cost_heater)
 
             utility *= self.scale_heater
 
@@ -3251,7 +3240,7 @@ class AgentBuildings(ThermalBuildings):
             details = concat((
                 self.constant_insulation_extensive, rate, renovation_rate_ini, stock_ini / 10 ** 6,
                 agg / 10 ** 3, wtp), axis=1, keys=['constant', 'calcul', 'observed', 'stock', 'flow', 'wtp']).round(decimals=3)
-            if self.path is not None:
+            if self.path_calibration is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_extensive.csv'))
 
             flow_insulation = (flow * _market_share.T).T.sum()
@@ -3263,7 +3252,7 @@ class AgentBuildings(ThermalBuildings):
             details = concat(
                 (self.constant_insulation_intensive, share, ms_insulation_ini, flow_insulation / 10 ** 3, wtp), axis=1,
                 keys=['constant', 'calcul', 'observed', 'thousand', 'wtp']).round(decimals=3)
-            if self.path is not None:
+            if self.path_calibration is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_insulation.csv'))
 
             compare = concat((compare_rate, compare_share), ignore_index=True)
@@ -3273,37 +3262,36 @@ class AgentBuildings(ThermalBuildings):
                 assert allclose(compare['Calculated'], compare['Observed'],
                                 rtol=10 ** -2), 'Calibration insulation did not work'
 
-            # export coefficient and preferences
-            scale_insulation = Series(self.scale_insulation, self.discount_rate.index)
-            preference_cost = Series(self.preferences_insulation['cost'], self.discount_rate.index)
-            preference_sub = Series(self.preferences_insulation['subsidy'], self.discount_rate.index)
-            temp = concat((scale_insulation, self.preferences_insulation['bill_saved'], preference_cost, preference_sub,
-                           self.discount_factor, self.discount_rate),
-                          axis=1, keys=['Scale', 'Bill saved', 'Coeff cost', 'Coeff sub', 'Discount factor', 'Discount rate'])
-            temp.to_csv(os.path.join(self.path_calibration, 'coefficient_insulation.csv'))
+            if self.path_calibration is not None:
+                # export coefficient and preferences
+                scale_insulation = Series(self.scale_insulation, self.discount_rate.index)
+                preference_cost = Series(self.preferences_insulation['cost'], self.discount_rate.index)
+                preference_sub = Series(self.preferences_insulation['subsidy'], self.discount_rate.index)
+                temp = concat((scale_insulation, self.preferences_insulation['bill_saved'], preference_cost, preference_sub,
+                               self.discount_factor, self.discount_rate),
+                              axis=1, keys=['Scale', 'Bill saved', 'Coeff cost', 'Coeff sub', 'Discount factor', 'Discount rate'])
+                temp.to_csv(os.path.join(self.path_calibration, 'coefficient_insulation.csv'))
 
-            # export hidden cost that result from calibration
-            temp = concat((self.hidden_cost, self.landlord_dilemma, self.multifamily_friction), axis=1,
-                          keys=['Hidden cost', 'Landlord-tenant dilemma', 'Multi-family friction']).round(0)
-            temp.to_csv(os.path.join(self.path_calibration, 'hidden_cost.csv'))
+                # export hidden cost that result from calibration
+                temp = concat((self.hidden_cost, self.landlord_dilemma, self.multifamily_friction), axis=1,
+                              keys=['Hidden cost', 'Landlord-tenant dilemma', 'Multi-family friction']).round(0)
+                temp.to_csv(os.path.join(self.path_calibration, 'hidden_cost.csv'))
 
-            # export hidden cost for each renovation work type that result from calibration
-            self.hidden_cost_insulation.to_csv(os.path.join(self.path_calibration, 'hidden_cost_insulation.csv'))
+                # export hidden cost for each renovation work type that result from calibration
+                self.hidden_cost_insulation.to_csv(os.path.join(self.path_calibration, 'hidden_cost_insulation.csv'))
 
+                # TODO: Clean this part
+                ms_full = (_market_share.T * _renovation_rate).T
+                price_elasticity = self.preferences_insulation['cost'] * _cost_total / 1000 * (1 - ms_full)
+                price_elasticity = (price_elasticity * _market_share).sum(axis=1)
+                df = price_elasticity.groupby(['Housing type', 'Occupancy status', 'Income owner']).describe()
+                df.to_csv(os.path.join(self.path_calibration, 'price_elasticity_description.csv'))
 
-            # TODO: Clean this part
-            ms_full = (_market_share.T * _renovation_rate).T
-            price_elasticity = self.preferences_insulation['cost'] * _cost_total / 1000 * (1 - ms_full)
-            price_elasticity = (price_elasticity * _market_share).sum(axis=1)
-            df = price_elasticity.groupby(['Housing type', 'Occupancy status', 'Income owner']).describe()
-            df.to_csv(os.path.join(self.path_calibration, 'price_elasticity_description.csv'))
+                temp = concat((price_elasticity, stock), axis=1, keys=['Price elasticity', 'Stock'])
+                make_hist(temp, 'Price elasticity', 'Housing type', 'Housing (Million)',
+                          format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6), kde=True,
+                          save=os.path.join(self.path_calibration, 'price_elasticity_insulation.png'))
 
-            temp = concat((price_elasticity, stock), axis=1, keys=['Price elasticity', 'Stock'])
-            make_hist(temp, 'Price elasticity', 'Housing type', 'Housing (Million)',
-                      format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6), kde=True,
-                      save=os.path.join(self.path_calibration, 'price_elasticity_insulation.png'))
-
-            if self.path is not None and False:
                 compare.to_csv(os.path.join(self.path_calibration, 'result_calibration.csv'))
 
         def assess_sensitivity_ad_valorem(_stock, _cost_total, _bill_saved, _subsidies_total, _cost_financing,
