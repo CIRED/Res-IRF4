@@ -27,8 +27,7 @@ def prepare_config(config):
     if 'file' in config.keys():
         temp = deepcopy(config)
         path = config['file']
-        with open(path) as file:
-            config = json.load(file)
+        config = get_json(path)
         config.update(temp)
         del config['file']
 
@@ -260,11 +259,12 @@ def get_inputs(path=None, config=None, variables=None):
               'income': inputs['income'],
               'energy_prices': inputs_dynamics['energy_prices'],
               'cost_insulation': inputs_dynamics['cost_insulation'],
+              'cost_heater': inputs_dynamics['cost_heater'],
               'carbon_emission': inputs_dynamics['post_inputs']['carbon_emission'],
               'carbon_value_kwh': inputs_dynamics['post_inputs']['carbon_value_kwh'],
               'health_cost': inputs_dynamics['post_inputs']['health_expenditure'] + inputs_dynamics['post_inputs']['mortality_cost'] + inputs_dynamics['post_inputs']['loss_well_being'],
               'efficiency': inputs['efficiency'],
-              'performance_insulation': inputs['performance_insulation']
+              'implicit_discount_rate': inputs_dynamics['post_inputs']['implicit_discount_rate']
               }
     output = {k: item for k, item in output.items() if k in variables}
 
@@ -293,7 +293,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         config = get_config()
 
     parsed_inputs = parse_inputs(inputs, taxes, config, stock)
-    if path is not None and config['simple']['detailed_output']:
+    if path is not None and config['simple']['detailed_output'] and config.get('figures') is not False:
         dump_inputs(parsed_inputs, path)
     post_inputs = select_post_inputs(parsed_inputs)
     if logger is None:
@@ -317,7 +317,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                rational_behavior_heater=parsed_inputs['rational_behavior_heater'],
                                resources_data=resources_data,
                                detailed_output=config['simple'].get('detailed_output'),
-                               figures=config.get('figures'))
+                               figures=config['simple'].get('figures'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -352,7 +352,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
                    p_heater, p_insulation, flow_built, year,
                    post_inputs,  calib_heater=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
-                   exogenous_social=None, output_details='full', premature_replacement=None, supply=None,
+                   exogenous_social=None, output_options='full', premature_replacement=None, supply=None,
                    carbon_content=None, carbon_content_before=None):
     """Update stock vintage due to renovation, demolition and construction.
 
@@ -402,7 +402,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
     if demolition_rate is not None:
         buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
     buildings.logger.info('Calculation retrofit')
-    if output_details == 'full':
+    if output_options == 'full':
         buildings.consumption_before_retrofit = buildings.store_consumption(prices_before,
                                                                             carbon_content_before,
                                                                             bill_rebate=bill_rebate_before)
@@ -437,21 +437,21 @@ def stock_turnover(buildings, prices, taxes, cost_heater, lifetime_heater, cost_
         buildings.add_flows([flow_built])
 
     buildings.logger.info('Writing output')
-    if output_details == 'full':
+    if output_options == 'full':
         buildings.logger.debug('Full output')
         stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
-                                                   bill_rebate=bill_rebate, detailed_output=buildings.detailed_output)
-    elif output_details == 'cost_benefit':
+                                                   bill_rebate=bill_rebate)
+    elif output_options == 'cost_benefit':
         buildings.logger.debug('Cost-benefit output')
         stock = buildings.simplified_stock().rename(year)
         output = buildings.parse_output_run_cba(prices, post_inputs, step=step, taxes=taxes, bill_rebate=bill_rebate)
-    elif output_details == 'consumption':
+    elif output_options == 'consumption':
         buildings.logger.debug('Consumption output')
         stock = buildings.simplified_stock().rename(year)
         output = buildings.parse_output_consumption(prices, bill_rebate=bill_rebate)
 
     else:
-        raise NotImplemented('output_details should be full, cost_benefit or consumption')
+        raise NotImplemented('output_options should be full, cost_benefit or consumption')
 
     return buildings, stock, output
 
@@ -484,8 +484,10 @@ def res_irf(config, path, level_logger='DEBUG'):
         logger.info('Reading input')
         config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
 
-        if policies_heater + policies_insulation and config['simple']['detailed_output']:
-            make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'), plot=True)
+        if policies_heater + policies_insulation and config['simple']['detailed_output'] and \
+                config.get('figures') is not False:
+            make_policies_tables(policies_heater + policies_insulation, os.path.join(path, 'policy_scenario.csv'),
+                                 plot=True)
 
         inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config, logger=logger)
         buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']
@@ -578,7 +580,7 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              district_heating=flow_district_heating,
                                              demolition_rate=inputs_dynamics['demolition_rate'],
                                              exogenous_social=inputs.get('exogenous_social'),
-                                             output_details=config['output'],
+                                             output_options=config['output'],
                                              climate=config.get('climate'),
                                              prices_before=prices_before,
                                              carbon_content=carbon_content,
@@ -620,7 +622,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
-            if config['output'] == 'full' and buildings.detailed_output and buildings.path_ini is not None:
+            if config['output'] == 'full' and buildings.path_ini is not None:
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
                 buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)
@@ -706,72 +708,18 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
         raise e
 
 
-def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False, consumption_before=None):
-    """Create cost curve.
-
-    Parameters
-    ----------
-    consumption_before
-    consumption_saved
-    cost_insulation
-    percent: bool, default True
-    marginal: bool, default False
-
-    Returns
-    -------
-
-    """
-
-    insulation = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
-                  'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
-    insulation = pd.MultiIndex.from_frame(pd.DataFrame(insulation))
-
-    consumption_saved = consumption_saved.loc[:, insulation]
-    cost_insulation = cost_insulation.loc[:, insulation]
-
-    cost_efficiency = cost_insulation / consumption_saved
-
-    x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved')
-    y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
-    c = (x * y).rename('Cost (Billion euro)') / 10**9
-    df = pd.concat((x, y, c), axis=1)
-
-    # sort by marginal cost
-    df.sort_values(y.name, inplace=True)
-
-    if percent is True:
-        if consumption_before is None:
-            raise AttributeError
-        df[x.name] = x / consumption_before.sum()
-        # x.name = '{} (%/initial)'.format(x.name)
-    else:
-        df[x.name] /= 10**9
-        # x.name = '{} (TWh/an)'.format(x.name)
-
-    if marginal is False:
-        df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
-        df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
-        df.dropna(inplace=True)
-        df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
-    else:
-        df.dropna(inplace=True)
-        df[y.name] = df[y.name].round(1)
-        df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
-        df = df.set_index(x.name)[y.name]
-    return df
-
-
 def social_planner(aggregation_archetype=None, climate=2006, smooth=False, freq='hour',
                    percent=True, marginal=False, hourly_profile=None):
-    """Function used when coupling with power system model.
+    """Calculate cost of mitigation potential of the building sector.
 
+
+    Example: Function used when coupling with power system model.
 
     Parameters
     ----------
     aggregation_archetype
     climate
     smooth
-    building_stock: optional
     freq: optional, {'hour', 'day', 'month', 'year'}
     percent: bool, default True
     marginal: bool, default
@@ -781,6 +729,61 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, freq=
     -------
 
     """
+
+    def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False, consumption_before=None):
+        """Create cost curve.
+
+        Parameters
+        ----------
+        consumption_before
+        consumption_saved
+        cost_insulation
+        percent: bool, default True
+        marginal: bool, default False
+
+        Returns
+        -------
+
+        """
+
+        insulation = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
+                      'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
+        insulation = pd.MultiIndex.from_frame(pd.DataFrame(insulation))
+
+        consumption_saved = consumption_saved.loc[:, insulation]
+        cost_insulation = cost_insulation.loc[:, insulation]
+
+        cost_efficiency = cost_insulation / consumption_saved
+
+        x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved')
+        y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
+        c = (x * y).rename('Cost (Billion euro)') / 10 ** 9
+        df = pd.concat((x, y, c), axis=1)
+
+        # sort by marginal cost
+        df.sort_values(y.name, inplace=True)
+
+        if percent is True:
+            if consumption_before is None:
+                raise AttributeError
+            df[x.name] = x / consumption_before.sum()
+            # x.name = '{} (%/initial)'.format(x.name)
+        else:
+            df[x.name] /= 10 ** 9
+            # x.name = '{} (TWh/an)'.format(x.name)
+
+        if marginal is False:
+            df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
+            df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
+            df.dropna(inplace=True)
+            df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
+        else:
+            df.dropna(inplace=True)
+            df[y.name] = df[y.name].round(1)
+            df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
+            df = df.set_index(x.name)[y.name]
+        return df
+
     resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'])
     buildings = resirf_inputs['buildings']
     energy_prices = resirf_inputs['energy_prices']
@@ -875,40 +878,6 @@ def social_planner(aggregation_archetype=None, climate=2006, smooth=False, freq=
         dict_heat['global'] = heating_need.sum()
 
     return dict_cost, dict_heat
-
-
-if __name__ == '__main__':
-    _dict_cost, _dict_heat = social_planner(aggregation_archetype=None, building_stock='medium_5', freq='hour',
-                                            percent=False)
-
-
-    """
-    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'income'],
-                               building_stock=os.path.join('project', 'input', 'stock', 'buildingstock_example.csv'))
-    _buildings = resirf_inputs['buildings']
-    _prices = resirf_inputs['energy_prices']
-    _income = resirf_inputs['income']
-    """
-
-
-
-    """from utils import make_plots
-    hourly_profile = [0.035, 0.039, 0.041, 0.042, 0.046, 0.05, 0.055, 0.058, 0.053, 0.049, 0.045, 0.041, 0.037, 0.034,
-     0.03, 0.033, 0.037, 0.042, 0.046, 0.041, 0.037, 0.034, 0.033, 0.042]
-    hourly_profile = pd.Series(hourly_profile, index=pd.TimedeltaIndex(range(0, 24), unit='h'))
-
-    dict_cost, dict_heat = social_planner(aggregation_archetype=None, building_stock='medium_5', freq='hour',
-                                          percent=False, marginal=True, hourly_profile=hourly_profile)
-    make_plots(dict_cost, 'Cost (Billion euro)')"""
-
-    """buildings = get_inputs(variables=['buildings'])['buildings']
-
-    h_month = buildings.heating_need(climate=2006, smooth=False, freq='month')
-    h_year = buildings.heating_need(climate=2006, smooth=False, freq='year')
-
-    h_month = buildings.heating_need(climate=2006, smooth=False, freq='month')
-    h_day = buildings.heating_need(climate=2006, smooth=False, freq='day')
-    h_hour = buildings.heating_need(climate=2006, smooth=False, freq='hour')"""
 
 
 

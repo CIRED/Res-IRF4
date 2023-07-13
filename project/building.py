@@ -75,22 +75,23 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 resources_data=None, detailed_output=True, figures=None):
+                 resources_data=None, detailed_output=None, figures=None):
 
-        if isinstance(stock, MultiIndex):
-            stock = Series(index=stock, dtype=float)
+        # default values
         if figures is None:
             figures = True
-
         if detailed_output is None:
             detailed_output = True
 
-        self.detailed_output = detailed_output
+        if isinstance(stock, MultiIndex):
+            stock = Series(index=stock, dtype=float)
+
         self._resources_data = resources_data
 
         self._efficiency = efficiency
         self._ratio_surface = ratio_surface
         self.path, self.path_ini, self.path_calibration = path, None, None
+
         if path is not None and detailed_output:
             self.path_calibration = os.path.join(path, 'calibration')
             if not os.path.isdir(self.path_calibration):
@@ -99,8 +100,6 @@ class ThermalBuildings:
                 self.path_ini = os.path.join(path, 'ini')
                 if not os.path.isdir(self.path_ini):
                     os.mkdir(self.path_ini)
-
-        self.info = {}
 
         self.coefficient_global, self.coefficient_heater = None, None
 
@@ -926,7 +925,7 @@ class AgentBuildings(ThermalBuildings):
         self.number_firms_insulation, self.number_firms_heater = None, None
 
         self._list_condition_subsidies = []
-        self._stock_ref = None
+        self._stock_ref = self.stock_mobile.copy()
         self._replaced_by = None
         self._only_heater = None
         self._heater_store = {}
@@ -3831,7 +3830,8 @@ class AgentBuildings(ThermalBuildings):
         else:
             renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
-        if self.year == self.first_year + 1 and self.rational_behavior_insulation is None and self.path_calibration is not None:
+        if self.year == self.first_year + 1 and self.rational_behavior_insulation is None and \
+                self.path_calibration is not None and self.path_ini is not False:
 
             market_failures = Series(0, index=self.hidden_cost.index)
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
@@ -4258,7 +4258,7 @@ class AgentBuildings(ThermalBuildings):
             flows_obligation.append(flow_obligation)
         return flows_obligation
 
-    def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None, detailed_output=True,
+    def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None,
                          lifetime_heater=20, lifetime_insulation=30, social_discount_rate=0.032, bill_rebate=0):
         """Parse output.
 
@@ -4953,14 +4953,13 @@ class AgentBuildings(ThermalBuildings):
                     lambda x: 'Annuities insulation {} - {} (euro/year.household)'.format(x[0], x[1]))
                 output.update(temp.T)
 
-                if detailed_output is True:
-                    temp = debt / owner
-                    temp.index = temp.index.map(lambda x: 'Debt insulation {} - {} (euro/household)'.format(x[0], x[1]))
-                    output.update(temp.T)
+                temp = debt / owner
+                temp.index = temp.index.map(lambda x: 'Debt insulation {} - {} (euro/household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
-                    temp = saving / owner
-                    temp.index = temp.index.map(lambda x: 'Saving insulation {} - {} (euro/household)'.format(x[0], x[1]))
-                    output.update(temp.T)
+                temp = saving / owner
+                temp.index = temp.index.map(lambda x: 'Saving insulation {} - {} (euro/household)'.format(x[0], x[1]))
+                output.update(temp.T)
 
                 temp = annuities_insulation_hh.sum(axis=1).xs('Privately rented', level='Occupancy status', drop_level=False)
                 temp = self.add_level(temp, self._stock_ref, 'Income tenant')
@@ -5107,23 +5106,22 @@ class AgentBuildings(ThermalBuildings):
                 #                     sub_cost = DataFrame(self._heater_store['cost_average'], dtype=float)
                 subsidies_details = Series({k: i.sum().sum() for k, i in subsidies_details.items()}, dtype='float64')
 
-                if detailed_output is True:
-                    for i in subsidies_details.index:
-                        # use subsidies in post-treatment
-                        if '{} {}'.format(i, gest) in inputs['use_subsidies'].index:
-                            use_subsidies = inputs['use_subsidies'].loc['{} {}'.format(i, gest)]
-                            subsidies_details[i] *= use_subsidies
-                            sub_count[i] *= use_subsidies
+                for i in subsidies_details.index:
+                    # use subsidies in post-treatment
+                    if '{} {}'.format(i, gest) in inputs['use_subsidies'].index:
+                        use_subsidies = inputs['use_subsidies'].loc['{} {}'.format(i, gest)]
+                        subsidies_details[i] *= use_subsidies
+                        sub_count[i] *= use_subsidies
 
-                        temp = sub_count[i]
-                        temp.index = temp.index.map(
-                            lambda x: '{} {} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), gest,
-                                                                              x))
-                        output.update(temp.T / 10 ** 3 / step)
-                        output['Average cost {} {} (euro)'.format(i.capitalize().replace('_', ' '), gest)] = sub_cost.loc[i]
+                    temp = sub_count[i]
+                    temp.index = temp.index.map(
+                        lambda x: '{} {} {} (Thousand households)'.format(i.capitalize().replace('_', ' '), gest,
+                                                                          x))
+                    output.update(temp.T / 10 ** 3 / step)
+                    output['Average cost {} {} (euro)'.format(i.capitalize().replace('_', ' '), gest)] = sub_cost.loc[i]
 
-                        output['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = \
-                            subsidies_details.loc[i] / 10 ** 9 / step
+                    output['{} {} (Billion euro)'.format(i.capitalize().replace('_', ' '), gest)] = \
+                        subsidies_details.loc[i] / 10 ** 9 / step
 
                 if subsidies is None:
                     subsidies = subsidies_details.copy()
@@ -5144,22 +5142,21 @@ class AgentBuildings(ThermalBuildings):
                     output.update(temp.T / 10 ** 3)
                     output['{} (Billion euro)'.format(i.capitalize().replace('_', ' '))] = subsidies.loc[i] / 10 ** 9 / step
 
-            if detailed_output is True:
-                t = self._heater_store['replacement'].groupby('Housing type').sum().loc['Multi-family']
-                t.index = t.index.map(lambda x: 'Switch Multi-family {} (Thousand households)'.format(x))
-                output.update((t / 10 ** 3 / step).T)
+            t = self._heater_store['replacement'].groupby('Housing type').sum().loc['Multi-family']
+            t.index = t.index.map(lambda x: 'Switch Multi-family {} (Thousand households)'.format(x))
+            output.update((t / 10 ** 3 / step).T)
 
-                t = self._heater_store['replacement'].groupby('Housing type').sum().loc['Single-family']
-                t.index = t.index.map(lambda x: 'Switch Single-family {} (Thousand households)'.format(x))
-                output.update((t / 10 ** 3 / step).T)
+            t = self._heater_store['replacement'].groupby('Housing type').sum().loc['Single-family']
+            t.index = t.index.map(lambda x: 'Switch Single-family {} (Thousand households)'.format(x))
+            output.update((t / 10 ** 3 / step).T)
 
-                temp = investment_total.groupby(['Housing type', 'Occupancy status']).sum()
-                temp.index = temp.index.map(lambda x: 'Investment total {} - {} (Billion euro)'.format(x[0], x[1]))
-                output.update(temp.T / 10 ** 9 / step)
+            temp = investment_total.groupby(['Housing type', 'Occupancy status']).sum()
+            temp.index = temp.index.map(lambda x: 'Investment total {} - {} (Billion euro)'.format(x[0], x[1]))
+            output.update(temp.T / 10 ** 9 / step)
 
-                temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
-                temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
-                output.update(temp.T / 10 ** 6 / step)
+            temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
+            temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
+            output.update(temp.T / 10 ** 6 / step)
 
             if self.year in self.expenditure_store.keys():
                 temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
@@ -5744,8 +5741,11 @@ class AgentBuildings(ThermalBuildings):
         return _output, _output_statistics
 
     def make_static_analysis(self, cost_insulation, cost_heater, prices, discount_rate,
-                             implicit_discount_rate, health_cost, carbon_value, carbon_content):
+                             implicit_discount_rate, health_cost, carbon_value, carbon_content,
+                             path_out=None):
         # select only stock mobile and existing before the first year
+        if path_out is None:
+            path_out = self.path_ini
         # select stock
         stock = self.add_certificate(self.stock)
         stock = stock[stock.index.get_level_values('Performance').astype(str) > 'B']
@@ -5820,7 +5820,8 @@ class AgentBuildings(ThermalBuildings):
 
         dict_rslt, dict_stats = {}, {}
         for key, option in options.items():
-            temp = self.marginal_abatement_cost(consumption_saved, emission_saved, cost, self._stock_ref, prices, certificate_after, **option)
+            temp = self.marginal_abatement_cost(consumption_saved, emission_saved, cost, self._stock_ref,
+                                                prices, certificate_after, **option)
             dict_rslt.update({key: temp[0]})
             dict_stats.update({key: temp[1]})
 
@@ -5845,21 +5846,22 @@ class AgentBuildings(ThermalBuildings):
                     dict_rslt[key][k].name = 'Consumption saving (% / 2019)'
 
         make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
-                   save=os.path.join(self.path_ini, 'abatement_curve.png'), ymax=1, ymin=-1,
+                   save=os.path.join(path_out, 'abatement_curve.png'), ymax=1, ymin=-1,
                    format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
                    format_x=lambda x, _: '{:.0%}'.format(x))
 
         make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
-                   save=os.path.join(self.path_ini, 'abatement_curve_carbon.png'), ymax=5000, ymin=-1000,
+                   save=os.path.join(path_out, 'abatement_curve_carbon.png'), ymax=5000, ymin=-1000,
                    format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
                    format_x=lambda x, _: '{:.0%}'.format(x))
 
         make_plots(dict_rslt['npv'], 'Net present cost (Thousand euro)',
-                   save=os.path.join(self.path_ini, 'npv_insulation_curve.png'),
+                   save=os.path.join(path_out, 'npv_insulation_curve.png'),
                    format_y=lambda y, _: '{:.1f}'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
                    format_x=lambda x, _: '{:.0%}'.format(x), ymin=None, hlines=0)
+
         make_plots(dict_rslt['roi'], 'Return Time on Investment (years)',
-                   save=os.path.join(self.path_ini, 'roi_insulation_curve.png'),
+                   save=os.path.join(path_out, 'roi_insulation_curve.png'),
                    format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
                    format_x=lambda x, _: '{:.0%}'.format(x), ymax=50)
 

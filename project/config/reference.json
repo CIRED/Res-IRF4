@@ -121,6 +121,8 @@
       "file": "project/input/policies/current/policies_ref.json"
     },
     "simple": {
+      "figures": true,
+      "detailed_output": true,
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,

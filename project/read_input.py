@@ -943,7 +943,7 @@ def parse_inputs(inputs, taxes, config, stock):
     return parsed_inputs
 
 
-def dump_inputs(parsed_inputs, path):
+def dump_inputs(parsed_inputs, path, figures=None):
     """Create summary input DataFrame.
 
     Parameters
@@ -983,8 +983,9 @@ def dump_inputs(parsed_inputs, path):
     t = parsed_inputs['total_taxes'].copy()
     t.columns = t.columns.map(lambda x: 'Taxes {} (euro/kWh)'.format(x))
     temp = parsed_inputs['energy_prices'].copy()
-    make_plot(temp.dropna(), 'Prices (euro/kWh)', format_y=lambda y, _: '{:.2f}'.format(y),
-              colors=resources_data['colors'], save=os.path.join(path, 'energy_prices.png'))
+    if figures is not False:
+        make_plot(temp.dropna(), 'Prices (euro/kWh)', format_y=lambda y, _: '{:.2f}'.format(y),
+                  colors=resources_data['colors'], save=os.path.join(path, 'energy_prices.png'))
     temp.columns = temp.columns.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
     pd.concat((summary_input, t, temp), axis=1).T.round(3).to_csv(os.path.join(path, 'input.csv'))
 
