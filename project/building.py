@@ -4935,6 +4935,21 @@ class AgentBuildings(ThermalBuildings):
 
                 self.expenditure_store.update({self.year: temp.copy()})
 
+                if self.year in self.expenditure_store.keys():
+                    temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
+                    temp.index = temp.index.map(
+                        lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                    output.update(temp.T)
+
+                    temp = self.expenditure_store[self.year]['ratio_total'].copy()
+                    temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                    output.update(temp.T)
+
+                    temp = self.expenditure_store[self.year]['stock'].copy()
+                    temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                    output.update(temp.T)
+
+
                 owner = replaced_by_grouped.sum(axis=1).groupby(levels_owner).sum()
                 temp = annuities_insulation_hh.sum(axis=1).groupby(levels_owner).sum() / owner
                 temp.index = temp.index.map(
@@ -5145,19 +5160,6 @@ class AgentBuildings(ThermalBuildings):
             temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
             temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
             output.update(temp.T / 10 ** 6 / step)
-
-            if self.year in self.expenditure_store.keys():
-                temp = self.expenditure_store[self.year]['ratio_total_std'].copy()
-                temp.index = temp.index.map(lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                output.update(temp.T)
-
-                temp = self.expenditure_store[self.year]['ratio_total'].copy()
-                temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                output.update(temp.T)
-
-                temp = self.expenditure_store[self.year]['stock'].copy()
-                temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
-                output.update(temp.T)
 
             self.store_over_years[self.year].update(
                 {'Annuities heater (Billion euro/year)': output['Annuities heater (Billion euro/year)'],

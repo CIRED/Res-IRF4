@@ -673,8 +673,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
 
         make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
                      palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)),
-                     title='Energy expenditure on income ratio in {} compare to Base year'.format(year)
-                     )
+                     title='Energy expenditure on income ratio in {} compare to Base year'.format(year))
 
     # graph line plot 2D comparison
     consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
@@ -940,7 +939,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                          ],
                    axis=1)
     df.dropna(inplace=True)
-    df.to_csv(os.path.join(folder_img, 'result.csv'))
+    df.to_csv(os.path.join(folder_img, '..', 'result.csv'))
 
     make_scatter_plot(df, 'Emission saving (%)', 'CBA diff (Billion euro per year)',
                       'Emission saving (%)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
@@ -999,6 +998,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                       annotate=False,
                       save=os.path.join(folder_img, 'cba_energy_poverty.png')
                       )
+
 
 def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None):
 
