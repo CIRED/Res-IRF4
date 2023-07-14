@@ -1,1 +1,380 @@
-{"S0": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": null}, "S1": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": null}, "S2": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": null}, "S3": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": null}, "S4": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": null}, "S5": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": null}, "S6": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "deep_renovation"}, "S7": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "deep_renovation"}, "S8": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "deep_renovation"}, "S9": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "deep_renovation"}, "S10": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "deep_renovation"}, "S11": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "deep_renovation"}, "S12": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "deep_renovation_fg"}, "S13": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "deep_renovation_fg"}, "S14": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "deep_renovation_fg"}, "S15": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "deep_renovation_fg"}, "S16": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "deep_renovation_fg"}, "S17": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "deep_renovation_fg"}, "S18": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "certificate_jump_min"}, "S19": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "certificate_jump_min"}, "S20": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "certificate_jump_min"}, "S21": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "certificate_jump_min"}, "S22": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "certificate_jump_min"}, "S23": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "certificate_jump_min"}, "S24": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "fossil"}, "S25": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "fossil"}, "S26": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "fossil"}, "S27": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "fossil"}, "S28": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "fossil"}, "S29": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "fossil"}, "S30": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "out_worst"}, "S31": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "out_worst"}, "S32": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "out_worst"}, "S33": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "out_worst"}, "S34": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "out_worst"}, "S35": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "out_worst"}, "S36": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "reach_best"}, "S37": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "reach_best"}, "S38": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": null, "target": "reach_best"}, "S39": {"start": 2019, "end": 2020, "value": 0.3, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "reach_best"}, "S40": {"start": 2019, "end": 2020, "value": 0.5, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "reach_best"}, "S41": {"start": 2019, "end": 2020, "value": 0.7, "policy": "subsidy_ad_valorem", "gest": "insulation", "index": "project/input/policies/targe/low_income_owner.csv", "target": "reach_best"}}
+{
+  "S0": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": null
+  },
+  "S1": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": null
+  },
+  "S2": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": null
+  },
+  "S3": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": null
+  },
+  "S4": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": null
+  },
+  "S5": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": null
+  },
+  "S6": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "deep_renovation"
+  },
+  "S7": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "deep_renovation"
+  },
+  "S8": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "deep_renovation"
+  },
+  "S9": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "deep_renovation"
+  },
+  "S10": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "deep_renovation"
+  },
+  "S11": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "deep_renovation"
+  },
+  "S12": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "deep_renovation_fg"
+  },
+  "S13": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "deep_renovation_fg"
+  },
+  "S14": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "deep_renovation_fg"
+  },
+  "S15": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "deep_renovation_fg"
+  },
+  "S16": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "deep_renovation_fg"
+  },
+  "S17": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "deep_renovation_fg"
+  },
+  "S18": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "certificate_jump_min"
+  },
+  "S19": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "certificate_jump_min"
+  },
+  "S20": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "certificate_jump_min"
+  },
+  "S21": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "certificate_jump_min"
+  },
+  "S22": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "certificate_jump_min"
+  },
+  "S23": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "certificate_jump_min"
+  },
+  "S24": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "fossil"
+  },
+  "S25": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "fossil"
+  },
+  "S26": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "fossil"
+  },
+  "S27": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "fossil"
+  },
+  "S28": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "fossil"
+  },
+  "S29": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "fossil"
+  },
+  "S30": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "out_worst"
+  },
+  "S31": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "out_worst"
+  },
+  "S32": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "out_worst"
+  },
+  "S33": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "out_worst"
+  },
+  "S34": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "out_worst"
+  },
+  "S35": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "out_worst"
+  },
+  "S36": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "reach_best"
+  },
+  "S37": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "reach_best"
+  },
+  "S38": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": null,
+    "target": "reach_best"
+  },
+  "S39": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.3,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "reach_best"
+  },
+  "S40": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.5,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "reach_best"
+  },
+  "S41": {
+    "start": 2019,
+    "end": 2020,
+    "value": 0.7,
+    "policy": "subsidy_ad_valorem",
+    "gest": "insulation",
+    "index": "project/input/policies/target/low_income_owner.csv",
+    "target": "reach_best"
+  }
+}
