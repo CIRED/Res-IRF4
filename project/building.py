@@ -1195,7 +1195,7 @@ class AgentBuildings(ThermalBuildings):
         return concat(dict_ds, axis=1)
 
     @staticmethod
-    def select_global_renovation(certificate_after):
+    def select_deep_renovation(certificate_after):
         condition = certificate_after.isin(['A', 'B'])
         index = condition.index[(~condition).all(axis=1)]
         condition.drop(index, inplace=True)
@@ -2462,7 +2462,7 @@ class AgentBuildings(ThermalBuildings):
                 cost_saving = _c_insulation / _c_saved
                 # cost_saving = reindex_mi(cost_saving, _index)
                 _temp = reindex_mi(_certificate, cost_saving.index)
-                # TODO: select_global_renovation
+                # TODO: select_deep_renovation
                 best = _temp.isin(['A', 'B']).replace(False, float('nan')) * cost_saving
                 # if B is not possible then C or D
                 idx = best[best.isna().all(axis=1)].index
@@ -2495,7 +2495,7 @@ class AgentBuildings(ThermalBuildings):
                     fg.loc[reindex_mi(_certificate_before, fg.index).isin(['G', 'F']), :] = True
                     _condition.update({'fg': fg})
 
-            minimum_gest_condition, global_condition = 1, 2
+            deep_condition = 2
             energy_condition = 0.35
 
             _certificate_jump = - _certificate.replace(EPC2INT).sub(_certificate_before.replace(EPC2INT), axis=0)
@@ -2506,21 +2506,21 @@ class AgentBuildings(ThermalBuildings):
                 _certificate_before_heater.replace(EPC2INT),
                 axis=0)
             _condition.update({'certificate_jump_all': _certificate_jump_all})
-            if 'global_renovation' in _list_conditions:
-                _condition.update({'global_renovation': _certificate_jump_all >= global_condition})
+            if 'deep_renovation' in _list_conditions:
+                _condition.update({'deep_renovation': _certificate_jump_all >= deep_condition})
 
             if 'certificate_jump_min' in _list_conditions:
-                _condition.update({'certificate_jump_min': _certificate_jump_all >= minimum_gest_condition})
+                _condition.update({'certificate_jump_min': _certificate_jump_all >= 1})
 
-            if 'global_renovation_fg' in _list_conditions:
-                condition_global_renovation = _certificate_jump_all >= global_condition
+            if 'deep_renovation_fg' in _list_conditions:
+                condition_deep_renovation = _certificate_jump_all >= deep_condition
                 _condition.update(
-                    {'global_renovation_fg': (condition_global_renovation.T & _certificate_before.isin(['G', 'F'])).T})
+                    {'deep_renovation_fg': (condition_deep_renovation.T & _certificate_before.isin(['G', 'F'])).T})
 
-            if 'global_renovation_fge' in _list_conditions:
-                condition_global_renovation = _certificate_jump_all >= global_condition
-                _condition.update({'global_renovation_fge': (
-                            condition_global_renovation.T & _certificate_before.isin(['G', 'F', 'E'])).T})
+            if 'deep_renovation_fge' in _list_conditions:
+                condition_deep_renovation = _certificate_jump_all >= deep_condition
+                _condition.update({'deep_renovation_fge': (
+                            condition_deep_renovation.T & _certificate_before.isin(['G', 'F', 'E'])).T})
 
             if 'fossil' in _list_conditions:
                 fossil = ['Oil fuel-Performance boiler', 'Oil fuel-Standard boiler', 'Oil fuel-Collective boiler',
@@ -2529,26 +2529,21 @@ class AgentBuildings(ThermalBuildings):
                 _temp = pd.Series(_certificate.index.get_level_values('Heating system').isin(fossil), index=_certificate.index)
                 _condition.update({'fossil': _temp})
 
-            low_income_condition = ['D1', 'D2', 'D3', 'D4']
-            if self.quintiles:
-                low_income_condition = ['C1', 'C2']
-            low_income_condition = _index.get_level_values('Income owner').isin(low_income_condition)
-            low_income_condition = Series(low_income_condition, index=_index)
-
-            if 'global_renovation_low_income' in _list_conditions:
-                condition_global_renovation = _certificate_jump_all >= global_condition
+            if 'deep_renovation_low_income' in _list_conditions:
+                low_income_condition = ['D1', 'D2', 'D3', 'D4', 'C1', 'C2']
+                low_income_condition = _index.get_level_values('Income owner').isin(low_income_condition)
+                low_income_condition = Series(low_income_condition, index=_index)
+                condition_deep_renovation = _certificate_jump_all >= deep_condition
                 _condition.update(
-                    {'global_renovation_low_income': (low_income_condition & condition_global_renovation.T).T})
+                    {'deep_renovation_low_income': (low_income_condition & condition_deep_renovation.T).T})
 
-            if 'global_renovation_high_income' in _list_conditions:
-                condition_global_renovation = _certificate_jump_all >= global_condition
-                high_income_condition = ['D5', 'D6', 'D7', 'D8', 'D9', 'D10']
-                if self.quintiles:
-                    high_income_condition = ['C3', 'C4', 'C5']
+            if 'deep_renovation_high_income' in _list_conditions:
+                condition_deep_renovation = _certificate_jump_all >= deep_condition
+                high_income_condition = ['D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'C3', 'C4', 'C5']
                 high_income_condition = _index.get_level_values('Income owner').isin(high_income_condition)
                 high_income_condition = Series(high_income_condition, index=_index)
                 _condition.update(
-                    {'global_renovation_high_income': (high_income_condition & condition_global_renovation.T).T})
+                    {'deep_renovation_high_income': (high_income_condition & condition_deep_renovation.T).T})
 
             if 'mpr_serenite_energy' in _list_conditions:
                 energy_condition = _energy_saved_3uses >= energy_condition
@@ -3825,7 +3820,7 @@ class AgentBuildings(ThermalBuildings):
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
             market_failures += self.multifamily_friction.reindex(market_failures.index).fillna(0)
 
-            condition_gr = self.select_global_renovation(certificate_after)
+            condition_gr = self.select_deep_renovation(certificate_after)
 
             assert condition_gr.any().all(), 'At least one option should be global renovation'
 
@@ -4949,7 +4944,6 @@ class AgentBuildings(ThermalBuildings):
                     temp.index = temp.index.map(lambda x: 'Stock {} - {} - {} (%)'.format(x[0], x[1], x[2]))
                     output.update(temp.T)
 
-
                 owner = replaced_by_grouped.sum(axis=1).groupby(levels_owner).sum()
                 temp = annuities_insulation_hh.sum(axis=1).groupby(levels_owner).sum() / owner
                 temp.index = temp.index.map(
@@ -5529,7 +5523,7 @@ class AgentBuildings(ThermalBuildings):
 
     def marginal_abatement_cost(self, consumption_saved, emission_saved, cost_insulation, stock, prices,
                                 certificate_after, lifetime=30,
-                                discount_rate=0.05, measures='global_renovation', plot=False, carbon_saved=None,
+                                discount_rate=0.05, measures='deep_renovation', plot=False, carbon_saved=None,
                                 health_cost=None):
 
         discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
@@ -5597,7 +5591,7 @@ class AgentBuildings(ThermalBuildings):
 
             # _output_statistics.update({'efficiency': (cost_efficiency * _stock.loc[_index]).sum() / _stock.loc[_index].sum()})
 
-        elif measures in ['global_renovation', 'global_insulation']:
+        elif measures in ['deep_renovation', 'global_insulation']:
             dict_df = {'consumption_saved': consumption_saved, 'emission_saved': emission_saved}
             cash_flow = bill_saved
 
@@ -5791,10 +5785,10 @@ class AgentBuildings(ThermalBuildings):
             'Private, deep renovation': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
-                'measures': 'global_renovation'},
+                'measures': 'deep_renovation'},
             'Social, deep renovation': {'discount_rate': discount_rate,
                                           'carbon_saved': emission_saved_value,
-                                          'measures': 'global_renovation',
+                                          'measures': 'deep_renovation',
                                           'health_cost': health_cost}
         }
         options = {k: i for k, i in options.items() if

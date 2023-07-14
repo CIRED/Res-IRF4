@@ -42,6 +42,7 @@ def run(path=None, folder=None):
 
     parser.add_argument('-d', '--directory', default='project/config/policies', help='path config directory')
     parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
+    parser.add_argument('-at', '--assessment_test', default=None, help='path config file with assessmnet')
     parser.add_argument('-y', '--year', default=None, help='end year')
 
     args = parser.parse_args()
@@ -87,24 +88,24 @@ def run(path=None, folder=None):
 
             prefix = policy_name
 
-            if config_policies['AP-1']:
+            if config_policies.get('AP-1'):
                 configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
                 configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['start'] + 2
 
-            if config_policies['ZP']:
+            if config_policies.get('ZP'):
                 configuration['ZP'] = copy.deepcopy(configuration['Reference'])
                 for name, policy in configuration['ZP']['policies'].items():
                     policy['end'] = configuration['Reference']['start'] + 2
                     configuration['ZP']['policies'][name] = policy
 
-            if config_policies['ZP'] and config_policies['ZP+1']:
+            if config_policies.get('ZP') and config_policies.get('ZP+1'):
                 configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
                 configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['end']
 
             list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                           re.search('20[0-9][0-9]', key)]
             for year in list_years:
-                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year > configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
+                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
                     configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
                     configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
                     configuration['AP-{}'.format(year)]['end'] = year + 1
@@ -301,10 +302,11 @@ def run(path=None, folder=None):
         logger.debug('Parsing results')
         config_policies = get_json('project/input/policies/cba_inputs.json')
         if configuration.get('Reference').get('output') == 'full' and output_compare == 'full':
-            plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
                 indicator_policies(result, folder, config_policies, policy_name=policy_name)
-            make_summary(folder, option='comparison')
+            if policy_name is None:
+                plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
+                make_summary(folder, option='comparison')
         elif output_compare == 'simple':
             plot_compare_scenarios_simple(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
 

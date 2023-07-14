@@ -181,6 +181,9 @@ def read_stock(config):
 
 
 def read_policies(config):
+
+    # TODO: replace names to clarify the definition of policies (index = households, columns = technologies).
+    # TODO: target should be a list with combination of simple condition.
     def read_mpr(data):
         l = list()
         heater = get_pandas(data['heater'],
@@ -194,11 +197,11 @@ def read_policies(config):
             growth_insulation = get_pandas(data['growth_insulation'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
             insulation = {k: i * insulation for k, i in growth_insulation.items()}
 
-        if data.get('global_renovation'):
-            global_renovation = get_pandas(data['global_renovation'],
+        if data.get('deep_renovation'):
+            deep_renovation = get_pandas(data['deep_renovation'],
                                            lambda x: pd.read_csv(x, index_col=[0]).squeeze())
-            l.append(PublicPolicy('mpr', data['start'], data['end'], global_renovation, 'subsidy_target',
-                                  gest='insulation', target='global_renovation'))
+            l.append(PublicPolicy('mpr', data['start'], data['end'], deep_renovation, 'subsidy_target',
+                                  gest='insulation', target='deep_renovation'))
 
         if data['bonus']:
             bonus_best = get_pandas(data['bonus'], lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze())

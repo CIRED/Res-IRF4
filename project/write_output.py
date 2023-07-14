@@ -998,6 +998,14 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None):
                       annotate=False,
                       save=os.path.join(folder_img, 'cba_energy_poverty.png')
                       )
+    make_scatter_plot(df, 'Energy poverty (Million)', 'CBA diff (Billion euro per year)',
+                      'Energy poverty (Million)', 'Cost-benefit analysis to {} (Billion euro per year)'.format(end),
+                      hlines=0,
+                      format_x=lambda x, _: '{:,.0f}'.format(x),
+                      format_y=lambda y, _: '{:.1f}'.format(y),
+                      annotate=False,
+                      save=os.path.join(folder_img, 'cba_energy_poverty.png')
+                      )
 
 
 def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None):
