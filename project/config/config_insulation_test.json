@@ -1,13 +1,15 @@
 {
-  "scenarios": {
+  "assessment_test": {
     "activated": true,
+    "file":  "project/input/policies/proposals/policies_test/policies_insulation_test.json"},
+  "scenarios": {
+    "activated": false,
     "current_policies": null,
     "no_policy": null,
     "prices_constant": null,
     "constant": null,
     "policies": null,
     "assessment": null,
-    "assessment_test": {"file":  "project/input/policies/proposals/policies_test/policies_test.json"},
     "test": [
       "cite",
       "cee",

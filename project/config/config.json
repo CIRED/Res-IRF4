@@ -1,9 +1,9 @@
 {
   "scenarios": {
-    "activated": false,
-    "current_policies": null,
+    "activated": true,
+    "current_policies": true,
     "no_policy": true,
-    "prices_constant": null,
+    "prices_constant": true,
     "constant": null,
     "policies": null,
     "add_policies": null,
@@ -43,7 +43,7 @@
     },
   "Reference": {
     "file":"project/config/reference.json",
-    "end": 2019,
+    "end": 2051,
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"},
     "simple": {

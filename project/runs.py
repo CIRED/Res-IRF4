@@ -33,7 +33,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--directory', default=None, help='path config directory')
     parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
-    parser.add_argument('-at', '--assessment_test', default=None, help='path config file with assessmnet')
 
     args = parser.parse_args()
 
@@ -42,34 +41,6 @@ if __name__ == '__main__':
     if args.directory is not None:
         configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
         configs = sorted(configs)
-
-    if args.assessment_test is not None:
-        with open(args.assessment_test) as file:
-            configuration = load(file)
-
-        policies = configuration['scenarios']['assessment_test']
-        if 'file' in policies.keys():
-            temp = get_json(policies['file'])
-            policies.update(temp)
-        del policies['file']
-
-        t = datetime.today().strftime('%Y%m%d_%H%M%S')
-        folder = os.path.join(os.path.join('project', 'output'), 'assessment_test_{}'.format(t))
-        os.mkdir(folder)
-
-        for key, item in policies.items():
-            _config = deepcopy(configuration)
-            _config['Reference']['policies'].update({key: item})
-            _config['assessment'] = {
-                "activated": True,
-                "Policy name": key,
-                "AP": "Reference",
-                "AP-{}".format(_config['Reference']['end'] - 1): True
-            }
-            del _config['scenarios']
-            if 'sensitivity' in _config.keys():
-                del _config['sensitivity']
-            configs += [_config]
 
     if args.assessment is not None:
         configs = []

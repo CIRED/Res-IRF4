@@ -1426,7 +1426,7 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        index: MultiIndex
+        index: Index or MultiIndex
         policies_heater: list
         cost_heater: Series
         consumption_saved: DataFrame
@@ -2527,6 +2527,7 @@ class AgentBuildings(ThermalBuildings):
                           'Natural gas-Performance boiler', 'Natural gas-Standard boiler', 'Natural gas-Collective boiler'
                           ]
                 _temp = pd.Series(_certificate.index.get_level_values('Heating system').isin(fossil), index=_certificate.index)
+                _temp = reindex_mi(_temp, _index).fillna(False).astype('float')
                 _condition.update({'fossil': _temp})
 
             if 'deep_renovation_low_income' in _list_conditions:
@@ -5780,16 +5781,16 @@ class AgentBuildings(ThermalBuildings):
                 'carbon_saved': None,
                 'measures': 'global_insulation'},
             'Private, global insulation': {'discount_rate': implicit_discount_rate,
-                                      'carbon_saved': None,
-                                      'measures': 'full_insulation'},
+                                           'carbon_saved': None,
+                                           'measures': 'full_insulation'},
             'Private, deep renovation': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
                 'measures': 'deep_renovation'},
             'Social, deep renovation': {'discount_rate': discount_rate,
-                                          'carbon_saved': emission_saved_value,
-                                          'measures': 'deep_renovation',
-                                          'health_cost': health_cost}
+                                        'carbon_saved': emission_saved_value,
+                                        'measures': 'deep_renovation',
+                                        'health_cost': health_cost}
         }
         options = {k: i for k, i in options.items() if
                    k in ['Private, deep insulation', 'Private, global insulation', 'Social, deep renovation',

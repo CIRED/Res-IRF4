@@ -42,7 +42,6 @@ def run(path=None, folder=None):
 
     parser.add_argument('-d', '--directory', default='project/config/policies', help='path config directory')
     parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
-    parser.add_argument('-at', '--assessment_test', default=None, help='path config file with assessmnet')
     parser.add_argument('-y', '--year', default=None, help='end year')
 
     args = parser.parse_args()
@@ -59,7 +58,7 @@ def run(path=None, folder=None):
     else:
         configuration = path
 
-    for key in [k for k in configuration.keys() if k not in ['assessment', 'scenarios', 'sensitivity',
+    for key in [k for k in configuration.keys() if k not in ['assessment', 'assessment_test', 'scenarios', 'sensitivity',
                                                              'policies_scenarios']]:
         configuration[key] = prepare_config(configuration[key])
 
@@ -77,6 +76,28 @@ def run(path=None, folder=None):
                 configuration[key]['policies'] = copy.deepcopy(item)
 
         del configuration['policies_scenarios']
+
+    if 'assessment_test' in configuration.keys():
+        if configuration['assessment_test']['activated']:
+            policy_name = 'policy_test'
+            prefix = 'assessment_test'
+            policies = configuration['assessment_test']
+            if 'file' in policies.keys():
+                temp = get_json(policies['file'])
+                policies.update(temp)
+                del policies['file']
+
+            configuration['Reference']['simple']['no_policy'] = False
+            configuration['Reference']['simple']['current_policies'] = False
+            configuration['ZP'] = copy.deepcopy(configuration['Reference'])
+            del policies['activated']
+            for key, item in policies.items():
+                configuration['ZP+{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                configuration['ZP+{}'.format(key)]['policies'].update({'policy_test': item})
+
+        del configuration['assessment_test']
+        if 'scenarios' in configuration.keys():
+            del configuration['scenarios']
 
     if 'assessment' in configuration.keys():
         if configuration['assessment']['activated']:

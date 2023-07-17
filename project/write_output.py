@@ -1257,7 +1257,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     comparison = pd.DataFrame(comparison)
 
     indicator = None
-    efficiency_scenarios = list(set(comparison.columns).intersection(['AP-{}'.format(y) for y in range(2018, 2051)]))
+    temp = ['AP-{}'.format(y) for y in range(2018, 2051)]
+    temp += [i for i in comparison.columns if i[:3] == 'ZP+']
+    efficiency_scenarios = list(set(comparison.columns).intersection(temp))
     # cost-efficiency
     if policy_name is not None:
         # cost-efficiency: AP and AP-t scenarios
@@ -1284,10 +1286,12 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
             indicator = pd.DataFrame(indicator).T
 
-            # Retrofit ratio = freerider ratio
             # And impact on retrofit rate : difference in retrofit rate / cost of subvention
             for s in efficiency_scenarios:
-                year = int(s[-4:])
+                try:
+                    year = int(s[-4:])
+                except:
+                    year = result[s].columns[-1]
                 if year in result['Reference'].columns:
                     """
                     indicator.loc['Investment insulation reference (Thousand euro/household)', s] = result['Reference'].loc['Investment insulation (Thousand euro/household)', year]
@@ -1300,6 +1304,22 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     indicator.loc['Additional renovation (Thousand households)', s] = result['Reference'].loc['Renovation (Thousand households)', year] - result[s].loc['Renovation (Thousand households)', year]
                     indicator.loc['Freeriding renovation ratio (%)', s] = indicator.loc['Non additional renovation (Thousand households)', s] / (indicator.loc['Additional renovation (Thousand households)', s] + indicator.loc['Non additional renovation (Thousand households)', s])
                     indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional renovation (Thousand households)', s] / indicator.loc['Non additional renovation (Thousand households)', s]
+
+                indicator.loc['Consumption saving (TWh/year)', s] = result[s].loc['Consumption (TWh)', year] - \
+                                                                    result['Reference'].loc['Consumption (TWh)', year]
+                indicator.loc['Emission saving (MtCO2/year)', s] = result[s].loc['Emission (MtCO2)', year] - \
+                                                                    result['Reference'].loc['Emission (MtCO2)', year]
+                indicator.loc['Cost-benefits analysis (Billion euro/year)', s] = result[s].loc['Cost-benefits analysis (Billion euro)', year] - \
+                                                                    result['Reference'].loc['Cost-benefits analysis (Billion euro)', year]
+                indicator.loc['Balance Tenant private - C1 (euro/year.household)', s] = result[s].loc['Balance Tenant private - C1 (euro/year.household)', year] - \
+                                                                    result['Reference'].loc['Balance Tenant private - C1 (euro/year.household)', year]
+                indicator.loc['Balance Owner-occupied - C1 (euro/year.household)', s] = result[s].loc[
+                                                                                            'Balance Owner-occupied - C1 (euro/year.household)', year] - \
+                                                                                        result['Reference'].loc[
+                                                                                            'Balance Owner-occupied - C1 (euro/year.household)', year]
+
+
+
         else:
             indicator = pd.DataFrame(indicator).T
         indicator.sort_index(axis=1, inplace=True)
@@ -1375,7 +1395,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
     comparison.round(2).to_csv(os.path.join(folder_policies, 'comparison.csv'))
     if indicator is not None:
-        indicator.round(2).to_csv(os.path.join(folder_policies, 'indicator.csv'))
+        indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))
 
     return comparison, indicator
 
