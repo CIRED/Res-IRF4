@@ -88,6 +88,11 @@ def config2inputs(config=None):
             inputs['calibration_heater']['ms_heater'].drop([i for i in inputs['calibration_heater']['ms_heater'].index.get_level_values('Heating system') if i not in list_heater], axis=0, inplace=True, level='Heating system')
             inputs['calibration_heater']['ms_heater'] = (inputs['calibration_heater']['ms_heater'].T / inputs['calibration_heater']['ms_heater'].sum(axis=1)).T
 
+        if isinstance(inputs['ms_heater_built'], pd.DataFrame):
+            # Replace index that are in Heating system level with replace
+            inputs['ms_heater_built'] = inputs['ms_heater_built'].rename(index=replace).groupby(
+                inputs['ms_heater_built'].index.names).sum()
+
         inputs['cost_heater'].drop([i for i in inputs['cost_heater'].index if i not in list_heater], inplace=True)
 
     if config['simple'].get('insulation'):

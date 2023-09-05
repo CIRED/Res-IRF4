@@ -414,6 +414,7 @@ class ThermalBuildings:
         prices: Series
         consumption: Series, default None
         level_heater: {'Heating system', 'Heating system final'}
+        bill_rebate: float or Series, default 0
 
         Returns
         -------
@@ -719,6 +720,8 @@ class ThermalBuildings:
         level_heater
             Heating system level to calculate the bill. Enable to calculate energy bill before or after change of
             heating system.
+        bill_rebate: float or Series, default 0
+            Bill rebate (€/dwelling.a)
 
         Returns
         -------
@@ -2162,8 +2165,10 @@ class AgentBuildings(ThermalBuildings):
 
         # first considering the case where the heating system is replaced by district heating
         if district_heating is not None:
-            temp = flow_replace[self.to_energy(flow_replace).isin(['Natural gas', 'Oil fuel'])]
+            temp = flow_replace[~flow_replace.index.get_level_values('Heating system').isin(
+                ['Electricity-Heat pump water', 'Electricity-Heat pump air'])]
             temp = select(temp, {'Housing type': 'Multi-family'})
+            assert temp.sum() > district_heating, 'District heating cannot replace all heating system'
             to_district_heating = district_heating * temp / temp.sum()
             to_district_heating = to_district_heating.reindex(flow_replace.index).fillna(0)
             flow_replace = flow_replace - to_district_heating
@@ -3425,8 +3430,8 @@ class AgentBuildings(ThermalBuildings):
 
                 f_replace_eligible = f_replace.loc[eligible, :]
 
-                _eligible = f_replace_eligible.sum().sum() / 10**3
-                _beneficiaries = f_replace[_sub > 0].sum().sum() / 10**3
+                _eligible = f_replace_eligible.sum().sum()
+                _beneficiaries = f_replace[_sub > 0].sum().sum()
 
                 avg_cost_eligible = (f_replace_eligible * _cost_total).sum().sum() / f_replace_eligible.sum().sum()
                 if key == 'reduced_vta':
@@ -3463,8 +3468,9 @@ class AgentBuildings(ThermalBuildings):
                      _additional_participant, _non_additional_participant, _free_riders,
                      avg_cost_eligible, avg_cost_eligible_nosub, _intensive_margin],
                     index=['Eligible (hh)', 'Beneficiaries (hh)', 'Average sub (euro)', 'Share sub (%)',
-                           'Additional participant (hh)', 'Non additional participant (hh)', 'Freeriders (%)',
-                           'Average cost eligible (euro)', 'Average cost eligible no sub (euro)',
+                           'Additional participants (hh)', 'Non additional participants (hh)',
+                           'Share of non additional participants (%)',
+                           'Average cost eligible (EUR)', 'Average cost eligible wo sub (EUR)',
                            'Intensive margin benef (%)'])})
 
             rslt = DataFrame(rslt)
@@ -4346,9 +4352,10 @@ class AgentBuildings(ThermalBuildings):
         output.update(temp.T / 10 ** 9)
 
         emission = inputs['carbon_emission'].loc[self.year:, :].copy()
-        renewable_gas = inputs['renewable_gas'].loc[self.year:]
-        temp = (consumption_energy.loc['Natural gas'] - renewable_gas) / consumption_energy.loc['Natural gas'] * emission.loc[:, 'Natural gas']
-        emission.loc[:, 'Natural gas'] = temp.copy()
+        if inputs.get('renewable_gas') is not None:
+            renewable_gas = inputs['renewable_gas'].loc[self.year:]
+            temp = (consumption_energy.loc['Natural gas'] - renewable_gas) / consumption_energy.loc['Natural gas'] * emission.loc[:, 'Natural gas']
+            emission.loc[:, 'Natural gas'] = temp.copy()
         self.store_over_years[self.year].update({'Emission content (gCO2/kWh)': emission.loc[self.year, :]})
 
         temp = emission.loc[self.year, :]

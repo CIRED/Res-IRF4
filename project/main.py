@@ -216,6 +216,20 @@ def run(path=None, folder=None):
                     configuration[key] = copy.deepcopy(configuration['Reference'])
                     configuration[key]['energy']['energy_prices'] = copy.deepcopy(item)
 
+            if config_sensitivity.get('district_heating') is not None:
+                values = config_sensitivity['district_heating']
+                for v in values:
+                    name = 'DH{}'.format(v.split('.')[0][-2:])
+                    configuration[name] = copy.deepcopy(configuration['Reference'])
+                    configuration[name]['switch_heater']['district_heating'] = v
+
+            if config_sensitivity.get('ms_heater_built') is not None:
+                values = config_sensitivity['ms_heater_built']
+                for v in values:
+                    name = 'Construction{}'.format(v.split('.')[0][-2:])
+                    configuration[name] = copy.deepcopy(configuration['Reference'])
+                    configuration[name]['switch_heater']['ms_heater_built'] = v
+
             if config_sensitivity.get('building_stock') is not None:
                 values = config_sensitivity['building_stock']
                 if values:
