@@ -94,7 +94,7 @@
       "energy_vta": "project/input/energy/energy_vta.csv",
       "carbon_emission": "project/input/energy/carbon_emission_tend.csv",
       "renewable_gas": "project/input/energy/renewable_gas_tend.csv"
-      },
+    },
     "macro": {
       "construction": true,
       "flow_construction": "project/input/macro/flow_construction_tend.csv",
