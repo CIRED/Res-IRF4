@@ -111,7 +111,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
                                      district_heating=flow_district_heating,
                                      demolition_rate=inputs_dynamics['demolition_rate'],
                                      exogenous_social=inputs.get('exogenous_social'),
-                                     output_details=config['output'],
+                                     output_options=config['output'],
                                      carbon_content=c_content
                                      )
 
@@ -201,9 +201,9 @@ def read_proportional(data):
 
 def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  lifetime_heater, lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
-                 financing_cost,
+                 financing_cost, output_options='full',
                  sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
-                 output_consumption=False, output_details='full', technical_progress=None,
+                 output_consumption=False, technical_progress=None,
                  premature_replacement=None, flow_district_heating=None, exogenous_social=None, carbon_content=None
                  ):
 
@@ -238,6 +238,10 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                 heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in cost_heater.index]
                 cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])
 
+        f_district_heating = None
+        if flow_district_heating is not None:
+            f_district_heating = flow_district_heating.loc[year]
+
         buildings, s, o = stock_turnover(buildings, prices, taxes,
                                          cost_heater, lifetime_heater,
                                          cost_insulation, lifetime_insulation,
@@ -245,19 +249,19 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                                          post_inputs,
                                          premature_replacement=premature_replacement,
                                          financing_cost=financing_cost,
-                                         district_heating=flow_district_heating,
+                                         district_heating=f_district_heating,
                                          demolition_rate=demolition_rate,
                                          exogenous_social=exogenous_social,
-                                         output_details=output_details,
+                                         output_options=output_options,
                                          carbon_content=c_content,
                                          prices_before=prices_before
                                          )
         output.update({year: o})
-        if output_details == 'full':
+        if output_options == 'full':
             stock.update({year: s})
 
     output = DataFrame(output)
-    if output_details == 'full':
+    if output_options == 'full':
         stock = DataFrame(stock)
         stock.index.names = s.index.names
 
@@ -350,11 +354,12 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               climate=2006,
                                               smooth=False,
                                               efficiency_hour=False,
+                                              flow_district_heating=inputs_dynamics['flow_district_heating'],
                                               demolition_rate=inputs_dynamics['demolition_rate'],
                                               output_consumption=output_consumption,
                                               technical_progress=inputs_dynamics['technical_progress'],
                                               premature_replacement=inputs_dynamics['premature_replacement'],
-                                              output_details='full',
+                                              output_options='full',
                                               carbon_content=inputs_dynamics['post_inputs']['carbon_emission']
                                               )
 
@@ -368,6 +373,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
 
 if __name__ == '__main__':
     # test_design_subsidies()
-    _config = 'project/config/coupling/config.json'
+    # _config = 'project/config/coupling/config.json'
+    _config = 'project/config/config.json'
     # _config = 'project/config/config.json'
     run_simu(output_consumption=False, start=2019, end=2025, config=_config)

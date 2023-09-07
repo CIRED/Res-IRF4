@@ -675,12 +675,16 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
         f_built = inputs_dynamics['flow_built'].loc[:, year]
+        flow_district_heating = None
+        if inputs_dynamics['flow_district_heating'] is not None:
+            flow_district_heating = inputs_dynamics['flow_district_heating'].loc[year]
         carbon_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
 
         buildings, s, o = stock_turnover(buildings, prices, taxes,
                                          inputs_dynamics['cost_heater'], inputs_dynamics['lifetime_heater'],
                                          inputs_dynamics['cost_insulation'], inputs_dynamics['lifetime_insulation'],
                                          p_heater, p_insulation, f_built, year, inputs_dynamics['post_inputs'],
+                                         district_heating=flow_district_heating,
                                          calib_renovation=inputs_dynamics['calibration_renovation'],
                                          calib_heater=inputs_dynamics['calibration_heater'],
                                          financing_cost=inputs_dynamics['financing_cost'],
