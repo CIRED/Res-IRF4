@@ -202,7 +202,8 @@ def read_proportional(data):
 def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_insulation,
                  lifetime_heater, lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
                  financing_cost, output_options='full',
-                 sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False, demolition_rate=None,
+                 sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False,
+                 demolition_rate=None,
                  output_consumption=False, technical_progress=None,
                  premature_replacement=None, flow_district_heating=None, exogenous_social=None, carbon_content=None
                  ):

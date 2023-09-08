@@ -1,0 +1,68 @@
+{
+  "Reference": {
+    "file":"project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_ref.json"},
+    "simple": {
+      "figures": true,
+      "detailed_output": true,
+      "quintiles": true,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "current_policies": false,
+      "no_policy": false,
+      "income": false,
+      "prices_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
+      },
+      "insulation": false,
+      "no_heating_switch": false,
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    }
+  },
+  "RestrictionGas": {
+    "file":"project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_ref.json",
+      "restriction_gas": {
+        "start": 2025,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }},
+    "simple": {
+      "figures": true,
+      "detailed_output": true,
+      "quintiles": true,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "current_policies": false,
+      "no_policy": false,
+      "income": false,
+      "prices_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
+      },
+      "insulation": false,
+      "no_heating_switch": false,
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    }
+  }
+}
