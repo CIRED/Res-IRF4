@@ -64,7 +64,7 @@
           "value_end": -0.1
         },
         "heater": {
-          "activated": false,
+          "activated": true,
           "start": 2020,
           "end": 2035,
           "value_end": -0.2
@@ -84,7 +84,7 @@
         "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
         "rate": {
           "Electricity": 0.0135,
-          "Natural gas": 0.0268,
+          "Natural gas": 0.0104,
           "Wood fuel": 0.0127,
           "Oil fuel": 0.0173,
           "Heating": 0.0127

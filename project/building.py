@@ -2731,7 +2731,7 @@ class AgentBuildings(ThermalBuildings):
             else:
                 subsidies_details[policy.name] = value.copy()
 
-        # for non cumulative subsidies, we compare the value of the subsidies with the sum of non cumulative subsidies
+        # for non-cumulative subsidies, we compare the value of the subsidies with the sum of non-cumulative subsidies
         for policy, value in sub_non_cumulative.items():
             compare = sum([subsidies_details[p] for p in policy.non_cumulative if p in subsidies_details.keys()])
             if isinstance(compare, DataFrame):

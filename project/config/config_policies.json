@@ -36,7 +36,7 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2041,
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"
     },
@@ -63,14 +63,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    }
-  },
-  "Ambitious": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json"
     }
   }
 }
