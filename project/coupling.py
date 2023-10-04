@@ -99,7 +99,6 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
 
     buildings, _, o = stock_turnover(buildings, prices, taxes,
                                      inputs_dynamics['cost_heater'],
-                                     inputs_dynamics['lifetime_heater'],
                                      inputs_dynamics['cost_insulation'],
                                      inputs_dynamics['lifetime_insulation'],
                                      p_heater, p_insulation, f_built, year,
@@ -200,7 +199,7 @@ def read_proportional(data):
 
 
 def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 lifetime_heater, lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
+                 lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
                  financing_cost, output_options='full',
                  sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False,
                  demolition_rate=None,
@@ -244,7 +243,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
             f_district_heating = flow_district_heating.loc[year]
 
         buildings, s, o = stock_turnover(buildings, prices, taxes,
-                                         cost_heater, lifetime_heater,
+                                         cost_heater,
                                          cost_insulation, lifetime_insulation,
                                          p_heater, p_insulation, f_built, year,
                                          post_inputs,
@@ -277,7 +276,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
 
 
 def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                   lifetime_heater, flow_built, post_inputs, policies_heater, policies_insulation, financing_cost,
+                   flow_built, post_inputs, policies_heater, policies_insulation, financing_cost,
                    sub_design=None):
 
     sub_insulation = [i / 10 for i in range(0, 11, 2)]
@@ -289,7 +288,6 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     taxes = [taxes] * _len
     cost_heater = [cost_heater] * _len
     cost_insulation = [cost_insulation] * _len
-    lifetime_heater = [lifetime_heater] * _len
     flow_built = [flow_built] * _len
     post_inputs = [post_inputs] * _len
     policies_heater = [policies_heater] * _len
@@ -299,7 +297,7 @@ def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost
     financing_cost = [financing_cost] * _len
 
     list_argument = list(zip(deepcopy(buildings), deepcopy(sub_heater), deepcopy(sub_insulation), start, end, energy_prices, taxes,
-                             cost_heater, cost_insulation, lifetime_heater, flow_built, post_inputs, policies_heater,
+                             cost_heater, cost_insulation, flow_built, post_inputs, policies_heater,
                              policies_insulation, sub_design, financing_cost))
 
     with Pool() as pool:
@@ -344,7 +342,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     output, stock, consumption = simu_res_irf(buildings, start, end,
                                               inputs_dynamics['energy_prices'], inputs_dynamics['taxes'],
                                               inputs_dynamics['cost_heater'], inputs_dynamics['cost_insulation'],
-                                              inputs_dynamics['lifetime_heater'], inputs_dynamics['lifetime_insulation'],
+                                              inputs_dynamics['lifetime_insulation'],
                                               inputs_dynamics['flow_built'],
                                               inputs_dynamics['post_inputs'],
                                               policies_heater,

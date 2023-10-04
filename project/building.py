@@ -861,7 +861,7 @@ class AgentBuildings(ThermalBuildings):
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
-                 performance_insulation_renovation, path=None, year=2018,
+                 performance_insulation_renovation, lifetime_heater=None, path=None, year=2018,
                  endogenous=True, exogenous=None, expected_utility=None,
                  logger=None, calib_scale=True,
                  quintiles=None, financing_cost=True,
@@ -945,6 +945,8 @@ class AgentBuildings(ThermalBuildings):
         self.taxes_revenues = {}
         self.bill_rebate = {}
         self._balance_state_ini = None
+
+        self.lifetime_heater = lifetime_heater
 
     @property
     def year(self):
@@ -1924,7 +1926,7 @@ class AgentBuildings(ThermalBuildings):
             self._heater_store['subsidies_average'].update({key: sub.sum().sum() / eligible.fillna(0).sum().sum()})
             self._heater_store['cost_average'].update({key: cost.sum().sum() / eligible.fillna(0).sum().sum()})
 
-    def heater_replacement(self, stock, prices, cost_heater, lifetime_heater, policies_heater, calib_heater=None,
+    def heater_replacement(self, stock, prices, cost_heater, policies_heater, calib_heater=None,
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
                            prices_before=None, supply=None, store_information=True, bill_rebate=0,
                            carbon_content=None, carbon_value=None):
@@ -1981,7 +1983,7 @@ class AgentBuildings(ThermalBuildings):
         index = stock.index
 
         list_heater = list(stock.index.get_level_values('Heating system').unique().union(cost_heater.index))
-
+        lifetime_heater = self.lifetime_heater
         probability = 1 / lifetime_heater
         probability *= step
         if isinstance(lifetime_heater, (float, int)):
@@ -2193,6 +2195,8 @@ class AgentBuildings(ThermalBuildings):
         to_replace = replacement.sum(axis=1)
 
         stock = stock - to_replace
+        # correct rounding error
+        stock[stock < 0] = 0
 
         # adding heating system final equal to heating system because no switch
         flow_premature_replacement = 0
@@ -3821,7 +3825,7 @@ class AgentBuildings(ThermalBuildings):
             renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
         if self.year == self.first_year + 1 and self.rational_behavior_insulation is None and \
-                self.path_calibration is not None and self.path_ini is not False:
+                self.path_calibration is not None and self.path_ini is not False and False:
 
             market_failures = Series(0, index=self.hidden_cost.index)
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
@@ -3829,7 +3833,7 @@ class AgentBuildings(ThermalBuildings):
 
             condition_gr = self.select_deep_renovation(certificate_after)
 
-            assert condition_gr.any().all(), 'At least one option should be global renovation'
+            assert condition_gr.any(axis=1).all(), 'At least one option should be global renovation'
 
             npv_no_subsidy = - cost_insulation_reindex + (reindex_mi(self.discount_factor, bill_saved.index) * bill_saved.T).T
             condition_gr = condition_gr.replace(False, float('nan'))
@@ -3922,7 +3926,7 @@ class AgentBuildings(ThermalBuildings):
 
         return renovation_rate, market_share
 
-    def flow_retrofit(self, prices, cost_heater, lifetime_heater, cost_insulation, lifetime_insulation,
+    def flow_retrofit(self, prices, cost_heater, cost_insulation, lifetime_insulation,
                       policies_heater=None, policies_insulation=None, calib_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None,
                       step=1, exogenous_social=None, premature_replacement=None, prices_before=None, supply=None,
@@ -3939,7 +3943,6 @@ class AgentBuildings(ThermalBuildings):
         ----------
         prices: Series
         cost_heater: Series
-        lifetime_heater: Series
         calib_heater: DataFrame
         cost_insulation
         policies_heater: list
@@ -3962,7 +3965,7 @@ class AgentBuildings(ThermalBuildings):
 
         # accounts for heater replacement - depends on energy prices, cost and policies heater
         self.logger.info('Calculation heater replacement')
-        stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
+        stock = self.heater_replacement(stock_mobile, prices, cost_heater, policies_heater,
                                         calib_heater=calib_heater, step=1, financing_cost=financing_cost,
                                         district_heating=district_heating, premature_replacement=premature_replacement,
                                         prices_before=prices_before, bill_rebate=bill_rebate,
@@ -3996,7 +3999,7 @@ class AgentBuildings(ThermalBuildings):
                 def supply_demand_heater_equilibrium(_prices_heater, _prices_index):
                     _prices_heater = pd.Series(_prices_heater, index=_prices_index)
 
-                    _stock = self.heater_replacement(stock_mobile, prices, _prices_heater, lifetime_heater, policies_heater,
+                    _stock = self.heater_replacement(stock_mobile, prices, _prices_heater, policies_heater,
                                                      financing_cost=financing_cost,
                                                      district_heating=district_heating,
                                                      premature_replacement=premature_replacement,
@@ -4010,7 +4013,7 @@ class AgentBuildings(ThermalBuildings):
                                        args=(cost_heater.index), xtol=10**-1)
                 prices_heater = Series(prices_heater, index=cost_heater.index)
 
-                stock = self.heater_replacement(stock_mobile, prices, prices_heater, lifetime_heater, policies_heater,
+                stock = self.heater_replacement(stock_mobile, prices, prices_heater, policies_heater,
                                                 calib_heater=calib_heater, step=1, financing_cost=financing_cost,
                                                 district_heating=district_heating, premature_replacement=premature_replacement,
                                                 prices_before=prices_before)
@@ -4079,12 +4082,16 @@ class AgentBuildings(ThermalBuildings):
 
         if step > 1:
             # approximation
-            stock = self.heater_replacement(stock_mobile, prices, cost_heater, lifetime_heater, policies_heater,
+            stock = self.heater_replacement(stock_mobile, prices, cost_heater, policies_heater,
                                             calib_heater=calib_heater, step=step, financing_cost=financing_cost,
                                             district_heating=district_heating, supply=supply)
             flow_insulation = flow_insulation.where(flow_insulation < stock, stock)
 
         flow_only_heater = stock - flow_insulation
+        if self.year == 2037:
+            print('break')
+        if (flow_only_heater >= 0).all().all() is False:
+            print('break')
         assert (flow_only_heater >= 0).all().all(), 'Remaining stock is not positive'
 
         flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack(
@@ -4249,7 +4256,7 @@ class AgentBuildings(ThermalBuildings):
         return flows_obligation
 
     def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None,
-                         lifetime_heater=20, lifetime_insulation=30, social_discount_rate=0.032, bill_rebate=0):
+                         lifetime_insulation=30, social_discount_rate=0.032, bill_rebate=0):
         """Parse output.
 
         Renovation : envelope
@@ -4287,8 +4294,18 @@ class AgentBuildings(ThermalBuildings):
 
         output = dict()
         output['Stock (Million)'] = stock.sum() / 10 ** 6
+        output['Stock existing (Million)'] = self.stock.xs(True, level='Existing').sum() / 10 ** 6
+        stock_new = 0
+        if False in self.stock.index.get_level_values('Existing'):
+            stock_new = self.stock.xs(False, level='Existing').sum() / 10 ** 6
+        output['Stock new (Million)'] = stock_new
+
         output['Surface (Million m2)'] = (self.stock * self.surface).sum() / 10 ** 6
         output['Surface existing (Million m2)'] = (self.stock * self.surface).xs(True, level='Existing').sum() / 10 ** 6
+        surface_new = 0
+        if False in self.stock.index.get_level_values('Existing'):
+            surface_new = (self.stock * self.surface).xs(False, level='Existing').sum() / 10 ** 6
+        output['Surface new (Million m2)'] = surface_new
 
         if 'population' in inputs.keys():
             output['Surface (m2/person)'] = (
@@ -4304,10 +4321,15 @@ class AgentBuildings(ThermalBuildings):
         output['Consumption (TWh)'] = consumption_energy.sum()
         output['Consumption (kWh/m2)'] = (output['Consumption (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
+
         output['Consumption existing (TWh)'] = self.consumption_agg(prices=prices, freq='year', existing=True,
                                                                     energy=False, bill_rebate=bill_rebate)
+        output['Consumption new (TWh)'] = output['Consumption (TWh)'] - output['Consumption existing (TWh)']
         output['Consumption existing (kWh/m2)'] = (output['Consumption existing (TWh)'] * 10 ** 9) / (
                 output['Surface existing (Million m2)'] * 10 ** 6)
+        if surface_new > 0:
+            output['Consumption new (kWh/m2)'] = (output['Consumption new (TWh)'] * 10 ** 9) / (
+                    output['Surface new (Million m2)'] * 10 ** 6)
 
         heating_intensity, budget_share = self.to_heating_intensity(self.stock.index, prices,
                                                                     full_output=True, bill_rebate=bill_rebate)
@@ -4706,13 +4728,13 @@ class AgentBuildings(ThermalBuildings):
             if isinstance(t, Series):
                 t = t.sum()
 
-            output['Switch premature heater (Thousand households)'] = t/ 10 ** 3 / step
+            output['Switch premature heater (Thousand households)'] = t / 10 ** 3 / step
 
             output['Switch Heat pump (Thousand households)'] = temp[[i for i in self._resources_data['index'][
                 'Heat pumps'] if i in temp.index]].sum() / 10 ** 3 / step
             temp.index = temp.index.map(lambda x: 'Switch {} (Thousand households)'.format(x))
             output.update((temp / 10 ** 3 / step).T)
-
+            # capture heating system transition
             temp = self._heater_store['replacement'].stack('Heating system final').squeeze()
             temp = temp.reset_index(['Heating system', 'Heating system final'])
             temp['Heating system'] = temp['Heating system'].replace(self._resources_data['heating2heater'])
@@ -4790,7 +4812,7 @@ class AgentBuildings(ThermalBuildings):
             output['Efficiency insulation (euro/tCO2 standard)'] = output['Annuities insulation (Billion euro/year)'] * 10 ** 3 / \
                                                                    output['Emission standard saving insulation (MtCO2/year)']
 
-            annuities_heater = calculate_annuities(investment_heater, lifetime=lifetime_heater, discount_rate=social_discount_rate)
+            annuities_heater = calculate_annuities(investment_heater, lifetime=20, discount_rate=social_discount_rate)
             output['Annuities heater (Billion euro/year)'] = annuities_heater.sum().sum() / 10 ** 9 / step
             output['Efficiency heater (euro/kWh standard)'] = output['Annuities heater (Billion euro/year)'] / output[
                 'Consumption standard saving heater (TWh/year)']

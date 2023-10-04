@@ -37,6 +37,27 @@ CERTIFICATE_3USES_BOUNDARIES = {
     'G': [450, 1000],
 }
 
+# kWhPE/m2.a
+CERTIFICATE_5USES_BOUNDARIES_ENERGY = {
+    'A': [0, 70],
+    'B': [70, 110],
+    'C': [110, 180],
+    'D': [180, 250],
+    'E': [250, 330],
+    'F': [330, 420],
+    'G': [420, 1000],
+}
+# kgCO2/m2.a
+CERTIFICATE_5USES_BOUNDARIES_EMISSION = {
+    'A': [0, 6],
+    'B': [6, 11],
+    'C': [11, 30],
+    'D': [30, 50],
+    'E': [50, 70],
+    'F': [70, 100],
+    'G': [100, 1000],
+}
+
 
 # Transmission heat losses
 THERMAL_BRIDGING = {'Minimal': 0,
@@ -105,9 +126,47 @@ DHW_EFFICIENCY = {'Electricity-Performance boiler': 0.95,
                   'Heating-District heating': 0.6
                   }
 
+# kWh/m2.a from EDF
+AUXILIARY_CONSUMPTION = {'Electricity-Performance boiler': 1.4,
+                         'Electricity-Heat pump air': 2.17,
+                         'Electricity-Heat pump': 2.17,
+                         'Electricity-Heat pump water': 2.17,
+                         'Natural gas-Performance boiler': 3.65,
+                         'Natural gas-Standard boiler': 3.65,
+                         'Natural gas-Collective boiler': 3.65,
+                         'Oil fuel-Performance boiler': 3.83,
+                         'Oil fuel-Standard boiler': 3.83,
+                         'Oil fuel-Collective boiler': 3.83,
+                         'Wood fuel-Performance boiler': 2.07,
+                         'Wood fuel-Standard boiler': 2.07,
+                         'Heating-District heating': 1.75
+                         }
+AUXILIARY_CONSUMPTION = 3
+
+CARBON_CONTENT = {'Electricity': 0.079,
+                  'Natural gas': 0.227,
+                  'Oil fuel': 0.324,
+                  'Wood fuel': 0.03,
+                  'Heating': 0.227
+                  }
+CARBON_CONTENT = {'Electricity-Performance boiler': 0.079,
+                  'Electricity-Heat pump air': 0.079,
+                  'Electricity-Heat pump': 0.079,
+                  'Electricity-Heat pump water': 0.079,
+                  'Natural gas-Performance boiler': 0.227,
+                  'Natural gas-Standard boiler': 0.227,
+                  'Natural gas-Collective boiler': 0.227,
+                  'Oil fuel-Performance boiler': 0.324,
+                  'Oil fuel-Standard boiler': 0.324,
+                  'Oil fuel-Collective boiler': 0.324,
+                  'Wood fuel-Performance boiler': 0.03,
+                  'Wood fuel-Standard boiler': 0.03,
+                  'Heating-District heating': 0.03
+                  }
 C_LIGHT = 0.9
 P_LIGHT = 1.4 # W/m2
-HOURS_LIGHT = 2123 # h
+HOURS_LIGHT = 1500 # h
+CONSUMPTION_LIGHT = (C_LIGHT * P_LIGHT * HOURS_LIGHT) / 1e3 # kWh/m2.a
 
 HOURLY_PROFILE_POWER = pd.Series(
     [0.035, 0.039, 0.041, 0.042, 0.046, 0.05, 0.055, 0.058, 0.053, 0.049, 0.045, 0.041, 0.037, 0.034,
@@ -374,7 +433,7 @@ def conventional_dhw_final(index):
 
 def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency, index,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None
+                              air_rate=None, unobserved=None, method='3uses'
                               ):
     """Space heating conventional, and energy performance certificate.
 
@@ -415,11 +474,17 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         energy_carrier = index.get_level_values('Energy')
 
     energy_primary = final2primary(energy_final, energy_carrier)
-    performance = find_certificate(energy_primary)
+    other_consumptions = None
+    if method == '5uses':
+        other_consumptions = (CONSUMPTION_LIGHT + AUXILIARY_CONSUMPTION) * CONVERSION
+
+    performance = find_certificate(energy_primary, method=method, other_consumptions=other_consumptions)
+
+    # performance = pd.concat((performance_3uses, performance_5uses), axis=1, keys=['3uses', '5uses'])
     return performance, energy_primary
 
 
-def find_certificate(primary_consumption):
+def find_certificate(primary_consumption, other_consumptions=None, method='3uses'):
     """Returns energy performance certificate from A to G.
 
     Parameters
@@ -431,25 +496,114 @@ def find_certificate(primary_consumption):
     float or pd.Series or pd.DataFrame
         Energy performance certificate.
     """
+    if method == '3uses':
+        if isinstance(primary_consumption, pd.Series):
+            certificate = pd.Series(dtype=str, index=primary_consumption.index)
+            for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+                cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
+                certificate[cond] = key
+            return certificate
 
-    if isinstance(primary_consumption, pd.Series):
-        certificate = pd.Series(dtype=str, index=primary_consumption.index)
-        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
-            cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
-            certificate[cond] = key
-        return certificate
+        elif isinstance(primary_consumption, pd.DataFrame):
+            certificate = pd.DataFrame(dtype=str, index=primary_consumption.index, columns=primary_consumption.columns)
+            for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+                cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
+                certificate[cond] = key
+            return certificate
 
-    elif isinstance(primary_consumption, pd.DataFrame):
-        certificate = pd.DataFrame(dtype=str, index=primary_consumption.index, columns=primary_consumption.columns)
-        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
-            cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
-            certificate[cond] = key
-        return certificate
+        elif isinstance(primary_consumption, float):
+            for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
+                if (primary_consumption > item[0]) & (primary_consumption <= item[1]):
+                    return key
 
-    elif isinstance(primary_consumption, float):
-        for key, item in CERTIFICATE_3USES_BOUNDARIES.items():
-            if (primary_consumption > item[0]) & (primary_consumption <= item[1]):
-                return key
+    elif method == '5uses':
+        carbon_content = pd.Series(CARBON_CONTENT).rename_axis('Heating system')
+        emission = primary_consumption * reindex_mi(carbon_content, primary_consumption.index)
+        primary_consumption += other_consumptions
+        emission += other_consumptions * reindex_mi(carbon_content, primary_consumption.index)
+
+        if isinstance(primary_consumption, pd.Series):
+            certificate_energy = pd.Series(dtype=str, index=primary_consumption.index)
+            for key, item in CERTIFICATE_5USES_BOUNDARIES_ENERGY.items():
+                cond = (primary_consumption > item[0]) & (primary_consumption <= item[1])
+                certificate_energy[cond] = key
+
+            certificate_emission = pd.Series(dtype=str, index=primary_consumption.index)
+            for key, item in CERTIFICATE_5USES_BOUNDARIES_EMISSION.items():
+                cond = (emission > item[0]) & (emission <= item[1])
+                certificate_emission[cond] = key
+
+            # maximum between energy and emission
+            temp = pd.concat([certificate_energy, certificate_emission], axis=1, keys=['Energy', 'Emission'])
+            certificate = temp.max(axis=1)
+
+            return certificate
+
+        elif isinstance(primary_consumption, pd.DataFrame):
+            raise NotImplementedError
+
+        else:
+            raise NotImplementedError
+
+
+def final2primary(heat_consumption, energy, conversion=CONVERSION):
+    if isinstance(heat_consumption, pd.Series):
+        primary_heat_consumption = heat_consumption.copy()
+        primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * conversion
+        return primary_heat_consumption
+
+    elif isinstance(heat_consumption, float):
+        if energy == 'Electricity':
+            return heat_consumption * conversion
+        else:
+            return heat_consumption
+
+    if isinstance(heat_consumption, pd.DataFrame):
+        # index
+        if energy.index.equals(heat_consumption.index):
+            primary_heat_consumption = heat_consumption.copy()
+            primary_heat_consumption.loc[energy == 'Electricity', :] = primary_heat_consumption * conversion
+            return primary_heat_consumption
+        # columns
+        elif energy.index.equals(heat_consumption.columns):
+            primary_heat_consumption = heat_consumption.copy()
+            primary_heat_consumption.loc[:, energy == 'Electricity'] = primary_heat_consumption * conversion
+            return primary_heat_consumption
+        else:
+            raise 'Energy DataFrame do not match indexes and columns'
+
+
+
+
+def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, energy, ratio_surface, hdd,
+                                conversion=CONVERSION):
+    """Convert final to primary heating consumption.
+
+    Parameters
+    ----------
+    u_wall
+    u_floor
+    u_roof
+    u_windows
+    hdd
+    efficiency
+    energy
+    ratio_surface
+    conversion
+
+    Returns
+    -------
+    """
+    # data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    heat_consumption = stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd)
+    return final2primary(heat_consumption, energy, conversion=conversion)
+
+
+def heat_intensity(budget, method='v4'):
+    if method == 'v3':
+        return -0.191 * budget.apply(log) + 0.1105
+    elif method == 'v4':
+        return 0.3564 * budget**(-0.244)
 
 
 def stat_model_heating_consumption(df, a=0.921323, b=0.634717):
@@ -510,58 +664,7 @@ def stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, rat
     return consumption
 
 
-def final2primary(heat_consumption, energy, conversion=CONVERSION):
-    if isinstance(heat_consumption, pd.Series):
-        primary_heat_consumption = heat_consumption.copy()
-        primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * conversion
-        return primary_heat_consumption
-
-    elif isinstance(heat_consumption, float):
-        if energy == 'Electricity':
-            return heat_consumption * conversion
-        else:
-            return heat_consumption
-
-    if isinstance(heat_consumption, pd.DataFrame):
-        # index
-        if energy.index.equals(heat_consumption.index):
-            primary_heat_consumption = heat_consumption.copy()
-            primary_heat_consumption.loc[energy == 'Electricity', :] = primary_heat_consumption * conversion
-            return primary_heat_consumption
-        # columns
-        elif energy.index.equals(heat_consumption.columns):
-            primary_heat_consumption = heat_consumption.copy()
-            primary_heat_consumption.loc[:, energy == 'Electricity'] = primary_heat_consumption * conversion
-            return primary_heat_consumption
-        else:
-            raise 'Energy DataFrame do not match indexes and columns'
-
-
-def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, energy, ratio_surface, hdd,
-                                conversion=CONVERSION):
-    """Convert final to primary heating consumption.
-
-    Parameters
-    ----------
-    u_wall
-    u_floor
-    u_roof
-    u_windows
-    hdd
-    efficiency
-    energy
-    ratio_surface
-    conversion
-
-    Returns
-    -------
-    """
-    # data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
-    heat_consumption = stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd)
-    return final2primary(heat_consumption, energy, conversion=conversion)
-
-
-def certificate(df):
+def stat_certificate(df):
     """Returns energy performance certificate based on space heating energy consumption.
 
     Parameters
@@ -594,7 +697,6 @@ def certificate(df):
             if (primary_consumption > item[0]) & (primary_consumption <= item[1]):
                 return key
 
-
 def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, energy, ratio_surface):
     """Returns energy performance certificate.
 
@@ -619,14 +721,8 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
     """
     primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, hdd, efficiency,
                                                            energy, ratio_surface, conversion=CONVERSION)
-    return primary_heat_consumption, certificate(primary_heat_consumption)
+    return primary_heat_consumption, stat_certificate(primary_heat_consumption)
 
-
-def heat_intensity(budget, method='v4'):
-    if method == 'v3':
-        return -0.191 * budget.apply(log) + 0.1105
-    elif method == 'v4':
-        return 0.3564 * budget**(-0.244)
 
 
 if __name__ == '__main__':

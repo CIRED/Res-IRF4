@@ -51,7 +51,7 @@
     "mpr_performance": {
       "start": 2023,
       "end": 2051,
-      "insulation": "project/input/policies/current/mpr_performance.csv",
+      "insulation": "project/input/policies/current/mpr_performance_very_ambitious.csv",
       "cap": null,
       "growth_insulation": null,
       "non_cumulative": [
@@ -83,22 +83,19 @@
     },
     "mpr_multifamily": {
       "start": 2021,
-      "end": 2051,
+      "end": 2023,
       "insulation": "project/input/policies/current/mpr_multifamily.csv",
       "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
       "non_cumulative": [
         "cite",
-        "mpr",
-        "mpr_efficacite",
-        "mpr_serenite",
-        "mpr_performance"
+        "mpr"
       ],
       "target": "mpr_serenite_nb",
       "policy": "subsidy_ad_valorem"
     },
     "cap": {
       "start": 2018,
-      "end": 2051,
+      "end": 2023,
       "insulation": "project/input/policies/current/subsidies_cap.csv",
       "target": [
         "mpr_serenite",

@@ -1,268 +1,48 @@
 {
   "scenarios": {
-    "activated": false,
-    "current_policies": null,
-    "no_policy": null,
+    "activated": true,
+    "current_policies": true,
+    "no_policy": true,
     "prices_constant": null,
-    "constant": null,
-    "add_policies": {
-      "zero_interest_loan": {
-        "start": 2020,
-        "end": 2051,
-        "policy": "zero_interest_loan",
-        "cost_max": 10000,
-        "gest": "insulation",
-        "value": 0.0,
-        "duration": 10
-    }
-    }
-},
-  "Reference": {
-    "end": 2021,
-    "step": 1,
-    "output": "full",
-    "start": 2017,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
-    "financing_cost": {
-      "activated": true,
-      "interest_rate": 0.05,
-      "saving_rate": 0.025,
-      "duration": 15,
-      "upfront_max": "project/input/macro/upfront_max.csv",
-      "debt_income_ratio": 0.1,
-      "constraint_liquidity": true
-    },
-    "renovation": {
-      "endogenous": true,
-      "exogenous_social": null,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
-      "scale": {
+    "constant": true,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "sensitivity": {
+    "activated": false,
+    "ms_heater_built": [
+      "project/input/investment/market_share_heater_construction_s1.csv",
+      "project/input/investment/market_share_heater_construction_s2.csv",
+      "project/input/investment/market_share_heater_construction_s3.csv",
+      "project/input/investment/market_share_heater_construction_s4.csv"
+    ]
+  },
+  "uncertainty": {
+    "activated": false,
+    "energy_prices_factor": [2, 5],
+    "carbon_emission" : [
+      "project/input/energy/carbon_emission_tend.csv"
+    ],
+    "scale_renovation": [
+      {
         "option": "share_fg",
-        "target": 0.31
-      },
-      "ms_insulation": {
-        "ms_insulation_ini": "project/input/investment/market_share_insulation_ini.csv",
-        "minimum_performance": null
-      },
-      "rational_behavior": {
-        "activated": false,
-        "social": false,
-        "calibration": true
-      },
-      "exogenous": {
-        "number": 700000,
-        "target": "worst"
-      },
-      "lifetime_insulation": 5,
-      "preferences_insulation": "project/input/investment/stated_preferences_insulation.csv"
-    },
-    "switch_heater": {
-      "district_heating": "project/input/energy/district_heating_s2.csv",
-      "ms_heater": "project/input/investment/market_share_heater_transition2050.csv",
-      "ms_heater_built": "project/input/investment/market_share_heater_built.csv",
-      "preferences_heater": "project/input/investment/stated_preferences_heater.csv",
-      "premature_replacement": null,
-      "information_rate": 0.333,
-      "scale": {
-        "option": "price_elasticity",
-        "target": -1.2
+        "target": 0.4
       }
-    },
-    "technical": {
-      "cost_heater": "project/input/technical/cost_heater.csv",
-      "efficiency": "project/input/technical/efficiency.csv",
-      "lifetime_heater": "project/input/technical/lifetime_heater.csv",
-      "cost_insulation": "project/input/technical/cost_insulation.csv",
-      "performance_insulation_renovation": "project/input/technical/performance_insulation_renovation.csv",
-      "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",
-      "technical_progress": {
-        "insulation": {
-          "activated": false,
-          "start": 2020,
-          "end": 2035,
-          "value_end": -0.1
-        },
-        "heater": {
-          "activated": false,
-          "start": 2020,
-          "end": 2035,
-          "value_end": -0.2
-        }
-      },
-      "footprint": {
-        "Traditional material": 1.0,
-        "Bio material": 0.0,
-        "construction": "project/input/technical/footprint_construction.csv",
-        "renovation": "project/input/technical/footprint_renovation.csv"
-      },
-      "surface": "project/input/technical/surface.csv",
-      "ratio_surface": "project/input/technical/ratio_surface.csv"
-    },
-    "energy": {
-      "energy_prices": {
-        "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-        "rate": {
-          "Electricity": 0.0135,
-          "Natural gas": 0.0268,
-          "Wood fuel": 0.0127,
-          "Oil fuel": 0.0173,
-          "Heating": 0
-        }
-      },
-      "energy_taxes": "project/input/energy/energy_taxes_ame2021.csv",
-      "energy_vta": "project/input/energy/energy_vta.csv",
-      "carbon_emission": "project/input/energy/carbon_emission.csv",
-      "renewable_gas": {
-        "file": "project/input/energy/renewable_gas.csv",
-        "scenario": "NO"
-      }
-    },
-    "macro": {
-      "construction": true,
-      "flow_construction": "project/input/macro/flow_construction_ame2021.csv",
-      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_ame2021.csv",
-      "demolition_rate": 0.0035,
-      "income": "project/input/macro/income.csv",
-      "income_rate": 0.012,
-      "rotation_rate": "project/input/macro/rotation_rate.csv",
-      "consumption_ini": "project/input/macro/consumption_ini.csv",
-      "preferences_saving": "project/input/investment/stated_preferences_saving.csv",
-      "population": null,
-      "surface_built": null,
-      "stock_ini": null,
-      "available_income": null,
-      "pop_housing": null,
-      "share_multi_family": null
-    },
-    "implicit_discount_rate": "project/input/investment/implicit_discount_rate.csv",
-    "health_cost": "project/input/policies/health_cost.csv",
-    "carbon_value": "project/input/policies/carbon_value.csv",
+    ]
+  },
+  "Reference": {
+    "file":"project/config/reference.json",
+    "step": 1,
+    "end": 2031,
     "policies": {
-      "carbon_tax": {
-        "start": 2017,
-        "end": 2019,
-        "tax": "project/input/policies/current/carbon_tax.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": null,
-        "name": "carbon_tax"
-      },
-      "cite": {
-        "start": 2018,
-        "end": 2019,
-        "heater": "project/input/policies/current/cite_heater_sf.csv",
-        "insulation": "project/input/policies/current/cite_insulation_sf.csv",
-        "cap": 4800,
-        "policy": "subsidy_ad_valorem",
-        "name": "cite"
-      },
-      "cee": {
-        "start": 2017,
-        "end": 2019,
-        "cumac_heater": "project/input/policies/current/cumac_heater.csv",
-        "cumac_insulation": "project/input/policies/current/cumac_insulation.csv",
-        "bonus_insulation": {
-          "value": "project/input/policies/current/cee_bonus_insulation.csv",
-          "start": 2019,
-          "end": 2022
-        },
-        "bonus_heater": {
-          "value": "project/input/policies/current/cee_bonus_heater.csv",
-          "start": 2019,
-          "end": 2026
-        },
-        "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
-        "policy": "subsidy_targeted",
-        "value": "project/input/policies/current/cee_value.csv",
-        "growth": null,
-        "name": "cee"
-      },
-      "mpr_serenite": {
-        "start": 2018,
-        "end": 2051,
-        "insulation": "project/input/policies/current/mpr_serenite.csv",
-        "cap": "project/input/policies/current/mpr_serenite_cap.csv",
-        "growth_insulation": null,
-        "non_cumulative": [
-          "cee",
-          "mpr"
-        ],
-        "target": "mpr_serenite_nb",
-        "policy": "subsidy_ad_valorem",
-        "name": "mpr_serenite"
-      },
-      "mpr": {
-        "start": 2021,
-        "end": 2019,
-        "heater": "project/input/policies/current/mpr_heater.csv",
-        "growth_heater": null,
-        "insulation": "project/input/policies/current/mpr_insulation.csv",
-        "growth_insulation": null,
-        "bonus": "project/input/policies/current/mpr_bonus.csv",
-        "name": "mpr"
-      },
-      "mpr_multifamily": {
-        "start": 2021,
-        "end": 2019,
-        "insulation": "project/input/policies/current/mpr_multifamily.csv",
-        "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
-        "non_cumulative": [
-          "cite",
-          "mpr"
-        ],
-        "target": "mpr_serenite_nb",
-        "policy": "subsidy_ad_valorem",
-        "name": "mpr_multifamily"
-      },
-      "cap": {
-        "start": 2018,
-        "end": 2019,
-        "insulation": "project/input/policies/current/subsidies_cap.csv",
-        "target": [
-          "mpr_serenite",
-          "mpr_multifamily",
-          "mpr",
-          "cite",
-          "cee"
-        ],
-        "name": "cap"
-      },
-      "reduced_vta": {
-        "start": 2018,
-        "end": 2019,
-        "value": 0.055,
-        "name": "reduced_vta"
-      },
-      "restriction_oil": {
-        "start": 2018,
-        "end": 2019,
-        "value": "Oil fuel",
-        "policy": "restriction_energy",
-        "name": "restriction_oil"
-      },
-      "obligation": {
-        "start": 2022,
-        "end": 2019,
-        "value": "project/input/policies/current/agenda_obligation_pb.csv",
-        "frequency": {
-          "value": [
-            0,
-            0.1,
-            0
-          ],
-          "index": [
-            "Owner-occupied",
-            "Privately rented",
-            "Social-housing"
-          ],
-          "name": "Occupancy status"
-        },
-        "intensive": "market_share",
-        "minimum_performance": "D",
-        "policy": "obligation",
-        "name": "obligation"
-      }
+      "file": "project/input/policies/current/policies_ref.json"
     },
     "simple": {
+      "figures": true,
+      "detailed_output": true,
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
@@ -282,8 +62,71 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false,
-      "no_natural_replacement": false,
-      "detailed_output": true
+      "no_natural_replacement": false
+    }
+  },
+  "Ambitious": {
+    "file":"project/config/reference.json",
+    "step": 1,
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_ambitious.json"
     },
-    "figures": true}
+    "simple": {
+      "figures": true,
+      "detailed_output": true,
+      "quintiles": true,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "current_policies": false,
+      "no_policy": false,
+      "income": false,
+      "prices_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
+      },
+      "insulation": false,
+      "no_heating_switch": false,
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    }
+  },
+  "Very Ambitious": {
+    "file":"project/config/reference.json",
+    "step": 1,
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_very_ambitious.json"
+    },
+    "simple": {
+      "figures": true,
+      "detailed_output": true,
+      "quintiles": true,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "current_policies": false,
+      "no_policy": false,
+      "income": false,
+      "prices_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
+      },
+      "insulation": false,
+      "no_heating_switch": false,
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    }
+  }
 }
