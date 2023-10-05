@@ -2414,43 +2414,6 @@ class AgentBuildings(ThermalBuildings):
                 Contains boolean DataFrame that established condition to get subsidies.
             """
 
-            def define_zil_target(__certificate, __certificate_before, __energy_saved_3uses):
-                """Define target (households and insulation work) that can get zil.
-
-
-                Zero_interest_loan_old is the target in terms of EPC jump.
-                zero_interest_loan_new is the requirement to be eligible to a 'global renovation' program,
-                the renovation must reduce of 35% the conventional primary energy need
-                and the resulting building must not be of G or F epc level.
-
-                Parameters
-                ----------
-                __certificate
-                __certificate_before
-                __energy_saved_3uses
-
-                Returns
-                -------
-                target_subsidies: DataFrame
-                    Each cell, a gesture and a segment, is a boolean which is True if it is targeted by the policy
-
-                """
-                energy_saved_min = 0.35
-
-                target_subsidies = {}
-                target_0 = __certificate.isin(['D', 'C', 'B', 'A']).astype(int).mul(
-                    __certificate_before.isin(['G', 'F', 'E']).astype(int), axis=0).astype(bool)
-                target_1 = __certificate.isin(['B', 'A']).astype(int).mul(
-                    __certificate_before.isin(['D', 'C']).astype(int),
-                    axis=0).astype(bool)
-                target_subsidies['zero_interest_loan_old'] = target_0 | target_1
-
-                target_0 = __certificate.isin(['E', 'D', 'C', 'B', 'A']).astype(bool)
-                target_1 = __energy_saved_3uses[__energy_saved_3uses >= energy_saved_min].fillna(0).astype(bool)
-                target_subsidies['zero_interest_loan_new'] = target_0 & target_1
-
-                return target_subsidies
-
             _condition = dict()
             if 'out_worst' in _list_conditions:
                 out_worst = (~_certificate.isin(['G', 'F'])).T.multiply(_certificate_before.isin(['G', 'F'])).T
@@ -2559,10 +2522,6 @@ class AgentBuildings(ThermalBuildings):
                 energy_condition = _energy_saved_3uses >= energy_condition
                 # _condition.update({'mpr_serenite': (reindex_mi(energy_condition, _index).T & low_income_condition).T})
                 _condition.update({'mpr_serenite': reindex_mi(energy_condition, _index)})
-
-            if 'zero_interest_loan' in _list_conditions:
-                _condition.update(
-                    {'zero_interest_loan': define_zil_target(_certificate, _certificate_before, _energy_saved_3uses)})
 
             if 'mpr_no_fg' in _list_conditions:
                 _condition.update({'mpr_no_fg': ~_certificate_before.isin(['G', 'F'])})

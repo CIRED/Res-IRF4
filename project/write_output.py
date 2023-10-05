@@ -21,7 +21,7 @@ import os
 import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    make_uncertainty_plot, format_table, select
+    make_uncertainty_plot, format_table, select, make_clusterstackedbar_plot
 from project.utils import stack_catplot, make_relplot, make_stackedbar_plot, make_scatter_plot
 from itertools import product
 from PIL import Image
@@ -452,6 +452,27 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     consumption_ini = result.get('Reference').loc['Consumption (TWh)', :].iloc[0]
     start = result.get('Reference').columns[0]
     end = result.get('Reference').columns[-1]
+
+
+    # graph comparison stock
+    variables = [('Stock {} (Million)', 'Heater'),
+                 ('Stock {} (Million)', 'Performance'),
+                 ('Consumption {} (TWh)', 'Heater'),
+                 ('Consumption {} (TWh)', 'Performance')]
+
+    groupby = 'Heater'
+    v = 'Stock {} (Million)'
+    years = [2030, 2050]
+    years = [i for i in years if (i >= start) and (i <= end)]
+    temp = grouped(result, [v.format(i) for i in resources_data['index'][groupby]])
+    temp = {k: i.loc[years, :] for k, i in temp.items()}
+    replace = {v.format(i): i for i in resources_data['index'][groupby]}
+    temp = {replace[key]: item for key, item in temp.items()}
+    temp = pd.concat(temp).rename_axis([groupby, 'Years'], axis=0).rename_axis('Scenario', axis=1)
+    temp = temp.stack('Scenario').unstack('Years')
+    make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                                save=os.path.join(folder_img, 'stock_{}.png'.format(groupby.lower())),
+                                rotation=90)
 
     # graph emission saving
     variables = {

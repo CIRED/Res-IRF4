@@ -1026,6 +1026,53 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
     save_fig(fig, save=save)
 
 
+def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: '{:.0f}'.format(y), save=None,
+                                rotation=0):
+
+    list_keys = list(df.columns)
+    y_max = df.groupby([i for i in df.index.names if i != groupby]).sum().max().max() * 1.1
+    n_columns = int(len(list_keys))
+    n_rows = 1
+    fig, axes = plt.subplots(n_rows, n_columns, figsize=(12.8, 9.6), sharex='all', sharey='all')
+    handles, labels = None, None
+    for k in range(n_rows * n_columns):
+
+        column = k % n_columns
+        ax = axes[column]
+
+        try:
+            key = list_keys[k]
+            df_temp = df[key].unstack(groupby)
+            if colors is not None:
+                df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors)
+            else:
+                df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors)
+
+            ax = format_ax(ax, format_y=format_y, ymin=0, xinteger=True)
+            ax.spines['left'].set_visible(False)
+            ax.set_ylim(ymax=y_max)
+            ax.set_xlabel('')
+
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
+            ax.tick_params(axis='both', which='major', labelsize=14)
+
+            title = key
+            if isinstance(key, tuple):
+                title = '{}-{}'.format(key[0], key[1])
+            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6, fontsize=16)
+
+            if k == 0:
+                handles, labels = ax.get_legend_handles_labels()
+                labels = [l.replace('_', ' ') for l in labels]
+            ax.get_legend().remove()
+
+        except IndexError:
+            ax.axis('off')
+
+    fig.legend(handles, labels, loc='lower center', frameon=False, ncol=3,
+               bbox_to_anchor=(0.5, -0.1))
+    save_fig(fig, save=save)
+
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
                          scatterplot=None):
