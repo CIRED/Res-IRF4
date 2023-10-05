@@ -38,7 +38,13 @@
     "step": 1,
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/current/policies_ref.json",
+      "restriction_gas": {
+        "start": 2025,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
     },
     "simple": {
       "figures": true,

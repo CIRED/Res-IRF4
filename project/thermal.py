@@ -433,7 +433,7 @@ def conventional_dhw_final(index):
 
 def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency, index,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, method='5uses'
+                              air_rate=None, unobserved=None, method='3uses'
                               ):
     """Space heating conventional, and energy performance certificate.
 

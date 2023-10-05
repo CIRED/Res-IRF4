@@ -2277,6 +2277,9 @@ class AgentBuildings(ThermalBuildings):
                        axis=0, keys=[False, True], names=['Heater replacement'])
         stock.sort_index(inplace=True)
 
+        if round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(), 0) != 0:
+            print('break')
+            print('break')
         assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
 
@@ -3711,7 +3714,7 @@ class AgentBuildings(ThermalBuildings):
         _, _, certificate_before_heater = self.consumption_heating_store(index, level_heater='Heating system')
 
         # before include the change of heating system
-        consumption_before, consumption_3uses_before, certificate_before = self.consumption_heating_store(index, level_heater='Heating system final')
+        consumption_before, consumption_3uses_before, certificate_before = self.consumption_heating_store(index,level_heater='Heating system final')
 
         surface = reindex_mi(self._surface, index)
 
@@ -4047,10 +4050,6 @@ class AgentBuildings(ThermalBuildings):
             flow_insulation = flow_insulation.where(flow_insulation < stock, stock)
 
         flow_only_heater = stock - flow_insulation
-        if self.year == 2037:
-            print('break')
-        if (flow_only_heater >= 0).all().all() is False:
-            print('break')
         assert (flow_only_heater >= 0).all().all(), 'Remaining stock is not positive'
 
         flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack(
