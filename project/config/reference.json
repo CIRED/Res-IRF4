@@ -114,6 +114,7 @@
     },
     "implicit_discount_rate": "project/input/investment/implicit_discount_rate.csv",
     "health_cost": "project/input/policies/health_cost.csv",
+    "health_probability": "project/input/policies/health_probability.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"

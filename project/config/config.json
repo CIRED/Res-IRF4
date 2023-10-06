@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": false,
+    "activated": true,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": true,
@@ -36,15 +36,9 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2021,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json",
-      "restriction_gas": {
-        "start": 2025,
-        "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
-      }
+      "file": "project/input/policies/current/policies_ref.json"
     },
     "simple": {
       "figures": true,

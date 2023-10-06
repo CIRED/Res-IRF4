@@ -453,7 +453,6 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     start = result.get('Reference').columns[0]
     end = result.get('Reference').columns[-1]
 
-
     # graph comparison stock
     variables = [('Stock {} (Million)', 'Heater'),
                  ('Stock {} (Million)', 'Performance'),
@@ -463,7 +462,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         name = v[0].split(' {}')[0].lower()
         groupby = v[1]
         v = v[0]
-        years = [2030, 2050]
+        years = [start, 2030, 2050]
         years = [i for i in years if (i >= start) and (i <= end)]
         temp = grouped(result, [v.format(i) for i in resources_data['index'][groupby]])
         temp = {k: i.loc[years, :] for k, i in temp.items()}
@@ -471,9 +470,12 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         temp = {replace[key]: item for key, item in temp.items()}
         temp = pd.concat(temp).rename_axis([groupby, 'Years'], axis=0).rename_axis('Scenario', axis=1)
         temp = temp.stack('Scenario').unstack('Years')
-        make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
-                                    save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                    rotation=90)
+        if not temp.empty:
+            if len(temp.columns) > 1:
+                make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                            format_y=lambda y, _: '{:.0f}'.format(y),
+                                            save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                            rotation=90, year_ini=start)
 
     # graph emission saving
     variables = {
@@ -647,6 +649,9 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                               )
     except KeyError:
         pass
+
+    # graph cost
+
 
     # graph distributive impact
     levels = ['Housing type', 'Occupancy status', 'Income tenant']

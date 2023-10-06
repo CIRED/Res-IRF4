@@ -1027,13 +1027,19 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
 
 def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: '{:.0f}'.format(y), save=None,
-                                rotation=0):
+                                rotation=0, year_ini=None):
 
     list_keys = list(df.columns)
     y_max = df.groupby([i for i in df.index.names if i != groupby]).sum().max().max() * 1.1
     n_columns = int(len(list_keys))
+    n_scenario = df.index.get_level_values([i for i in df.index.names if i != groupby][0]).unique()
     n_rows = 1
-    fig, axes = plt.subplots(n_rows, n_columns, figsize=(12.8, 9.6), sharex='all', sharey='all')
+    if year_ini is not None:
+        width_ratios = [1] + [len(n_scenario)] * (n_columns - 1)
+    else:
+        width_ratios = [1] * n_columns
+    fig, axes = plt.subplots(n_rows, n_columns, figsize=(12.8, 9.6), sharey='all',
+                             gridspec_kw={'width_ratios': width_ratios})
     handles, labels = None, None
     for k in range(n_rows * n_columns):
 
@@ -1043,10 +1049,15 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
         try:
             key = list_keys[k]
             df_temp = df[key].unstack(groupby)
+
+            if key == year_ini:
+                df_temp = df_temp.loc['Reference', :]
+                df_temp = df_temp.to_frame().T
+
             if colors is not None:
                 df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors)
             else:
-                df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors)
+                df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0)
 
             ax = format_ax(ax, format_y=format_y, ymin=0, xinteger=True)
             ax.spines['left'].set_visible(False)

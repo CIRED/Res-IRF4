@@ -78,6 +78,7 @@ class ThermalBuildings:
                  resources_data=None, detailed_output=None, figures=None):
 
         # default values
+        self.hi_threshold = None
         if figures is None:
             figures = True
         if detailed_output is None:
@@ -291,7 +292,8 @@ class ThermalBuildings:
             return heating_need
 
     def consumption_heating(self, index=None, freq='year', climate=None, smooth=False,
-                            full_output=False, efficiency_hour=False, level_heater='Heating system'):
+                            full_output=False, efficiency_hour=False, level_heater='Heating system',
+                            method='5uses'):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
 
         Parameters
@@ -334,7 +336,8 @@ class ThermalBuildings:
         if full_output is True:
             certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
                                                                                self._ratio_surface.copy(),
-                                                                               efficiency, _index)
+                                                                               efficiency, _index,
+                                                                               method=method)
             certificate = reindex_mi(certificate, index)
             consumption_3uses = reindex_mi(consumption_3uses, index)
 
@@ -571,7 +574,7 @@ class ThermalBuildings:
 
             return _consumption_energy
 
-    def calibration_consumption(self, prices, consumption_ini, climate=None):
+    def calibration_consumption(self, prices, consumption_ini, health_probability, climate=None):
         """Calculate energy indicators.
 
         Parameters
@@ -609,6 +612,26 @@ class ThermalBuildings:
             _consumption_actual, heating_intensity, budget_share = self.consumption_actual(prices,
                                                                                            consumption=consumption,
                                                                                            full_output=True)
+            # calibration health_cost on heating intensity
+            _, certificate, _ = self.consumption_heating(method='3uses', full_output=True)
+            temp = concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
+            temp = concat((temp, reindex_mi(certificate, temp.index).rename('Performance')), axis=1)
+            temp.set_index('Performance', append=True, inplace=True)
+            # temp = concat((temp, reindex_mi(health_probability, temp.index).rename('Share')), axis=1)
+
+            def threshold(df, target_households):
+                df = df.sort_values(by='Heating intensity', ascending=True)
+                df['cumulative_stock'] = df['Stock'].cumsum()
+                return df[df['cumulative_stock'] >= target_households]['Heating intensity'].iloc[0]
+
+            target_households = (health_probability * temp['Stock'].groupby(health_probability.index.names).sum()).sum()
+            # condition = temp.index.get_level_values('Income tenant').isin(['C1', 'C2'])
+            hi_threshold = threshold(temp, target_households)
+            # temp.loc[temp.loc[condition, 'Heating intensity'] <= hi_threshold, 'Stock'].sum()
+            self.hi_threshold = hi_threshold
+
+            # heating intensity threshold by income, performance group
+
             try:
                 df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
                 df = df.reset_index('Income tenant')
@@ -1938,7 +1961,6 @@ class AgentBuildings(ThermalBuildings):
         stock: Series
         prices: Series
         cost_heater: Series
-        lifetime_heater: Series
         calib_heater: DataFrame, optional
         policies_heater: list
         calib_heater: DataFrame, optional
@@ -2277,9 +2299,6 @@ class AgentBuildings(ThermalBuildings):
                        axis=0, keys=[False, True], names=['Heater replacement'])
         stock.sort_index(inplace=True)
 
-        if round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(), 0) != 0:
-            print('break')
-            print('break')
         assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
 
@@ -3541,7 +3560,8 @@ class AgentBuildings(ThermalBuildings):
 
         if self.rational_behavior_insulation is None:
             market_share, renovation_rate = apply_endogenous_renovation(bill_saved, subsidies_total, cost_insulation,
-                                                                        _stock=stock, _cost_financing=cost_financing,
+                                                                        _stock=stock,
+                                                                        _cost_financing=cost_financing,
                                                                         _supply=supply,
                                                                         _credit_constraint=credit_constraint,
                                                                         _proba_replacement=proba_replacement)
@@ -4448,7 +4468,7 @@ class AgentBuildings(ThermalBuildings):
             output['Taxes expenditure (Billion euro)'] = taxes_expenditures.sum() / step
 
         output['Carbon value (Billion euro)'] = (consumption_energy * carbon_value_kwh).sum()
-        output['Health cost (Billion euro)'], o = self.health_cost(inputs)
+        output['Health cost (Billion euro)'], o = self.health_cost(inputs, prices)
         self.store_over_years[self.year].update({'Health cost (Billion euro)': output['Health cost (Billion euro)']})
         output.update(o)
 
@@ -5253,7 +5273,7 @@ class AgentBuildings(ThermalBuildings):
         output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
         output['Investment heater WT (Billion euro)'] = investment_heater - output['VTA heater (Billion euro)']
 
-        output['Health cost (Billion euro)'], temp = self.health_cost(inputs)
+        output['Health cost (Billion euro)'], temp = self.health_cost(inputs, prices)
 
         output['VTA (Billion euro)'] = output['VTA insulation (Billion euro)'] + output['VTA heater (Billion euro)']
         output['Health expenditure (Billion euro)'] = temp['Health expenditure (Billion euro)']
@@ -5495,19 +5515,46 @@ class AgentBuildings(ThermalBuildings):
         flow_demolition = (stock_demolition * demolition_total).dropna()
         return flow_demolition.reorder_levels(self.stock.index.names)
 
-    def health_cost(self, param, stock=None):
-        if stock is None:
-            stock = self.simplified_stock()
+    def health_cost(self, param, prices, stock=None, version='epc'):
 
         health_cost_type = {'health_expenditure': 'Health expenditure (Billion euro)',
                             'mortality_cost': 'Social cost of mortality (Billion euro)',
                             'loss_well_being': 'Loss of well-being (Billion euro)'}
-        health_cost = dict()
-        for key, item in health_cost_type.items():
-            health_cost[item] = (stock * reindex_mi(param[key], stock.index)).sum() / 10 ** 9
+        if stock is None:
+            stock = self.stock
+        if version == 'epc':
 
-        health_cost_total = Series(health_cost).sum()
-        return health_cost_total, health_cost
+            _, certificate, _ = self.consumption_heating(method='3uses', full_output=True)
+            temp = concat((stock, reindex_mi(certificate, stock.index).rename('Performance')), axis=1)
+            temp.set_index('Performance', append=True, inplace=True)
+            temp = temp.squeeze()
+
+            health_cost = dict()
+            for key, item in health_cost_type.items():
+                health_cost[item] = (temp * reindex_mi(param[key], temp.index)).sum() / 10 ** 9
+
+            health_cost_total = Series(health_cost).sum()
+            return health_cost_total, health_cost
+        elif version == 'heating_intensity':
+            cost = {'health_expenditure': 7275,
+                    'mortality_cost': 102840,
+                    'loss_well_being': 24507}
+
+            heating_intensity = self.to_heating_intensity(stock.index, prices)
+            stock = concat((stock, heating_intensity), axis=1, keys=['Stock', 'Heating intensity'])
+            """if self.year >= 2020:
+                print(self.hi_threshold)
+                stock['Poverty'] = 0
+                stock.loc[stock['Heating intensity'] <= self.hi_threshold, 'Poverty'] = 1
+                stock.to_csv(os.path.join('stock_hi_{}.csv'.format(self.year)))"""
+
+            stock_health = stock.loc[stock['Heating intensity'] <= self.hi_threshold, 'Stock'].sum()
+
+            health_cost = dict()
+            for key, item in health_cost_type.items():
+                health_cost[item] = (stock_health * cost[key]) / 10 ** 9
+            health_cost_total = Series(health_cost).sum()
+            return health_cost_total, health_cost
 
     def marginal_abatement_cost(self, consumption_saved, emission_saved, cost_insulation, stock, prices,
                                 certificate_after, lifetime=30,

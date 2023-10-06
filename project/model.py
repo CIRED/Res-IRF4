@@ -350,6 +350,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         'consumption_ini': parsed_inputs['consumption_ini'],
         'supply': parsed_inputs['supply'],
         'premature_replacement': parsed_inputs['premature_replacement'],
+        'health_probability': parsed_inputs['health_probability'],
         'output': config['output']
     }
     return inputs_dynamic
@@ -470,8 +471,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
                              'Switch {} (Thousand households)'.format(i) in output.keys()})
         if new_heating is not None:
             switch_heating = switch_heating.add(new_heating, fill_value=0)
-        if year >= 2037:
-            print('stop')
+
         lifetime_heater = (buildings.lifetime_heater - 1) * (heating + switch_heating) / heating
         lifetime_heater.fillna(buildings.lifetime_heater, inplace=True)
         # cannot be less than 1
@@ -536,7 +536,9 @@ def res_irf(config, path, level_logger='DEBUG'):
                 calibration = load(file)
                 buildings.calibration_exogenous(**calibration)
         else:
-            buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :], inputs_dynamics['consumption_ini'])
+            buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :],
+                                              inputs_dynamics['consumption_ini'],
+                                              inputs_dynamics['health_probability'])
 
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
                                           taxes=taxes)
