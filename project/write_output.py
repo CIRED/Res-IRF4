@@ -671,23 +671,27 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     df = df.stack('Scenario')
 
     years = [2018, 2030, 2050]
-    df = df.loc[:, years]
+    df = df.loc[:, [i for i in years if i in df.columns]]
 
     groupby = 'Type'
     name = 'cost_households_owner'
     temp = df.xs(('Single-family', 'Owner-occupied', 'C1'), level='Household').copy()
     temp.dropna(how='all', inplace=True, axis=1)
-    make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
-                                format_y=lambda y, _: '{:.0f}'.format(y),
-                                save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                rotation=90, year_ini=2018)
+    if not temp.empty:
+        if len(temp.columns) > 1:
+            make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                        format_y=lambda y, _: '{:.0f}'.format(y),
+                                        save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                        rotation=90, year_ini=2018)
     temp = df.xs(('Single-family', 'Privately rented', 'C1'), level='Household').copy()
     name = 'cost_households_renter'
     temp.dropna(how='all', inplace=True, axis=1)
-    make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
-                                format_y=lambda y, _: '{:.0f}'.format(y),
-                                save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                rotation=90, year_ini=2018)
+    if not temp.empty:
+        if len(temp.columns) > 1:
+            make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                        format_y=lambda y, _: '{:.0f}'.format(y),
+                                        save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                        rotation=90, year_ini=2018)
 
     # graph distributive impact
     levels = ['Housing type', 'Occupancy status', 'Income tenant']

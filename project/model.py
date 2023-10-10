@@ -324,7 +324,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                rational_behavior_heater=parsed_inputs['rational_behavior_heater'],
                                resources_data=resources_data,
                                detailed_output=config['simple'].get('detailed_output'),
-                               figures=config['simple'].get('figures'))
+                               figures=config['simple'].get('figures'),
+                               method_health_cost=config.get('method_health_cost'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():

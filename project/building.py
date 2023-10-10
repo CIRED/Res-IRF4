@@ -613,8 +613,8 @@ class ThermalBuildings:
                                                                                            consumption=consumption,
                                                                                            full_output=True)
             # calibration health_cost on heating intensity
-            total_health_cost = self.health_cost(health_cost_dpe, health_cost_income, prices, version='epc')
-
+            total_health_cost = self.health_cost(health_cost_dpe, health_cost_income, prices,
+                                                 method_health_cost='epc')
             """_, certificate, _ = self.consumption_heating(method='3uses', full_output=True)
             temp = concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
             temp = concat((temp, reindex_mi(certificate, temp.index).rename('Performance')), axis=1)
@@ -901,6 +901,7 @@ class AgentBuildings(ThermalBuildings):
                  quintiles=None, financing_cost=True,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
                  resources_data=None, detailed_output=True, figures=None,
+                 method_health_cost=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures)
@@ -981,6 +982,11 @@ class AgentBuildings(ThermalBuildings):
         self._balance_state_ini = None
 
         self.lifetime_heater = lifetime_heater
+
+        # 'epc', 'heating_intensity'
+        if method_health_cost is None:
+            method_health_cost = 'epc'
+        self.method_health_cost = method_health_cost
 
     @property
     def year(self):
@@ -5570,11 +5576,14 @@ class AgentBuildings(ThermalBuildings):
         flow_demolition = (stock_demolition * demolition_total).dropna()
         return flow_demolition.reorder_levels(self.stock.index.names)
 
-    def health_cost(self, health_cost_dpe, health_cost_income, prices, stock=None, version='heating_intensity'):
+    def health_cost(self, health_cost_dpe, health_cost_income, prices, stock=None, method_health_cost=None):
+
+        if method_health_cost is None:
+            method_health_cost = self.method_health_cost
 
         if stock is None:
             stock = self.stock
-        if version == 'epc':
+        if method_health_cost == 'epc':
 
             _, certificate, _ = self.consumption_heating(method='3uses', full_output=True)
             temp = concat((stock, reindex_mi(certificate, stock.index).rename('Performance')), axis=1)
@@ -5583,7 +5592,7 @@ class AgentBuildings(ThermalBuildings):
 
             return (temp * reindex_mi(health_cost_dpe, temp.index)).sum() / 10 ** 9
 
-        elif version == 'heating_intensity':
+        elif method_health_cost == 'heating_intensity':
 
             heating_intensity = self.to_heating_intensity(stock.index, prices)
             stock = concat((stock, heating_intensity), axis=1, keys=['Stock', 'Heating intensity'])
