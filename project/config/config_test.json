@@ -4,7 +4,7 @@
     "current_policies": true,
     "no_policy": true,
     "prices_constant": null,
-    "constant": true,
+    "constant": null,
     "policies": null,
     "add_policies": null,
     "remove_policies": null,
@@ -97,17 +97,18 @@
       "no_natural_replacement": false
     }
   },
-  "BanGas": {
+  "Ban": {
     "file":"project/config/reference.json",
     "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/current/policies_ambitious.json",
-      "restriction_gas": {
+      "restriction_standalone_gas": {
         "start": 2025,
         "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
+        "value": ["Natural gas-Standard boiler", "Natural gas-Performance boiler"],
+        "policy": "restriction_heater",
+        "target": "Single-family"
       }
     },
     "simple": {

@@ -3,7 +3,7 @@
     "carbon_tax": {
       "start": 2017,
       "end": 2051,
-      "tax": "project/input/policies/current/carbon_tax.csv",
+      "tax": "project/input/policies/current/carbon_tax_growth.csv",
       "emission": "project/input/policies/current/carbon_tax_emission.csv",
       "recycling": null
     },
@@ -28,7 +28,7 @@
       "bonus_heater": {
         "value": "project/input/policies/current/cee_bonus_heater.csv",
         "start": 2019,
-        "end": 2026
+        "end": 2051
       },
       "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
       "policy": "subsidy_targeted",
@@ -43,7 +43,8 @@
       "growth_insulation": null,
       "non_cumulative": [
         "cee",
-        "mpr"
+        "mpr",
+        "mpr_efficacite"
       ],
       "target": "mpr_serenite_nb",
       "policy": "subsidy_ad_valorem"
@@ -52,7 +53,6 @@
       "start": 2023,
       "end": 2051,
       "insulation": "project/input/policies/current/mpr_performance.csv",
-      "cap": null,
       "growth_insulation": null,
       "non_cumulative": [
         "cee",
@@ -60,6 +60,7 @@
         "mpr_efficacite"
       ],
       "target": "mpr_serenite_nb",
+      "cap": "project/input/policies/current/mpr_performance_cap.csv",
       "policy": "subsidy_ad_valorem"
     },
     "mpr": {
@@ -112,7 +113,7 @@
     },
     "reduced_vta": {
       "start": 2018,
-      "end": 2051,
+      "end": 2023,
       "value": 0.055
     },
     "restriction_oil": {

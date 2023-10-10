@@ -492,7 +492,8 @@ def plot_compare_scenarios(result, folder, quintiles=None):
     df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
     df = df.rename(index=variables)
     df /= emission_ini
-    make_stackedbar_plot(df.T, 'Emission saving to {} (% of initial emission {} - {:.0f} MtCO2)'.format(end, start, emission_ini), ncol=2, ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
+    make_stackedbar_plot(df.T, 'Emission saving to {} (% of initial emission {} - {:.0f} MtCO2)'.format(end, start, emission_ini),
+                         ncol=2, ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
                          colors=colors_temp, save=os.path.join(folder_img, 'emission_saving_decomposition.png'),
                          rotation=20, left=1.2)
     emission_saving = df.sum()
@@ -546,7 +547,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
             make_stackedbar_plot(diff.drop('Reference', axis=1).T,
                                  'Running cost compare to Reference to {} (Billion euro)'.format(end), ncol=3, ymin=None,
                                  format_y=lambda y, _: '{:.0f}'.format(y),
-                                 hline=0, scatterplot=cost_diff_total, colors=resources_data['colors'],
+                                 hline=0, scatterplot=cost_diff_total.drop('Reference'), colors=resources_data['colors'],
                                  save=os.path.join(folder_img, 'running_cost_comparison.png'), rotation=0,
                                  left=1.3)
 
@@ -612,7 +613,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                  'Cost-benefits analysis compare to Reference to {} (Billion euro)'.format(end),
                                  ncol=3, ymin=None,
                                  format_y=lambda y, _: '{:.0f}'.format(y),
-                                 hline=0, scatterplot=cba_diff_total, colors=resources_data['colors'],
+                                 hline=0, scatterplot=cba_diff_total.drop('Reference'), colors=resources_data['colors'],
                                  save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), rotation=0,
                                  left=1.3)
 
@@ -651,7 +652,42 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         pass
 
     # graph cost
+    data = pd.concat(result).rename_axis(['Scenario', 'Variable'], axis=0).rename_axis('Years', axis=1).unstack('Scenario')
+    levels = ['Housing type', 'Occupancy status', 'Income tenant']
+    idx = list(product(*[resources_data['index'][i] for i in levels]))
 
+    stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+    stock = data.loc[stock, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
+
+    cost = ['Annuities {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+    cost = data.loc[cost, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
+    cost_avg = cost / stock
+
+    energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+    energy = data.loc[energy, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
+    energy_avg = energy / stock
+
+    df = pd.concat((cost_avg, energy_avg), axis=0, keys=['Cost', 'Energy'], names=['Type'])
+    df = df.stack('Scenario')
+
+    years = [2018, 2030, 2050]
+    df = df.loc[:, years]
+
+    groupby = 'Type'
+    name = 'cost_households_owner'
+    temp = df.xs(('Single-family', 'Owner-occupied', 'C1'), level='Household').copy()
+    temp.dropna(how='all', inplace=True, axis=1)
+    make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                format_y=lambda y, _: '{:.0f}'.format(y),
+                                save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                rotation=90, year_ini=2018)
+    temp = df.xs(('Single-family', 'Privately rented', 'C1'), level='Household').copy()
+    name = 'cost_households_renter'
+    temp.dropna(how='all', inplace=True, axis=1)
+    make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                format_y=lambda y, _: '{:.0f}'.format(y),
+                                save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                rotation=90, year_ini=2018)
 
     # graph distributive impact
     levels = ['Housing type', 'Occupancy status', 'Income tenant']
@@ -1139,12 +1175,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
                                                 for i in resources_data['index']['Energy'])})
 
-            if details_health:
-                temp.update({'Well-being benefit': df['Loss of well-being (Billion euro)']})
-                temp.update({'Health savings': df['Health expenditure (Billion euro)']})
-                temp.update({'Mortality reduction benefit': df['Social cost of mortality (Billion euro)']})
-            else:
-                temp.update({'Health cost': df['Health cost (Billion euro)']})
+            temp.update({'Health cost': df['Health cost (Billion euro)']})
 
             if 'AP' in s:
                 temp = pd.Series(temp)
@@ -1213,8 +1244,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
         rslt = {}
         for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
-                    'Health expenditure (Billion euro)', 'Social cost of mortality (Billion euro)',
-                    'Loss of well-being (Billion euro)', 'Health cost (Billion euro)', 'Emission (MtCO2)']:
+                    'Health cost (Billion euro)', 'Emission (MtCO2)']:
             rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
                                           values=None)
 

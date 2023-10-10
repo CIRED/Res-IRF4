@@ -232,8 +232,8 @@ def select_post_inputs(parsed_inputs):
     vars = ['carbon_emission', 'renewable_gas',
             'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
-            'health_expenditure', 'mortality_cost', 'loss_well_being', 'carbon_value_kwh', 'carbon_value',
-            'use_subsidies', 'health_cost', 'implicit_discount_rate', 'energy_prices_wt']
+            'health_cost_dpe', 'health_cost_income', 'carbon_value_kwh', 'carbon_value',
+            'use_subsidies', 'implicit_discount_rate', 'energy_prices_wt']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
@@ -350,7 +350,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         'consumption_ini': parsed_inputs['consumption_ini'],
         'supply': parsed_inputs['supply'],
         'premature_replacement': parsed_inputs['premature_replacement'],
-        'health_probability': parsed_inputs['health_probability'],
+        'health_cost_dpe': parsed_inputs['health_cost_dpe'],
+        'health_cost_income': parsed_inputs['health_cost_income'],
         'output': config['output']
     }
     return inputs_dynamic
@@ -538,7 +539,8 @@ def res_irf(config, path, level_logger='DEBUG'):
         else:
             buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :],
                                               inputs_dynamics['consumption_ini'],
-                                              inputs_dynamics['health_probability'])
+                                              inputs_dynamics['health_cost_income'],
+                                              inputs_dynamics['health_cost_dpe'])
 
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
                                           taxes=taxes)
@@ -628,7 +630,7 @@ def res_irf(config, path, level_logger='DEBUG'):
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
                                                prices, 0.05,
                                                inputs_dynamics['post_inputs']['implicit_discount_rate'],
-                                               inputs_dynamics['post_inputs']['health_cost'].sum(axis=1),
+                                               inputs_dynamics['post_inputs']['health_cost_dpe'],
                                                inputs_dynamics['post_inputs']['carbon_value_kwh'].loc[year, :],
                                                inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :])
 
