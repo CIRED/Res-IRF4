@@ -70,7 +70,7 @@
     "step": 1,
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json"
+      "file": "project/input/policies/current/policies_ambitious_insulation.json"
     },
     "simple": {
       "figures": true,
@@ -141,7 +141,7 @@
     "step": 1,
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json",
+      "file": "project/input/policies/current/policies_ambitious_insulation.json",
       "restriction_standalone_gas": {
         "start": 2025,
         "end": 2051,
