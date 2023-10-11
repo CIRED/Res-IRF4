@@ -462,7 +462,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         name = v[0].split(' {}')[0].lower()
         groupby = v[1]
         v = v[0]
-        years = [start, 2030, 2050]
+        years = [start, 2030, end]
         years = [i for i in years if (i >= start) and (i <= end)]
         temp = grouped(result, [v.format(i) for i in resources_data['index'][groupby]])
         temp = {k: i.loc[years, :] for k, i in temp.items()}
