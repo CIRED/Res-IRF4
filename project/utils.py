@@ -1080,8 +1080,8 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
         except IndexError:
             ax.axis('off')
 
-    fig.legend(handles, labels, loc='center right', frameon=False, ncol=3,
-               bbox_to_anchor=(0.5, -0.1), fontsize=SMALL_SIZE)
+    fig.legend(handles, labels, loc='center left', frameon=False, ncol=1,
+               bbox_to_anchor=(1, 0.5), fontsize=MEDIUM_SIZE)
     save_fig(fig, save=save)
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
