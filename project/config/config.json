@@ -36,7 +36,8 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2021,
+    "end": 2051,
+    "method_health_cost": "heating_intensity",
     "policies": {
       "file": "project/input/policies/current/policies_ref.json"
     },

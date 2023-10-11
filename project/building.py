@@ -5490,7 +5490,7 @@ class AgentBuildings(ThermalBuildings):
     def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
                               scale_heater=None, constant_insulation_intensive=None, constant_insulation_extensive=None,
                               scale_insulation=None, energy_prices=None, rational_hidden_cost=None,
-                              number_firms_insulation=None, number_firms_heater=None):
+                              number_firms_insulation=None, number_firms_heater=None, hi_threshold=None):
         """Function calibrating buildings object with exogenous data.
 
 
@@ -5533,6 +5533,8 @@ class AgentBuildings(ThermalBuildings):
 
             if scale_insulation is not None:
                 self.apply_scale(scale_insulation, gest='insulation')
+
+        self.hi_threshold = hi_threshold
         self.number_firms_insulation, self.number_firms_heater = number_firms_insulation, number_firms_heater
 
     def remove_calibration(self):

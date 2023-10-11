@@ -739,7 +739,8 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
             'scale_insulation': buildings.scale_insulation,
             'number_firms_insulation': buildings.number_firms_insulation,
             'number_firms_heater': buildings.number_firms_heater,
-            'rational_hidden_cost': buildings.rational_hidden_cost
+            'rational_hidden_cost': buildings.rational_hidden_cost,
+            'hi_threshold': buildings.hi_threshold
         }
 
         return calibration
