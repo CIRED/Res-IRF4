@@ -897,8 +897,7 @@ class AgentBuildings(ThermalBuildings):
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
                  performance_insulation_renovation, lifetime_heater=None, path=None, year=2018,
                  endogenous=True, exogenous=None, expected_utility=None,
-                 logger=None, calib_scale=True,
-                 quintiles=None, financing_cost=True,
+                 logger=None, calib_scale=True, quintiles=None, financing_cost=True,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
                  resources_data=None, detailed_output=True, figures=None,
                  method_health_cost=None
@@ -2518,8 +2517,8 @@ class AgentBuildings(ThermalBuildings):
                 _certificate_before_heater.replace(EPC2INT),
                 axis=0)
             _condition.update({'epc_upgrade_all': _epc_upgrade_all})
-            if 'deep_renovation' in _list_conditions:
-                _condition.update({'deep_renovation': _epc_upgrade_all >= deep_condition})
+            # if 'deep_renovation' in _list_conditions:
+            _condition.update({'deep_renovation': _epc_upgrade_all >= deep_condition})
 
             if 'epc_upgrade_min' in _list_conditions:
                 _condition.update({'epc_upgrade_min': _epc_upgrade_all >= 1})
@@ -2569,6 +2568,20 @@ class AgentBuildings(ThermalBuildings):
             if 'heater_replacement' in _list_conditions:
                 _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)
                 _condition.update({'heater_replacement': _temp})
+
+            if 'heater_replacement_low_carbon' in _list_conditions:
+                _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)
+                _temp = _temp & pd.Series(_certificate.index.get_level_values('Heating system final').isin(
+                    self._resources_data['index']['Low Carbon']), index=_certificate.index)
+                _temp = (_condition['deep_renovation'].T & _temp).T
+                _condition.update({'heater_replacement_low_carbon': _temp})
+
+            if 'heater_replacement_heat_pump' in _list_conditions:
+                _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)
+                _temp = _temp & pd.Series(_certificate.index.get_level_values('Heating system final').isin(
+                    self._resources_data['index']['Heat pumps']), index=_certificate.index)
+                _temp = (_condition['deep_renovation'].T & _temp).T
+                _condition.update({'heater_replacement_heat_pump': _temp})
 
             if 'mpr_no_fg_heater_replacement' in _list_conditions:
                 _temp = pd.Series(_certificate.index.get_level_values('Heater replacement'), index=_certificate.index)

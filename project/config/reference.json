@@ -113,7 +113,7 @@
       "share_multi_family": null
     },
     "implicit_discount_rate": "project/input/investment/implicit_discount_rate.csv",
-    "method_health_cost": "epc",
+    "method_health_cost": "heating_intensity",
     "health_cost_dpe": "project/input/policies/health_cost_dpe.csv",
     "health_cost_income": "project/input/policies/health_cost_income.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",

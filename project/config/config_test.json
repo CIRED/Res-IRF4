@@ -136,6 +136,46 @@
       "no_natural_replacement": false
     }
   },
+  "Enhanced": {
+    "file":"project/config/reference.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/current/policies_ref.json",
+      "subsidies": {
+        "start": 2025,
+        "end": 2051,
+        "policy": "subsidy_ad_valorem",
+        "value": 0.5,
+        "gest": "insulation",
+        "target": "heater_replacement_low_carbon"
+      }
+    },
+    "simple": {
+      "figures": true,
+      "detailed_output": true,
+      "quintiles": true,
+      "surface": false,
+      "ratio_surface": false,
+      "stock": false,
+      "current_policies": false,
+      "no_policy": false,
+      "income": false,
+      "prices_constant": false,
+      "heating_system": {
+        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
+      },
+      "insulation": false,
+      "no_heating_switch": false,
+      "collective_boiler": false,
+      "no_natural_replacement": false
+    }
+  },
   "BanAmbitious": {
     "file":"project/config/reference.json",
     "step": 1,
