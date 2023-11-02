@@ -4409,6 +4409,10 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
 
+        temp = self.consumption_agg(energy=True, standard=True, freq='year')
+        temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
+        output.update(temp.T)
+
         emission = inputs['carbon_emission'].loc[self.year:, :].copy()
         if inputs.get('renewable_gas') is not None:
             renewable_gas = inputs['renewable_gas'].loc[self.year:]
@@ -4798,6 +4802,9 @@ class AgentBuildings(ThermalBuildings):
             for i in ['Wall', 'Floor', 'Roof', 'Windows']:
                 temp = replaced_by_grouped.xs(True, level=i, axis=1).sum(axis=1)
                 o['Replacement {} (Thousand households)'.format(i)] = temp.sum() / 10 ** 3 / step
+
+                t = temp * reindex_mi(self._surface * self._ratio_surface.loc[:, i], temp.index)
+                o['Replacement {} (Million m2)'.format(i)] = t.sum() / 10 ** 6 / step
 
                 cost = self._renovation_store['cost_component'].loc[:, i]
                 t = reindex_mi(cost, temp.index) * temp

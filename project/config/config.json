@@ -36,10 +36,17 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2021,
     "method_health_cost": "heating_intensity",
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/current/policies_ref.json",
+      "sub_proportional": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": ["insulation"],
+          "value": 1,
+          "proportional": "MWh_cumac"}
     },
     "simple": {
       "figures": true,
@@ -57,8 +64,7 @@
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
         "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water"
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },
       "insulation": false,
       "no_heating_switch": false,

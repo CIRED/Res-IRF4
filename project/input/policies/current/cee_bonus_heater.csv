@@ -1,11 +1,21 @@
-﻿Income owner,Electricity-Heat pump water,Wood fuel-Performance boiler
-D1,4000,4000
-D2,4000,4000
-D3,4000,4000
-D4,4000,4000
-D5,2500,2500
-D6,2500,2500
-D7,2500,2500
-D8,2500,2500
-D9,2500,2500
-D10,2500,2500
+﻿Heating system final,Income owner,
+Electricity-Heat pump water,D1,4000
+Electricity-Heat pump water,D2,4000
+Electricity-Heat pump water,D3,4000
+Electricity-Heat pump water,D4,4000
+Electricity-Heat pump water,D5,2500
+Electricity-Heat pump water,D6,2500
+Electricity-Heat pump water,D7,2500
+Electricity-Heat pump water,D8,2500
+Electricity-Heat pump water,D9,2500
+Electricity-Heat pump water,D10,2500
+Wood fuel-Performance boiler,D1,4000
+Wood fuel-Performance boiler,D2,4000
+Wood fuel-Performance boiler,D3,4000
+Wood fuel-Performance boiler,D4,4000
+Wood fuel-Performance boiler,D5,2500
+Wood fuel-Performance boiler,D6,2500
+Wood fuel-Performance boiler,D7,2500
+Wood fuel-Performance boiler,D8,2500
+Wood fuel-Performance boiler,D9,2500
+Wood fuel-Performance boiler,D10,2500

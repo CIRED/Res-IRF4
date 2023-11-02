@@ -1,3 +1,9 @@
-﻿Housing type,Electricity-Heat pump water,Electricity-Heat pump air,Natural gas-Performance boiler,Wood fuel-Performance boiler
-Single-family,66400,77900,46900,41300
-Multi-family,26400,17400,21200,33800
+﻿Heating system final,Housing type,
+Electricity-Heat pump water,Single-family,66400
+Electricity-Heat pump water,Multi-family,26400
+Electricity-Heat pump air,Single-family,77900
+Electricity-Heat pump air,Multi-family,17400
+Natural gas-Performance boiler,Single-family,46900
+Natural gas-Performance boiler,Multi-family,21200
+Wood fuel-Performance boiler,Single-family,41300
+Wood fuel-Performance boiler,Multi-family,33800
