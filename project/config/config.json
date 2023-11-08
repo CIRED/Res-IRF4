@@ -64,7 +64,8 @@
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
         "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
+        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+        "Electricity-Heat pump air": "Electricity-Heat pump water"
       },
       "insulation": false,
       "no_heating_switch": false,

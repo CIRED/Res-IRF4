@@ -482,7 +482,7 @@ class ThermalBuildings:
             return consumption, heating_intensity, budget_share
 
     def consumption_agg(self, prices=None, freq='year', climate=None, smooth=False,
-                        standard=False, efficiency_hour=False, existing=False, energy=False, bill_rebate=0):
+                        standard=False, efficiency_hour=False, existing=False, agg='all', bill_rebate=0):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -512,11 +512,14 @@ class ThermalBuildings:
                 consumption = reindex_mi(consumption, self.stock.index) * self.surface * self.stock
                 if existing is True:
                     consumption = consumption[consumption.index.get_level_values('Existing')]
-                if energy is False:
+
+                if agg == 'all':
                     return consumption.sum() / 10 ** 9
-                else:
+                elif agg == 'energy':
                     energy = self.energy.reindex(consumption.index)
                     return consumption.groupby(energy).sum() / 10 ** 9
+                elif agg == 'heater':
+                    return consumption.groupby('Heating system').sum() / 10 ** 9
 
         if standard is False:
             if freq == 'year':
@@ -526,12 +529,14 @@ class ThermalBuildings:
                 if existing is True:
                     consumption = consumption[consumption.index.get_level_values('Existing')]
                 consumption = self.consumption_actual(prices, consumption=consumption, bill_rebate=bill_rebate) * self.stock
-                consumption = self.apply_calibration(consumption) / 10 ** 9
 
-                if energy is False:
-                    return consumption.sum()
+                if agg == 'all':
+                    consumption = self.apply_calibration(consumption, agg='energy') / 10 ** 9
+                    consumption = consumption.sum()
                 else:
-                    return consumption
+                    consumption = self.apply_calibration(consumption, agg=agg) / 10 ** 9
+
+                return consumption
 
             if freq == 'hour':
                 consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth,
@@ -544,7 +549,7 @@ class ThermalBuildings:
                 consumption = self.apply_calibration(consumption)
                 return consumption
 
-    def apply_calibration(self, consumption, level_heater='Heating system'):
+    def apply_calibration(self, consumption, level_heater='Heating system', agg='energy'):
         if self.coefficient_global is None:
             raise AttributeError
 
@@ -563,7 +568,13 @@ class ThermalBuildings:
                 _consumption_heater.index.str.split('-').str[0].rename('Energy')).sum()
             _consumption_energy['Wood fuel'] += consumption_secondary.sum()
 
-            return _consumption_energy
+            _consumption_heater['Wood fuel-Performance boiler'] += consumption_secondary.sum()
+            if agg == 'energy':
+                return _consumption_energy
+            elif agg == 'heater':
+                return _consumption_heater
+            else:
+                raise ValueError
 
         elif isinstance(consumption, DataFrame):
             _consumption_heater = (consumption_heater.T * self.coefficient_heater).T
@@ -825,13 +836,13 @@ class ThermalBuildings:
         bill_rebate
         """
         output = dict()
-        temp = self.consumption_agg(freq='year', standard=True, existing=True, energy=True)
+        temp = self.consumption_agg(freq='year', standard=True, existing=True, agg='energy')
         output.update({'Consumption standard (TWh)': temp.sum()})
         temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
         output.update(temp)
 
         temp = self.consumption_agg(prices=prices, freq='year', standard=False, climate=None, smooth=False,
-                                    existing=True, energy=True, bill_rebate=bill_rebate)
+                                    existing=True, agg='energy', bill_rebate=bill_rebate)
         output.update({'Consumption (TWh)': temp.sum()})
         emission = (temp * carbon_content).sum() / 10 ** 3
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -4336,30 +4347,34 @@ class AgentBuildings(ThermalBuildings):
             stock_new = self.stock.xs(False, level='Existing').sum() / 10 ** 6
         output['Stock new (Million)'] = stock_new
 
-        output['Surface (Million m2)'] = (self.stock * self.surface).sum() / 10 ** 6
-        output['Surface existing (Million m2)'] = (self.stock * self.surface).xs(True, level='Existing').sum() / 10 ** 6
+        surface = self.stock * self.surface
+        output['Surface (Million m2)'] = surface.sum() / 10 ** 6
+        output['Surface existing (Million m2)'] = surface.xs(True, level='Existing').sum() / 10 ** 6
         surface_new = 0
         if False in self.stock.index.get_level_values('Existing'):
-            surface_new = (self.stock * self.surface).xs(False, level='Existing').sum() / 10 ** 6
+            surface_new = surface.xs(False, level='Existing').sum() / 10 ** 6
         output['Surface new (Million m2)'] = surface_new
+
+        surface = surface.groupby('Heating system').sum()
+        output.update({'Surface {} (Million m2)'.format(i): surface.loc[i] / 10 ** 6 for i in surface.index})
 
         if 'population' in inputs.keys():
             output['Surface (m2/person)'] = (
                     output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
         output['Consumption standard (TWh)'] = self.consumption_agg(prices=prices, freq='year', climate=climate,
-                                                                    standard=True, energy=False)
+                                                                    standard=True, agg='all')
         output['Consumption standard (kWh/m2)'] = (output['Consumption standard (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
 
-        consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True,
-                                                  bill_rebate=bill_rebate)
+        consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False,
+                                                  agg='energy', bill_rebate=bill_rebate)
         output['Consumption (TWh)'] = consumption_energy.sum()
         output['Consumption (kWh/m2)'] = (output['Consumption (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
 
         output['Consumption existing (TWh)'] = self.consumption_agg(prices=prices, freq='year', existing=True,
-                                                                    energy=False, bill_rebate=bill_rebate)
+                                                                    agg='all', bill_rebate=bill_rebate)
         output['Consumption new (TWh)'] = output['Consumption (TWh)'] - output['Consumption existing (TWh)']
         output['Consumption existing (kWh/m2)'] = (output['Consumption existing (TWh)'] * 10 ** 9) / (
                 output['Surface existing (Million m2)'] * 10 ** 6)
@@ -4381,25 +4396,29 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T)
 
-        consumption = self.consumption_actual(prices) * self.stock
-        consumption_calib = consumption * self.coefficient_global
-        consumption_hp = consumption_calib[consumption_calib.index.get_level_values('Heating system').isin(
-            self._resources_data['index']['Heat pumps'])]
-        output.update({'Consumption Heat pump (TWh)': consumption_hp.sum() / 10 ** 9})
-        output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity (TWh)'] - output[
-            'Consumption Heat pump (TWh)']})
+        temp = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False,
+                                    agg='heater', bill_rebate=bill_rebate).dropna()
+        consumption_hp = sum([temp.loc[i] for i in self._resources_data['index']['Heat pumps'] if i in temp.index])
+        temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
+        output.update(temp.T)
+
+        output.update({'Consumption Heat pump (TWh)': consumption_hp})
+        output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity-Performance boiler (TWh)']})
         output.update({'Consumption District heating (TWh)': output['Consumption Heating (TWh)']})
 
         consumption_energy_climate = None
         if climate is not None:
             consumption_energy_climate = self.consumption_agg(prices=prices, freq='year', climate=climate,
-                                                              standard=False, energy=True, bill_rebate=bill_rebate)
+                                                              standard=False, agg='energy', bill_rebate=bill_rebate)
             output['Consumption climate (TWh)'] = consumption_energy_climate.sum()
             temp = consumption_energy_climate.copy()
             temp.index = temp.index.map(lambda x: 'Consumption {} climate (TWh)'.format(x))
             output.update(temp.T)
             output['Factor climate (%)'] = output['Consumption climate (TWh)'] / output['Consumption (TWh)']
 
+        consumption = self.consumption_actual(prices) * self.stock
+        consumption_calib = consumption * self.coefficient_global
+        # correct that do consider secondary heating system
         temp = consumption_calib.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -4409,7 +4428,7 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
 
-        temp = self.consumption_agg(energy=True, standard=True, freq='year')
+        temp = self.consumption_agg(agg='heater', standard=True, freq='year')
         temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
         output.update(temp.T)
 
@@ -5337,7 +5356,7 @@ class AgentBuildings(ThermalBuildings):
 
         # emission
         emission = inputs['carbon_emission'].loc[self.year, :]
-        consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True,
+        consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, agg='energy',
                                                   bill_rebate=bill_rebate)
         temp = consumption_energy * emission
         output['Emission (MtCO2)'] = temp.sum() / 10 ** 3
@@ -5365,7 +5384,7 @@ class AgentBuildings(ThermalBuildings):
 
         if taxes is not None:
             consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False,
-                                                      energy=True, bill_rebate=bill_rebate)
+                                                      agg='energy', bill_rebate=bill_rebate)
 
             taxes_expenditures = dict()
             total_taxes = Series(0, index=prices.index)
@@ -5423,7 +5442,7 @@ class AgentBuildings(ThermalBuildings):
         return output
 
     def parse_output_consumption(self, prices, bill_rebate=0):
-        output = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, energy=True,
+        output = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False, agg='energy',
                                       bill_rebate=bill_rebate)
         output.index = output.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         temp = prices.T
