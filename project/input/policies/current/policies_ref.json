@@ -43,6 +43,7 @@
       "growth_insulation": null,
       "non_cumulative": [
         "cee",
+        "cite",
         "mpr"
       ],
       "target": "mpr_serenite_nb",
