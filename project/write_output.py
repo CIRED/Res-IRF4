@@ -464,6 +464,7 @@ def plot_compare_scenarios(result, folder, quintiles=None):
         v = v[0]
         years = list({start, 2030, end})
         years = [i for i in years if (i >= start) and (i <= end)]
+        years.sort()
         temp = grouped(result, [v.format(i) for i in resources_data['index'][groupby]])
         temp = {k: i.loc[years, :] for k, i in temp.items()}
         replace = {v.format(i): i for i in resources_data['index'][groupby]}
@@ -694,54 +695,57 @@ def plot_compare_scenarios(result, folder, quintiles=None):
                                         rotation=90, year_ini=2018)
 
     # graph distributive impact
-    levels = ['Housing type', 'Occupancy status', 'Income tenant']
-    idx = list(product(*[resources_data['index'][i] for i in levels]))
+    try:
+        levels = ['Housing type', 'Occupancy status', 'Income tenant']
+        idx = list(product(*[resources_data['index'][i] for i in levels]))
 
-    years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
-    years = list(set(years))
-    years = [y for y in years if y in result['Reference'].columns]
+        years = [2020, 2030, 2040, 2050, max(result['Reference'].columns)]
+        years = list(set(years))
+        years = [y for y in years if y in result['Reference'].columns]
+        years.sort()
 
-    ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
+        ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
 
-    idx = pd.MultiIndex.from_tuples(idx, names=levels)
-    dict_rslt = {k: i.loc[ratio, :].set_axis(idx, axis=0).dropna(axis=1, how='all') for k, i in result.items()}
+        idx = pd.MultiIndex.from_tuples(idx, names=levels)
+        dict_rslt = {k: i.loc[ratio, :].set_axis(idx, axis=0).dropna(axis=1, how='all') for k, i in result.items()}
 
-    start = min(dict_rslt['Reference'].columns)
-    ini = pd.DataFrame({k: i.loc[:, start] for k, i in dict_rslt.items() if start in i.columns})
+        start = min(dict_rslt['Reference'].columns)
+        ini = pd.DataFrame({k: i.loc[:, start] for k, i in dict_rslt.items() if start in i.columns})
 
-    for year in years:
-        df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
+        for year in years:
+            df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
 
-        data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-        data = format_table(data, name='Scenarios')
-        data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
+            data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+            data = format_table(data, name='Scenarios')
+            data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
 
-        make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)),
-                     title='Energy expenditure on income ratio in {}'.format(year))
+            make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)),
+                         title='Energy expenditure on income ratio in {}'.format(year))
 
-        # > 0 positive means households are loosing money compare to ref
-        if df.shape[1] > 1:
-            rate = ((df.T - df.loc[:, 'Reference']) / df.loc[:, 'Reference']).T
-            rate = rate.loc[:, [i for i in rate.columns if i != 'Reference']]
-            rate = select(rate, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-            rate = format_table(rate, name='Scenarios')
-            rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
+            # > 0 positive means households are loosing money compare to ref
+            if df.shape[1] > 1:
+                rate = ((df.T - df.loc[:, 'Reference']) / df.loc[:, 'Reference']).T
+                rate = rate.loc[:, [i for i in rate.columns if i != 'Reference']]
+                rate = select(rate, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+                rate = format_table(rate, name='Scenarios')
+                rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
 
-            make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)),
-                         title='Energy expenditure on income ratio in {} compare to Reference'.format(year))
+                make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                             palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)),
+                             title='Energy expenditure on income ratio in {} compare to Reference'.format(year))
 
-        # > 0 positive means households are loosing money compare to ini
-        diff = (df - ini) / ini
-        diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-        diff = format_table(diff, name='Scenarios')
-        diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
+            # > 0 positive means households are loosing money compare to ini
+            diff = (df - ini) / ini
+            diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+            diff = format_table(diff, name='Scenarios')
+            diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
 
-        make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                     palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)),
-                     title='Energy expenditure on income ratio in {} compare to Base year'.format(year))
-
+            make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)),
+                         title='Energy expenditure on income ratio in {} compare to Base year'.format(year))
+    except KeyError:
+        print('Problem Energy expenditure')
     # graph line plot 2D comparison
     consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
     consumption_total_hist.index = consumption_total_hist.index.astype(int)

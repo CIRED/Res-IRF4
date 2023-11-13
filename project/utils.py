@@ -592,7 +592,7 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     return ax
 
 
-def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04):
+def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, order='reverse'):
     try:
         leg = None
         if loc == 'upper':
@@ -618,7 +618,10 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04):
                                 frameon=False, shadow=False)
             else:
                 handles, labels = ax.get_legend_handles_labels()
-                leg = ax.legend(handles[::-1], labels[::-1], loc='upper center', bbox_to_anchor=(left, 0.7),
+                if order == 'reverse':
+                    handles = handles[::-1]
+                    labels = labels[::-1]
+                leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(left, 0.7),
                                 frameon=False, shadow=True)
         texts = leg.get_texts()
         for text in texts:
@@ -637,7 +640,7 @@ def save_fig(fig, save=None, bbox_inches='tight'):
 
 
 def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
-              ymin=0, ymax=None, hlines=None):
+              ymin=0, ymax=None, hlines=None, labels=None):
     """Make plot.
 
     Parameters
@@ -667,7 +670,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x)
     if legend:
-        format_legend(ax)
+        format_legend(ax, labels=labels)
     # plt.ticklabel_format(style='plain', axis='x')
 
     save_fig(fig, save=save)
@@ -675,7 +678,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 
 def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
                integer=False, loc='upper', left=1.04, ymax=None, ymin=0, format_x=None, hlines=None,
-               scatter_dict=None):
+               scatter_dict=None, labels=None, order_legend='reverse'):
     """Make plot.
 
     Parameters
@@ -717,7 +720,7 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x)
     if legend:
-        format_legend(ax, loc=loc, left=left)
+        format_legend(ax, loc=loc, left=left, labels=labels, order=order_legend)
     save_fig(fig, save=save)
 
 

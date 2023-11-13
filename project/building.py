@@ -1255,6 +1255,9 @@ class AgentBuildings(ThermalBuildings):
         index = condition.index[(~condition).all(axis=1)]
         condition.drop(index, inplace=True)
         condition = concat((condition, certificate_after.loc[index, :].isin(['C'])), axis=0)
+        index = condition.index[(~condition).all(axis=1)]
+        condition.drop(index, inplace=True)
+        condition = concat((condition, certificate_after.loc[index, :].isin(['D'])), axis=0)
         return condition
 
     def prepare_consumption(self, choice_insulation=None, performance_insulation=None, index=None,
@@ -3851,7 +3854,7 @@ class AgentBuildings(ThermalBuildings):
             renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
         if self.year == self.first_year + 1 and self.rational_behavior_insulation is None and \
-                self.path_calibration is not None and self.path_ini is not False and False:
+                self.path_calibration is not None and self.path_ini is not False:
 
             market_failures = Series(0, index=self.hidden_cost.index)
             market_failures += self.landlord_dilemma.reindex(market_failures.index).fillna(0)
@@ -3878,22 +3881,22 @@ class AgentBuildings(ThermalBuildings):
 
             npv_dict = {'Cost - Bill saving': npv_no_subsidy,
                         '- Subsidies': npv_no_financing,
-                        '- Subsidies - Financing': npv_no_hidden,
-                        '- Subsidies - Financing - Hidden cost': npv_no_mf,
-                        '- Market failures': npv_with_mf
+                        '- Subsidies + Financing': npv_no_hidden,
+                        '- Subsidies + Financing + Hidden cost': npv_no_mf,
+                        '+ Market failures': npv_with_mf
                         }
 
             colors = {'Cost - Bill saving': 'black',
                       '- Subsidies': 'dimgray',
-                      '- Subsidies - Financing': 'darkgray',
-                      '- Subsidies - Financing - Hidden cost': 'royalblue',
-                      '- Market failures': 'orangered'
+                      '- Subsidies + Financing': 'darkgray',
+                      '- Subsidies + Financing + Hidden cost': 'royalblue',
+                      '+ Market failures': 'orangered'
                       }
             marker = {'Cost - Bill saving': '',
                       '- Subsidies': '.',
-                      '- Subsidies - Financing': 'v',
-                      '- Subsidies - Financing - Hidden cost': 'o',
-                      '- Market failures': 'x'
+                      '- Subsidies + Financing': 'v',
+                      '- Subsidies + Financing + Hidden cost': 'o',
+                      '+ Market failures': 'x'
                       }
 
             dict_df = {}
@@ -3911,10 +3914,12 @@ class AgentBuildings(ThermalBuildings):
                                     npv_best.rename('Net present cost (Thousand EUR)'), hlines=0, ref=ref, plot=False)
                 dict_df.update({name: df})
 
-            make_plots(dict_df, 'Net present cost Global Renovation (Thousand EUR)', format_x=lambda y, _: '{:.0%}'.format(y),
-                       integer=False, loc='upper', left=1.3, ymin=None, hlines=0,
+            make_plots(dict_df, 'Net present cost Deep Renovation (Thousand EUR)',
+                       format_x=lambda y, _: '{:.0%}'.format(y),
+                       integer=False, loc='left', left=1.3, ymin=None, hlines=0,
                        colors=colors, format_y=lambda y, _: '{:.0f}'.format(y),
-                       save=os.path.join(self.path_calibration, 'net_present_cost_ini.png')
+                       save=os.path.join(self.path_calibration, 'net_present_cost_ini.png'),
+                       labels=None, order_legend=False
                        )
 
         if self._condition_store is None and calculate_condition:
@@ -5665,6 +5670,7 @@ class AgentBuildings(ThermalBuildings):
         _output_statistics = {}
         health_cost_saved = None
         if health_cost is not None:
+
             s = self.add_certificate(stock.loc[index])
             health_cost_before = s * reindex_mi(health_cost, s.index).fillna(0)
 
@@ -5678,7 +5684,7 @@ class AgentBuildings(ThermalBuildings):
             health_cost_saved = (health_cost_saved.T / stock.loc[index]).T
 
         npv, roi = None, None
-        if measures == 'full_insulation':
+        if measures == 'global_insulation':
             insulation = deepcopy(INSULATION)
             if 'Heater replacement' in consumption_saved.columns.names:
                 insulation.update({'Heater replacement': (False, False, False, False)})
@@ -5711,7 +5717,7 @@ class AgentBuildings(ThermalBuildings):
 
             # _output_statistics.update({'efficiency': (cost_efficiency * _stock.loc[_index]).sum() / _stock.loc[_index].sum()})
 
-        elif measures in ['deep_renovation', 'global_insulation']:
+        elif measures in ['deep_renovation', 'deep_insulation']:
             dict_df = {'consumption_saved': consumption_saved, 'emission_saved': emission_saved}
             cash_flow = bill_saved
 
@@ -5726,15 +5732,22 @@ class AgentBuildings(ThermalBuildings):
 
             dict_df.update({'cash_flow': cash_flow, 'cost_insulation': cost_insulation})
 
-            _condition = certificate_after.isin(['A', 'B']).replace(False, float('nan'))
-            _index = certificate_after[_condition.isnull().all(1)].index
+            c_after = certificate_after.copy()
+            if measures == 'deep_insulation':
+                c_after.loc[:, c_after.columns.get_level_values('Heater replacement')] = float('nan')
+                c_after = c_after.dropna(how='all', axis=1)
+
+            c_after = c_after.reindex(stock.index)
+            c_after.dropna(how='all', inplace=True)
+            test = self.select_deep_renovation(c_after)
+            _condition = c_after.isin(['A', 'B']).replace(False, float('nan'))
+            _index = c_after[_condition.isnull().all(1)].index
             _condition.dropna(how='all', inplace=True)
-            _condition = concat((_condition, certificate_after.loc[_index, :].isin(['C'])), axis=0)
+            _condition = concat((_condition, c_after.loc[_index, :].isin(['C'])), axis=0)
             _condition = _condition.replace(False, float('nan'))
-
-            if measures == 'global_insulation':
-                _condition.loc[:, _condition.columns.get_level_values('Heater replacement')] = float('nan')
-
+            _index = c_after.loc[_condition.isnull().all(1)].index
+            _condition.dropna(how='all', inplace=True)
+            _condition = concat((_condition, c_after.loc[_index, :].isin(['D'])), axis=0)
             _condition.dropna(how='all', inplace=True)
 
             cost_efficiency = cost_annualized / consumption_saved
@@ -5898,10 +5911,10 @@ class AgentBuildings(ThermalBuildings):
             'Private, deep insulation': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
-                'measures': 'global_insulation'},
+                'measures': 'deep_insulation'},
             'Private, global insulation': {'discount_rate': implicit_discount_rate,
                                            'carbon_saved': None,
-                                           'measures': 'full_insulation'},
+                                           'measures': 'global_insulation'},
             'Private, deep renovation': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
@@ -5912,7 +5925,7 @@ class AgentBuildings(ThermalBuildings):
                                         'health_cost': health_cost}
         }
         options = {k: i for k, i in options.items() if
-                   k in ['Private, deep insulation', 'Private, global insulation', 'Social, deep renovation',
+                   k in ['Private, global insulation', 'Private, deep insulation', 'Social, deep renovation',
                          'Private, deep renovation']}
 
         colors = {'Social, all measures': 'darkred',
@@ -5942,12 +5955,12 @@ class AgentBuildings(ThermalBuildings):
             if key == 'efficiency_carbon':
                 for k in dict_rslt[key].keys():
                     dict_rslt[key][k].index = dict_rslt[key][k].index * 10**9 / e_before
-                    dict_rslt[key][k].name = 'Emission saving (% / 2019)'
+                    dict_rslt[key][k].name = 'Emission saving (% / 2018)'
 
             else:
                 for k in dict_rslt[key].keys():
                     dict_rslt[key][k].index = dict_rslt[key][k].index / (c_before.sum() / 10 ** 9)
-                    dict_rslt[key][k].name = 'Consumption saving (% / 2019)'
+                    dict_rslt[key][k].name = 'Consumption saving (% / 2018)'
 
         make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
                    save=os.path.join(path_out, 'abatement_curve.png'), ymax=1, ymin=-1,
