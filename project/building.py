@@ -111,7 +111,7 @@ class ThermalBuildings:
         self._income, self._income_owner, self._income_tenant = None, None, None
         self.income = income
 
-        self._residual_rate = 0.05
+        self._residual_rate = 0
         self._stock_residual = self._residual_rate * stock
         self.stock_mobile = stock - self._stock_residual
 
@@ -837,12 +837,14 @@ class ThermalBuildings:
         """
         output = dict()
         temp = self.consumption_agg(freq='year', standard=True, existing=True, agg='energy')
+        temp = temp.reindex(prices.index).fillna(0)
         output.update({'Consumption standard (TWh)': temp.sum()})
         temp.index = temp.index.map(lambda x: 'Consumption standard {} (TWh)'.format(x))
         output.update(temp)
 
         temp = self.consumption_agg(prices=prices, freq='year', standard=False, climate=None, smooth=False,
                                     existing=True, agg='energy', bill_rebate=bill_rebate)
+        temp = temp.reindex(prices.index).fillna(0)
         output.update({'Consumption (TWh)': temp.sum()})
         emission = (temp * carbon_content).sum() / 10 ** 3
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
@@ -2818,7 +2820,7 @@ class AgentBuildings(ThermalBuildings):
         regulation = [p for p in policies_insulation if p.policy == 'regulation']
         if 'landlord' in [p.name for p in regulation]:
             apply_regulation('Privately rented', 'Owner-occupied', 'Occupancy status')
-        if 'multi_family' in [p.name for p in regulation]:
+        if 'multi-family' in [p.name for p in regulation]:
             apply_regulation('Multi-family', 'Single-family', 'Housing type')
 
         return cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition
@@ -3819,7 +3821,8 @@ class AgentBuildings(ThermalBuildings):
         bill_saved = reindex_mi(bill_saved, index)
         bill_saved = (bill_saved.T * reindex_mi(self._surface, bill_saved.index)).T
 
-        if credit_constraint:
+        p = [p for p in policies_insulation if p.name == 'credit-constraint']
+        if credit_constraint and not p:
             credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
         else:
             credit_constraint = None
@@ -4375,6 +4378,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_energy = self.consumption_agg(prices=prices, freq='year', climate=None, standard=False,
                                                   agg='energy', bill_rebate=bill_rebate)
         output['Consumption (TWh)'] = consumption_energy.sum()
+        self.store_over_years[self.year].update({'Consumption (TWh)': output['Consumption (TWh)']})
         output['Consumption (kWh/m2)'] = (output['Consumption (TWh)'] * 10 ** 9) / (
                 output['Surface (Million m2)'] * 10 ** 6)
 
@@ -4454,6 +4458,8 @@ class AgentBuildings(ThermalBuildings):
         output['Emission mean (gCO2/kWh)'] = (consumption_energy * emission).sum() / consumption_energy.sum()
         temp = consumption_energy * emission
         output['Emission (MtCO2)'] = temp.sum() / 10 ** 3
+        self.store_over_years[self.year].update({'Emission (MtCO2)': output['Emission (MtCO2)']})
+
         temp.index = temp.index.map(lambda x: 'Emission {} (MtCO2)'.format(x))
         output.update(temp.T / 10 ** 3)
 
@@ -4669,6 +4675,17 @@ class AgentBuildings(ThermalBuildings):
             output['Consumption saving prices constant (TWh/year)'] = consumption_saved_price_constant.sum() / 10 ** 9
             output['Consumption saving prices effect (TWh/year)'] = round(
                 output['Consumption saving (TWh/year)'] - output['Consumption saving prices constant (TWh/year)'], 3)
+
+            if self.year - 1 in self.store_over_years.keys():
+                consumption_saving = self.store_over_years[self.year - 1]['Consumption (TWh)'] - output['Consumption (TWh)']
+                output['Consumption saving total (TWh/year)'] = consumption_saving
+                output['Consumption saving total (%/year)'] = consumption_saving / self.store_over_years[self.year - 1]['Consumption (TWh)']
+                output['Consumption saving natural replacement (TWh/year)'] = consumption_saving - output['Consumption saving (TWh/year)']
+
+                emission_saving = self.store_over_years[self.year - 1]['Emission (MtCO2)'] - output['Emission (MtCO2)']
+                output['Emission saving total (TWh/year)'] = emission_saving
+                output['Emission saving total (%/year)'] = emission_saving / self.store_over_years[self.year - 1]['Emission (MtCO2)']
+                output['Emission saving natural replacement (MtCO2/year)'] = emission_saving - output['Emission saving (MtCO2/year)']
 
             consumption_saving_prices = Series({i: (output['Consumption {} saving (TWh/year)'.format(i)] * 10**9 - consumption_saved_price_constant.loc[i]) for i in consumption_saved_price_constant.keys()})
             output['Emission saving prices (MtCO2/year)'] = (consumption_saving_prices * emission).sum() / 10**12
@@ -5739,8 +5756,8 @@ class AgentBuildings(ThermalBuildings):
 
             c_after = c_after.reindex(stock.index)
             c_after.dropna(how='all', inplace=True)
-            test = self.select_deep_renovation(c_after)
-            _condition = c_after.isin(['A', 'B']).replace(False, float('nan'))
+            _condition = self.select_deep_renovation(c_after)
+            """_condition = c_after.isin(['A', 'B']).replace(False, float('nan'))
             _index = c_after[_condition.isnull().all(1)].index
             _condition.dropna(how='all', inplace=True)
             _condition = concat((_condition, c_after.loc[_index, :].isin(['C'])), axis=0)
@@ -5748,7 +5765,7 @@ class AgentBuildings(ThermalBuildings):
             _index = c_after.loc[_condition.isnull().all(1)].index
             _condition.dropna(how='all', inplace=True)
             _condition = concat((_condition, c_after.loc[_index, :].isin(['D'])), axis=0)
-            _condition.dropna(how='all', inplace=True)
+            _condition.dropna(how='all', inplace=True)"""
 
             cost_efficiency = cost_annualized / consumption_saved
             cost_efficiency *= reindex_mi(_condition, cost_efficiency.index)

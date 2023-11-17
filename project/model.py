@@ -473,6 +473,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
                              'Switch {} (Thousand households)'.format(i) in output.keys()})
         if new_heating is not None:
             switch_heating = switch_heating.add(new_heating, fill_value=0)
+        switch_heating = switch_heating.reindex(heating.index, fill_value=0)
 
         lifetime_heater = (buildings.lifetime_heater - 1) * (heating + switch_heating) / heating
         lifetime_heater.fillna(buildings.lifetime_heater, inplace=True)

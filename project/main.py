@@ -338,7 +338,14 @@ def run(path=None, folder=None):
         config_policies = get_json('project/input/policies/cba_inputs.json')
         if configuration.get('Reference').get('output') == 'full' and output_compare == 'full':
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
-                indicator_policies(result, folder, config_policies, policy_name=policy_name)
+                _, indicator = indicator_policies(result, folder, config_policies, policy_name=policy_name)
+                # add NPV to result
+                for scenario in result.keys():
+                    temp = 0
+                    if scenario in indicator.columns:
+                        temp = indicator.loc['NPV', scenario]
+                    result[scenario].loc['NPV (Billion Euro)', result[scenario].columns[-1]] = temp
+
             if policy_name is None:
                 plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
                 make_summary(folder, option='comparison')

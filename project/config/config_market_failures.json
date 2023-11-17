@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": null,
@@ -34,47 +34,67 @@
     ]
   },
   "Reference": {
+    "file":"project/config/reference.json",
+    "step": 1,
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_ref.json"}
+  },
+  "Landlord": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/current/policies_ref.json",
+      "landlord": {
+        "start": 2020,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      }
     }
   },
-  "Update": {
+  "MultiFamily": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json"
-    }},
-  "FossilBan": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json",
-      "restriction_gas": {
-        "start": 2030,
+      "file": "project/input/policies/current/policies_ref.json",
+      "multi-family": {
+        "start": 2020,
         "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
+        "policy": "regulation",
+        "gest": "insulation"
       }
-    }},
-  "CarbonTax": {
+    }
+  },
+  "CreditConstraint": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/current/policies_calibration.json",
-      "carbon_tax": {
-        "start": 2017,
+      "file": "project/input/policies/current/policies_ref.json",
+      "credit-constraint": {
+        "start": 2020,
         "end": 2051,
-        "tax": "project/input/policies/carbon_value.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": true,
-        "recycling_ini": 2000000000
+        "policy": "regulation",
+        "gest": "insulation"
+      }
+    }
+  },
+  "InertiaHeater": {
+    "file": "project/config/reference.json",
+    "step": 1,
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/current/policies_ref.json",
+      "inertia_heater": {
+        "start": 2020,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "heater"
       }
     }
   }
+
 }

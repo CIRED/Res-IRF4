@@ -22,7 +22,7 @@ from math import floor, ceil
 import seaborn as sns
 import logging
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, MultipleLocator
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 
@@ -555,10 +555,11 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(True)
-    # ax.spines['bottom'].set_linewidth(2)
-
     ax.spines['left'].set_visible(True)
-    # ax.spines['left'].set_linewidth(2)
+
+    ax.set_facecolor('none')
+    ax.grid(False)
+
     ax.xaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
@@ -588,6 +589,7 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
 
     if xinteger:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        # ax.xaxis.set_major_locator(MultipleLocator(base=5))
 
     return ax
 
@@ -640,7 +642,7 @@ def save_fig(fig, save=None, bbox_inches='tight'):
 
 
 def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
-              ymin=0, ymax=None, hlines=None, labels=None):
+              ymin=0, ymax=None, hlines=None, labels=None, loc='upper', left=1.04, order_legend='reverse'):
     """Make plot.
 
     Parameters
@@ -670,7 +672,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x)
     if legend:
-        format_legend(ax, labels=labels)
+        format_legend(ax, labels=labels, loc=loc, left=left, order=order_legend)
     # plt.ticklabel_format(style='plain', axis='x')
 
     save_fig(fig, save=save)
@@ -778,7 +780,7 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
 
 
 def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
-                      save=None, xmin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
+                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     colors = None
@@ -807,7 +809,7 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
     if hlines is not None:
         ax.axhline(y=hlines, linewidth=1, color='grey')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=None, xmin=xmin)
+    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin)
     ax.set(xlabel=x_label, ylabel=None)
 
     if col_size is not None:
@@ -849,7 +851,7 @@ def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
         format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
         ax.set_title(k, fontsize=15)
 
-    g.fig.suptitle(title, x=0.15, y=1.01, weight='bold', color='black', size=20)
+    g.fig.suptitle(title, x=0.5, y=1.05, weight='bold', color='black', size=20)
 
     save_fig(g.figure, save=save)
 
@@ -1030,7 +1032,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
 
 def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: '{:.0f}'.format(y), save=None,
-                                rotation=0, year_ini=None):
+                                rotation=0, year_ini=None, order_scenarios=None, reference='Reference'):
 
     list_keys = list(df.columns)
     y_max = df.groupby([i for i in df.index.names if i != groupby]).sum().max().max() * 1.1
@@ -1054,9 +1056,12 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
             df_temp = df[key].unstack(groupby)
 
             if key == year_ini:
-                df_temp = df_temp.loc['Reference', :]
+                df_temp = df_temp.loc[reference, :]
                 df_temp = df_temp.to_frame().T
-
+                df_temp.index = ['Initial']
+            else:
+                if order_scenarios is not None:
+                    df_temp = df_temp.loc[order_scenarios, :]
             if colors is not None:
                 df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors)
             else:
@@ -1068,6 +1073,7 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
             ax.set_xlabel('')
 
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
+            # put tick label in bold
             ax.tick_params(axis='both', which='major', labelsize=14)
 
             title = key
@@ -1083,9 +1089,10 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
         except IndexError:
             ax.axis('off')
 
-    fig.legend(handles, labels, loc='center left', frameon=False, ncol=1,
+    fig.legend(handles[::-1], labels[::-1], loc='center left', frameon=False, ncol=1,
                bbox_to_anchor=(1, 0.5), fontsize=MEDIUM_SIZE)
     save_fig(fig, save=save)
+
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
@@ -1233,6 +1240,65 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
     ax.set_xticklabels(labels, rotation=15)
     save_fig(fig, save=save)
 
+
+def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
+                     format_y=lambda y, _: '{:.0f}'.format(y),
+                     title=None, y_label="Emissions (MtCO2)"):
+    """Plots LDMI decomposition method."""
+
+    new_index = []
+    for c in channel.index:
+        if len(c.split(' ')) > 1:  # we have two words
+            new_index.append(c.split(' ')[0] + ' \n ' + c.split(' ')[1])
+        else:
+            new_index.append(c)
+    channel.index = new_index
+
+    start, end = emission.index[0], emission.index[-1]
+    colors.update({str(start): 'darkgrey', str(end): 'darkgrey'})
+
+    tmp = pd.concat([channel, emission])
+    tmp = tmp.reindex([start] + channel.index.to_list() + [end])
+    tmp.index = tmp.index.astype(str)
+    blank = tmp.cumsum().shift(1).fillna(0)  # will be used as start point for the bar plot
+    blank[-1] = 0
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    if colors is not None:
+        tmp.plot(kind='bar', stacked=True, bottom=blank, title=None, ax=ax, color=[colors[i] for i in tmp.index])
+    else:
+        tmp.plot(kind='bar', stacked=True, bottom=blank, title=None, ax=ax)
+    y_height = tmp.cumsum().shift(1).fillna(0)
+    max = tmp.max()
+    neg_offset, pos_offset = max / 20, max / 50
+    # Start label loop
+    loop = 0
+    for index, val in tmp.iteritems():
+        # For the last item in the list, we don't want to double count
+        if val == tmp.iloc[-1]:
+            y = y_height[loop]
+        else:
+            y = y_height[loop] + val
+        # Determine if we want a neg or pos offset
+        if val > 0:
+            y += pos_offset
+        else:
+            y -= neg_offset
+        ax.annotate("{:,.1f}".format(val), (loop, y), ha="center")
+        loop += 1
+    y_max = blank.max() * 1.1
+    y_min = blank.min() * 1.1
+    ax.spines['left'].set_visible(False)
+    ax.set_ylim(ymax=y_max)
+    ax.set_ylim(ymin=y_min)
+    ax.set_xlabel('')
+    ax = format_ax(ax, format_y=format_y, xinteger=True)
+    if title is not None:
+        ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6, fontsize=16)
+    if y_label is not None:
+        ax.set_ylabel(y_label, color='dimgrey', fontsize=20)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
+    ax.tick_params(axis='both', which='major', labelsize=14)
+    save_fig(fig, save=save)
 
 def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ymin=0, save=None, scatter=None,
                           columns=None, ncol=3, offset=1, loc='upper', left=1.04):
