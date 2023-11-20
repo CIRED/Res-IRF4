@@ -993,6 +993,15 @@ class AgentBuildings(ThermalBuildings):
         self.bill_rebate = {}
         self._balance_state_ini = None
 
+        # self.lifetime_heater = lifetime_heater
+        temp = self.stock.groupby('Heating system').sum()
+        heater_vintage = dict()
+        for i in lifetime_heater.index:
+            if i not in temp.index:
+                temp.loc[i] = 0
+            heater_vintage.update({i: Series([temp.loc[i] / lifetime_heater.loc[i]] * lifetime_heater.loc[i],
+                                  index=range(1, lifetime_heater.loc[i] + 1))})
+        self.heater_vintage = DataFrame(heater_vintage).T.rename_axis(index='Heating system', columns='Year')
         self.lifetime_heater = lifetime_heater
 
         # 'epc', 'heating_intensity'
@@ -2037,18 +2046,16 @@ class AgentBuildings(ThermalBuildings):
 
         index = stock.index
 
-        list_heater = list(stock.index.get_level_values('Heating system').unique().union(cost_heater.index))
-        lifetime_heater = self.lifetime_heater
-        probability = 1 / lifetime_heater
+        probability = self.heater_vintage.loc[:, 1] / self.heater_vintage.sum(axis=1)
+        probability.dropna(inplace=True)
         probability *= step
-        if isinstance(lifetime_heater, (float, int)):
-            probability = Series(len(list_heater) * [1 / lifetime_heater], Index(list_heater, name='Heating system'))
 
         # premature replacement
         premature_heater = [p for p in policies_heater if p.policy == 'premature_heater']
         for premature in premature_heater:
-            temp = [i for i in probability.index if '{}'.format(i.split('-')[0]) in premature.target]
-            probability.loc[temp] = premature.value
+            print('Premature replacement not Implemented')
+            # temp = [i for i in probability.index if '{}'.format(i.split('-')[0]) in premature.target]
+            # probability.loc[temp] = premature.value
 
         flow_replace = stock * reindex_mi(probability, stock.index)
 
@@ -4487,20 +4494,10 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
 
-        output['Stock efficient (Million)'] = 0
-        if 'Stock A (Million)' in output.keys():
-            output['Stock efficient (Million)'] += output['Stock A (Million)']
-        if 'Stock B (Million)' in output.keys():
-            output['Stock efficient (Million)'] += output['Stock B (Million)']
-
-        output['Stock low-efficient (Million)'] = 0
-        if 'Stock F (Million)' in output.keys():
-            output['Stock low-efficient (Million)'] += output['Stock F (Million)']
-        if 'Stock G (Million)' in output.keys():
-            output['Stock low-efficient (Million)'] += output['Stock G (Million)']
-
-        output['Stock to renovate (Million)'] = output['Stock low-efficient (Million)'] + output['Stock E (Million)'] + \
-                                                output['Stock D (Million)']
+        output['Stock efficient (Million)'] = output.get('Stock A (Million)', 0) + output.get('Stock B (Million)', 0)
+        output['Stock low-efficient (Million)'] = output.get('Stock G (Million)', 0) + output.get('Stock F (Million)', 0)
+        output['Stock to renovate (Million)'] = output['Stock low-efficient (Million)'] + output.get('Stock E (Million)', 0) + \
+                                                output.get('Stock D (Million)', 0)
 
         temp = self.stock.groupby('Heating system').sum()
 
@@ -5292,6 +5289,7 @@ class AgentBuildings(ThermalBuildings):
             years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities heater (Billion euro/year)' in self.store_over_years[y].keys()]
             annuities_heater_cumulated = sum([self.store_over_years[y]['Annuities heater (Billion euro/year)'] for y in years])
 
+            # TODO: Cumulated 20 years ?
             years = [y for y in self.store_over_years.keys() if y > self.year - 20 and 'Annuities insulation (Billion euro/year)' in self.store_over_years[y].keys()]
             annuities_insulation_cumulated = sum(
                 [self.store_over_years[y]['Annuities insulation (Billion euro/year)'] for y in years])
@@ -5348,7 +5346,8 @@ class AgentBuildings(ThermalBuildings):
             output['CBA Thermal loss prices (Billion euro)'] = - output['Thermal loss prices (Billion euro)']
             output['CBA Annuities insulation (Billion euro)'] = - output['Annuities insulation (Billion euro/year)']
             output['CBA Annuities heater (Billion euro)'] = - output['Annuities heater (Billion euro/year)']
-            temp = calculate_annuities(output['Carbon value indirect renovation (Billion euro)'], lifetime=lifetime_insulation,
+            temp = calculate_annuities(output['Carbon value indirect renovation (Billion euro)'],
+                                       lifetime=lifetime_insulation,
                                        discount_rate=social_discount_rate)
             output['CBA Carbon Emission indirect (Billion euro)'] = - temp
             output['CBA COFP (Billion euro)'] = - output['COFP (Billion euro)']

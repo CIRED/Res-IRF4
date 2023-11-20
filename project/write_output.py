@@ -532,8 +532,63 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     # ini
     emission_ini = result.get(reference).loc['Emission (MtCO2)', :].iloc[0]
     consumption_ini = result.get(reference).loc['Consumption (TWh)', :].iloc[0]
+    energy_poverty_ini = result.get(reference).loc['Energy poverty (Million)', :].iloc[0]
+
     start = result.get(reference).columns[0]
     end = result.get(reference).columns[-1]
+
+    # make table summary
+    vars = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)']
+    vars += ['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']]
+    vars += ['Energy poverty (Million)', 'Emission (MtCO2)']
+    vars += ['Stock {} (Million)'.format(i) for i in resources_data['index']['Performance']]
+    vars += ['Stock {} (Million)'.format(i) for i in resources_data['index']['Heating system']]
+    vars += ['Carbon value (Billion euro)', 'Health cost (Billion euro)', 'Energy expenditures (Billion euro)']
+
+    cum_vars = ['Emission (MtCO2)', 'Renovation (Thousand households)',
+               'Investment insulation (Billion euro)', 'Subsidies insulation (Billion euro)',
+               'Investment heater (Billion euro)', 'Subsidies heater (Billion euro)']
+    avg_vars = ['Cumulated Investment insulation (Billion euro)', 'Cumulated Subsidies insulation (Billion euro)',
+               'Cumulated Investment heater (Billion euro)', ' Cumulated Subsidies heater (Billion euro)']
+
+    for yr in [i for i in [2030, 2050] if i in result.get(reference).columns]:
+        summary = dict()
+        for key, data in result.items():
+            temp = data.loc[[v for v in vars if v in data.index], yr]
+
+            t = data.loc[[v for v in cum_vars if v in data.index], :].sum(axis=1).rename(yr)
+            t.index = t.index.map(lambda x: 'Cumulated {}'.format(x))
+            temp = pd.concat((temp, t), axis=0)
+
+            t = temp.loc[[v for v in avg_vars if v in temp.index]] / (yr - start)
+            t.index = t.index.map(lambda x: x.replace('Cumulated', 'Annual average'))
+            temp = pd.concat((temp, t), axis=0)
+
+            temp['Consumption saving (%)'] = (consumption_ini - temp['Consumption (TWh)']) / consumption_ini
+            temp['Emission saving (%)'] = (emission_ini - temp['Emission (MtCO2)']) / emission_ini
+            temp['Energy poverty reduction (%)'] = (energy_poverty_ini - temp['Energy poverty (Million)']) / energy_poverty_ini
+            summary.update({key: temp})
+
+        summary = pd.concat(summary, axis=1)
+        if order_scenarios is not None:
+            summary = summary.loc[:, order_scenarios]
+        summary.to_csv(os.path.join(folder, 'summary_{}.csv'.format(yr)))
+
+
+    # calculate cumulated annuities
+    lifetime_insulation, lifetime_heater = 35, 20
+    for scenario in result.keys():
+        annuities_insulation = result.get(scenario).loc[['CBA Annuities insulation (Billion euro)'], :].T.dropna()
+        annuities_insulation = annuities_insulation.rolling(window=lifetime_insulation, min_periods=1).sum()
+        annuities_insulation = annuities_insulation.rename(
+            columns={'CBA Annuities insulation (Billion euro)': 'CBA Annuities cumulated insulation (Billion euro)'})
+        result[scenario] = pd.concat((result[scenario], annuities_insulation.T), axis=0)
+
+        annuities_heater = result.get(scenario).loc[['CBA Annuities heater (Billion euro)'], :].T.dropna()
+        annuities_heater = annuities_heater.rolling(window=lifetime_heater, min_periods=1).sum()
+        annuities_heater = annuities_heater.rename(
+            columns={'CBA Annuities heater (Billion euro)': 'CBA Annuities cumulated heater (Billion euro)'})
+        result[scenario] = pd.concat((result[scenario], annuities_heater.T), axis=0)
 
     # graph comparison stock
     variables = [('Stock {} (Million)', 'Heater', 'M'),
@@ -563,31 +618,42 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             reference=reference)
 
     # graph policies
-    try:
-        policies = [i.split(' Single-family (Thousand households)')[0] for i in result.get(reference).index if ('Single-family (Thousand households)' in i) and
+    policies = []
+    for _, df in result.items():
+        policies += [i.split(' Single-family (Thousand households)')[0] for i in df.index if ('Single-family (Thousand households)' in i) and
                     ('insulation' not in i) and ('heater' not in i) and ('Renovation' not in i)]
-        policies = [i for i in policies if 'Over cap' not in i]
-        temp = grouped(result, ['{} (Billion euro)'.format(i) for i in policies])
-        years = list({start + 1, 2030, end})
-        years = [i for i in years if (i >= start) and (i <= end)]
-        years.sort()
-        temp = {k: i.loc[years, :] for k, i in temp.items()}
-        temp = pd.concat(temp).rename_axis(['Policy', 'Years'], axis=0).rename_axis('Scenario', axis=1)
-        temp = temp.stack('Scenario').unstack('Years')
-        # remove policies with nan for a single year
-        to_drop = temp.loc[:, [i for i in years if i != start + 1]]
+    policies = list(set(policies))
+    policies = [i for i in policies if 'Over cap' not in i]
+
+    temp = grouped(result, ['{} (Billion euro)'.format(i) for i in policies])
+    years = list({start + 1, 2030, end})
+    years = [i for i in years if (i >= start) and (i <= end)]
+    years.sort()
+    temp = {k: i.loc[years, :] for k, i in temp.items()}
+    temp = pd.concat(temp).rename_axis(['Policy', 'Years'], axis=0).rename_axis('Scenario', axis=1)
+    temp = temp.stack('Scenario').unstack('Years')
+    # remove policies with nan for a single year
+    yrs = [i for i in years if i != start + 1]
+    if all(item in temp.columns for item in yrs):
+        to_drop = temp.loc[:, yrs]
         to_drop = to_drop.unstack('Scenario').stack('Years').T
         to_drop = to_drop.loc[to_drop.isna().all(axis=1), :].index
         temp.drop(to_drop, axis=0, level='Scenario', inplace=True)
+        # modifiy index level 'Policy' to remove ' (Billion euro)'
+        temp.index = temp.index.set_levels([i.split(' (Billion euro)')[0] for i in temp.index.levels[0]], level=0)
         if not temp.empty:
             if len(temp.columns) > 1:
+                temp.fillna(0, inplace=True)
+                order = None
+                if order_scenarios is not None:
+                    order = [i for i in order_scenarios if i in temp.index.get_level_values('Scenario')]
                 make_clusterstackedbar_plot(temp, 'Policy',
                                             format_y=lambda y, _: '{:.0f} B€'.format(y),
                                             save=os.path.join(folder_img, 'policy_scenario.png'),
-                                            rotation=90, year_ini=start + 1, order_scenarios=order_scenarios,
+                                            rotation=90, year_ini=start + 1,
+                                            order_scenarios=order,
                                             reference=reference)
-    except:
-        pass
+
 
     # graph emission saving
     variables = {

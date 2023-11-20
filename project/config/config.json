@@ -1,15 +1,15 @@
 {
   "scenarios": {
-    "activated": true,
-    "current_policies": true,
-    "no_policy": true,
+    "activated": false,
+    "current_policies": null,
+    "no_policy": null,
     "prices_constant": null,
     "constant": null,
     "policies": null,
     "add_policies": null,
     "remove_policies": null,
     "policies_scenarios": null,
-    "no_natural_replacement": null
+    "no_natural_replacement": true
   },
   "sensitivity": {
     "activated": false,
@@ -54,7 +54,7 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": false,
+      "current_policies": true,
       "no_policy": false,
       "income": false,
       "prices_constant": false,

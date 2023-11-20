@@ -409,8 +409,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
     if year - 1 in buildings.bill_rebate.keys():
         bill_rebate_before = buildings.bill_rebate[year - 1]
 
+    heater_demolition = None
     if demolition_rate is not None:
-        buildings.add_flows([- buildings.flow_demolition(demolition_rate, step=step)])
+        temp = buildings.flow_demolition(demolition_rate, step=step)
+        heater_demolition = temp.groupby('Heating system').sum()
+        buildings.add_flows([- temp])
     buildings.logger.info('Calculation retrofit')
     if output_options == 'full':
         buildings.consumption_before_retrofit = buildings.store_consumption(prices_before,
@@ -465,21 +468,40 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
     else:
         raise NotImplemented('output_options should be full, cost_benefit or consumption')
 
-    # updating heating-system average life expectancy
+    # updating heating-system vintage
     if True:
-        heating = stock.groupby('Heating system').sum()
         switch_heating = pd.Series({i: output['Switch {} (Thousand households)'.format(i)] * 1e3 for i in
                              stock.index.get_level_values('Heating system').unique() if
                              'Switch {} (Thousand households)'.format(i) in output.keys()})
         if new_heating is not None:
-            switch_heating = switch_heating.add(new_heating, fill_value=0)
-        switch_heating = switch_heating.reindex(heating.index, fill_value=0)
+            pass
+            # switch_heating = switch_heating.add(new_heating, fill_value=0)
 
-        lifetime_heater = (buildings.lifetime_heater - 1) * (heating + switch_heating) / heating
-        lifetime_heater.fillna(buildings.lifetime_heater, inplace=True)
-        # cannot be less than 1
-        lifetime_heater[lifetime_heater < 1] = 1
-        buildings.lifetime_heater = lifetime_heater
+        temp = buildings.heater_vintage.loc[:, 1] - buildings._heater_store['replacement'].groupby('Heating system').sum().sum(axis=1)
+
+        # update heater_vintage with switch_heating for year == lifetime heater
+        # reduce column of 1 to account for vintage
+        buildings.heater_vintage.columns = buildings.heater_vintage.columns - 1
+        buildings.heater_vintage.drop(0, axis=1, inplace=True)
+
+        if heater_demolition is not None:
+            heater_demolition = heater_demolition - temp
+            heater_demolition.dropna(inplace=True)
+            temp = dict()
+            # demolition target old heating-system ?
+            for i in heater_demolition.index:
+                x = buildings.heater_vintage.loc[i, :int(buildings.lifetime_heater[i] / 2)]
+                temp.update({i: heater_demolition.loc[i] * x / x.sum()})
+            temp = pd.DataFrame(temp).T.rename_axis('Heating system', axis=0).rename_axis('Year', axis=1)
+            buildings.heater_vintage = buildings.heater_vintage.sub(temp, fill_value=0)
+            # test not negative values
+
+        for i in switch_heating.index:
+            buildings.heater_vintage.loc[i, buildings.lifetime_heater.loc[i]] = switch_heating.loc[i]
+
+        # test
+        heating = buildings.stock.groupby('Heating system').sum()
+        temp = pd.concat((heating, buildings.heater_vintage.sum(axis=1)), axis=1)
 
     return buildings, stock, output
 

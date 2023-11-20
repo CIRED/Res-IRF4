@@ -375,4 +375,4 @@ if __name__ == '__main__':
     # _config = 'project/config/coupling/config.json'
     _config = 'project/config/config.json'
     # _config = 'project/config/config.json'
-    run_simu(output_consumption=False, start=2019, end=2022, config=_config)
+    run_simu(output_consumption=False, start=2019, end=2021, config=_config)
