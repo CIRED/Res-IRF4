@@ -328,7 +328,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     sub_insulation = {'name': 'sub_insulation',
                       'start': start,
                       'end': end,
-                      'value': 0,
+                      'value': 0.95,
                       'policy': 'subsidy_ad_valorem',
                       'gest': 'insulation',
                       'target': target,
@@ -375,4 +375,4 @@ if __name__ == '__main__':
     # _config = 'project/config/coupling/config.json'
     _config = 'project/config/config.json'
     # _config = 'project/config/config.json'
-    run_simu(output_consumption=False, start=2019, end=2021, config=_config)
+    run_simu(start=2019, end=2050, config=_config)

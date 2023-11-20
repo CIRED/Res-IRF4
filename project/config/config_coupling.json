@@ -9,7 +9,7 @@
     "add_policies": null,
     "remove_policies": null,
     "policies_scenarios": null,
-    "no_natural_replacement": null
+    "no_natural_replacement": true
   },
   "sensitivity": {
     "activated": false,
@@ -38,7 +38,7 @@
     "step": 1,
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/current/policies_calibration.json"
     },
     "simple": {
       "figures": true,

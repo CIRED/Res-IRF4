@@ -61,7 +61,7 @@
         "policy": "restriction_energy"
       }
     }},
-  "CarbonTaxRecycling": {
+  "CarbonTax": {
     "file": "project/config/reference.json",
     "step": 1,
     "end": 2051,
@@ -74,22 +74,6 @@
         "emission": "project/input/policies/current/carbon_tax_emission.csv",
         "recycling": true,
         "recycling_ini": 2000000000
-      }
-    }
-  },
-  "CarbonTax": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/current/policies_calibration.json",
-      "carbon_tax": {
-        "start": 2017,
-        "end": 2051,
-        "tax": "project/input/policies/carbon_value.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": false,
-        "recycling_ini": 0
       }
     }
   }
