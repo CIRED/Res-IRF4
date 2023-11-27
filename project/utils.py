@@ -880,11 +880,11 @@ def make_grouped_subplots(dict_df, n_columns=3, format_y=lambda y, _: y, n_bins=
     try:
         sns.set_palette(sns.color_palette('husl', dict_df[list_keys[0]].shape[1]))
     except:
-        print('break')
+        print('Problem with colors')
     try:
         y_max = max([i.fillna(0).to_numpy().max() for i in dict_df.values()]) * 1.1
     except ValueError:
-        print('break')
+        print('Problem with y_max')
 
     n_axes = int(len(list_keys))
     n_rows = ceil(n_axes / n_columns)
@@ -1032,7 +1032,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
 
 def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: '{:.0f}'.format(y), save=None,
-                                rotation=0, year_ini=None, order_scenarios=None, reference='Reference'):
+                                rotation=0, year_ini=None, order_scenarios=None, reference='Reference', fonttick=14):
 
     list_keys = list(df.columns)
     y_max = df.groupby([i for i in df.index.names if i != groupby]).sum().max().max() * 1.1
@@ -1074,12 +1074,12 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
 
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
             # put tick label in bold
-            ax.tick_params(axis='both', which='major', labelsize=14)
+            ax.tick_params(axis='both', which='major', labelsize=fonttick)
 
             title = key
             if isinstance(key, tuple):
                 title = '{}-{}'.format(key[0], key[1])
-            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6, fontsize=16)
+            ax.set_title(title, fontweight='bold', color='dimgrey', pad=-1.6, fontsize=fonttick)
 
             if k == 0:
                 handles, labels = ax.get_legend_handles_labels()
@@ -1096,7 +1096,7 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
-                         scatterplot=None):
+                         scatterplot=None, fontxtick=16):
     """Make stackedbar plot.
 
     Parameters
@@ -1134,12 +1134,13 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
             ax.annotate("{:,.1f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
+
     ax.spines['left'].set_visible(False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
     # ax.set_xticklabels(df.index, rotation=rotation)
 
-    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=16)
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
     ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
     ax.set(xlabel=None, ylabel=None)
 

@@ -277,6 +277,7 @@ def run(path=None, folder=None):
 
     if 'uncertainty' in configuration.keys():
         if configuration['uncertainty']['activated']:
+            output_compare = 'simple'
             prefix = 'uncertainty'
             config_uncertainty = {k: i for k, i in configuration['uncertainty'].items() if k != 'activated'}
             keys, values = zip(*config_uncertainty.items())

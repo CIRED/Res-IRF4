@@ -46,7 +46,7 @@
         "cite",
         "mpr"
       ],
-      "target": "mpr_serenite_nb",
+      "target": "deep_renovation",
       "policy": "subsidy_ad_valorem"
     },
     "mpr": {
@@ -65,9 +65,10 @@
       "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
       "non_cumulative": [
         "cite",
-        "mpr"
+        "mpr",
+        "mpr_serenite"
       ],
-      "target": "mpr_serenite_nb",
+      "target": "energy_condition_35",
       "policy": "subsidy_ad_valorem"
     },
     "cap": {

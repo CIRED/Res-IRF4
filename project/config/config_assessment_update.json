@@ -7,12 +7,12 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "cite",
+      "zero_interest_loan",
       "cee",
-      "mpr",
-      "mpr_serenite",
+      "mpr_efficacite",
+      "mpr_performance",
       "mpr_multifamily",
-      "reduced_vta"
+      "mpr_multifamily_deep"
     ],
     "test": [
       "cite",
@@ -27,7 +27,7 @@
     "file": "project/config/reference.json",
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/current/policies_ambitious.json"
     },
     "simple": {
       "quintiles": true,

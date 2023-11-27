@@ -1028,6 +1028,7 @@ class AgentBuildings(ThermalBuildings):
         self._only_heater = None
         self._flow_obligation = {}
 
+        """
         index = self.stock.droplevel('Income tenant').index
         index = index[~index.duplicated()]
 
@@ -1071,13 +1072,12 @@ class AgentBuildings(ThermalBuildings):
 
         for k, item in ini.items():
             self._renovation_store[k] = item
-
+        """
         ini = {
             'subsidies_details': {},
             'subsidies_count': {},
             'subsidies_average': {},
             'cost_average': {},
-
         }
 
         for k, item in ini.items():
@@ -2545,7 +2545,7 @@ class AgentBuildings(ThermalBuildings):
                     _condition.update({'fg': fg})
 
             deep_condition = 2
-            energy_condition = 0.35
+            energy_condition_35, energy_condition_50 = 0.35, 0.5
 
             _epc_upgrade = - _certificate.replace(EPC2INT).sub(_certificate_before.replace(EPC2INT), axis=0)
             _epc_upgrade = reindex_mi(_epc_upgrade, _index)
@@ -2595,10 +2595,13 @@ class AgentBuildings(ThermalBuildings):
                 _condition.update(
                     {'deep_renovation_high_income': (high_income_condition & condition_deep_renovation.T).T})
 
-            if 'mpr_serenite_energy' in _list_conditions:
-                energy_condition = _energy_saved_3uses >= energy_condition
-                # _condition.update({'mpr_serenite': (reindex_mi(energy_condition, _index).T & low_income_condition).T})
-                _condition.update({'mpr_serenite': reindex_mi(energy_condition, _index)})
+            if 'energy_condition_35' in _list_conditions:
+                energy_condition_35 = _energy_saved_3uses >= energy_condition_35
+                _condition.update({'energy_condition_35': reindex_mi(energy_condition_35, _index)})
+
+            if 'energy_condition_50' in _list_conditions:
+                energy_condition_50 = _energy_saved_3uses >= energy_condition_50
+                _condition.update({'energy_condition_50': reindex_mi(energy_condition_50, _index)})
 
             if 'mpr_no_fg' in _list_conditions:
                 _condition.update({'mpr_no_fg': ~_certificate_before.isin(['G', 'F'])})
@@ -3988,7 +3991,6 @@ class AgentBuildings(ThermalBuildings):
 
             return renovation_rate, market_share
 
-
     def flow_retrofit(self, prices, cost_heater, cost_insulation, lifetime_insulation,
                       policies_heater=None, policies_insulation=None, calib_heater=None, district_heating=None,
                       financing_cost=None, calib_renovation=None,
@@ -4597,6 +4599,88 @@ class AgentBuildings(ThermalBuildings):
             levels_owner = ['Occupancy status', 'Income owner']
 
             replaced_by_grouped = self._replaced_by.groupby(levels).sum()
+
+            # cost of epc transition
+            if False:
+                replacement = self._replaced_by.copy().groupby(['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']).sum()
+                cost = (self._renovation_store['cost_households'].T / self._surface).T
+                cost = cost.xs(False, level='Existing').xs('Owner-occupied', level='Occupancy status')
+                cost = reindex_mi(cost, replacement.index)
+
+                consumption_before, certificate_before, _ = self.consumption_heating(index=replacement.index, method='3uses',
+                                                                    full_output=True)
+
+                s = concat([Series(index=replacement.index, dtype=float)] * len(replacement.columns), axis=1).set_axis(replacement.columns, axis=1)
+                # choice_insulation = choice_insulation.drop(no_insulation) # only for
+                s.index.rename(
+                    {'Wall': 'Wall before', 'Floor': 'Floor before', 'Roof': 'Roof before', 'Windows': 'Windows before'},
+                    inplace=True)
+                temp = s.fillna(0).stack(s.columns.names)
+                temp = temp.reset_index().drop(0, axis=1)
+                for i in ['Wall', 'Floor', 'Roof', 'Windows']:
+                    # keep the info to unstack later
+                    temp.loc[:, '{} bool'.format(i)] = temp.loc[:, i]
+                    temp.loc[temp[i], i] = self._performance_insulation_renovation[i]
+                    temp.loc[temp[i] == False, i] = temp.loc[temp[i] == False, '{} before'.format(i)]
+                temp = temp.astype(
+                    {'Housing type': 'string', 'Wall': 'float', 'Floor': 'float', 'Roof': 'float', 'Windows': 'float',
+                     'Heating system': 'string'})
+                index = MultiIndex.from_frame(temp)
+                consumption_after, certificate_after, _ = self.consumption_heating(index=index, method='3uses', full_output=True)
+
+                certificate_after = reindex_mi(certificate_after, index).droplevel(['Wall', 'Floor', 'Roof', 'Windows']).unstack(
+                    ['{} bool'.format(i) for i in ['Wall', 'Floor', 'Roof', 'Windows']])
+                certificate_after.index.rename({'Wall before': 'Wall', 'Floor before': 'Floor', 'Roof before': 'Roof',
+                                                'Windows before': 'Windows'}, inplace=True)
+                certificate_after.columns.rename(
+                    {'Wall bool': 'Wall', 'Floor bool': 'Floor', 'Roof bool': 'Roof', 'Windows bool': 'Windows'},
+                    inplace=True)
+                consumption_after = reindex_mi(consumption_after, index).droplevel(['Wall', 'Floor', 'Roof', 'Windows']).unstack(
+                    ['{} bool'.format(i) for i in ['Wall', 'Floor', 'Roof', 'Windows']])
+                consumption_after.index.rename({'Wall before': 'Wall', 'Floor before': 'Floor', 'Roof before': 'Roof',
+                                                'Windows before': 'Windows'}, inplace=True)
+                consumption_after.columns.rename(
+                    {'Wall bool': 'Wall', 'Floor bool': 'Floor', 'Roof bool': 'Roof', 'Windows bool': 'Windows'},
+                    inplace=True)
+
+                # calculate the cost of the transition
+                rename_insulation = {'Wall': 'Wall insulation', 'Floor': 'Floor insulation', 'Roof': 'Roof insulation',
+                                     'Windows': 'Windows insulation'}
+                replacement.columns.rename(rename_insulation, inplace=True)
+                replacement = replacement.stack(replacement.columns.names)
+
+                replacement = concat((replacement, reindex_mi(certificate_before, replacement.index)), axis=1,
+                                     keys=['replacement', 'certificate_before'])
+                replacement = concat(
+                    (replacement, reindex_mi(consumption_before, replacement.index).rename('consumption_before')), axis=1)
+
+                cost.columns.rename(rename_insulation, inplace=True)
+                cost = cost.stack(cost.columns.names)
+                replacement = concat((replacement, cost.rename('Cost')), axis=1)
+
+                consumption_after.columns.rename(rename_insulation, inplace=True)
+                consumption_after = consumption_after.stack(consumption_after.columns.names)
+                replacement = concat((replacement, consumption_after.rename('consumption_after')), axis=1)
+
+                certificate_after.columns.rename(rename_insulation, inplace=True)
+                certificate_after = certificate_after.stack(certificate_after.columns.names)
+                replacement = concat((replacement, certificate_after.rename('certificate_after')), axis=1)
+
+                replacement.set_index(['certificate_before', 'certificate_after'], append=True, inplace=True)
+                replacement['consumption_saving'] = replacement['consumption_before'] - replacement['consumption_after']
+
+                # weighted cost of the transition groupby certificate_before and certificate_after
+                cost_transition = replacement.groupby(['certificate_before', 'certificate_after']).apply(
+                    lambda x: (x['replacement'] * x['Cost']).sum() / x['replacement'].sum())
+                cost_transition = cost_transition.unstack('certificate_after')
+                replacement_transition = replacement.groupby(['certificate_before', 'certificate_after'])['replacement'].sum()
+                replacement_transition = replacement_transition.unstack('certificate_after')
+
+                if self.path_ini:
+                    replacement.to_csv(os.path.join(self.path_ini, 'replacement.csv'))
+                    cost_transition.to_csv(os.path.join(self.path_ini, 'cost_transition.csv'))
+                    replacement_transition.to_csv(os.path.join(self.path_ini, 'replacement_transition.csv'))
+
             # consumption saving
             if self.consumption_before_retrofit is not None:
                 consumption_before_retrofit = self.consumption_before_retrofit
@@ -4786,6 +4870,7 @@ class AgentBuildings(ThermalBuildings):
 
             temp = temp.groupby(['Occupancy status', 'Housing type', 'Performance']).sum()
             temp = (temp.sum(axis=1) / s.groupby(temp.index.names).sum()).dropna()
+            temp = temp.xs('Owner-occupied', level='Occupancy status').xs('Single-family', level='Housing type')
             temp.index = temp.index.map(lambda x: 'Rate Single-family - Owner-occupied {} (%)'.format(x))
             output.update(temp.T)
 
@@ -5783,6 +5868,7 @@ class AgentBuildings(ThermalBuildings):
             c_after = c_after.reindex(stock.index)
             c_after.dropna(how='all', inplace=True)
             _condition = self.select_deep_renovation(c_after)
+            _condition = _condition.replace(False, float('nan'))
             """_condition = c_after.isin(['A', 'B']).replace(False, float('nan'))
             _index = c_after[_condition.isnull().all(1)].index
             _condition.dropna(how='all', inplace=True)
@@ -5915,8 +6001,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_before = self.consumption_heating_store(index, full_output=False)
 
         s_no_switch = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
-                                      name='Heating system final')), axis=1).set_index('Heating system final',
-                                                                                       append=True).squeeze()
+                                      name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
         idx_fossil = ['Natural gas', 'Oil fuel']
         s_switch = stock[self.to_energy(stock).isin(idx_fossil)]
         s_switch = concat((s_switch, Series('Electricity-Heat pump water', index=stock.index,
@@ -5946,7 +6031,8 @@ class AgentBuildings(ThermalBuildings):
         cost = self.prepare_cost_insulation(cost_insulation * self.surface_insulation)
         cost = cost.T.multiply(self._surface, level='Housing type').T
 
-        cost = concat((cost, cost + cost_heater.loc['Electricity-Heat pump water']), axis=1, keys=[False, True], names=['Heater replacement'])
+        cost = concat((cost, cost + cost_heater.loc['Electricity-Heat pump water']), axis=1, keys=[False, True],
+                      names=['Heater replacement'])
         cost = cost.reorder_levels(consumption_saved.columns.names, axis=1)
         cost = reindex_mi(cost, consumption_saved.index)
 

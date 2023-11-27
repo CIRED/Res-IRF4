@@ -22,7 +22,7 @@ import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
     make_uncertainty_plot, format_table, select, make_clusterstackedbar_plot, plot_ldmi_method
-from project.utils import stack_catplot, make_relplot, make_stackedbar_plot, make_scatter_plot
+from project.utils import stack_catplot, make_relplot, make_stackedbar_plot, make_scatter_plot, get_pandas, get_series
 from itertools import product
 from PIL import Image
 from numpy import log
@@ -513,8 +513,9 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                              [i for i in order_scenarios if i in dict_data[key].columns]
                 dict_data[key] = dict_data[key].loc[:, order_temp]
 
-        make_grouped_subplots(dict_data, format_y=inf.get('format_y'), n_columns=n_columns, save=os.path.join(folder_img, n),
-                              order=order, scatter=inf.get('scatter'), colors=colors)
+        if dict_data:
+            make_grouped_subplots(dict_data, format_y=inf.get('format_y'), n_columns=n_columns, save=os.path.join(folder_img, n),
+                                  order=order, scatter=inf.get('scatter'), colors=colors)
 
     if quintiles:
         resources_data['index']['Income tenant'] = resources_data['quintiles']
@@ -615,7 +616,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             format_y=lambda y, _: '{:.0f} {}'.format(y, unit),
                                             save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
                                             rotation=90, year_ini=start, order_scenarios=order_scenarios,
-                                            reference=reference)
+                                            reference=reference, fonttick=20)
 
     # graph policies
     policies = []
@@ -652,8 +653,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             save=os.path.join(folder_img, 'policy_scenario.png'),
                                             rotation=90, year_ini=start + 1,
                                             order_scenarios=order,
-                                            reference=reference)
-
+                                            reference=reference, fonttick=20)
 
     # graph emission saving
     variables = {
@@ -677,7 +677,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     make_stackedbar_plot(df.T, 'Emission saving to {} (% of initial emission {} - {:.0f} MtCO2)'.format(end, start, emission_ini),
                          ncol=2, ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
                          colors=colors_temp, save=os.path.join(folder_img, 'emission_saving_decomposition.png'),
-                         rotation=90, left=1.2)
+                         rotation=90, left=1.2, fontxtick=20)
 
     # consumption saving
     variables = {
@@ -701,13 +701,12 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                          ncol=2,
                          ymin=None, format_y=lambda y, _: '{:.0%}'.format(y),
                          colors=colors_temp, save=os.path.join(folder_img, 'consumption_saving_decomposition.png'),
-                         rotation=90, left=1.2)
+                         rotation=90, left=1.2, fontxtick=20)
 
     emission_saving = pd.Series([result[s].loc['Emission (MtCO2)', start] - result[s].loc['Emission (MtCO2)', end] for s in result.keys()],
                                 index=result.keys()) / emission_ini
     consumption_saving = pd.Series([result[s].loc['Consumption (TWh)', start] - result[s].loc['Consumption (TWh)', end] for s in result.keys()],
                                       index=result.keys()) / consumption_ini
-
 
     # graph cba
     try:
@@ -1313,7 +1312,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None, reference='Ref
 
 
 def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None,
-                       reference='Reference'):
+                       reference='Reference', order_scenarios=None):
 
     def double_difference(ref, scenario, values=None, discount_rate=discount_rate, years=years):
         """Calculate double difference.
@@ -1359,7 +1358,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         return (result * discount).sum()
 
     def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True,
-                              cofp=True, details_health=False):
+                              cofp=True, order_scenarios=None):
         """Calculate socioeconomic NPV.
 
         Double difference is calculated with : scenario - reference
@@ -1444,12 +1443,14 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
         npv = - pd.DataFrame(npv)
         if save:
+            if order_scenarios is not None:
+                npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
             make_stackedbar_plot(npv.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
                                  format_y=lambda y, _: '{:.0f}'.format(y),
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'cost_benefit_analysis_counterfactual.png'.lower().replace(' ', '_')),
-                                 rotation=90, left=1.3)
+                                 rotation=90, left=1.3, fontxtick=30)
         npv.loc['NPV', :] = npv.sum()
         return npv
 
@@ -1464,9 +1465,10 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         years = int(cba_inputs['Lifetime'])
 
     # Getting inputs needed
-    energy_prices = pd.read_csv(cba_inputs['energy_prices'], index_col=[0]) * 10 ** 9  # euro/kWh to euro/TWh
-    carbon_value = pd.read_csv(cba_inputs['carbon_value'], index_col=[0], header=None).squeeze()  # euro/tCO2
-    carbon_emission = pd.read_csv(cba_inputs['carbon_emission'], index_col=[0]) * 10 ** 6  # unit: kgCO2/kWh to tCO2/TWh
+    energy_prices = get_pandas(cba_inputs['energy_prices'], lambda x: pd.read_csv(x, index_col=[0])) * 10 ** 9  # euro/kWh to euro/TWh
+    carbon_value = get_series(cba_inputs['carbon_value'], header=None)  # euro/kWh to euro/TWh
+    carbon_emission = get_pandas(cba_inputs['carbon_emission'], lambda x: pd.read_csv(x, index_col=[0])) * 10 ** 6
+
     # euro/tCO2 * tCO2/TWh  = euro/TWh
     carbon_emission_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_emission_value.dropna(how='all', inplace=True)
@@ -1623,7 +1625,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     # Effectiveness all scenarios except AP- and ZP-
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
-        cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=folder_policies)
+        cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=folder_policies,
+                                    order_scenarios=order_scenarios)
         if indicator is not None:
             if set(list(cba.index)).issubset(list(indicator.index)):
                 indicator.loc[list(cba.index), s] = cba[s]
@@ -1710,7 +1713,7 @@ def compare_results(output, path):
     df.round(1).to_csv(os.path.join(path, 'validation.csv'))
 
 
-def make_summary(path, option='input'):
+def make_summary(path, option=None):
 
     images = []
     # 1. reference - input
@@ -1727,23 +1730,27 @@ def make_summary(path, option='input'):
                 'investment.png', 'financing_households.png', 'policies_validation.png']
         images += [os.path.join(path_reference_result, i) for i in temp]
 
+    path_compare = os.path.join(path, 'img')
+    temp = ['consumption_hist.png',
+            'emission.png',
+            'stock_performance.png',
+            'stock_heater.png',
+            'consumption_heater.png',
+            'consumption_saving_decomposition.png',
+            'emission_saving_decomposition.png',
+            'investment_total.png',
+            'cost_benefit_analysis_counterfactual.png',
+            'energy_poverty.png',
+            'energy_income_ratio_rate_2050.png',
+            'cba_consumption.png',
+            'cba_emission.png',
+            ]
+    images += [os.path.join(path_compare, i) for i in temp]
+
     # 3. result - compare
     path_policies = os.path.join(path, 'policies')
     temp = ['cost_benefit_analysis_counterfactual.png']
     images += [os.path.join(path_policies, i) for i in temp]
-
-    path_compare = os.path.join(path, 'img')
-    temp = ['cost_benefit_analysis_comparison.png',
-            'cba_consumption.png', 'cba_emission.png',
-            'running_cost_comparison.png', 'running_cost_consumption.png', 'running_cost_emission.png',
-            'consumption_saving_decomposition.png', 'emission_saving_decomposition.png',
-            'energy_income_ratio_rate_2030.png',
-            'renovation.png', 'stock_heat_pump.png', 'retrofit_measures_count.png', 'consumption_hist.png',
-            'consumption_energy.png', 'emission.png', 'investment_total.png', 'subsidies_total.png',
-            'efficiency_insulation.png', 'energy_poverty.png', 'retrofit_financing.png',
-            'retrofit_decarbonize_options.png',
-            ]
-    images += [os.path.join(path_compare, i) for i in temp]
 
     images = [i for i in images if os.path.isfile(i)]
 
