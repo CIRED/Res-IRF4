@@ -216,17 +216,57 @@ def run(path=None, folder=None):
                     configuration[key] = copy.deepcopy(configuration['Reference'])
                     configuration[key]['energy']['energy_prices'] = copy.deepcopy(item)
 
+            if config_sensitivity.get('financing_cost') is not None:
+                for key, item in config_sensitivity['financing_cost'].items():
+                    configuration['financing_cost_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['financing_cost_{}'.format(key)]['financing_cost'] = copy.deepcopy(item)
+
+            if config_sensitivity.get('income_rate') is not None:
+                values = config_sensitivity['income_rate']
+                if isinstance(values, (float, int)):
+                    values = [values]
+                for v in values:
+                    configuration['income_rate_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
+                    configuration['income_rate_{}'.format(v)]['macro']['income_rate'] = v
+
+            if config_sensitivity.get('factor_energy_prices') is not None:
+                values = config_sensitivity['factor_energy_prices']
+                if isinstance(values, (float, int)):
+                    values = [values]
+                for v in values:
+                    configuration['factor_prices_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
+                    configuration['factor_prices_{}'.format(v)]['energy']['energy_prices']['factor'] = v
+
+            if config_sensitivity.get('technical_progress_insulation') is not None:
+                values = config_sensitivity['technical_progress_insulation']
+                for key, item in values.items():
+                    configuration['progress_insulation_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['progress_insulation_{}'.format(key)]['technical']['technical_progress']['insulation'] = copy.deepcopy(item)
+
+            if config_sensitivity.get('technical_progress_heater') is not None:
+                values = config_sensitivity['technical_progress_heater']
+                for key, item in values.items():
+                    configuration['progress_heater_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['progress_heater_{}'.format(key)]['technical']['technical_progress']['heater'] = copy.deepcopy(item)
+
             if config_sensitivity.get('district_heating') is not None:
                 values = config_sensitivity['district_heating']
                 for v in values:
-                    name = 'DH{}'.format(v.split('.')[0][-2:])
+                    name = 'district_heating_{}'.format(v.split('.')[0][-2:])
                     configuration[name] = copy.deepcopy(configuration['Reference'])
                     configuration[name]['switch_heater']['district_heating'] = v
+
+            if config_sensitivity.get('renewable_gas') is not None:
+                values = config_sensitivity['renewable_gas']
+                for v in values:
+                    name = 'renewable_gas_{}'.format(v.split('.')[0][-2:])
+                    configuration[name] = copy.deepcopy(configuration['Reference'])
+                    configuration[name]['energy']['renewable_gas'] = v
 
             if config_sensitivity.get('ms_heater_built') is not None:
                 values = config_sensitivity['ms_heater_built']
                 for v in values:
-                    name = 'Construction{}'.format(v.split('.')[0][-2:])
+                    name = 'heater_construction_{}'.format(v.split('.')[0][-2:])
                     configuration[name] = copy.deepcopy(configuration['Reference'])
                     configuration[name]['switch_heater']['ms_heater_built'] = v
 
@@ -245,26 +285,14 @@ def run(path=None, folder=None):
                 if isinstance(values, (float, int)):
                     values = [values]
                 for v in values:
-                    configuration['Lifetime{}'.format(v)] = copy.deepcopy(configuration['Reference'])
-                    configuration['Lifetime{}'.format(v)]['technical']['lifetime_insulation'] = v
-
-            if config_sensitivity.get('scale_renovation') is not None:
-                values = config_sensitivity['scale_renovation']
-                if isinstance(values, dict):
-                    values = [values]
-                for v in values:
-                    name = str(v['target']).replace('.', '')
-                    configuration['ScaleInsulation{}'.format(name)] = copy.deepcopy(configuration['Reference'])
-                    configuration['ScaleInsulation{}'.format(name)]['renovation']['scale'] = v
+                    configuration['lifetimeinsulation_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
+                    configuration['lifetimeinsulation_{}'.format(v)]['technical']['lifetime_insulation'] = v
 
             if config_sensitivity.get('scale_heater') is not None:
                 values = config_sensitivity['scale_heater']
-                if isinstance(values, dict):
-                    values = [values]
-                for v in values:
-                    name = str(v['target']).replace('.', '')
-                    configuration['ScaleHeater{}'.format(name)] = copy.deepcopy(configuration['Reference'])
-                    configuration['ScaleHeater{}'.format(name)]['switch_heater']['scale'] = v
+                for key, item in values.items():
+                    configuration['scale_heater_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['scale_heater_{}'.format(key)]['switch_heater']['scale'] = copy.deepcopy(item)
 
             if config_sensitivity.get('step') is not None:
                 values = config_sensitivity['step']
@@ -326,6 +354,9 @@ def run(path=None, folder=None):
             configuration[s]['simple']['detailed_output'] = False
             configuration[s]['simple']['figures'] = False
 
+    if len(configuration.keys()) > 10:
+        output_compare = 'none'
+
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logger.debug('Launching processes')
@@ -352,6 +383,8 @@ def run(path=None, folder=None):
                 make_summary(folder, option='comparison')
         elif output_compare == 'simple':
             plot_compare_scenarios_simple(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
+        else:
+            pass
 
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:

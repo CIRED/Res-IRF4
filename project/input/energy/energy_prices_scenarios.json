@@ -3,38 +3,38 @@
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0214,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
-      "Heating": 0.019
+      "Oil fuel": 0.0173,
+      "Heating": 0.0102
     }
   },
   "S1": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0254
+      "Electricity": 0.0203,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0173,
+      "Heating": 0.019
     }
   },
   "S2": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0203,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0254,
+      "Wood fuel": 0.0102,
       "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Heating": 0.0102
     }
   },
   "S3": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0254,
+      "Electricity": 0.027,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.0173,
       "Heating": 0.0127
     }
@@ -42,71 +42,71 @@
   "S4": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.0203,
       "Natural gas": 0.0536,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0102
+      "Oil fuel": 0.0346,
+      "Heating": 0.019
     }
   },
   "S5": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0268,
+      "Electricity": 0.027,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0254,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0254
+      "Oil fuel": 0.0173,
+      "Heating": 0.019
     }
   },
   "S6": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0536,
+      "Electricity": 0.0108,
+      "Natural gas": 0.0268,
       "Wood fuel": 0.0254,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Oil fuel": 0.026,
+      "Heating": 0.0127
     }
   },
   "S7": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0254
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0127
     }
   },
   "S8": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.027,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
-    }
-  },
-  "S9": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0135,
       "Natural gas": 0.0214,
       "Wood fuel": 0.0127,
       "Oil fuel": 0.026,
-      "Heating": 0.0254
+      "Heating": 0.019
+    }
+  },
+  "S9": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.027,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.026,
+      "Heating": 0.019
     }
   },
   "S10": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.0203,
       "Natural gas": 0.0268,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0127
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
     }
   },
   "S11": {
@@ -115,57 +115,57 @@
       "Electricity": 0.027,
       "Natural gas": 0.0402,
       "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Oil fuel": 0.0173,
+      "Heating": 0.0254
     }
   },
   "S12": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0135,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
+    }
+  },
+  "S13": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0203,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0346,
+      "Heating": 0.019
+    }
+  },
+  "S14": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0108,
       "Natural gas": 0.0268,
       "Wood fuel": 0.0127,
       "Oil fuel": 0.0138,
-      "Heating": 0.0127
-    }
-  },
-  "S13": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0102
-    }
-  },
-  "S14": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0254
+      "Heating": 0.019
     }
   },
   "S15": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
+      "Electricity": 0.0108,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.019,
+      "Wood fuel": 0.0254,
       "Oil fuel": 0.026,
-      "Heating": 0.0254
+      "Heating": 0.0127
     }
   },
   "S16": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.027,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
       "Heating": 0.0102
     }
   },
@@ -173,8 +173,8 @@
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0102,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.0346,
       "Heating": 0.0102
     }
@@ -182,9 +182,9 @@
   "S18": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0102,
+      "Electricity": 0.0108,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0254,
       "Oil fuel": 0.0173,
       "Heating": 0.0254
     }
@@ -192,60 +192,60 @@
   "S19": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0102
+      "Electricity": 0.0135,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0127
     }
   },
   "S20": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0402,
+      "Electricity": 0.027,
+      "Natural gas": 0.0268,
       "Wood fuel": 0.0102,
       "Oil fuel": 0.0138,
-      "Heating": 0.0254
+      "Heating": 0.019
     }
   },
   "S21": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.0135,
       "Natural gas": 0.0214,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.026,
+      "Heating": 0.0254
     }
   },
   "S22": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0135,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0346,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.026,
       "Heating": 0.0102
     }
   },
   "S23": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Electricity": 0.0108,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S24": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0108,
       "Natural gas": 0.0268,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.0346,
+      "Oil fuel": 0.0173,
       "Heating": 0.0127
     }
   },
@@ -253,10 +253,10 @@
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0108,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0254
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0127
     }
   },
   "S26": {
@@ -264,226 +264,226 @@
     "rate": {
       "Electricity": 0.027,
       "Natural gas": 0.0268,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S27": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.0254,
+      "Electricity": 0.0135,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Heating": 0.0254
     }
   },
   "S28": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0135,
-      "Natural gas": 0.0214,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
-      "Heating": 0.019
+      "Oil fuel": 0.0346,
+      "Heating": 0.0127
     }
   },
   "S29": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.027,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.026,
-      "Heating": 0.019
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S30": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.0108,
       "Natural gas": 0.0214,
-      "Wood fuel": 0.0102,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.0173,
-      "Heating": 0.0127
+      "Heating": 0.0254
     }
   },
   "S31": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0138,
-      "Heating": 0.019
+      "Electricity": 0.027,
+      "Natural gas": 0.0402,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.026,
+      "Heating": 0.0127
     }
   },
   "S32": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0268,
+      "Electricity": 0.0135,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0254
+      "Oil fuel": 0.026,
+      "Heating": 0.0102
     }
   },
   "S33": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.0135,
       "Natural gas": 0.0536,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0102
+      "Oil fuel": 0.0346,
+      "Heating": 0.019
     }
   },
   "S34": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0254
+      "Electricity": 0.0203,
+      "Natural gas": 0.0402,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0346,
+      "Heating": 0.019
     }
   },
   "S35": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0108,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0173,
+      "Heating": 0.019
+    }
+  },
+  "S36": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0135,
       "Natural gas": 0.0536,
       "Wood fuel": 0.0254,
       "Oil fuel": 0.026,
-      "Heating": 0.0127
-    }
-  },
-  "S36": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0173,
       "Heating": 0.0102
     }
   },
   "S37": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0536,
+      "Electricity": 0.027,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0254
+      "Oil fuel": 0.0138,
+      "Heating": 0.0127
     }
   },
   "S38": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0254,
+      "Electricity": 0.0108,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.0346,
-      "Heating": 0.0127
+      "Heating": 0.0254
     }
   },
   "S39": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0203,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.026,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0346,
       "Heating": 0.0254
     }
   },
   "S40": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0102
+      "Electricity": 0.0135,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0346,
+      "Heating": 0.019
     }
   },
   "S41": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0536,
+      "Electricity": 0.027,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.019,
-      "Oil fuel": 0.0138,
+      "Oil fuel": 0.0346,
       "Heating": 0.019
     }
   },
   "S42": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
+      "Electricity": 0.0108,
       "Natural gas": 0.0268,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0138,
+      "Heating": 0.0254
     }
   },
   "S43": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.0108,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0102
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.026,
+      "Heating": 0.0127
     }
   },
   "S44": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0108,
       "Natural gas": 0.0402,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0127
     }
   },
   "S45": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0346,
-      "Heating": 0.019
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0254
     }
   },
   "S46": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.026,
+      "Electricity": 0.0203,
+      "Natural gas": 0.0402,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0346,
       "Heating": 0.0102
     }
   },
   "S47": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0135,
       "Natural gas": 0.0268,
       "Wood fuel": 0.0127,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Oil fuel": 0.026,
+      "Heating": 0.0102
     }
   },
   "S48": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0108,
-      "Natural gas": 0.0536,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.0127,
       "Oil fuel": 0.026,
       "Heating": 0.0254
@@ -492,38 +492,38 @@
   "S49": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Electricity": 0.0135,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S50": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
-      "Natural gas": 0.0536,
+      "Electricity": 0.0135,
+      "Natural gas": 0.0268,
       "Wood fuel": 0.019,
       "Oil fuel": 0.0346,
-      "Heating": 0.0254
+      "Heating": 0.0102
     }
   },
   "S51": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
+      "Electricity": 0.0203,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0102
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0127
     }
   },
   "S52": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0214,
+      "Electricity": 0.0203,
+      "Natural gas": 0.0268,
       "Wood fuel": 0.019,
       "Oil fuel": 0.026,
       "Heating": 0.0127
@@ -532,21 +532,21 @@
   "S53": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Electricity": 0.0108,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0138,
+      "Heating": 0.0127
     }
   },
   "S54": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0268,
+      "Electricity": 0.0135,
+      "Natural gas": 0.0214,
       "Wood fuel": 0.0102,
       "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Heating": 0.0254
     }
   },
   "S55": {
@@ -556,25 +556,25 @@
       "Natural gas": 0.0536,
       "Wood fuel": 0.019,
       "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Heating": 0.0254
     }
   },
   "S56": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.027,
       "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S57": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
+      "Electricity": 0.027,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.0346,
       "Heating": 0.019
     }
@@ -582,109 +582,109 @@
   "S58": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0214,
+      "Electricity": 0.027,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0254,
       "Oil fuel": 0.0346,
-      "Heating": 0.019
+      "Heating": 0.0102
     }
   },
   "S59": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
-      "Heating": 0.019
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0254
     }
   },
   "S60": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.0135,
       "Natural gas": 0.0536,
       "Wood fuel": 0.0254,
-      "Oil fuel": 0.0346,
+      "Oil fuel": 0.0138,
       "Heating": 0.019
     }
   },
   "S61": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.0135,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0346,
       "Heating": 0.0254
     }
   },
   "S62": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.027,
       "Natural gas": 0.0402,
-      "Wood fuel": 0.0102,
+      "Wood fuel": 0.0254,
       "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Heating": 0.0254
     }
   },
   "S63": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
+      "Electricity": 0.0203,
       "Natural gas": 0.0268,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
     }
   },
   "S64": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0135,
-      "Natural gas": 0.0268,
+      "Natural gas": 0.0214,
       "Wood fuel": 0.0254,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0127
+      "Oil fuel": 0.0138,
+      "Heating": 0.0102
     }
   },
   "S65": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0108,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0254
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.026,
+      "Heating": 0.019
     }
   },
   "S66": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.0135,
       "Natural gas": 0.0402,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0102
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0254
     }
   },
   "S67": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
+      "Electricity": 0.0203,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.019,
+      "Wood fuel": 0.0102,
       "Oil fuel": 0.026,
-      "Heating": 0.0127
+      "Heating": 0.0254
     }
   },
   "S68": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0135,
       "Natural gas": 0.0402,
-      "Wood fuel": 0.0127,
+      "Wood fuel": 0.019,
       "Oil fuel": 0.026,
       "Heating": 0.019
     }
@@ -692,20 +692,20 @@
   "S69": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0214,
+      "Electricity": 0.027,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.026,
-      "Heating": 0.0254
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
     }
   },
   "S70": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
+      "Electricity": 0.027,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0173,
       "Heating": 0.0102
     }
   },
@@ -714,47 +714,47 @@
     "rate": {
       "Electricity": 0.0203,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0173,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
       "Heating": 0.0254
     }
   },
   "S72": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.026,
-      "Heating": 0.019
+      "Electricity": 0.027,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0102
     }
   },
   "S73": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.0108,
       "Natural gas": 0.0214,
       "Wood fuel": 0.019,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0254
+      "Oil fuel": 0.0138,
+      "Heating": 0.0127
     }
   },
   "S74": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.026,
-      "Heating": 0.0102
+      "Electricity": 0.0108,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
     }
   },
   "S75": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.019,
+      "Electricity": 0.0203,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0254,
       "Oil fuel": 0.026,
       "Heating": 0.0254
     }
@@ -762,40 +762,40 @@
   "S76": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0214,
+      "Electricity": 0.027,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.0127,
       "Oil fuel": 0.0346,
-      "Heating": 0.0127
+      "Heating": 0.0102
     }
   },
   "S77": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.019
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.026,
+      "Heating": 0.0102
     }
   },
   "S78": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0127
+      "Electricity": 0.0108,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0138,
+      "Heating": 0.0254
     }
   },
   "S79": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.027,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
       "Heating": 0.0127
     }
   },
@@ -803,7 +803,7 @@
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0135,
-      "Natural gas": 0.0268,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.0127,
       "Oil fuel": 0.026,
       "Heating": 0.0254
@@ -812,31 +812,31 @@
   "S81": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.0254,
+      "Electricity": 0.027,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0102,
       "Oil fuel": 0.0346,
-      "Heating": 0.0254
+      "Heating": 0.019
     }
   },
   "S82": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.026,
-      "Heating": 0.019
+      "Electricity": 0.027,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0254
     }
   },
   "S83": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0127
+      "Electricity": 0.0203,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.026,
+      "Heating": 0.0254
     }
   },
   "S84": {
@@ -844,87 +844,87 @@
     "rate": {
       "Electricity": 0.0108,
       "Natural gas": 0.0536,
-      "Wood fuel": 0.0127,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0127
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S85": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0203,
       "Natural gas": 0.0214,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0254
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0127
     }
   },
   "S86": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0402,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.026,
+      "Electricity": 0.027,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.019,
+      "Oil fuel": 0.0138,
       "Heating": 0.0102
     }
   },
   "S87": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.026,
-      "Heating": 0.019
-    }
-  },
-  "S88": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0127
-    }
-  },
-  "S89": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0268,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0127
-    }
-  },
-  "S90": {
-    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
-    "rate": {
-      "Electricity": 0.0203,
+      "Electricity": 0.027,
       "Natural gas": 0.0268,
       "Wood fuel": 0.019,
       "Oil fuel": 0.0173,
       "Heating": 0.0102
     }
   },
-  "S91": {
+  "S88": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0108,
+      "Natural gas": 0.0268,
+      "Wood fuel": 0.0254,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0127
+    }
+  },
+  "S89": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0203,
-      "Natural gas": 0.0402,
+      "Natural gas": 0.0214,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0173,
+      "Heating": 0.0254
+    }
+  },
+  "S90": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.0108,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0127,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Oil fuel": 0.0173,
+      "Heating": 0.019
+    }
+  },
+  "S91": {
+    "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+    "rate": {
+      "Electricity": 0.027,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.0346,
+      "Heating": 0.0254
     }
   },
   "S92": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.027,
+      "Electricity": 0.0135,
       "Natural gas": 0.0214,
-      "Wood fuel": 0.0127,
+      "Wood fuel": 0.0102,
       "Oil fuel": 0.0173,
       "Heating": 0.0254
     }
@@ -932,30 +932,30 @@
   "S93": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.0102,
-      "Oil fuel": 0.0138,
-      "Heating": 0.0127
+      "Electricity": 0.027,
+      "Natural gas": 0.0402,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.026,
+      "Heating": 0.0254
     }
   },
   "S94": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0214,
-      "Wood fuel": 0.019,
-      "Oil fuel": 0.0346,
-      "Heating": 0.0127
+      "Electricity": 0.0108,
+      "Natural gas": 0.0536,
+      "Wood fuel": 0.0102,
+      "Oil fuel": 0.026,
+      "Heating": 0.019
     }
   },
   "S95": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
-      "Natural gas": 0.0402,
+      "Electricity": 0.0203,
+      "Natural gas": 0.0268,
       "Wood fuel": 0.019,
-      "Oil fuel": 0.0346,
+      "Oil fuel": 0.0173,
       "Heating": 0.019
     }
   },
@@ -963,27 +963,27 @@
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
       "Electricity": 0.0108,
-      "Natural gas": 0.0536,
-      "Wood fuel": 0.0254,
-      "Oil fuel": 0.0346,
+      "Natural gas": 0.0402,
+      "Wood fuel": 0.0127,
+      "Oil fuel": 0.026,
       "Heating": 0.0127
     }
   },
   "S97": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0108,
+      "Electricity": 0.0203,
       "Natural gas": 0.0536,
       "Wood fuel": 0.019,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0127
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
     }
   },
   "S98": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0203,
-      "Natural gas": 0.0402,
+      "Electricity": 0.0135,
+      "Natural gas": 0.0536,
       "Wood fuel": 0.0254,
       "Oil fuel": 0.0346,
       "Heating": 0.0127
@@ -992,11 +992,11 @@
   "S99": {
     "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
     "rate": {
-      "Electricity": 0.0135,
-      "Natural gas": 0.0268,
+      "Electricity": 0.0203,
+      "Natural gas": 0.0402,
       "Wood fuel": 0.0102,
-      "Oil fuel": 0.0173,
-      "Heating": 0.0127
+      "Oil fuel": 0.0138,
+      "Heating": 0.019
     }
   }
 }

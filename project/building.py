@@ -107,9 +107,10 @@ class ThermalBuildings:
         self._surface_yrs = surface
         self._surface = surface.loc[:, year]
 
-        self._income_ini = income.copy()
+        self._income_yrs = income.copy()
+        # self._income_ini = income.loc[:, year].copy()
         self._income, self._income_owner, self._income_tenant = None, None, None
-        self.income = income
+        self.income = self._income_yrs.loc[:, year]
 
         self._residual_rate = 0
         self._stock_residual = self._residual_rate * stock
@@ -151,6 +152,8 @@ class ThermalBuildings:
         self._surface = self._surface_yrs.loc[:, year]
         self.consumption_before_retrofit = None
         self.intensity_before_retrofit = None
+        self.income = self._income_yrs.loc[:, year]
+
 
     @property
     def stock(self):
@@ -1023,6 +1026,7 @@ class AgentBuildings(ThermalBuildings):
 
         self._list_condition_subsidies = []
         self._condition_store = None
+        self.income = self._income_yrs.loc[:, year]
 
         self._replaced_by = None
         self._only_heater = None

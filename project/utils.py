@@ -1302,7 +1302,7 @@ def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
     save_fig(fig, save=save)
 
 def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ymin=0, save=None, scatter=None,
-                          columns=None, ncol=3, offset=1, loc='upper', left=1.04):
+                          columns=None, ncol=3, offset=1, loc='upper', left=1.04, reference='Reference'):
     """Plot multi scenarios and uncertainty area between lower value and higher value of scenarios.
 
     Parameters
@@ -1315,12 +1315,16 @@ def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ym
     ymin: float or int
     """
 
-    subset = df.loc[:, columns]
-    others = df.loc[:, [c for c in df.columns if c not in columns]]
+    if columns is not None:
+        subset = df.loc[:, columns]
+        others = df.loc[:, [c for c in df.columns if c not in columns]]
+    else:
+        subset = df
+        others = pd.DataFrame()
 
     df_min = subset.min(axis=1)
     df_max = subset.max(axis=1)
-    df_ref = df.loc[:, 'Reference']
+    df_ref = df.loc[:, reference]
 
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
     fig.subplots_adjust(top=0.85)
