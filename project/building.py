@@ -4405,7 +4405,7 @@ class AgentBuildings(ThermalBuildings):
             output['Surface (m2/person)'] = (
                     output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
-        temp = prices.T
+        temp = prices.copy().T
         temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
         output.update(temp.T)
 

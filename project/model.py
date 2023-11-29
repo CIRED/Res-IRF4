@@ -470,13 +470,10 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
 
     # updating heating-system vintage
     if True:
-        switch_heating = pd.Series({i: output['Switch {} (Thousand households)'.format(i)] * 1e3 for i in
-                             stock.index.get_level_values('Heating system').unique() if
-                             'Switch {} (Thousand households)'.format(i) in output.keys()})
+        switch_heating = buildings._heater_store['replacement'].groupby('Heating system').sum().sum()
         if new_heating is not None:
             pass
             # switch_heating = switch_heating.add(new_heating, fill_value=0)
-
         temp = buildings.heater_vintage.loc[:, 1] - buildings._heater_store['replacement'].groupby('Heating system').sum().sum(axis=1)
 
         # update heater_vintage with switch_heating for year == lifetime heater
