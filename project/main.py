@@ -226,53 +226,55 @@ def run(path=None, folder=None):
                     configuration['financing_cost_{}'.format(key)]['financing_cost'] = copy.deepcopy(item)
 
             if config_sensitivity.get('income_rate') is not None:
-                values = config_sensitivity['income_rate']
-                if isinstance(values, (float, int)):
-                    values = [values]
-                for v in values:
-                    configuration['income_rate_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
-                    configuration['income_rate_{}'.format(v)]['macro']['income_rate'] = v
+                for key, item in config_sensitivity['income_rate'].items():
+                    configuration['income_rate_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['income_rate_{}'.format(key)]['macro']['income_rate'] = item
 
             if config_sensitivity.get('factor_energy_prices') is not None:
-                values = config_sensitivity['factor_energy_prices']
-                if isinstance(values, (float, int)):
-                    values = [values]
-                for v in values:
-                    configuration['factor_prices_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
-                    configuration['factor_prices_{}'.format(v)]['energy']['energy_prices']['factor'] = v
+                for key, item in config_sensitivity['factor_energy_prices'].items():
+                    configuration['factor_prices_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['factor_prices_{}'.format(key)]['energy']['energy_prices']['factor'] = item
 
             if config_sensitivity.get('technical_progress_insulation') is not None:
-                values = config_sensitivity['technical_progress_insulation']
-                for key, item in values.items():
+                for key, item in config_sensitivity['technical_progress_insulation'].items():
                     configuration['progress_insulation_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
                     configuration['progress_insulation_{}'.format(key)]['technical']['technical_progress']['insulation'] = copy.deepcopy(item)
 
             if config_sensitivity.get('technical_progress_heater') is not None:
-                values = config_sensitivity['technical_progress_heater']
-                for key, item in values.items():
+                for key, item in config_sensitivity['technical_progress_heater'].items():
                     configuration['progress_heater_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
                     configuration['progress_heater_{}'.format(key)]['technical']['technical_progress']['heater'] = copy.deepcopy(item)
 
             if config_sensitivity.get('district_heating') is not None:
-                values = config_sensitivity['district_heating']
-                for v in values:
-                    name = 'district_heating_{}'.format(v.split('.')[0][-2:])
-                    configuration[name] = copy.deepcopy(configuration['Reference'])
-                    configuration[name]['switch_heater']['district_heating'] = v
+                for key, item in config_sensitivity['district_heating'].items():
+                    configuration['district_heating_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['district_heating_{}'.format(key)]['switch_heater']['district_heating'] = item
 
             if config_sensitivity.get('renewable_gas') is not None:
-                values = config_sensitivity['renewable_gas']
-                for v in values:
-                    name = 'renewable_gas_{}'.format(v.split('.')[0][-2:])
-                    configuration[name] = copy.deepcopy(configuration['Reference'])
-                    configuration[name]['energy']['renewable_gas'] = v
+                for key, item in config_sensitivity['renewable_gas'].items():
+                    configuration['renewable_gas_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['renewable_gas_{}'.format(key)]['energy']['renewable_gas'] = item
 
             if config_sensitivity.get('ms_heater_built') is not None:
-                values = config_sensitivity['ms_heater_built']
-                for v in values:
-                    name = 'heater_construction_{}'.format(v.split('.')[0][-2:])
-                    configuration[name] = copy.deepcopy(configuration['Reference'])
-                    configuration[name]['switch_heater']['ms_heater_built'] = v
+                for key, item in config_sensitivity['ms_heater_built'].items():
+                    configuration['heater_construction_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['heater_construction_{}'.format(key)]['switch_heater']['ms_heater_built'] = item
+
+            if config_sensitivity.get('turnover') is not None:
+                for key, item in config_sensitivity['turnover'].items():
+                    configuration['turnover_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['turnover_{}'.format(key)]['macro']['flow_construction'] = item['flow_construction']
+                    configuration['turnover_{}'.format(key)]['macro']['demolition_rate'] = item['demolition_rate']
+
+            if config_sensitivity.get('scale_heater') is not None:
+                for key, item in config_sensitivity['scale_heater'].items():
+                    configuration['scale_heater_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['scale_heater_{}'.format(key)]['switch_heater']['scale'] = copy.deepcopy(item)
+
+            if config_sensitivity.get('scale_renovation') is not None:
+                for key, item in config_sensitivity['scale_renovation'].items():
+                    configuration['scale_renovation_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['scale_renovation_{}'.format(key)]['renovation']['scale'] = copy.deepcopy(item)
 
             if config_sensitivity.get('building_stock') is not None:
                 values = config_sensitivity['building_stock']
@@ -292,11 +294,6 @@ def run(path=None, folder=None):
                     configuration['lifetimeinsulation_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
                     configuration['lifetimeinsulation_{}'.format(v)]['technical']['lifetime_insulation'] = v
 
-            if config_sensitivity.get('scale_heater') is not None:
-                values = config_sensitivity['scale_heater']
-                for key, item in values.items():
-                    configuration['scale_heater_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
-                    configuration['scale_heater_{}'.format(key)]['switch_heater']['scale'] = copy.deepcopy(item)
 
             if config_sensitivity.get('step') is not None:
                 values = config_sensitivity['step']
