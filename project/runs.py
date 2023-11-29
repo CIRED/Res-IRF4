@@ -81,7 +81,5 @@ if __name__ == '__main__':
 
     for c in configs:
         # add try/except to continue if one config fail
-        try:
-            run(path=c, folder=folder)
-        except:
-            continue
+        run(path=c, folder=folder)
+
