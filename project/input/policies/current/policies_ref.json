@@ -81,7 +81,8 @@
         "mpr",
         "cite",
         "cee"
-      ]
+      ],
+      "policy": "subsidy_cap"
     },
     "reduced_vta": {
       "start": 2018,

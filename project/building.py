@@ -30,7 +30,7 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
     get_size, compare_bar_plot, make_sensitivity_tables, cumulated_plot, find_discount_rate
-from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots, calculate_average
+from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots, calculate_average, make_scatter_plot
 
 import project.thermal as thermal
 
@@ -3562,9 +3562,19 @@ class AgentBuildings(ThermalBuildings):
             rate = flow / stock.groupby(level).sum()
             rate = self.add_certificate(rate)
             npv = npv.groupby(level).mean()
+
             npv = self.add_certificate(npv)
 
             df = pd.concat((rate, npv), axis=1, keys=['rate', 'npv'])
+
+            temp = df.reset_index('Occupancy status').copy()
+            temp['Occupancy status'] = temp['Occupancy status'].apply(lambda x: self._resources_data['colors'][x])
+            make_scatter_plot(temp, 'npv', 'rate', 'Net present value (euro)', 'Renovation rate (%)',
+                              col_colors='Occupancy status',
+                              format_x=lambda y, _: '{:,.0f}'.format(y),
+                              format_y=lambda y, _: '{:,.0%}'.format(y),
+                              save=os.path.join(self.path_ini, 'renovation_rate_npv.png'), annotate=False)
+
             dict_df = {i: df for i in df.index.names if i not in ['Existing', 'Wall', 'Floor', 'Roof', 'Windows']}
             make_grouped_scatterplots(dict_df, 'npv', 'rate', colors=self._resources_data['colors'],
                                       save=os.path.join(self.path_ini, 'renovation_rate_ini.png'), n_columns=2,

@@ -14,8 +14,9 @@
       "mpr",
       "mpr_efficacite",
       "mpr_multifamily",
-      "mpr_deep",
+      "mpr_multifamily_deep",
       "reduced_vta",
+      "obligation",
       "zero_interest_loan"
     ],
     "test": [

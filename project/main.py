@@ -104,6 +104,8 @@ def run(path=None, folder=None):
             config_policies = configuration['assessment']
             config_policies = {key: item for key, item in config_policies.items() if item is not None}
             policy_name = configuration['assessment']['Policy name']
+            if policy_name not in configuration['Reference']['policies'].keys():
+                raise ValueError('Policy name not in Reference policies')
             end = configuration['Reference']['policies'][policy_name]['end']
             configuration['Reference']['end'] = end
 
@@ -123,13 +125,15 @@ def run(path=None, folder=None):
                 configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
                 configuration['ZP+1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['end']
 
-            list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
-                          re.search('20[0-9][0-9]', key)]
-            for year in list_years:
-                if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
-                    configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
-                    configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
-                    configuration['AP-{}'.format(year)]['end'] = year + 1
+            if configuration['Reference']['policies'][policy_name]['policy'] not in ['obligation', 'restriction_energy',
+                                                                                     'subsidy_cap']:
+                list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
+                              re.search('20[0-9][0-9]', key)]
+                for year in list_years:
+                    if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
+                        configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
+                        configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
+                        configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
 
