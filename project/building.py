@@ -1425,12 +1425,12 @@ class AgentBuildings(ThermalBuildings):
         cost_total, cost_financing, amount_debt, amount_saving, discount = cost, None, None, None, None
         to_pay = cost - subsidies
 
-        financing_options = {'debt': {'price': financing_cost['interest_rate'],
+        financing_options = {'debt': {'price': financing_cost['interest_rate'].loc[self.year],
                                       'max': None,
                                       'duration': financing_cost['duration'],
                                       'type': 'debt'
                                       },
-                             'saving': {'price': financing_cost['saving_rate'],
+                             'saving': {'price': financing_cost['saving_rate'].loc[self.year],
                                         'max': financing_cost['upfront_max'],
                                         'duration': financing_cost['duration'],
                                         'type': 'saving'
@@ -1500,7 +1500,8 @@ class AgentBuildings(ThermalBuildings):
         condition = DataFrame(True, index=amount_debt.index, columns=amount_debt.columns)
 
         if financing_cost['constraint_liquidity']:
-            debt_reimbursement = calculate_annuities(amount_debt, lifetime=financing_cost['duration'], discount_rate=financing_cost['interest_rate'])
+            debt_reimbursement = calculate_annuities(amount_debt, lifetime=financing_cost['duration'],
+                                                     discount_rate=financing_cost['interest_rate'].loc[self.year])
             debt_income_ratio = (debt_reimbursement.T / reindex_mi(self._income_owner, amount_debt.index)).T
             condition = condition & (debt_income_ratio <= financing_cost['debt_income_ratio'])
 

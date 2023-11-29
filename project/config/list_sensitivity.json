@@ -54,25 +54,25 @@
     "project/input/investment/market_share_heater_construction_s4.csv"
   ],
   "financing_cost": {
-    "low": {
-      "activated": false,
-      "interest_rate": 0.05,
-      "saving_rate": 0.025,
-      "duration": 15,
-      "upfront_max": "project/input/macro/upfront_max.csv",
-      "debt_income_ratio": 0.1,
-      "constraint_liquidity": true
+      "low": {
+        "activated": true,
+        "interest_rate": "project/input/macro/interest_rate_low.csv",
+        "saving_rate": "project/input/macro/saving_rate_low.csv",
+        "duration": 15,
+        "upfront_max": "project/input/macro/upfront_max.csv",
+        "debt_income_ratio": 0.1,
+        "constraint_liquidity": true
+      },
+      "high": {
+        "activated": true,
+        "interest_rate": "project/input/macro/interest_rate_high.csv",
+        "saving_rate": "project/input/macro/saving_rate_high.csv",
+        "duration": 15,
+        "upfront_max": "project/input/macro/upfront_max.csv",
+        "debt_income_ratio": 0.1,
+        "constraint_liquidity": true
+      }
     },
-    "high": {
-      "activated": true,
-      "interest_rate": 0.1,
-      "saving_rate": 0.05,
-      "duration": 15,
-      "upfront_max": "project/input/macro/upfront_max.csv",
-      "debt_income_ratio": 0.1,
-      "constraint_liquidity": true
-    }
-  },
   "income_rate": [
     0,
     0.02
