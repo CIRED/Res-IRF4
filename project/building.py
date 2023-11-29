@@ -4405,6 +4405,10 @@ class AgentBuildings(ThermalBuildings):
             output['Surface (m2/person)'] = (
                     output['Surface (Million m2)'] / (inputs['population'].loc[self.year] / 10 ** 6))
 
+        temp = prices.T
+        temp.index = temp.index.map(lambda x: 'Prices {} (euro/kWh)'.format(x))
+        output.update(temp.T)
+
         output['Consumption standard (TWh)'] = self.consumption_agg(prices=prices, freq='year', climate=climate,
                                                                     standard=True, agg='all')
         output['Consumption standard (kWh/m2)'] = (output['Consumption standard (TWh)'] * 10 ** 9) / (
