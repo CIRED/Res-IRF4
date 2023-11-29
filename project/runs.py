@@ -68,8 +68,8 @@ if __name__ == '__main__':
                 "AP-2025": True,
                 "AP-2030": True,
                 "AP-2035": False,
-                "AP-2040": False,
-                "AP-2050": False
+                "AP-2040": True,
+                "AP-2050": True
             }
             del _config['scenarios']
             if 'sensitivity' in _config.keys():
