@@ -9,10 +9,14 @@
     "assessment": [
       "cite",
       "cee",
-      "mpr",
       "mpr_serenite",
+      "mpr_performance",
+      "mpr",
+      "mpr_efficacite",
       "mpr_multifamily",
-      "reduced_vta"
+      "mpr_deep",
+      "reduced_vta",
+      "zero_interest_loan"
     ],
     "test": [
       "cite",
