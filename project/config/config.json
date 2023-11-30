@@ -134,7 +134,7 @@
     ]
   },
   "Reference": {
-    "file":"project/config/ambitious.json",
+    "file":"project/config/reference.json",
     "step": 1,
     "end": 2051,
     "policies": {
