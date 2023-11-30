@@ -7,6 +7,9 @@
     "constant": null,
     "policies": null,
     "assessment": [
+      "mpr_performance"
+    ],
+    "test": [
       "cee",
       "mpr_performance",
       "mpr_efficacite",
@@ -14,14 +17,6 @@
       "mpr_multifamily_deep",
       "zero_interest_loan",
       "obligation"
-    ],
-    "test": [
-      "cite",
-      "cee",
-      "mpr",
-      "mpr_serenite",
-      "mpr_multifamily",
-      "reduced_vta"
     ]
   },
   "Reference": {

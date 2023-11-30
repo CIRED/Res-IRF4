@@ -5,7 +5,8 @@
       "end": 2051,
       "tax": "project/input/policies/current/carbon_tax_growth.csv",
       "emission": "project/input/policies/current/carbon_tax_emission.csv",
-      "recycling": null
+      "recycling": null,
+        "policy": "carbon_tax"
     },
     "cite": {
       "start": 2018,
@@ -31,9 +32,9 @@
         "end": 2051
       },
       "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
-      "policy": "subsidy_targeted",
       "value": "project/input/policies/current/cee_value.csv",
-      "growth": null
+      "growth": null,
+      "policy": "subsidy_targeted"
     },
     "mpr_serenite": {
       "start": 2018,
@@ -71,7 +72,8 @@
       "growth_heater": null,
       "insulation": "project/input/policies/current/mpr_insulation.csv",
       "growth_insulation": null,
-      "bonus": "project/input/policies/current/mpr_bonus.csv"
+      "bonus": "project/input/policies/current/mpr_bonus.csv",
+      "policy": "subsidy_targeted"
     },
     "mpr_efficacite": {
       "start": 2024,
@@ -81,7 +83,8 @@
       "insulation": "project/input/policies/current/mpr_insulation.csv",
       "growth_insulation": null,
       "bonus": "project/input/policies/current/mpr_bonus.csv",
-      "target": "mpr_no_fg_heater_replacement"
+      "target": "mpr_no_fg_heater_replacement",
+      "policy": "subsidy_targeted"
     },
     "mpr_multifamily": {
       "start": 2021,
@@ -117,7 +120,7 @@
     },
     "cap": {
       "start": 2018,
-      "end": 2021,
+      "end": 2024,
       "insulation": "project/input/policies/current/subsidies_cap.csv",
       "target": [
         "mpr_serenite",
@@ -128,10 +131,11 @@
         "mpr_efficacite",
         "cite",
         "cee"
-      ]
+      ],
+      "policy": "subsidy_cap"
     },
     "cap_updated": {
-      "start": 2021,
+      "start": 2024,
       "end": 2051,
       "insulation": "project/input/policies/current/subsidies_cap_updated.csv",
       "target": [
@@ -143,12 +147,14 @@
         "mpr_efficacite",
         "cite",
         "cee"
-      ]
+      ],
+      "policy": "subsidy_cap"
     },
     "reduced_vta": {
       "start": 2018,
       "end": 2024,
-      "value": 0.055
+      "value": 0.055,
+      "policy": "reduced_vta"
     },
     "restriction_oil": {
       "start": 2018,
@@ -180,11 +186,11 @@
     "zero_interest_loan": {
         "start": 2024,
         "end": 2051,
-        "policy": "zero_interest_loan",
         "cost_max": 30000,
         "gest": ["heater", "insulation"],
         "value": 0.0,
-        "duration": 15
-      }
+        "duration": 15,
+        "policy": "zero_interest_loan"
+    }
     }
 }
