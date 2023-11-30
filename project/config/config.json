@@ -12,7 +12,106 @@
     "no_natural_replacement": null
   },
   "sensitivity": {
-    "activated": false,
+    "activated": true,
+      "factor_energy_prices": {
+        "low": 0.8,
+        "medium": 1.2,
+        "high": 1.5
+      },
+      "turnover": {
+      "high": {
+        "flow_construction": "project/input/macro/flow_construction_s3.csv",
+        "demolition_rate": "project/input/macro/demolition_rate_s3.csv"
+      },
+      "low": {
+          "flow_construction": "project/input/macro/flow_construction_s1.csv",
+          "demolition_rate": "project/input/macro/demolition_rate_s1.csv"
+      }
+    },
+      "income_rate": {
+        "low": 0,
+        "high": 0.02
+      },
+      "scale_heater": {
+        "low": {
+          "option": "price_elasticity",
+          "target": -1
+        },
+        "high": {
+          "option": "price_elasticity",
+          "target": -1.5
+        }
+      },
+      "technical_progress_insulation": {
+        "high": {
+          "activated": true,
+          "start": 2020,
+          "end": 2035,
+          "value_end": 0.3
+        },
+        "low": {
+          "activated": true,
+          "start": 2020,
+          "end": 2035,
+          "value_end": 0.1
+        }
+      },
+      "technical_progress_heater": {
+        "low": {
+          "activated": false,
+          "start": 2020,
+          "end": 2035,
+          "value_end": -0.2
+        },
+        "high": {
+          "activated": true,
+          "start": 2020,
+          "end": 2035,
+          "value_end": -0.5
+        }
+      },
+      "district_heating": {
+        "low": "project/input/energy/district_heating_s1.csv",
+        "high": "project/input/energy/district_heating_s3.csv"
+      },
+      "renewable_gas": {
+        "low": "project/input/energy/renewable_gas_no.csv",
+        "high": "project/input/energy/renewable_gas_s3.csv"
+      },
+      "ms_heater_built": {
+        "low": "project/input/investment/market_share_heater_construction_s1.csv",
+        "high": "project/input/investment/market_share_heater_construction_s4.csv"
+      },
+      "financing_cost": {
+          "low": {
+            "activated": true,
+            "interest_rate": "project/input/macro/interest_rate_low.csv",
+            "saving_rate": "project/input/macro/saving_rate_low.csv",
+            "duration": 15,
+            "upfront_max": "project/input/macro/upfront_max.csv",
+            "debt_income_ratio": 0.1,
+            "constraint_liquidity": true
+          },
+          "high": {
+            "activated": true,
+            "interest_rate": "project/input/macro/interest_rate_high.csv",
+            "saving_rate": "project/input/macro/saving_rate_high.csv",
+            "duration": 15,
+            "upfront_max": "project/input/macro/upfront_max.csv",
+            "debt_income_ratio": 0.1,
+            "constraint_liquidity": true
+          }
+        },
+      "scale_renovation": {
+        "low": {
+          "option": "share_fg",
+          "target": 0.25
+        },
+        "high": {
+          "option": "share_fg",
+          "target": 0.4
+        }
+      },
       "carbon_emission": {
         "constant": "project/input/energy/carbon_emission_constant.csv"
       },
@@ -37,7 +136,7 @@
   "Reference": {
     "file":"project/config/ambitious.json",
     "step": 1,
-    "end": 2031,
+    "end": 2051,
     "policies": {
       "file": "project/input/policies/current/policies_ambitious.json"
     },

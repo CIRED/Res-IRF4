@@ -7,15 +7,19 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "cite",
-      "mpr",
-      "mpr_multifamily"
+      "cee",
+      "mpr_efficacite",
+      "mpr_performance",
+      "mpr_multifamily_updated",
+      "mpr_multifamily_deep",
+      "zero_interest_loan",
+      "obligation"
     ],
     "test": [
       "cee",
-      "mpr_performance",
       "mpr_efficacite",
-      "mpr_multifamily",
+      "mpr_performance",
+      "mpr_multifamily_updated",
       "mpr_multifamily_deep",
       "zero_interest_loan",
       "obligation"
