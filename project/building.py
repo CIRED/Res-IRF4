@@ -75,7 +75,7 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 resources_data=None, detailed_output=None, figures=None):
+                 resources_data=None, detailed_output=None, figures=None, residual_rate=0):
 
         # default values
         self.hi_threshold = None
@@ -112,7 +112,7 @@ class ThermalBuildings:
         self._income, self._income_owner, self._income_tenant = None, None, None
         self.income = self._income_yrs.loc[:, year]
 
-        self._residual_rate = 0
+        self._residual_rate = residual_rate
         self._stock_residual = self._residual_rate * stock
         self.stock_mobile = stock - self._stock_residual
 
@@ -916,10 +916,11 @@ class AgentBuildings(ThermalBuildings):
                  logger=None, calib_scale=True, quintiles=None, financing_cost=True,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
                  resources_data=None, detailed_output=True, figures=None,
-                 method_health_cost=None
+                 method_health_cost=None, residual_rate=0
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
-                         resources_data=resources_data, detailed_output=detailed_output, figures=figures)
+                         resources_data=resources_data, detailed_output=detailed_output, figures=figures,
+                         residual_rate=residual_rate)
 
         if logger is None:
             logger = logging.getLogger()

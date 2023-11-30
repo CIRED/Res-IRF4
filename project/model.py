@@ -325,7 +325,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                resources_data=resources_data,
                                detailed_output=config['simple'].get('detailed_output'),
                                figures=config['simple'].get('figures'),
-                               method_health_cost=config.get('method_health_cost'))
+                               method_health_cost=config.get('method_health_cost'),
+                               residual_rate=config['technical'].get('residual_rate'))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():

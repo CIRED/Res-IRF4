@@ -1,5 +1,3 @@
-﻿Content,Materials,Wall,Floor,Roof,Windows
-Grey energy (kWh/m2),Traditional material,182,141,146,30
-Grey energy (kWh/m2),Bio material,127,99,102,21
-Carbon content (kgCO2/m2),Traditional material,44,34,35,7
-Carbon content (kgCO2/m2),Bio material,22,17,18,4
+﻿Content,Wall,Floor,Roof,Windows
+Grey energy (kWh/m2),228,121,124,27
+Carbon content (kgCO2/m2),55,29,30,7

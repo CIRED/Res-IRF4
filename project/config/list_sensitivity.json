@@ -1,5 +1,8 @@
 {
-
+      "factor_energy_prices": {
+        "low": 0.5,
+        "high": 1.5
+      },
       "turnover": {
       "high": {
         "flow_construction": "project/input/macro/flow_construction_s3.csv",
@@ -93,5 +96,12 @@
           "option": "share_fg",
           "target": 0.4
         }
-      }
+      },
+      "carbon_emission": {
+        "constant": "project/input/energy/carbon_emission_constant.csv"
+      },
+      "residual_rate": {
+      "low": 0.05,
+      "high": 0.1
+    }
 }

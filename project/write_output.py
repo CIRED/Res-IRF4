@@ -982,10 +982,10 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     if result[reference].loc['Consumption Heating (TWh)', :].iloc[0] == 0:
         consumption_total_hist.drop('Heating', axis=1, inplace=True)
     consumption_total_hist = consumption_total_hist.sum(axis=1).rename('Historic')
+    # 'exogenous': consumption_total_hist to add to consumption to also capture historic values
 
-    variables = {'Consumption (TWh)': {'name': 'consumption_hist.png',
-                                       'format_y': lambda y, _: '{:,.0f}'.format(y),
-                                       'exogenous': consumption_total_hist
+    variables = {'Consumption (TWh)': {'name': 'consumption.png',
+                                       'format_y': lambda y, _: '{:,.0f}'.format(y)
                                        },
                  'Consumption standard (TWh)': {'name': 'consumption_standard.png',
                                                 'format_y': lambda y, _: '{:,.0f}'.format(y)},
@@ -1731,7 +1731,7 @@ def make_summary(path, option=None):
         images += [os.path.join(path_reference_result, i) for i in temp]
 
     path_compare = os.path.join(path, 'img')
-    temp = ['consumption_hist.png',
+    temp = ['consumption.png',
             'emission.png',
             'stock_performance.png',
             'stock_heater.png',

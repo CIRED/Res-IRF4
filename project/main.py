@@ -225,6 +225,21 @@ def run(path=None, folder=None):
                     configuration['financing_cost_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
                     configuration['financing_cost_{}'.format(key)]['financing_cost'] = copy.deepcopy(item)
 
+            if config_sensitivity.get('carbon_emission') is not None:
+                for key, item in config_sensitivity['carbon_emission'].items():
+                    configuration['carbon_emission_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['carbon_emission_{}'.format(key)]['energy']['carbon_emission'] = item
+
+            if config_sensitivity.get('residual_rate') is not None:
+                for key, item in config_sensitivity['residual_rate'].items():
+                    configuration['residual_rate_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['residual_rate_{}'.format(key)]['technical']['residual_rate'] = item
+
+            if config_sensitivity.get('carbon_emission') is not None:
+                for key, item in config_sensitivity['carbon_emission'].items():
+                    configuration['carbon_emission_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['carbon_emission_{}'.format(key)]['energy']['carbon_emission'] = item
+
             if config_sensitivity.get('income_rate') is not None:
                 for key, item in config_sensitivity['income_rate'].items():
                     configuration['income_rate_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
