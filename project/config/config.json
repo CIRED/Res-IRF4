@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": false,
+    "activated": true,
     "current_policies": null,
     "no_policy": true,
     "prices_constant": null,
@@ -35,9 +35,9 @@
     ]
   },
   "Reference": {
-    "file":"project/config/reference.json",
+    "file":"project/config/ambitious.json",
     "step": 1,
-    "end": 2021,
+    "end": 2031,
     "policies": {
       "file": "project/input/policies/current/policies_ambitious.json"
     },

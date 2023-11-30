@@ -391,7 +391,8 @@ def run(path=None, folder=None):
                 for scenario in result.keys():
                     temp = 0
                     if scenario in indicator.columns:
-                        temp = indicator.loc['NPV', scenario]
+                        if 'NPV' in indicator.index:
+                            temp = indicator.loc['NPV', scenario]
                     result[scenario].loc['NPV (Billion Euro)', result[scenario].columns[-1]] = temp
 
             if policy_name is None:

@@ -26,6 +26,7 @@ from project.utils import stack_catplot, make_relplot, make_stackedbar_plot, mak
 from itertools import product
 from PIL import Image
 from numpy import log
+import re
 
 
 def decomposition_analysis(output, save=None):
@@ -386,6 +387,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                            loc='left', left=1.2)
 
         else:
+            # start in 2018
             make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
                            colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
                            scatter=historic, loc='left', left=1.2)
@@ -934,46 +936,50 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
         years = [y for y in years if y in result[reference].columns]
         years.sort()
 
-        ratio = ['Ratio expenditure {} - {} - {} (%)'.format(i[0], i[1], i[2]) for i in idx]
+        for k in ['', ' std']:
+            ratio = ['Ratio expenditure{} {} - {} - {} (%)'.format(k, i[0], i[1], i[2]) for i in idx]
 
-        idx = pd.MultiIndex.from_tuples(idx, names=levels)
-        dict_rslt = {k: i.loc[ratio, :].set_axis(idx, axis=0).dropna(axis=1, how='all') for k, i in result.items()}
+            idx = pd.MultiIndex.from_tuples(idx, names=levels)
+            dict_rslt = {k: i.loc[ratio, :].set_axis(idx, axis=0).dropna(axis=1, how='all') for k, i in result.items()}
 
-        start = min(dict_rslt[reference].columns)
-        ini = pd.DataFrame({k: i.loc[:, start] for k, i in dict_rslt.items() if start in i.columns})
+            start = min(dict_rslt[reference].columns)
+            ini = pd.DataFrame({k: i.loc[:, start] for k, i in dict_rslt.items() if start in i.columns})
 
-        for year in years:
-            df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
+            for year in years:
+                df = pd.DataFrame({k: i.loc[:, year] for k, i in dict_rslt.items() if year in i.columns})
 
-            data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-            data = format_table(data, name='Scenarios')
-            data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
+                data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+                data = format_table(data, name='Scenarios')
+                data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
 
-            make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_{}.png'.format(year)),
-                         title='Energy expenditure on income ratio\n{}'.format(year))
+                make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                             palette=colors,
+                             save=os.path.join(folder_img, 'energy_income_ratio{}_{}.png'.format(k.replace(' ', '_'), year)),
+                             title='Energy expenditure{} on income ratio\n{}'.format(k, year))
 
-            # > 0 positive means households are loosing money compare to ref
-            if df.shape[1] > 1:
-                rate = ((df.T - df.loc[:, reference]) / df.loc[:, reference]).T
-                rate = rate.loc[:, [i for i in rate.columns if i != reference]]
-                rate = select(rate, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-                rate = format_table(rate, name='Scenarios')
-                rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
+                # > 0 positive means households are loosing money compare to ref
+                if df.shape[1] > 1:
+                    rate = ((df.T - df.loc[:, reference]) / df.loc[:, reference]).T
+                    rate = rate.loc[:, [i for i in rate.columns if i != reference]]
+                    rate = select(rate, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+                    rate = format_table(rate, name='Scenarios')
+                    rate['Decision maker'] = rate['Housing type'] + ' - ' + rate['Occupancy status']
 
-                make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                             palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_rate_{}.png'.format(year)),
-                             title='Energy expenditure on income ratio\n{} compare to Reference'.format(year))
+                    make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                                 palette=colors,
+                                 save=os.path.join(folder_img, 'energy_income_ratio_rate{}_{}.png'.format(k.replace(' ', '_'), year)),
+                                 title='Energy expenditure{} on income ratio\n{} compare to Reference'.format(k, year))
 
-            # > 0 positive means households are loosing money compare to ini
-            diff = (df - ini) / ini
-            diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-            diff = format_table(diff, name='Scenarios')
-            diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
+                # > 0 positive means households are loosing money compare to ini
+                diff = (df - ini) / ini
+                diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+                diff = format_table(diff, name='Scenarios')
+                diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
 
-            make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                         palette=colors, save=os.path.join(folder_img, 'energy_income_ratio_ini_{}.png'.format(year)),
-                         title='Energy expenditure on income ratio\n{} compare to {}'.format(year, start))
+                make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                             palette=colors,
+                             save=os.path.join(folder_img, 'energy_income_ratio_ini{}_{}.png'.format(k.replace(' ', '_'), year)),
+                             title='Energy expenditure{} on income ratio\n{} compare to {}'.format(k, year, start))
     except KeyError:
         print('Problem Energy expenditure')
     # graph line plot 2D comparison
@@ -985,23 +991,23 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     # 'exogenous': consumption_total_hist to add to consumption to also capture historic values
 
     variables = {'Consumption (TWh)': {'name': 'consumption.png',
-                                       'format_y': lambda y, _: '{:,.0f}'.format(y)
+                                       'format_y': lambda y, _: '{:,.0f} TWh'.format(y)
                                        },
                  'Consumption standard (TWh)': {'name': 'consumption_standard.png',
-                                                'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                                                'format_y': lambda y, _: '{:,.0f} TWh'.format(y)},
                  'Heating intensity (%)': {'name': 'heating_intensity.png',
                                            'format_y': lambda y, _: '{:,.0%}'.format(y)},
                  'Emission (MtCO2)': {'name': 'emission.png',
-                                      'format_y': lambda y, _: '{:,.0f}'.format(y)
+                                      'format_y': lambda y, _: '{:,.0f} MtCO2'.format(y)
                                       },
                  'Stock Heat pump (Million)': {'name': 'stock_heat_pump.png',
-                                               'format_y': lambda y, _: '{:,.1f}'.format(y)},
+                                               'format_y': lambda y, _: '{:,.1f} M'.format(y)},
                  'Energy poverty (Million)': {'name': 'energy_poverty.png',
-                                              'format_y': lambda y, _: '{:,.1f}'.format(y)},
+                                              'format_y': lambda y, _: '{:,.0f} M'.format(y)},
                  'Retrofit (Thousand households)': {'name': 'retrofit.png',
-                                                    'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                                                    'format_y': lambda y, _: '{:,.0f} k'.format(y)},
                  'Renovation (Thousand households)': {'name': 'renovation.png',
-                                                      'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                                                      'format_y': lambda y, _: '{:,.0f} k'.format(y)},
                  'Investment total (Thousand euro/household)': {'name': 'investment_households.png',
                                                                 'format_y': lambda y, _: '{:,.0f}'.format(y)},
                  'Consumption saving insulation (TWh/year)': {'name': 'saving_insulation.png',
@@ -1013,9 +1019,9 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                       'format_y': lambda y, _: '{:,.0f}'.format(y),
                       'exogenous': resources_data['retrofit_comparison']},
                  'Investment total (Billion euro)': {'name': 'investment_total.png',
-                                                     'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                                                     'format_y': lambda y, _: '{:,.0f} B€'.format(y)},
                  'Subsidies total (Billion euro)': {'name': 'subsidies_total.png',
-                                                    'format_y': lambda y, _: '{:,.0f}'.format(y)},
+                                                    'format_y': lambda y, _: '{:,.0f} B€'.format(y)},
                  'Energy expenditures (Billion euro)': {
                      'name': 'energy_expenditures.png',
                      'format_y': lambda y, _: '{:,.0f}'.format(y)},
@@ -1489,13 +1495,11 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         rslt = {}
         for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
                     'Health cost (Billion euro)', 'Emission (MtCO2)']:
-            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
-                                          values=None)
+            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None)
 
         for energy in resources_data['index']['Energy']:
             var = 'Consumption {} (TWh)'.format(energy)
-            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :],
-                                          values=None)
+            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None)
             rslt['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(
                 ref.loc[var, :],
                 data.loc[var, :],
@@ -1539,21 +1543,19 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
         var = '{} (Billion euro)'.format(policy_name)
 
-        if var in data.index and var in ref.index:
-            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
-                                 index=ref.loc[var, :].index)
-            rslt[var] = (((data.loc[var, :]).fillna(0) - ref.loc[var, :].fillna(0)) * discount.T).sum()
-            # We had NaN for year t with AP-t scnarios, so replaced these with 0... is it ok?
-        elif var in ref.index:
-            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
-                                 index=ref.loc[var, :].index)
-            rslt[var] = (- ref.loc[var, :] * discount.T).sum()
-        elif var in data.index:
-            discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(data.loc[var, :].shape[0])],
-                                 index=data.loc[var, :].index)
-            rslt[var] = (data.loc[var, :] * discount.T).sum()
-        else:
+        # capture year 'AP-20{}' with regex
+        start = ref.columns[0] + 1
+        try:
+            year = int(re.findall(r'\d+', scenario)[0])
+            if 'AP' in scenario:
+                rslt[var] = - ref.loc[var, year] * (1 / (1 + discount_rate) ** (year - start))
+            elif 'ZP' in scenario:
+                rslt[var] = data.loc[var, year] * (1 / (1 + discount_rate) ** (year - start))
+            else:
+                rslt[var] = 0
+        except:
             rslt[var] = 0
+
         comparison[scenario] = rslt
     comparison = pd.DataFrame(comparison)
 
@@ -1634,58 +1636,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 indicator = pd.concat((indicator, cba), axis=0)
         else:
             indicator = cba
-        # Percentage of objectives accomplished
 
-        # Objectives in param (resources_data), we need to make this cleaner but for now:
-
-        comparison_results_energy = pd.DataFrame([result[s].loc['Consumption (TWh)'] for s in effectiveness_scenarios],
-                                                 index=effectiveness_scenarios).T
-        comparison_results_emissions = pd.DataFrame([result[s].loc['Emission (MtCO2)'] for s in effectiveness_scenarios],
-                                                    index=effectiveness_scenarios).T
-
-        # Selecting years with corresponding objectives and calculating the % of objective accomplished
-        if False:
-            for y in resources_data['consumption_total_objectives'].index:
-                if y in comparison_results_energy.index:
-                    indicator.loc['Consumption reduction {} (TWh) '.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                     comparison_results_energy.loc[y]).T
-
-                    indicator.loc['Consumption reduction Obj {} (TWh)'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                        resources_data['consumption_total_objectives'].loc[y]).T
-
-                    indicator.loc['Percentage of {} consumption objective (%)'.format(y), :] = (comparison_results_energy.iloc[0] -
-                                                                                                comparison_results_energy.loc[y]).T / (
-                                                                                                comparison_results_energy.iloc[0] -
-                                                                                                resources_data['consumption_total_objectives'].loc[y]).T
-
-            for y in resources_data['emissions_total_objectives'].index:
-                if y in comparison_results_emissions.index:
-                    indicator.loc['Emission reduction {} (MtCO2) '.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                    comparison_results_emissions.loc[y]).T
-
-                    indicator.loc['Emission reduction Obj {} (MtCO2)'.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                       resources_data['emissions_total_objectives'] .loc[y]).T
-
-                    indicator.loc['Percentage of {} emission objective (%)'.format(y), :] = (comparison_results_emissions.iloc[0] -
-                                                                                             comparison_results_emissions.loc[y]).T / (
-                                                                                             comparison_results_emissions.iloc[0] -
-                                                                                             resources_data['emissions_total_objectives'] .loc[y]).T
-            # low_eff_var = 'Stock low-efficient (Million)'
-            # Objective is zero in 2030 - introduce it in params to make it resilient
-            comparison_results_low_eff = pd.DataFrame([result[s].loc['Stock low-efficient (Million)']
-                                                       for s in effectiveness_scenarios], index=effectiveness_scenarios).T
-            for y in resources_data['low_eff_objectives'].index:
-                if y in comparison_results_low_eff.index:
-                    indicator.loc['Low-efficient stock reduction {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                                 comparison_results_low_eff.loc[y]).T
-
-                    indicator.loc['Low-efficient stock reduction objective {} (Million) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                                           resources_data['low_eff_objectives'].loc[y]).T
-
-                    indicator.loc['Percentage of {} low-efficient objective (%) '.format(y), :] = (comparison_results_low_eff.iloc[0] -
-                                                                                                   comparison_results_low_eff.loc[y]).T / (
-                                                                                                   comparison_results_low_eff.iloc[0] -
-                                                                                                   resources_data['low_eff_objectives'].loc[y]).T
         # Energy poverty
         # No objective so simply showing the reduction between first and last year
         energy_poverty = pd.DataFrame([result[s].loc['Energy poverty (Million)'] for s in effectiveness_scenarios],

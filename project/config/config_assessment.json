@@ -7,8 +7,9 @@
     "constant": null,
     "policies": null,
     "assessment": [
+      "cite",
       "mpr",
-      "reduced_vta"
+      "mpr_multifamily"
     ],
     "test": [
       "cite",

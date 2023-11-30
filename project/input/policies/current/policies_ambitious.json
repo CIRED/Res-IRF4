@@ -48,7 +48,7 @@
         "mpr",
         "mpr_efficacite"
       ],
-      "target": "mpr_serenite_nb",
+      "target": "deep_renovation",
       "policy": "subsidy_ad_valorem"
     },
     "mpr_performance": {
@@ -88,6 +88,19 @@
     },
     "mpr_multifamily": {
       "start": 2021,
+      "end": 2024,
+      "insulation": "project/input/policies/current/mpr_multifamily.csv",
+      "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
+      "non_cumulative": [
+        "cite",
+        "mpr",
+        "mpr_serenite"
+      ],
+      "target": "energy_condition_35",
+      "policy": "subsidy_ad_valorem"
+    },
+    "mpr_multifamily_updated": {
+      "start": 2024,
       "end": 2051,
       "insulation": "project/input/policies/current/mpr_multifamily_updated.csv",
       "cap": "project/input/policies/current/mpr_multifamily_updated_cap.csv",

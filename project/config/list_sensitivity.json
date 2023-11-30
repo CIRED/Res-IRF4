@@ -1,6 +1,7 @@
 {
       "factor_energy_prices": {
-        "low": 0.5,
+        "low": 0.8,
+        "medium": 1.2,
         "high": 1.5
       },
       "turnover": {
@@ -32,7 +33,7 @@
           "activated": true,
           "start": 2020,
           "end": 2035,
-          "value_end": -0.1
+          "value_end": 0.3
         },
         "low": {
           "activated": true,
