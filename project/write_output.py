@@ -525,7 +525,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
 
     if colors is None:
         colors = dict(zip(result.keys(), sns.color_palette(n_colors=len(result.keys()))))
-        colors.update({'Historic': "#000000"}) #(0, 0, 0)
+    colors.update({'Historic': "#000000"}) #(0, 0, 0)
     colors_add = sns.color_palette("husl", 10)
 
     folder_img = os.path.join(folder, 'img')
@@ -1003,7 +1003,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                  'Stock Heat pump (Million)': {'name': 'stock_heat_pump.png',
                                                'format_y': lambda y, _: '{:,.1f} M'.format(y)},
                  'Energy poverty (Million)': {'name': 'energy_poverty.png',
-                                              'format_y': lambda y, _: '{:,.0f} M'.format(y)},
+                                              'format_y': lambda y, _: '{:,.1f} M'.format(y)},
                  'Retrofit (Thousand households)': {'name': 'retrofit.png',
                                                     'format_y': lambda y, _: '{:,.0f} k'.format(y)},
                  'Renovation (Thousand households)': {'name': 'renovation.png',

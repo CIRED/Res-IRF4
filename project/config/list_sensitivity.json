@@ -33,13 +33,13 @@
           "activated": true,
           "start": 2020,
           "end": 2035,
-          "value_end": 0.3
+          "value_end": -0.3
         },
         "low": {
           "activated": true,
           "start": 2020,
           "end": 2035,
-          "value_end": 0.1
+          "value_end": -0.1
         }
       },
       "technical_progress_heater": {
