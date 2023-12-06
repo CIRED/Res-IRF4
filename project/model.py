@@ -354,7 +354,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         'premature_replacement': parsed_inputs['premature_replacement'],
         'health_cost_dpe': parsed_inputs['health_cost_dpe'],
         'health_cost_income': parsed_inputs['health_cost_income'],
-        'output': config['output']
+        'output': config['output'],
+        'hourly_profile': parsed_inputs.get('hourly_profile')
     }
     return inputs_dynamic
 

@@ -204,7 +204,8 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                  sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False,
                  demolition_rate=None,
                  output_consumption=False, technical_progress=None,
-                 premature_replacement=None, flow_district_heating=None, exogenous_social=None, carbon_content=None
+                 premature_replacement=None, flow_district_heating=None, exogenous_social=None, carbon_content=None,
+                 hourly_profile=None
                  ):
 
     # initialize policies
@@ -269,44 +270,11 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
         buildings.logger.info('Calculating hourly consumption')
 
         consumption = buildings.consumption_agg(prices=prices, freq='hour', standard=False, climate=climate,
-                                                smooth=smooth, efficiency_hour=efficiency_hour)
+                                                smooth=smooth, efficiency_hour=efficiency_hour,
+                                                hourly_profile=hourly_profile)
 
     buildings.logger.info('End of Res-IRF simulation')
     return output, stock, consumption
-
-
-def run_multi_simu(buildings, sub_heater, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                   flow_built, post_inputs, policies_heater, policies_insulation, financing_cost,
-                   sub_design=None):
-
-    sub_insulation = [i / 10 for i in range(0, 11, 2)]
-    _len = len(sub_insulation)
-    sub_heater = [sub_heater] * _len
-    start = [start] * _len
-    end = [end] * _len
-    energy_prices = [energy_prices] * _len
-    taxes = [taxes] * _len
-    cost_heater = [cost_heater] * _len
-    cost_insulation = [cost_insulation] * _len
-    flow_built = [flow_built] * _len
-    post_inputs = [post_inputs] * _len
-    policies_heater = [policies_heater] * _len
-    policies_insulation = [policies_insulation] * _len
-    buildings = [deepcopy(buildings)] * _len
-    sub_design = [sub_design] * _len
-    financing_cost = [financing_cost] * _len
-
-    list_argument = list(zip(deepcopy(buildings), deepcopy(sub_heater), deepcopy(sub_insulation), start, end, energy_prices, taxes,
-                             cost_heater, cost_insulation, flow_built, post_inputs, policies_heater,
-                             policies_insulation, sub_design, financing_cost))
-
-    with Pool() as pool:
-        results = pool.starmap(simu_res_irf, list_argument)
-
-    result = {list_argument[i][2]: results[i][0].squeeze() for i in range(len(results))}
-    result = DataFrame(result)
-    return result
-
 
 def run_simu(config, output_consumption=False, start=2019, end=2021):
 
@@ -328,7 +296,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     sub_insulation = {'name': 'sub_insulation',
                       'start': start,
                       'end': end,
-                      'value': 0.95,
+                      'value': 0,
                       'policy': 'subsidy_ad_valorem',
                       'gest': 'insulation',
                       'target': target,
@@ -359,7 +327,8 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               technical_progress=inputs_dynamics['technical_progress'],
                                               premature_replacement=inputs_dynamics['premature_replacement'],
                                               output_options='full',
-                                              carbon_content=inputs_dynamics['post_inputs']['carbon_emission']
+                                              carbon_content=inputs_dynamics['post_inputs']['carbon_emission'],
+                                              hourly_profile=inputs_dynamics['hourly_profile']
                                               )
 
     concat_output = concat((concat_output, output), axis=1)
@@ -375,4 +344,4 @@ if __name__ == '__main__':
     # _config = 'project/config/coupling/config.json'
     _config = 'project/config/config.json'
     # _config = 'project/config/config.json'
-    run_simu(start=2019, end=2050, config=_config)
+    run_simu(start=2019, end=2020, config=_config, output_consumption=True)

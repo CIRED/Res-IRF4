@@ -335,12 +335,6 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         if freq == 'hour':
             if hourly_profile is None:
                 hourly_profile = HOURLY_PROFILE_POWER
-            elif hourly_profile == 'power':
-                hourly_profile = HOURLY_PROFILE_POWER
-            elif hourly_profile == 'fossil':
-                hourly_profile = HOURLY_PROFILE_FOSSIL
-            else:
-                hourly_profile = HOURLY_PROFILE_POWER
 
             heat_need = heat_need.to_frame().dot(hourly_profile.to_frame().T)
             heat_need = heat_need.unstack(['time'])
