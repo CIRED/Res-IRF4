@@ -1,8 +1,8 @@
 {
   "scenarios": {
-    "activated": true,
-    "current_policies": null,
-    "no_policy": true,
+    "activated": false,
+    "current_policies": true,
+    "no_policy": null,
     "prices_constant": null,
     "constant": null,
     "policies": null,
@@ -12,7 +12,7 @@
     "no_natural_replacement": null
   },
   "sensitivity": {
-    "activated": true,
+    "activated": false,
       "technical_progress_insulation": {
         "high": {
           "activated": true,
@@ -44,7 +44,7 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2021,
     "policies": {
       "file": "project/input/policies/current/policies_ambitious.json"
     },

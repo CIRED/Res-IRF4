@@ -335,6 +335,12 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         if freq == 'hour':
             if hourly_profile is None:
                 hourly_profile = HOURLY_PROFILE_POWER
+            elif hourly_profile == 'power':
+                hourly_profile = HOURLY_PROFILE_POWER
+            elif hourly_profile == 'fossil':
+                hourly_profile = HOURLY_PROFILE_FOSSIL
+            else:
+                hourly_profile = HOURLY_PROFILE_POWER
 
             heat_need = heat_need.to_frame().dot(hourly_profile.to_frame().T)
             heat_need = heat_need.unstack(['time'])
@@ -349,7 +355,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                                air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
                                temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
-                               efficiency_hour=False):
+                               efficiency_hour=False, hourly_profile=None):
     """Monthly stead-state space heating final energy delivered.
 
 
@@ -386,7 +392,8 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           th_bridging=th_bridging, vent_types=vent_types,
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                           climate=climate, freq=freq, smooth=smooth,
-                                          temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor)
+                                          temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor,
+                                          hourly_profile=hourly_profile)
 
     if (freq == 'hour') and (efficiency_hour is True):
         path = CLIMATE_DATA[freq]

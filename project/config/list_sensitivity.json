@@ -44,7 +44,7 @@
       },
       "technical_progress_heater": {
         "low": {
-          "activated": false,
+          "activated": true,
           "start": 2020,
           "end": 2035,
           "value_end": -0.2

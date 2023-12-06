@@ -296,7 +296,7 @@ class ThermalBuildings:
 
     def consumption_heating(self, index=None, freq='year', climate=None, smooth=False,
                             full_output=False, efficiency_hour=False, level_heater='Heating system',
-                            method='5uses'):
+                            method='5uses', hourly_profile=None):
         """Calculation consumption standard of the current building stock [kWh/m2.a].
 
         Parameters
@@ -332,7 +332,7 @@ class ThermalBuildings:
         efficiency = to_numeric(heating_system.replace(self._efficiency))
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
-                                                         efficiency_hour=efficiency_hour)
+                                                         efficiency_hour=efficiency_hour, hourly_profile=hourly_profile)
 
         consumption = reindex_mi(consumption, index)
 
@@ -485,7 +485,8 @@ class ThermalBuildings:
             return consumption, heating_intensity, budget_share
 
     def consumption_agg(self, prices=None, freq='year', climate=None, smooth=False,
-                        standard=False, efficiency_hour=False, existing=False, agg='all', bill_rebate=0):
+                        standard=False, efficiency_hour=False, existing=False, agg='all', bill_rebate=0,
+                        hourly_profile=None):
         """Aggregated final energy consumption (TWh final energy).
 
         Parameters
@@ -543,7 +544,7 @@ class ThermalBuildings:
 
             if freq == 'hour':
                 consumption = self.consumption_heating(freq=freq, climate=climate, smooth=smooth,
-                                                       efficiency_hour=efficiency_hour)
+                                                       efficiency_hour=efficiency_hour, hourly_profile=hourly_profile)
                 consumption = (reindex_mi(consumption, self.stock.index).T * self.surface).T
                 heating_intensity = self.to_heating_intensity(consumption.index, prices,
                                                               consumption=consumption.sum(axis=1),
@@ -4475,6 +4476,23 @@ class AgentBuildings(ThermalBuildings):
             temp.index = temp.index.map(lambda x: 'Consumption {} climate (TWh)'.format(x))
             output.update(temp.T)
             output['Factor climate (%)'] = output['Consumption climate (TWh)'] / output['Consumption (TWh)']
+
+        if False:
+            consumption_hourly = self.consumption_agg(prices=prices, freq='hour', standard=False, climate=2006,
+                                                      efficiency_hour=True, hourly_profile='power')
+
+            # format_x datetime hourly
+            temp = consumption_hourly.loc['Electricity']
+            make_plot(temp, 'Consumption electricity (GWh/h)',
+                      save=os.path.join(self.path, 'consumption_hour.png'),
+                      format_y=lambda y, _: '{:.0f}'.format(y / 1e6), integer=False, legend=False)
+
+            # only select a day in february
+
+            temp = consumption_hourly.loc['Electricity'].loc['2006-02-01']
+            make_plot(temp, 'Consumption electricity (GWh/h)',
+                      save=os.path.join(self.path, 'consumption_day.png'),
+                      format_y=lambda y, _: '{:.0f}'.format(y / 1e6), integer=False, legend=False)
 
         consumption = self.consumption_actual(prices) * self.stock
         consumption_calib = consumption * self.coefficient_global

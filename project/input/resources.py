@@ -164,24 +164,6 @@ colors = {
     "Taxes expenditure": "darkorange",
     "Energy expenditure": "darkorange",
     "Energy": "darkorange",
-    "Subsidies heater": "royalblue",
-    "Subsidies insulation": "darksalmon",
-    "Reduced vta": "darkolivegreen",
-    "Cee": "tomato",
-    "Cee tax": "red",
-    "Cite": "blue",
-    "Zero interest loan": "darkred",
-    "Over cap": "grey",
-    "Carbon tax": "darkgreen",
-    "Mpr": "darkmagenta",
-    "Mpr multifamily": "pink",
-    "Mpr serenite": "violet",
-    "Mpr serenite low income": "violet",
-    "Mpr serenite high income": "rebeccapurple",
-    "Valorem insulation": "darkorange",
-    'Sub ad valorem': "darkorange",
-    "Sub merit": "slategrey",
-    "Sub obligation": "darkorange",
     "Existing": "tomato",
     "New": "lightgrey",
     "Renovation": "brown",
@@ -221,5 +203,31 @@ colors = {
     "Global renovation fge": 'lightblue',
     "Fg": 'lightblue'
 }
+
+colors_policies = {
+    "Subsidies heater": "royalblue",
+    "Subsidies insulation": "darksalmon",
+    "Reduced vta": "darkolivegreen",
+    "Cee": "tomato",
+    "Cee tax": "red",
+    "Cite": "blue",
+    "Zero interest loan": "darkred",
+    "Over cap": "grey",
+    "Carbon tax": "darkgreen",
+    "Mpr": "darkmagenta",
+    "Mpr efficacite": "darkmagenta",
+    "Mpr multifamily": "pink",
+    "Mpr multifamily updated": "pink",
+    "Mpr multifamily deep": "pink",
+    "Mpr serenite": "violet",
+    "Mpr performance": "purple",
+    "Valorem insulation": "darkorange",
+    'Sub ad valorem': "darkorange",
+    "Sub merit": "slategrey",
+    "Sub obligation": "darkorange",
+    "Subsidy": "darkmagenta"
+}
+
+colors.update(colors_policies)
 
 resources_data['colors'] = colors

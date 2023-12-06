@@ -379,17 +379,27 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             palette = {s: resources_data['colors'][s] for s in df['Policies'].unique()}
             stack_catplot(x='Years', y='Data', cat='Source', stack='Policies', data=df, palette=palette,
                           y_label='Policies amount (Billion euro)',
-                          save=os.path.join(path, 'policies_validation.png'),
+                          save=os.path.join(path, 'policies_validation_hash.png'),
                           format_y=lambda y, _: '{:.0f}'.format(y))
 
+            temp = df.copy()
+            temp.set_index(['Years', 'Source', 'Policies'], inplace=True)
+            temp = temp.squeeze().unstack('Years')
+            make_clusterstackedbar_plot(temp, 'Policies', colors=resources_data['colors'],
+                                        format_y=lambda y, _: '{:.0f} B€'.format(y),
+                                        save=os.path.join(path, 'policies_validation.png'),
+                                        rotation=90,
+                                        fonttick=20)
+
+            subset = subset.iloc[1:, :]
             make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
-                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f} B€'.format(y),
                            loc='left', left=1.2)
 
         else:
-            # start in 2018
+            subset = subset.iloc[1:, :]
             make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
-                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f}'.format(y),
+                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f} B€'.format(y),
                            scatter=historic, loc='left', left=1.2)
 
     # graph public finance
@@ -650,11 +660,28 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                 order = None
                 if order_scenarios is not None:
                     order = [i for i in order_scenarios if i in temp.index.get_level_values('Scenario')]
+
                 make_clusterstackedbar_plot(temp, 'Policy',
                                             format_y=lambda y, _: '{:.0f} B€'.format(y),
-                                            save=os.path.join(folder_img, 'policy_scenario.png'),
+                                            save=os.path.join(folder_img, 'policy_scenario_detailed.png'),
                                             rotation=90, year_ini=start + 1,
                                             order_scenarios=order,
+                                            reference=reference, fonttick=20)
+
+                agg = {'Mpr': 'Subsidy', 'Mpr multifamily': 'Subsidy', 'Mpr multifamily deep': 'Subsidy',
+                       'Mpr multifamily updated': 'Subsidy',
+                       'Mpr serenite': 'Subsidy', 'Mpr efficacite': 'Subsidy', 'Mpr performance': 'Subsidy',
+                       'Cite': 'Subsidy'}
+                # replace index with aggregated
+
+                temp = temp.rename(index=agg).groupby(temp.index.names).sum()
+                # ['Cee', 'Subsidy', 'Reduced vta', 'Zero interest loan']
+                make_clusterstackedbar_plot(temp, 'Policy',
+                                            format_y=lambda y, _: '{:.0f} B€'.format(y),
+                                            save=os.path.join(folder_img, 'policy_scenario_aggregated.png'),
+                                            rotation=90, year_ini=start + 1,
+                                            order_scenarios=order,
+                                            colors=resources_data['colors'],
                                             reference=reference, fonttick=20)
 
     # graph emission saving
@@ -725,7 +752,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
 
         make_scatter_plot(df, 'CBA diff (Billion euro)', 'Consumption saving (TWh)',
                           'Cost benefit analysis to {} (Billion euro)'.format(end),
-                          'Consumption saving to {} (TWh)'.format(end),
+                          'Consumption saving to {} (%)'.format(end),
                           hlines=0,
                           format_x=lambda y, _: '{:.1f}'.format(y), ymin=0,
                           format_y=lambda x, _: '{:.0%}'.format(x),
@@ -736,7 +763,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
 
         make_scatter_plot(df, 'CBA diff (Billion euro)', 'Emission saving (MtCO2)',
                           'Cost benefit analysis to {} (Billion euro)'.format(end),
-                          'Emission saving to {} (MtCO2)'.format(end),
+                          'Emission saving to {} (%)'.format(end),
                           hlines=0,
                           format_x=lambda y, _: '{:.1f}'.format(y), ymin=0,
                           format_y=lambda x, _: '{:.0%}'.format(x),
@@ -1689,10 +1716,13 @@ def make_summary(path, option=None):
             'consumption_heater.png',
             'consumption_saving_decomposition.png',
             'emission_saving_decomposition.png',
+            'renovation.png',
             'investment_total.png',
+            'policy_scenario.png',
             'cost_benefit_analysis_counterfactual.png',
             'energy_poverty.png',
-            'energy_income_ratio_rate_2050.png',
+            'energy_income_ratio_std_2020.png',
+            'energy_income_ratio_std_2050.png',
             'cba_consumption.png',
             'cba_emission.png',
             ]
