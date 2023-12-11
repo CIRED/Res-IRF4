@@ -57,7 +57,6 @@
       "insulation": "project/input/policies/current/mpr_performance.csv",
       "growth_insulation": null,
       "non_cumulative": [
-        "cee",
         "mpr",
         "mpr_efficacite"
       ],
