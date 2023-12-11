@@ -28,8 +28,16 @@ def prepare_config(config):
         temp = deepcopy(config)
         path = config['file']
         config = get_json(path)
-        config.update(temp)
-        del config['file']
+        # if temp of keys in config replace values with temp
+        for k, v in temp.items():
+            if k in config.keys():
+                if isinstance(v, dict):
+                    config[k].update(v)
+                else:
+                    config[k] = v
+
+        # config.update(temp)
+        # del config['file']
 
     # read policies
     parse_policies(config)
