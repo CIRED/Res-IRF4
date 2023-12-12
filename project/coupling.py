@@ -276,6 +276,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
     buildings.logger.info('End of Res-IRF simulation')
     return output, stock, consumption
 
+
 def run_simu(config, output_consumption=False, start=2019, end=2021):
 
     path = os.path.join('project', 'output', 'ResIRF')

@@ -73,7 +73,14 @@
       "no_natural_replacement": false
     },
     "technical": {
-      "hourly_profile": "project/input/technical/hourly_profile_flat.csv"
+      "technical_progress": {
+        "heater": {
+          "activated": true,
+          "start": 2019,
+          "end": 2035,
+          "value_end": -0.5
+        }
+      }
     }
   }
 }

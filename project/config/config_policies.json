@@ -12,13 +12,7 @@
     "no_natural_replacement": null
   },
   "sensitivity": {
-    "activated": false,
-    "ms_heater_built": [
-      "project/input/investment/market_share_heater_construction_s1.csv",
-      "project/input/investment/market_share_heater_construction_s2.csv",
-      "project/input/investment/market_share_heater_construction_s3.csv",
-      "project/input/investment/market_share_heater_construction_s4.csv"
-    ]
+    "activated": false
   },
   "uncertainty": {
     "activated": false,

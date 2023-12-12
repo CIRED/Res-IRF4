@@ -58,7 +58,7 @@
       "performance_insulation_construction": "project/input/technical/performance_insulation_construction.csv",
       "technical_progress": {
         "insulation": {
-          "activated": true,
+          "activated": false,
           "start": 2019,
           "end": 2035,
           "value_end": -0.1
