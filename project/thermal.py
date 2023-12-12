@@ -82,6 +82,7 @@ VENTILATION_TYPES = {'Ventilation naturelle': 0.4,
 # Heat transfer
 FACTOR_NON_UNIFORM = 0.9
 TEMP_INDOOR = 19 #°C
+TEMP_OUTDOOR_PEAK = -6
 
 # Solar heat load
 FACTOR_SHADING = 0.6
@@ -187,6 +188,72 @@ CLIMATE_DATA = {'year': os.path.join('project', 'input', 'climatic', 'climatic_d
 
 
 GAIN_UTILIZATION_FACTOR = False
+
+
+def size_heating_system(u_wall, u_floor, u_roof, u_windows, ratio_surface,
+                        th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
+                        air_rate=None, unobserved=None, temp_indoor=None):
+    """Seasonal method for space heating need.
+
+
+    We apply a seasonal method according to EN ISO 13790 to estimate annual space heating demand by building type.
+    The detailed calculation can be found in the TABULA project documentation (Loga, 2013).
+    In a nutshell, the energy need for heating is the difference between the heat losses and the heat gain.
+    The total heat losses result from heat transfer by transmission and ventilation during the heating season
+    respectively proportional to the heat transfer coefficient $H_tr$ and $H_ve$.
+
+    To not consider gain_utilization_factor create a difference of 5%. For consistency between results and
+
+    Parameters
+    ----------
+    u_wall: pd.Series
+        Index should include Housing type {'Single-family', 'Multi-family'}.
+    u_floor: pd.Series
+    u_roof: pd.Series
+    u_windows: pd.Series
+    ratio_surface: pd.Series
+    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}, default None
+    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}, default None
+    infiltration: {'Minimal', 'Low', 'Medium', 'High'}, default None
+    air_rate: pd.Series, default None
+    unobserved: {'Minimal', 'High'}, default None
+    temp_indoor: optional, default temp_indoor
+
+    Returns
+    -------
+    Conventional heating need (kWh/m2.a)
+    """
+
+    if temp_indoor is None:
+        temp_indoor = TEMP_INDOOR
+
+    if unobserved == 'Minimal':
+        th_bridging = 'Minimal'
+        vent_types = 'VMC SF hydrogérable'
+        infiltration = 'Minimal'
+    elif unobserved == 'High':
+        th_bridging = 'High'
+        vent_types = 'Ventilation naturelle'
+        infiltration = 'High'
+
+    surface_components = ratio_surface.copy()
+
+    df = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    surface_components.loc[:, 'Floor'] *= FACTOR_SOIL
+    surface_components = reindex_mi(surface_components, df.index)
+
+    coefficient_transmission_transfer = (surface_components * df).sum(axis=1)
+    coefficient_transmission_transfer += surface_components.sum(axis=1) * THERMAL_BRIDGING[th_bridging]
+
+    if air_rate is None:
+        air_rate = VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]
+
+    coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
+    heat_transfer_coefficient = coefficient_ventilation_transfer + coefficient_transmission_transfer
+
+    size = heat_transfer_coefficient * (temp_indoor - TEMP_OUTDOOR_PEAK)
+
+    return size
 
 
 def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,

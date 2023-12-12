@@ -50,7 +50,7 @@
       }
     },
     "technical": {
-      "cost_heater": "project/input/technical/cost_heater.csv",
+      "cost_heater": "project/input/technical/cost_heater_kW.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",
@@ -75,17 +75,19 @@
       "surface": "project/input/technical/surface.csv",
       "ratio_surface": "project/input/technical/ratio_surface.csv",
       "residual_rate": 0,
-      "hourly_profile": "project/input/technical/hourly_profile_rte.csv"
+      "hourly_profile": "project/input/technical/hourly_profile_rte.csv",
+      "constraint_heat_pumps": true,
+      "variable_size_heater": true
     },
     "energy": {
       "energy_prices": {
         "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
         "rate": {
           "Electricity": 0.0135,
-          "Natural gas": 0.0268,
+          "Natural gas": 0.0104,
           "Wood fuel": 0.0127,
           "Oil fuel": 0.0173,
-          "Heating": 0.0127
+          "Heating": 0.0104
         }
       },
       "energy_taxes": "project/input/energy/energy_taxes_ame2021.csv",

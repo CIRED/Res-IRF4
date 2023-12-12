@@ -154,7 +154,6 @@ class ThermalBuildings:
         self.intensity_before_retrofit = None
         self.income = self._income_yrs.loc[:, year]
 
-
     @property
     def stock(self):
         return self._stock
@@ -293,6 +292,26 @@ class ThermalBuildings:
                 heating_need = (heating_need.T * self.stock * self.surface).T
 
             return heating_need
+
+    def size_heater(self, index=None):
+        if index is None:
+            levels = ['Housing type', 'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
+            index = self.stock.groupby(levels).sum().index
+
+        levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', 'Housing type']
+        _index = index.to_frame().loc[:, levels_consumption].set_index(levels_consumption).index
+        _index = _index[~_index.duplicated()]
+
+        wall = Series(_index.get_level_values('Wall'), index=_index)
+        floor = Series(_index.get_level_values('Floor'), index=_index)
+        roof = Series(_index.get_level_values('Roof'), index=_index)
+        windows = Series(_index.get_level_values('Windows'), index=_index)
+
+        size_heating_system = thermal.size_heating_system(wall, floor, roof, windows, self._ratio_surface.copy())
+        size_heating_system = reindex_mi(size_heating_system, index)
+        size_heating_system *= reindex_mi(self._surface, index)
+
+        return size_heating_system / 1e3
 
     def consumption_heating(self, index=None, freq='year', climate=None, smooth=False,
                             full_output=False, efficiency_hour=False, level_heater='Heating system',
@@ -917,7 +936,8 @@ class AgentBuildings(ThermalBuildings):
                  logger=None, calib_scale=True, quintiles=None, financing_cost=True,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
                  resources_data=None, detailed_output=True, figures=None,
-                 method_health_cost=None, residual_rate=0
+                 method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
+                 variable_size_heater=True
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
@@ -974,6 +994,9 @@ class AgentBuildings(ThermalBuildings):
         self._heater_store = {}
         self._renovation_store = {}
         self._condition_store = None
+
+        self._variable_size_heater = variable_size_heater
+        self._constraint_heat_pumps = constraint_heat_pumps
 
         self._markup_insulation_store, self._markup_heater_store = 1, 1
 
@@ -1534,13 +1557,15 @@ class AgentBuildings(ThermalBuildings):
         if p:
             vta = p[0].value
             sub = cost_heater * (VTA - vta)
-            subsidies_details.update({'reduced_vta': concat([sub] * index.shape[0], keys=index, axis=1).T})
+            subsidies_details.update({'reduced_vta': sub})
 
         vta_heater = cost_heater * vta
         cost_heater += vta_heater
 
         policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap']
         self.policies += [i.name for i in policies_heater if i.policy in policies_incentive and i.name not in self.policies]
+
+        cost_heater.sort_index(inplace=True)
 
         for policy in [p for p in policies_heater if p.policy in ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional']]:
 
@@ -1550,8 +1575,10 @@ class AgentBuildings(ThermalBuildings):
                 value = policy.value
 
             if policy.policy == 'subsidy_target':
-                value = value.reindex(cost_heater.index, axis=1).fillna(0)
-                value = reindex_mi(value, index)
+                value = value.stack()
+                value = value[value.index.get_level_values('Heating system final').isin(cost_heater.columns)]
+                # value = value.reindex(cost_heater.index, axis=1).fillna(0)
+                value = reindex_mi(value, cost_heater.stack().index).unstack('Heating system final').fillna(0)
 
             elif policy.policy == 'subsidy_ad_valorem':
                 if isinstance(policy.value, dict):
@@ -1561,21 +1588,23 @@ class AgentBuildings(ThermalBuildings):
 
                 if isinstance(value, (float, int)):
                     value = value * cost_heater
-                    value = concat([value] * index.shape[0], keys=index, axis=1).T
+                    # value = concat([value] * index.shape[0], keys=index, axis=1).T
 
                 elif isinstance(value, DataFrame):
-                    value = (value * cost_heater).loc[:, cost_heater.index]
-                    value = reindex_mi(value, index).fillna(0)
+                    value = value.stack()
+                    value = value[value.index.get_level_values('Heating system final').isin(cost_heater.columns)]
+                    value = (cost_heater.stack() * value).unstack('Heating system final').fillna(0)
 
                 elif isinstance(value, Series):
-                    if policy.by == 'index':
+                    """if policy.by == 'index':
                         value = value.to_frame().dot(cost_heater.to_frame().T)
                         value = reindex_mi(value, index).fillna(0)
                     elif policy.by == 'columns':
                         value = (value * cost_heater).fillna(0).reindex(cost_heater.index)
                         value = concat([value] * index.shape[0], keys=index, names=index.names, axis=1).T
                     else:
-                        raise NotImplemented('Error by should be index or columns')
+                        raise NotImplemented('Error by should be index or columns')"""
+                    raise NotImplemented('Error by should be index or columns')
 
             elif policy.policy == 'subsidy_proportional':
                 # reindex_mi(cost_insulation, index) / consumption_saved_cumac
@@ -1598,8 +1627,10 @@ class AgentBuildings(ThermalBuildings):
 
             # cap for all policies
             value.fillna(0, inplace=True)
-            c = concat([cost_heater] * index.shape[0], keys=index, axis=1).T
-            value = value.where(value <= cost_heater, c)
+            value = value.loc[:, [i for i in cost_heater.columns if i in value.columns]]
+            value = value.reorder_levels(cost_heater.index.names)
+            value.sort_index(inplace=True)
+            value = value.where(value <= cost_heater, cost_heater)
 
             if policy.cap:
                 value = value.where(value <= policy.cap, policy.cap)
@@ -1614,7 +1645,7 @@ class AgentBuildings(ThermalBuildings):
                 value = policy.value
 
             value = reindex_mi(value, index)
-            value = value.reindex(cost_heater.index, axis=1).fillna(0)
+            value = value.reindex(cost_heater.columns, axis=1).fillna(0)
 
             if policy.name in subsidies_details.keys():
                 subsidies_details[policy.name] = subsidies_details[policy.name] + value
@@ -2100,13 +2131,20 @@ class AgentBuildings(ThermalBuildings):
                     idx = condition.index.get_level_values('Housing type') == policy.target
                 condition.loc[idx, temp] = False
 
+        # size heating system
+        if self._variable_size_heater:
+            size_heater = self.size_heater(index=index)
+        else:
+            size_heater = Series(15, index=index)
+
         # technical restriction - removing heat-pump for low-efficient buildings
-        condition = self.add_certificate(condition)
         condition.columns.names = ['Heating system final']
-        idx = (condition.index.get_level_values('Performance').isin(['F', 'G'])) & (
-            ~condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
-        condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
-        condition = condition.droplevel('Performance')
+        if self._constraint_heat_pumps:
+            condition = self.add_certificate(condition)
+            idx = (condition.index.get_level_values('Performance').isin(['F', 'G'])) & (
+                ~condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
+            condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
+            condition = condition.droplevel('Performance')
 
         # technical restriction - heat pump can only be switch with heat pump
         idx = condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps'])
@@ -2169,6 +2207,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_before = consumption_before.loc[index_consumption]
 
         # subsidies
+        cost_heater = size_heater.to_frame().dot(cost_heater.to_frame().T)
         cost_heater, vta_heater, subsidies_details, subsidies_total = self.apply_subsidies_heater(index,
                                                                                                   policies_heater,
                                                                                                   cost_heater.copy(),
@@ -2177,7 +2216,7 @@ class AgentBuildings(ThermalBuildings):
 
         # cost financing
         _cost_heater = cost_heater.copy()
-        cost_heater = Series(1, index=index, dtype='float').to_frame().dot(cost_heater.to_frame().T)
+        # cost_heater = Series(1, index=index, dtype='float').to_frame().dot(cost_heater.to_frame().T)
 
         p = [p for p in policies_heater if p.policy == 'zero_interest_loan']
         cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
@@ -5015,9 +5054,9 @@ class AgentBuildings(ThermalBuildings):
             output.update(o.T)
 
             # economic output global
-            temp = self._heater_store['cost_households']
+            """temp = self._heater_store['cost_households']
             temp.index = temp.index.map(lambda x: 'Cost {} (euro)'.format(x))
-            output.update(temp.T)
+            output.update(temp.T)"""
 
             temp = self._heater_store['cost'].sum()
             output['Investment heater (Billion euro)'] = temp.sum() / 10 ** 9 / step

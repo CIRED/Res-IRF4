@@ -334,7 +334,9 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                detailed_output=config['simple'].get('detailed_output'),
                                figures=config['simple'].get('figures'),
                                method_health_cost=config.get('method_health_cost'),
-                               residual_rate=config['technical'].get('residual_rate'))
+                               residual_rate=config['technical'].get('residual_rate'),
+                               constraint_heat_pumps=config['technical'].get('constraint_heat_pumps', True),
+                               variable_size_heater=config['technical'].get('variable_size_heater', True))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
