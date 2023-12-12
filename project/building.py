@@ -1542,7 +1542,7 @@ class AgentBuildings(ThermalBuildings):
         ----------
         index: Index or MultiIndex
         policies_heater: list
-        cost_heater: Series
+        cost_heater: DataFrame
         consumption_saved: DataFrame
         emission_saved: DataFrame
 
@@ -1657,7 +1657,7 @@ class AgentBuildings(ThermalBuildings):
         if subsidies_total:
             subsidies_total = sum(subsidies_total)
         else:
-            subsidies_total = pd.DataFrame(0, index=index, columns=cost_heater.index)
+            subsidies_total = pd.DataFrame(0, index=index, columns=cost_heater.columns)
 
         regulation = [p for p in policies_heater if p.policy == 'regulation']
         if 'inertia_heater' in [p.name for p in regulation]:
