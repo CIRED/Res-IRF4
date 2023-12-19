@@ -21,9 +21,7 @@ specific functions. Use only with care and caution._**
 
 - Use your terminal and go to a location where you want to store the Res-IRF project.
 - `https://github.com/CIRED/Res-IRF4.git`
-- If the code is not released in
-  open-source. [Create a token](https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
-- `git clone https://oauth-key-goes-here@/github.com/CIRED/Res-IRF4.git`
+- `git clone https://github.com/CIRED/Res-IRF4.git`
 
 **Step 2**: **Create a conda environment** from the environment.yml file:
 
