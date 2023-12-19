@@ -370,7 +370,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             df = format_table(subset.rename_axis('Policies', axis=1).T, name='Years')
             df = df[df['Policies'].isin(historic.columns)]
             df_historic = format_table(historic.rename_axis('Policies', axis=1).T, name='Years')
-            df = pd.concat((df, df_historic), axis=0, keys=['Model', 'Realized'], names=['Source']).reset_index('Source')
+            df = pd.concat((df, df_historic), axis=0, keys=['Simulated', 'Realized'], names=['Source']).reset_index('Source')
             df.reset_index(drop=True, inplace=True)
 
             yrs = [str(i) for i in subset.index if i in resources_data['policies_hist'].index and i != buildings.first_year]

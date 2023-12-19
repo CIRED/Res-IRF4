@@ -41,8 +41,8 @@ specific functions. Use only with care and caution._**
 **Step 4**: **Launch Res-IRF**
 
 - Launch from Res-IRF root folder (not from `/project`):
-- `python -m project.main -c project/config/test/config.json`
-- `project/config/test/config.json` is the path to the configuration file
+- `python -m project.main -c project/config/config.json`
+- `project/config/config.json` is the path to the configuration file
 - It is possible that some new packages are not integrated in the yml file. In this case you have to install these
   additional packages manually in the environment.
 
@@ -87,7 +87,7 @@ Among the possible variants that can be created automatically:
   - "Current Policies" keeps the same public policies used during calibration throughout the simulation.
   - "No policy" deletes all public policies in the year after calibration.
   - "Constant Prices" retains the same energy prices as used during calibration.
-- `sensititity` : modify one or multiple parameters of the Reference scenario,
+- `sensitivity` : modify one or multiple parameters of the Reference scenario,
 - `uncertainty` : run all possible permutation of modified parameters, 
 - `policies_scenarios` : simplified output for large number of scenarios,
 - `assessment_test` : run assessment indicators for one policy.
@@ -109,7 +109,7 @@ simplified simulations reducing this requirement.
 Nevertheless, it is recommended not to run more than 3 scenarios in parallel on a laptop.
 
 A feature allows to simplify some functionalities of the model. This is the "simple" part of the configuration file.
-Among the possible parameters, some reduce the combinatoriality and thus allow to realize simulations with less
+Among the possible parameters, some reduce the number of combination and thus allow to realize simulations with less
 computing time and especially less memory:
 
 - the configuration parameter "quintiles" allows to pass quintiles or deciles,
@@ -150,7 +150,7 @@ The development of the Res-IRF model was initiated at CIRED in 2008. Coordinated
 over the years, in alphabetic order, Louise Asselin, Cyril Bourgeois, Frédéric Branger, François Chabrol, David Glotin,
 Céline Guivarch, Philippe Quirion, and Lucas Vivier.
 
-We perform major improvements in version 4.0, and we rewrite the code entirely.
+The last version of the code was rewritten entirely and developed by Lucas Vivier.
 
 ## Meta
 
@@ -167,6 +167,6 @@ If you find `Res-IRF` useful, please kindly cite our last paper:
 }
 ```
 
-Lucas Vivier – [@VivierLucas](https://twitter.com/VivierLucas) – vivier@centre-cired.fr
+Lucas Vivier – [@VivierLucas](https://twitter.com/VivierLucas) – lucas.vivier@enpc.fr
 
 Distributed under the GNU GENERAL PUBLIC LICENSE. See ``LICENSE`` for more information.

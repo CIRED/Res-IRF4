@@ -50,7 +50,7 @@
       }
     },
     "technical": {
-      "cost_heater": "project/input/technical/cost_heater_kw.csv",
+      "cost_heater": "project/input/technical/cost_heater_kw_rte.csv",
       "efficiency": "project/input/technical/efficiency.csv",
       "lifetime_heater": "project/input/technical/lifetime_heater.csv",
       "cost_insulation": "project/input/technical/cost_insulation.csv",

@@ -13,7 +13,7 @@
   },
   "sensitivity": {
     "activated": false,
-      "technical_progress_insulation": {
+    "technical_progress_insulation": {
         "high": {
           "activated": true,
           "start": 2020,
@@ -44,17 +44,16 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2031,
+    "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_calibration.json",
-      "carbon_tax": {
-        "start": 2017,
+      "file": "project/input/policies/current/policies_ambitious.json",
+      "restriction_gas": {
+        "start": 2030,
         "end": 2051,
-        "tax": "project/input/policies/carbon_value.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": true,
-        "recycling_ini": 2000000000
-      }},
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+    },
     "simple": {
       "figures": true,
       "detailed_output": true,

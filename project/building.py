@@ -1513,10 +1513,10 @@ class AgentBuildings(ThermalBuildings):
 
             cost_total = cost + cost_financing
 
-        subsidies = dict()
-        if policies:
-            for policy in policies:
-                subsidies.update({policy.name: rslt[policy.name] * 0.015 * financing_options[policy.name]['duration']})
+            subsidies = dict()
+            if policies:
+                for policy in policies:
+                    subsidies.update({policy.name: rslt[policy.name] * 0.015 * financing_options[policy.name]['duration']})
 
         return cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies
 
@@ -1658,6 +1658,34 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total = sum(subsidies_total)
         else:
             subsidies_total = pd.DataFrame(0, index=index, columns=cost_heater.columns)
+
+        # overall cap for cumulated amount of subsidies
+        # TODO if necessary
+        subsidies_cap = [p for p in policies_heater if p.policy == 'subsidies_cap']
+        if subsidies_cap:
+            # only one subsidy cap
+            subsidies_cap = subsidies_cap[0]
+            policies_target = subsidies_cap.target
+            subsidies_cap = reindex_mi(subsidies_cap.value, subsidies_total.index)
+            cap = (reindex_mi(cost_heater, index).T * subsidies_cap).T
+            over_cap = subsidies_total > cap
+            subsidies_details['over_cap'] = (subsidies_total - cap)[over_cap].fillna(0)
+            subsidies_details['over_cap'].sort_index(inplace=True)
+            remaining = subsidies_details['over_cap'].copy()
+
+            for policy_name in policies_target:
+                if policy_name in subsidies_details.keys():
+                    self.logger.debug('Capping amount for {}'.format(policy_name))
+                    temp = remaining.where(remaining <= subsidies_details[policy_name], subsidies_details[policy_name])
+                    subsidies_details[policy_name] -= temp
+                    assert (subsidies_details[policy_name].values >= 0).all(), '{} got negative values'.format(
+                        policy_name)
+                    remaining -= temp
+                    if allclose(remaining, 0, rtol=10 ** -1):
+                        break
+
+            assert allclose(remaining, 0, rtol=10 ** -1), 'Over cap'
+            subsidies_total -= subsidies_details['over_cap']
 
         regulation = [p for p in policies_heater if p.policy == 'regulation']
         if 'inertia_heater' in [p.name for p in regulation]:
@@ -1953,7 +1981,7 @@ class AgentBuildings(ThermalBuildings):
 
         Parameters
         ----------
-        cost_heater: Series
+        cost_heater: DataFrame
             Cost of each heating system (EUR).
         subsidies_total: DataFrame
             Total amount of eligible subsidies by dwelling and heating system (EUR).
@@ -1965,7 +1993,7 @@ class AgentBuildings(ThermalBuildings):
             VTA tax of each heating system (EUR).
         flow_premature_replacement: int
             Number of dwelling that replace their heating system before the end of its lifetime.
-        cost_financing: Series
+        cost_financing: DataFrame
             Cost of financing by dwelling (EUR).
         amount_debt: DataFrame
             Amount of debt by dwelling and income owner (EUR).
@@ -2135,7 +2163,7 @@ class AgentBuildings(ThermalBuildings):
         if self._variable_size_heater:
             size_heater = self.size_heater(index=index)
         else:
-            size_heater = Series(15, index=index)
+            size_heater = Series(8, index=index)
 
         # technical restriction - removing heat-pump for low-efficient buildings
         condition.columns.names = ['Heating system final']
@@ -2215,9 +2243,6 @@ class AgentBuildings(ThermalBuildings):
                                                                                                   emission_saved)
 
         # cost financing
-        _cost_heater = cost_heater.copy()
-        # cost_heater = Series(1, index=index, dtype='float').to_frame().dot(cost_heater.to_frame().T)
-
         p = [p for p in policies_heater if p.policy == 'zero_interest_loan']
         cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
             cost_heater,
@@ -2293,7 +2318,8 @@ class AgentBuildings(ThermalBuildings):
             temp = flow_replace[~flow_replace.index.get_level_values('Heating system').isin(
                 ['Electricity-Heat pump water', 'Electricity-Heat pump air'])]
             temp = select(temp, {'Housing type': 'Multi-family'})
-            assert temp.sum() > district_heating, 'District heating cannot replace all heating system'
+            if district_heating > temp.sum():
+                district_heating = temp.sum()
             to_district_heating = district_heating * temp / temp.sum()
             to_district_heating = to_district_heating.reindex(flow_replace.index).fillna(0)
             flow_replace = flow_replace - to_district_heating
@@ -2404,7 +2430,7 @@ class AgentBuildings(ThermalBuildings):
                      0) == 0, 'Sum problem'
 
         if store_information:
-            self.store_information_heater(_cost_heater, subsidies_total, bill_saved, subsidies_details,
+            self.store_information_heater(cost_heater.copy(), subsidies_total, bill_saved, subsidies_details,
                                           stock_replacement.unstack('Heating system final'),
                                           vta_heater, cost_financing, amount_debt, amount_saving, discount,
                                           consumption_saved,
@@ -4551,9 +4577,12 @@ class AgentBuildings(ThermalBuildings):
 
         emission = inputs['carbon_emission'].loc[self.year:, :].copy()
         if inputs.get('renewable_gas') is not None:
-            renewable_gas = inputs['renewable_gas'].loc[self.year:]
-            temp = (consumption_energy.loc['Natural gas'] - renewable_gas) / consumption_energy.loc['Natural gas'] * emission.loc[:, 'Natural gas']
-            emission.loc[:, 'Natural gas'] = temp.copy()
+            renewable_gas = inputs['renewable_gas'].loc[self.year]
+            if renewable_gas < consumption_energy.loc['Natural gas']:
+                temp = (consumption_energy.loc['Natural gas'] - renewable_gas) / consumption_energy.loc['Natural gas'] * emission.loc[self.year, 'Natural gas']
+            else:
+                temp = 0
+            emission.loc[self.year, 'Natural gas'] = temp
         self.store_over_years[self.year].update({'Emission content (gCO2/kWh)': emission.loc[self.year, :]})
 
         temp = emission.loc[self.year, :]
