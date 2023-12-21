@@ -46,7 +46,7 @@
       "information_rate": 0.333,
       "scale": {
         "option": "price_elasticity",
-        "target": -1.2
+        "target": -1
       }
     },
     "technical": {
@@ -76,8 +76,8 @@
       "ratio_surface": "project/input/technical/ratio_surface.csv",
       "residual_rate": 0,
       "hourly_profile": "project/input/technical/hourly_profile_rte.csv",
-      "constraint_heat_pumps": true,
-      "variable_size_heater": false
+      "constraint_heat_pumps": 10,
+      "variable_size_heater": true
     },
     "energy": {
       "energy_prices": {
@@ -101,7 +101,7 @@
       "share_single_family_construction": "project/input/macro/share_singlefamily_construction_tend.csv",
       "demolition_rate": "project/input/macro/demolition_rate_tend.csv",
       "income": "project/input/macro/income.csv",
-      "income_rate": 0.012,
+      "income_rate": 0.008,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
       "consumption_ini": "project/input/macro/consumption_ini.csv",
       "preferences_saving": "project/input/investment/stated_preferences_saving.csv",
@@ -118,7 +118,7 @@
     "health_cost_income": "project/input/policies/health_cost_income.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/policies_2021.json"
     },
     "simple": {
       "figures": true,
@@ -135,7 +135,6 @@
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
         "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water",
         "Natural gas-Collective boiler": "Natural gas-Performance boiler",
         "Oil fuel-Collective boiler": "Oil fuel-Performance boiler"
       },

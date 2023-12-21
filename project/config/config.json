@@ -13,19 +13,9 @@
   },
   "sensitivity": {
     "activated": false,
-    "technical_progress_insulation": {
-        "high": {
-          "activated": true,
-          "start": 2020,
-          "end": 2035,
-          "value_end": -0.3
-        },
-        "low": {
-          "activated": true,
-          "start": 2020,
-          "end": 2035,
-          "value_end": -0.1
-        }
+    "constraint_heat_pumps": {
+        "high": 15,
+        "low": false
       }
   },
   "uncertainty": {
@@ -44,15 +34,9 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json",
-      "restriction_gas": {
-        "start": 2030,
-        "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
-      }
+      "file": "project/input/policies/policies_2024.json"
     },
     "simple": {
       "figures": true,
@@ -79,7 +63,8 @@
       "no_natural_replacement": false
     },
     "technical": {
-      "variable_size_heater": true
+      "variable_size_heater": true,
+      "constraint_heat_pumps": 15
     }
   }
 }

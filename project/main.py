@@ -225,6 +225,16 @@ def run(path=None, folder=None):
                     configuration['financing_cost_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
                     configuration['financing_cost_{}'.format(key)]['financing_cost'] = copy.deepcopy(item)
 
+            if config_sensitivity.get('constraint_heat_pumps') is not None:
+                for key, item in config_sensitivity['constraint_heat_pumps'].items():
+                    configuration['constraint_heat_pumps_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['constraint_heat_pumps_{}'.format(key)]['technical']['constraint_heat_pumps'] = item
+
+            if config_sensitivity.get('variable_size_heater') is not None:
+                for key, item in config_sensitivity['variable_size_heater'].items():
+                    configuration['variable_size_heater_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['variable_size_heater_{}'.format(key)]['technical']['variable_size_heater'] = item
+
             if config_sensitivity.get('carbon_emission') is not None:
                 for key, item in config_sensitivity['carbon_emission'].items():
                     configuration['carbon_emission_{}'.format(key)] = copy.deepcopy(configuration['Reference'])

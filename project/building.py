@@ -1660,7 +1660,6 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total = pd.DataFrame(0, index=index, columns=cost_heater.columns)
 
         # overall cap for cumulated amount of subsidies
-        # TODO if necessary
         subsidies_cap = [p for p in policies_heater if p.policy == 'subsidies_cap']
         if subsidies_cap:
             # only one subsidy cap
@@ -2168,11 +2167,15 @@ class AgentBuildings(ThermalBuildings):
         # technical restriction - removing heat-pump for low-efficient buildings
         condition.columns.names = ['Heating system final']
         if self._constraint_heat_pumps:
-            condition = self.add_certificate(condition)
+            """condition = self.add_certificate(condition)
             idx = (condition.index.get_level_values('Performance').isin(['F', 'G'])) & (
                 ~condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
             condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
-            condition = condition.droplevel('Performance')
+            condition = condition.droplevel('Performance')"""
+            size = self.size_heater(index=index)
+            idx = (size > self._constraint_heat_pumps) & (
+                ~size.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
+            condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
 
         # technical restriction - heat pump can only be switch with heat pump
         idx = condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps'])

@@ -134,7 +134,8 @@
       "start": 2018,
       "end": 2024,
       "insulation": "project/input/policies/current/subsidies_cap.csv",
-      "target": [
+      "heater": "project/input/policies/current/subsidies_cap_updated.csv",
+      "target_insulation": [
         "mpr_serenite",
         "mpr_performance",
         "mpr_multifamily",
@@ -144,13 +145,20 @@
         "cite",
         "cee"
       ],
+      "target_heater": [
+        "cee",
+        "mpr",
+        "mpr_efficacite",
+        "cite"
+      ],
       "policy": "subsidy_cap"
     },
     "cap_updated": {
       "start": 2024,
       "end": 2051,
       "insulation": "project/input/policies/current/subsidies_cap_updated.csv",
-      "target": [
+      "heater": "project/input/policies/current/subsidies_cap_updated.csv",
+      "target_insulation": [
         "mpr_serenite",
         "mpr_performance",
         "mpr_multifamily",
@@ -159,6 +167,12 @@
         "mpr_efficacite",
         "cite",
         "cee"
+      ],
+      "target_heater": [
+        "cee",
+        "mpr",
+        "mpr_efficacite",
+        "cite"
       ],
       "policy": "subsidy_cap"
     },
