@@ -391,7 +391,7 @@ def run(path=None, folder=None):
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logger.debug('Launching processes')
-        with Pool(args.cpu) as pool:
+        with Pool(int(args.cpu)) as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}
