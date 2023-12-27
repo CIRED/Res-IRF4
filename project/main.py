@@ -225,6 +225,11 @@ def run(path=None, folder=None):
                     configuration['financing_cost_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
                     configuration['financing_cost_{}'.format(key)]['financing_cost'] = copy.deepcopy(item)
 
+            if config_sensitivity.get('debt_income_ratio') is not None:
+                for key, item in config_sensitivity['debt_income_ratio'].items():
+                    configuration['debt_income_ratio_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['debt_income_ratio_{}'.format(key)]['financing_cost']['debt_income_ratio'] = item
+
             if config_sensitivity.get('constraint_heat_pumps') is not None:
                 for key, item in config_sensitivity['constraint_heat_pumps'].items():
                     configuration['constraint_heat_pumps_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
@@ -318,7 +323,6 @@ def run(path=None, folder=None):
                 for v in values:
                     configuration['lifetimeinsulation_{}'.format(v)] = copy.deepcopy(configuration['Reference'])
                     configuration['lifetimeinsulation_{}'.format(v)]['technical']['lifetime_insulation'] = v
-
 
             if config_sensitivity.get('step') is not None:
                 values = config_sensitivity['step']

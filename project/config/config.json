@@ -12,9 +12,9 @@
     "no_natural_replacement": null
   },
   "sensitivity": {
-    "activated": false,
-    "constraint_heat_pumps": {
-        "high": 15,
+    "activated": true,
+    "debt_income_ratio": {
+        "high": 0.05,
         "low": false
       }
   },
@@ -34,7 +34,7 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2022,
+    "end": 2020,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     },

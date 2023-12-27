@@ -1524,7 +1524,7 @@ class AgentBuildings(ThermalBuildings):
 
         condition = DataFrame(True, index=amount_debt.index, columns=amount_debt.columns)
 
-        if financing_cost['constraint_liquidity']:
+        if financing_cost['debt_income_ratio']:
             debt_reimbursement = calculate_annuities(amount_debt, lifetime=financing_cost['duration'],
                                                      discount_rate=financing_cost['interest_rate'].loc[self.year])
             debt_income_ratio = (debt_reimbursement.T / reindex_mi(self._income_owner, amount_debt.index)).T
