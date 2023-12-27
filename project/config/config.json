@@ -12,7 +12,7 @@
     "no_natural_replacement": null
   },
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "scale_renovation": {
       "low": {
         "option": "share_fg",
