@@ -165,10 +165,6 @@
       "no_heating_switch": false,
       "collective_boiler": false,
       "no_natural_replacement": false
-    },
-    "technical": {
-      "variable_size_heater": true,
-      "constraint_heat_pumps": 15
     }
   }
 }

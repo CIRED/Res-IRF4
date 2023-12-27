@@ -41,8 +41,9 @@ def run(path=None, folder=None):
     parser.add_argument('-c', '--config', default=os.path.join('project', 'config', 'test', 'config.json'), help='path config file')
 
     parser.add_argument('-d', '--directory', default='project/config/policies', help='path config directory')
-    parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
+    parser.add_argument('-a', '--assessment', default=None, help='path config file with assessment')
     parser.add_argument('-y', '--year', default=None, help='end year')
+    parser.add_argument('-cpu', '--cpu', default=6, help='number of cpu')
 
     args = parser.parse_args()
 
@@ -390,7 +391,7 @@ def run(path=None, folder=None):
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
         logger.debug('Launching processes')
-        with Pool(6) as pool:
+        with Pool(args.cpu) as pool:
             results = pool.starmap(res_irf,
                                    zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
         result = {i[0]: i[1] for i in results}
