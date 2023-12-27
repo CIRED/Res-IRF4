@@ -18,7 +18,7 @@
       "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "share_fg",
-        "target": 0.26
+        "target": 0.27
       },
       "ms_insulation": {
         "ms_insulation_ini": "project/input/investment/market_share_insulation_ini.csv",
