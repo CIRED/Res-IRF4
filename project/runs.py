@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--directory', default=None, help='path config directory')
-    parser.add_argument('-a', '--assessment', default=None, help='path config file with assessmnet')
+    parser.add_argument('-a', '--assessment', default=None, help='path config file with assessment')
 
     args = parser.parse_args()
 

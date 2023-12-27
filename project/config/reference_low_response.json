@@ -18,7 +18,7 @@
       "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "share_fg",
-        "target": 0.31
+        "target": 0.26
       },
       "ms_insulation": {
         "ms_insulation_ini": "project/input/investment/market_share_insulation_ini.csv",
@@ -45,7 +45,7 @@
       "information_rate": 0.333,
       "scale": {
         "option": "price_elasticity",
-        "target": -1
+        "target": -0.8
       }
     },
     "technical": {
@@ -63,7 +63,7 @@
           "value_end": -0.1
         },
         "heater": {
-          "activated": true,
+          "activated": false,
           "start": 2019,
           "end": 2035,
           "value_end": -0.2
@@ -87,7 +87,8 @@
           "Wood fuel": 0.0127,
           "Oil fuel": 0.0173,
           "Heating": 0.0104
-        }
+        },
+        "factor": 0.8
       },
       "energy_taxes": "project/input/energy/energy_taxes_ame2021.csv",
       "energy_vta": "project/input/energy/energy_vta.csv",
