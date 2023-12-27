@@ -135,6 +135,7 @@ colors = {
     "D8": "lightcoral",
     "D9": "lightsalmon",
     "D10": "darksalmon",
+    "Others":"saddlebrown",
     "Heat pump": "gold",
     "Electricity": "darkorange",
     "Natural gas": "slategrey",

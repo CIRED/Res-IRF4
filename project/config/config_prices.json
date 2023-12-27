@@ -18,8 +18,8 @@
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
-      "no_policy": false,
+      "current_policies": false,
+      "no_policy": true,
       "income": false,
       "prices_constant": false,
       "heating_system": {

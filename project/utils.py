@@ -671,6 +671,8 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
         ax.axhline(y=hlines, linewidth=1, color='grey')
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x)
+    if df.index[-1] == 2050:
+        ax.xaxis.set_major_locator(MultipleLocator(base=5))
     if legend:
         format_legend(ax, labels=labels, loc=loc, left=left, order=order_legend)
     # plt.ticklabel_format(style='plain', axis='x')

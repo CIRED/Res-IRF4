@@ -1419,9 +1419,6 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             If True, embodied emission are taken into account.
         cofp: bool, default True
             If True, cofp are taken into account.
-        details_health: bool, default False
-            If True, details of health are taken into account.
-
 
         Returns
         -------

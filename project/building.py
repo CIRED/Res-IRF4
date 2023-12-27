@@ -2068,8 +2068,13 @@ class AgentBuildings(ThermalBuildings):
 
             self._heater_store['subsidies_count'].update(
                 {key: eligible.sum(axis=1).groupby('Housing type').sum()})
-            self._heater_store['subsidies_average'].update({key: sub.sum().sum() / eligible.fillna(0).sum().sum()})
-            self._heater_store['cost_average'].update({key: cost.sum().sum() / eligible.fillna(0).sum().sum()})
+
+            if eligible.fillna(0).sum().sum() > 0:
+                self._heater_store['subsidies_average'].update({key: sub.sum().sum() / eligible.fillna(0).sum().sum()})
+                self._heater_store['cost_average'].update({key: cost.sum().sum() / eligible.fillna(0).sum().sum()})
+            else:
+                self._heater_store['subsidies_average'].update({key: 0})
+                self._heater_store['cost_average'].update({key: 0})
 
     def heater_replacement(self, stock, prices, cost_heater, policies_heater, calib_heater=None,
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
@@ -4636,7 +4641,7 @@ class AgentBuildings(ThermalBuildings):
 
         output['Stock Direct electric (Million)'] = temp['Electricity-Performance boiler'] / 10 ** 6
         output['Stock Heat pump (Million)'] = temp['Electricity-Heat pump water'] / 10 ** 6
-        if 'Electricity-Heat pump air' in output.keys():
+        if 'Electricity-Heat pump air' in temp.keys():
             output['Stock Heat pump (Million)'] += temp['Electricity-Heat pump air'] / 10 ** 6
 
         heater = {
@@ -4839,7 +4844,7 @@ class AgentBuildings(ThermalBuildings):
                 {'Emission saving insulation (MtCO2/year)': self.to_emission(temp, emission).sum() / 10 ** 12})
 
             consumption = self.consumption_heating_store(self._renovation_store['consumption_saved_households'].index,
-                                                             full_output=False, level_heater='Heating system final')
+                                                         full_output=False, level_heater='Heating system final')
 
             consumption = reindex_mi(consumption, self._renovation_store['consumption_saved_households'].index)
             consumption *= reindex_mi(self._surface, consumption.index)
@@ -5914,7 +5919,8 @@ class AgentBuildings(ThermalBuildings):
             c = reindex_mi(certificate_after, index)
             health_cost_after = {}
             for i, j in c.items():
-                df = concat((j, stock.loc[index]), keys=['Performance', 'Stock'], axis=1).dropna().set_index('Performance', append=True).squeeze()
+                df = concat((j, stock.loc[index]), keys=['Performance', 'Stock'], axis=1).dropna().set_index(
+                    'Performance', append=True).squeeze()
                 health_cost_after.update({i: (reindex_mi(health_cost, df.index) * df).droplevel('Performance')})
             health_cost_after = DataFrame(health_cost_after).fillna(0)
             health_cost_saved = (health_cost_before - health_cost_after.T).T
@@ -6110,7 +6116,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_before = self.consumption_heating_store(index, full_output=False)
 
         s_no_switch = concat((stock, Series(stock.index.get_level_values('Heating system'), index=stock.index,
-                                      name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
+                              name='Heating system final')), axis=1).set_index('Heating system final', append=True).squeeze()
         idx_fossil = ['Natural gas', 'Oil fuel']
         s_switch = stock[self.to_energy(stock).isin(idx_fossil)]
         s_switch = concat((s_switch, Series('Electricity-Heat pump water', index=stock.index,
@@ -6146,31 +6152,32 @@ class AgentBuildings(ThermalBuildings):
         cost = reindex_mi(cost, consumption_saved.index)
 
         options = {
-            'Private, deep insulation': {
+            'Deep insulation, private': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
                 'measures': 'deep_insulation'},
-            'Private, global insulation': {'discount_rate': implicit_discount_rate,
+            'Global insulation, private': {'discount_rate': implicit_discount_rate,
                                            'carbon_saved': None,
                                            'measures': 'global_insulation'},
-            'Private, deep renovation': {
+            'Deep renovation, private': {
                 'discount_rate': implicit_discount_rate,
                 'carbon_saved': None,
                 'measures': 'deep_renovation'},
-            'Social, deep renovation': {'discount_rate': discount_rate,
+            'Deep renovation, social': {'discount_rate': discount_rate,
                                         'carbon_saved': emission_saved_value,
                                         'measures': 'deep_renovation',
                                         'health_cost': health_cost}
         }
         options = {k: i for k, i in options.items() if
-                   k in ['Private, global insulation', 'Private, deep insulation', 'Social, deep renovation',
-                         'Private, deep renovation']}
+                   k in ['Deep insulation, private', 
+                         'Deep renovation, social',
+                         'Deep renovation, private']}
 
         colors = {'Social, all measures': 'darkred',
-                  'Social, deep renovation': 'orangered',
-                  'Private, deep insulation': 'darkmagenta',
-                  'Private, global insulation': 'darkblue',
-                  'Private, deep renovation': 'royalblue'
+                  'Deep renovation, social': 'orangered',
+                  'Deep insulation, private': 'darkmagenta',
+                  'Global insulation, private': 'darkblue',
+                  'Deep renovation, private': 'royalblue'
                   }
 
         dict_rslt, dict_stats = {}, {}
@@ -6194,31 +6201,43 @@ class AgentBuildings(ThermalBuildings):
                 for k in dict_rslt[key].keys():
                     dict_rslt[key][k].index = dict_rslt[key][k].index * 10**9 / e_before
                     dict_rslt[key][k].name = 'Emission saving (% / 2018)'
+                    dict_rslt[key][k].index.rename('Emission saved (% / 2018)', inplace=True)
 
             else:
                 for k in dict_rslt[key].keys():
                     dict_rslt[key][k].index = dict_rslt[key][k].index / (c_before.sum() / 10 ** 9)
                     dict_rslt[key][k].name = 'Consumption saving (% / 2018)'
+                    dict_rslt[key][k].index.rename('Consumption saved (% / 2018)', inplace=True)
 
         make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
                    save=os.path.join(path_out, 'abatement_curve.png'), ymax=1, ymin=-1,
-                   format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x))
+                   format_y=lambda y, _: '{:.2f}'.format(y), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
+
+        make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
+                   save=os.path.join(path_out, 'abatement_curve_zoom.png'), ymax=0.3, ymin=0,
+                   format_y=lambda y, _: '{:.2f}'.format(y), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
 
         make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
                    save=os.path.join(path_out, 'abatement_curve_carbon.png'), ymax=5000, ymin=-1000,
-                   format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x))
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
+
+        make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
+                   save=os.path.join(path_out, 'abatement_curve_carbon_zoom.png'), ymax=500, ymin=0,
+                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
 
         make_plots(dict_rslt['npv'], 'Net present cost (Thousand euro)',
                    save=os.path.join(path_out, 'npv_insulation_curve.png'),
-                   format_y=lambda y, _: '{:.1f}'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), ymin=None, hlines=0)
+                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
+                   format_x=lambda x, _: '{:.0%}'.format(x), ymin=None, hlines=0, order_legend=False)
 
         make_plots(dict_rslt['roi'], 'Return Time on Investment (years)',
                    save=os.path.join(path_out, 'roi_insulation_curve.png'),
                    format_y=lambda y, _: '{:.1f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), ymax=50)
+                   format_x=lambda x, _: '{:.0%}'.format(x), ymax=50, order_legend=False)
 
     def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission=None, carbon_value=None,
                              health_cost=None, index=None):
