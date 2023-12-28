@@ -7,23 +7,17 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "cee",
       "cite",
+      "cee",
       "mpr",
       "mpr_serenite",
       "mpr_multifamily",
-      "reduced_vta",
       "obligation"
     ],
     "test": [
       "cite",
       "cee",
       "mpr",
-      "mpr_serenite",
-      "mpr_multifamily",
-      "reduced_vta",
-      "cite",
-      "cee",
       "mpr_serenite",
       "mpr_multifamily",
       "obligation"
@@ -33,7 +27,7 @@
     "file": "project/config/reference.json",
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/policies_2021.json"
     },
     "simple": {
       "quintiles": true,

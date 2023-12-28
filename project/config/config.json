@@ -12,7 +12,7 @@
     "no_natural_replacement": null
   },
   "sensitivity": {
-    "activated": true,
+    "activated": false,
     "income_rate": {
       "low": 0,
       "high": 0.02
@@ -138,7 +138,7 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2051,
+    "end": 2020,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     },

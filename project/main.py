@@ -133,7 +133,8 @@ def run(path=None, folder=None):
                 for year in list_years:
                     if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
                         configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
-                        configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
+                        # configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year
+                        configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['year_stop'] = year
                         configuration['AP-{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']

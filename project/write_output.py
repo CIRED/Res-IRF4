@@ -1626,11 +1626,39 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     indicator.loc['Intensive margin (Thousand euro/household)', s] = indicator.loc['Investment insulation reference (Thousand euro/household)', s] - indicator.loc['Investment insulation (Thousand euro/household)', s]
                     indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (Thousand euro/household)', s] / result[reference].loc['Investment insulation (Thousand euro/household)', year]
                     """
+                    indicator.loc['Intensive margin (euro)', s] = result[reference].loc['Average cost {} (euro)'.format(policy_name), year] - result[s].loc['Average cost {} (euro)'.format(policy_name), year]
+                    indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / result[s].loc['Average cost {} (euro)'.format(policy_name), year]
 
-                    indicator.loc['Non additional renovation (Thousand households)', s] = result[s].loc['Renovation (Thousand households)', year]
-                    indicator.loc['Additional renovation (Thousand households)', s] = result[reference].loc['Renovation (Thousand households)', year] - result[s].loc['Renovation (Thousand households)', year]
-                    indicator.loc['Freeriding renovation ratio (%)', s] = indicator.loc['Non additional renovation (Thousand households)', s] / (indicator.loc['Additional renovation (Thousand households)', s] + indicator.loc['Non additional renovation (Thousand households)', s])
-                    indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional renovation (Thousand households)', s] / indicator.loc['Non additional renovation (Thousand households)', s]
+                    if 'Average cost {} insulation (euro)'.format(policy_name) in result[reference].index:
+                        indicator.loc['Intensive margin insulation (euro)', s] = result[reference].loc['Average cost {} insulation (euro)'.format(policy_name), year] - \
+                                                                      result[s].loc['Average cost {} insulation (euro)'.format(policy_name), year]
+                        indicator.loc['Intensive margin insulation (%)', s] = indicator.loc['Intensive margin insulation (euro)', s] / \
+                                                                   result[s].loc['Average cost {} insulation (euro)'.format(
+                                                                       policy_name), year]
+
+                    if 'Average cost {} heater (euro)'.format(policy_name) in result[reference].index:
+                        indicator.loc['Intensive margin heater (euro)', s] = result[reference].loc['Average cost {} heater (euro)'.format(policy_name), year] - \
+                                                                      result[s].loc['Average cost {} heater (euro)'.format(policy_name), year]
+                        indicator.loc['Intensive margin heater (%)', s] = indicator.loc['Intensive margin heater (euro)', s] / \
+                                                                   result[s].loc['Average cost {} heater (euro)'.format(
+                                                                       policy_name), year]
+
+                    indicator.loc['Non additional investment (Thousand households)', s] = result[reference].loc['{} (Thousand households)'.format(policy_name), year]
+                    indicator.loc['Additional investment (Thousand households)', s] = result[reference].loc['{} (Thousand households)'.format(policy_name), year] - result[s].loc['{} (Thousand households)'.format(policy_name), year]
+                    indicator.loc['Freeriding ratio (%)', s] = indicator.loc['Non additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
+                    indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional investment (Thousand households)', s] / indicator.loc['Non additional investment (Thousand households)', s]
+
+                    if '{} insulation (Thousand households)'.format(policy_name) in result[reference].index:
+                        indicator.loc['Non additional insulation (Thousand households)', s] = result[reference].loc['{} insulation (Thousand households)'.format(policy_name), year]
+                        indicator.loc['Additional insulation (Thousand households)', s] = result[reference].loc['{} insulation (Thousand households)'.format(policy_name), year] - result[s].loc['{} insulation (Thousand households)'.format(policy_name), year]
+                        indicator.loc['Freeriding ratio insulation (%)', s] = indicator.loc['Non additional insulation (Thousand households)', s] / (indicator.loc['Additional insulation (Thousand households)', s] + indicator.loc['Non additional insulation (Thousand households)', s])
+                        indicator.loc['Extensive margin insulation (%)', s] = indicator.loc['Additional insulation (Thousand households)', s] / indicator.loc['Non additional insulation (Thousand households)', s]
+
+                    if '{} heater (Thousand households)'.format(policy_name) in result[reference].index:
+                        indicator.loc['Non additional heater (Thousand households)', s] = result[reference].loc['{} heater (Thousand households)'.format(policy_name), year]
+                        indicator.loc['Additional heater (Thousand households)', s] = result[reference].loc['{} heater (Thousand households)'.format(policy_name), year] - result[s].loc['{} heater (Thousand households)'.format(policy_name), year]
+                        indicator.loc['Freeriding ratio heater (%)', s] = indicator.loc['Non additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
+                        indicator.loc['Extensive margin heater (%)', s] = indicator.loc['Additional heater (Thousand households)', s] / indicator.loc['Non additional heater (Thousand households)', s]
 
                 indicator.loc['Consumption saving (TWh/year)', s] = result[s].loc['Consumption (TWh)', year] - \
                                                                     result[reference].loc['Consumption (TWh)', year]
