@@ -12,7 +12,6 @@
       "mpr_performance",
       "mpr_multifamily_updated",
       "mpr_multifamily_deep",
-      "zero_interest_loan",
       "obligation"
     ],
     "test": [
@@ -29,7 +28,7 @@
     "file": "project/config/reference.json",
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ambitious.json"
+      "file": "project/input/policies/policies_2024.json"
     },
     "simple": {
       "quintiles": true,
