@@ -1512,6 +1512,8 @@ class AgentBuildings(ThermalBuildings):
         p = [p for p in policies_heater if 'reduced_vta' == p.policy]
         if p:
             vta = p[0].value
+            if isinstance(vta, dict):
+                vta = vta[self.year]
             sub = cost_heater * (VTA - vta)
             subsidies_details.update({'reduced_vta': sub})
 
@@ -2703,12 +2705,14 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_details = {}
 
-        tax = VTA
+        vta = VTA
         p = [p for p in policies_insulation if 'reduced_vta' == p.policy]
         if p:
-            tax = p[0].value
-            subsidies_details.update({p[0].name: reindex_mi(cost_insulation * (VTA - tax), index)})
-        vta_insulation = cost_insulation * tax
+            vta = p[0].value
+            if isinstance(vta, dict):
+                vta = vta[self.year]
+            subsidies_details.update({p[0].name: reindex_mi(cost_insulation * (VTA - vta), index)})
+        vta_insulation = cost_insulation * vta
         cost_insulation += vta_insulation
 
         if calculate_condition:
@@ -2801,12 +2805,17 @@ class AgentBuildings(ThermalBuildings):
         # adding bonus subsidies (subsidies have been calculated before)
         subsidies_bonus = [p for p in policies_insulation if p.policy == 'bonus']
         for policy in subsidies_bonus:
+            if isinstance(policy.value, dict):
+                bonus_value = policy.value[self.year]
+            else:
+                bonus_value = policy.value
+
             if policy.target is not None:
-                value = (reindex_mi(policy.value, condition[policy.target].index) * condition[policy.target].T).T
+                value = (reindex_mi(bonus_value, condition[policy.target].index) * condition[policy.target].T).T
             else:
                 if policy.name not in subsidies_details.keys():
                     raise KeyError('Bonus subsidies should be coupled in other subsidy')
-                value = reindex_mi(policy.value, subsidies_details[policy.name].index)
+                value = reindex_mi(bonus_value, subsidies_details[policy.name].index)
             value.fillna(0, inplace=True)
 
             if not policy.social_housing:
@@ -2889,7 +2898,7 @@ class AgentBuildings(ThermalBuildings):
         if 'multi-family' in [p.name for p in regulation]:
             apply_regulation('Multi-family', 'Single-family', 'Housing type')
 
-        return cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition, eligible
+        return cost_insulation, vta_insulation, vta, subsidies_details, subsidies_total, condition, eligible
 
     def endogenous_renovation(self, stock, prices, subsidies_total, cost_insulation, lifetime,
                               calib_renovation=None, min_performance=None, subsidies_details=None,

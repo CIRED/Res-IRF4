@@ -61,19 +61,19 @@ if __name__ == '__main__':
                 "activated": True,
                 "Policy name": policy,
                 "AP": "Reference",
-                "AP-1": True,
+                "AP-1": False,
                 "ZP": False,
                 "ZP+1": False,
                 "AP-2019": True,
                 "AP-2020": True,
-                "AP-2021": True,
+                "AP-2021": False,
                 "AP-2022": False,
-                "AP-2024": True,
+                "AP-2024": False,
                 "AP-2025": True,
                 "AP-2030": True,
                 "AP-2035": True,
-                "AP-2040": True,
-                "AP-2050": True
+                "AP-2040": False,
+                "AP-2050": False
             }
             del _config['scenarios']
             if 'sensitivity' in _config.keys():

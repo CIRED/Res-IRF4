@@ -138,9 +138,9 @@
   "Reference": {
     "file":"project/config/reference.json",
     "step": 1,
-    "end": 2020,
+    "end": 2025,
     "policies": {
-      "file": "project/input/policies/policies_2024.json"
+      "file": "project/input/policies/policies_2021.json"
     },
     "simple": {
       "figures": true,

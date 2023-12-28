@@ -1620,12 +1620,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 except:
                     year = result[s].columns[-1]
                 if year in result[reference].columns:
-                    """
-                    indicator.loc['Investment insulation reference (Thousand euro/household)', s] = result[reference].loc['Investment insulation (Thousand euro/household)', year]
-                    indicator.loc['Investment insulation (Thousand euro/household)', s] = result[s].loc['Investment insulation (Thousand euro/household)', year]
-                    indicator.loc['Intensive margin (Thousand euro/household)', s] = indicator.loc['Investment insulation reference (Thousand euro/household)', s] - indicator.loc['Investment insulation (Thousand euro/household)', s]
-                    indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (Thousand euro/household)', s] / result[reference].loc['Investment insulation (Thousand euro/household)', year]
-                    """
+
                     indicator.loc['Intensive margin (euro)', s] = result[reference].loc['Average cost {} (euro)'.format(policy_name), year] - result[s].loc['Average cost {} (euro)'.format(policy_name), year]
                     indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / result[s].loc['Average cost {} (euro)'.format(policy_name), year]
 
