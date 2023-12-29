@@ -1607,9 +1607,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             indicator.update({'Cost effectiveness carbon (euro/tCO2)': - policy_cost / comp_efficiency.loc[
                 'Emission (MtCO2)'] * 10**3})
             indicator.update({'Leverage (%)': comp_efficiency.loc['Investment total WT (Billion euro)'] / policy_cost})
-            indicator.update({'Investment / energy savings (euro/kWh)': comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
-            indicator.update({'Investment / energy savings standard (euro/kWh)': comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption standard (TWh)']})
-            indicator.update({'Investment / emission (euro/tCO2)': comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
+            indicator.update({'Investment / energy savings (euro/kWh)': - comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
+            indicator.update({'Investment / energy savings standard (euro/kWh)': - comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption standard (TWh)']})
+            indicator.update({'Investment / emission (euro/tCO2)': - comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
 
             indicator = pd.DataFrame(indicator).T
 
@@ -1638,19 +1638,19 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                                    result[s].loc['Average cost {} heater (euro)'.format(
                                                                        policy_name), year]
 
-                    indicator.loc['Non additional investment (Thousand households)', s] = result[reference].loc['{} (Thousand households)'.format(policy_name), year]
+                    indicator.loc['Non additional investment (Thousand households)', s] = result[s].loc['{} (Thousand households)'.format(policy_name), year]
                     indicator.loc['Additional investment (Thousand households)', s] = result[reference].loc['{} (Thousand households)'.format(policy_name), year] - result[s].loc['{} (Thousand households)'.format(policy_name), year]
-                    indicator.loc['Freeriding ratio (%)', s] = indicator.loc['Non additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
                     indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional investment (Thousand households)', s] / indicator.loc['Non additional investment (Thousand households)', s]
+                    indicator.loc['Freeriding ratio (%)', s] = indicator.loc['Non additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
 
                     if '{} insulation (Thousand households)'.format(policy_name) in result[reference].index:
-                        indicator.loc['Non additional insulation (Thousand households)', s] = result[reference].loc['{} insulation (Thousand households)'.format(policy_name), year]
+                        indicator.loc['Non additional insulation (Thousand households)', s] = result[s].loc['{} insulation (Thousand households)'.format(policy_name), year]
                         indicator.loc['Additional insulation (Thousand households)', s] = result[reference].loc['{} insulation (Thousand households)'.format(policy_name), year] - result[s].loc['{} insulation (Thousand households)'.format(policy_name), year]
                         indicator.loc['Freeriding ratio insulation (%)', s] = indicator.loc['Non additional insulation (Thousand households)', s] / (indicator.loc['Additional insulation (Thousand households)', s] + indicator.loc['Non additional insulation (Thousand households)', s])
                         indicator.loc['Extensive margin insulation (%)', s] = indicator.loc['Additional insulation (Thousand households)', s] / indicator.loc['Non additional insulation (Thousand households)', s]
 
                     if '{} heater (Thousand households)'.format(policy_name) in result[reference].index:
-                        indicator.loc['Non additional heater (Thousand households)', s] = result[reference].loc['{} heater (Thousand households)'.format(policy_name), year]
+                        indicator.loc['Non additional heater (Thousand households)', s] = result[s].loc['{} heater (Thousand households)'.format(policy_name), year]
                         indicator.loc['Additional heater (Thousand households)', s] = result[reference].loc['{} heater (Thousand households)'.format(policy_name), year] - result[s].loc['{} heater (Thousand households)'.format(policy_name), year]
                         indicator.loc['Freeriding ratio heater (%)', s] = indicator.loc['Non additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
                         indicator.loc['Extensive margin heater (%)', s] = indicator.loc['Additional heater (Thousand households)', s] / indicator.loc['Non additional heater (Thousand households)', s]

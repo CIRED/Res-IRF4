@@ -6,7 +6,7 @@
       "tax": "project/input/policies/current/carbon_tax_growth.csv",
       "emission": "project/input/policies/current/carbon_tax_emission.csv",
       "recycling": null,
-        "policy": "carbon_tax"
+      "policy": "carbon_tax"
     },
     "cite": {
       "start": 2018,
