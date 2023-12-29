@@ -61,7 +61,7 @@ if __name__ == '__main__':
                 "activated": True,
                 "Policy name": policy,
                 "AP": "Reference",
-                "AP-1": False,
+                "AP-1": True,
                 "ZP": False,
                 "ZP+1": False,
                 "AP-2019": True,
