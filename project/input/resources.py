@@ -176,6 +176,7 @@ colors = {
     'Embodied emission additional': 'darkgreen',
     'Indirect emission': 'darkgreen',
     'COFP': 'grey',
+    'Opportunity cost': 'grey',
     'Comfort prices': 'saddlebrown',
     'Comfort price': 'saddlebrown',
     'Saving price': 'peachpuff',

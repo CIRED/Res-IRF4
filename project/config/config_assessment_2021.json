@@ -7,8 +7,7 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "cee",
-      "mpr"
+      "cite"
     ],
     "test": [
       "cite",
