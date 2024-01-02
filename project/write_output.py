@@ -1685,7 +1685,6 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             indicator = cba
 
         # Energy poverty
-        # No objective so simply showing the reduction between first and last year
         energy_poverty = pd.DataFrame([result[s].loc['Energy poverty (Million)'] for s in effectiveness_scenarios],
                                       index=effectiveness_scenarios).T
         indicator.loc['Energy poverty (Thousand)'] = (energy_poverty.iloc[0] - energy_poverty.iloc[-1]) * 10**3

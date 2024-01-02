@@ -1610,7 +1610,7 @@ class AgentBuildings(ThermalBuildings):
         # store eligible before cap
         eligible = {}
         for policy in subsidies_details:
-            eligible.update({policy: subsidies_details[policy] > 0})
+            eligible.update({policy: (subsidies_details[policy] > 0).any(axis=1)})
 
         # overall cap for cumulated amount of subsidies
         subsidies_cap = [p for p in policies_heater if p.policy == 'subsidies_cap']
@@ -2020,16 +2020,17 @@ class AgentBuildings(ThermalBuildings):
             else:
                 eligible = sub.copy()
                 eligible[eligible > 0] = 1
+                eligible = eligible.any(axis=1)
 
-            replacement_eligible = replacement.fillna(0) * eligible
-            cost = cost_heater * replacement_eligible
+            replacement_eligible = replacement.fillna(0).sum(axis=1) * eligible
+            cost = ((cost_heater * replacement.fillna(0)).T * eligible).T
 
             self._heater_store['replacement_eligible'].update(
-                {key: replacement_eligible.sum(axis=1).groupby('Housing type').sum()})
+                {key: replacement_eligible.groupby('Housing type').sum()})
 
             if eligible.sum().sum() > 0:
-                self._heater_store['subsidies_average'].update({key: sub.sum().sum() / replacement_eligible.sum().sum()})
-                self._heater_store['cost_average'].update({key: cost.sum().sum() / replacement_eligible.sum().sum()})
+                self._heater_store['subsidies_average'].update({key: sub.sum().sum() / replacement_eligible.sum()})
+                self._heater_store['cost_average'].update({key: cost.sum().sum() / replacement_eligible.sum()})
             else:
                 self._heater_store['subsidies_average'].update({key: 0})
                 self._heater_store['cost_average'].update({key: 0})
@@ -2502,6 +2503,7 @@ class AgentBuildings(ThermalBuildings):
         subsidies_details: dict
         subsidies_total: DataFrame
         condition: dict
+        eligible: dict
         """
 
         def defined_condition(_index, _certificate, _certificate_before, _certificate_before_heater,
@@ -2863,7 +2865,7 @@ class AgentBuildings(ThermalBuildings):
         # store eligible before cap
         eligible = {}
         for policy in subsidies_details:
-            eligible.update({policy: subsidies_details[policy] > 0})
+            eligible.update({policy: (subsidies_details[policy] > 0).any(axis=1)})
 
         # overall cap for cumulated amount of subsidies
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']
@@ -5400,17 +5402,19 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     eligible = sub.copy()
                     eligible[eligible > 0] = 1
+                    eligible = eligible.any(axis=1)
 
-                replacement_eligible = self._replaced_by.fillna(0) * eligible
-                replacement_eligible_renovation[key] = replacement_eligible.sum(axis=1).groupby('Housing type').sum()
+                replacement_eligible = self._replaced_by.fillna(0).sum(axis=1) * eligible
+                replacement_eligible_renovation[key] = replacement_eligible.groupby('Housing type').sum()
 
                 if eligible.sum().sum() == 0:
                     subsidies_average_renovation[key] = 0
                     cost_average_renovation[key] = 0
                 else:
                     subsidies_average_renovation[key] = sub.sum().sum() / replacement_eligible.sum().sum()
-                    cost_average_renovation[key] = (reindex_mi(self._renovation_store['cost_households'],
-                                                               replacement_eligible.index) * replacement_eligible).sum().sum() / replacement_eligible.sum().sum()
+                    cost = reindex_mi(self._renovation_store['cost_households'], replacement_eligible.index)
+                    cost = ((cost * self._replaced_by.fillna(0)).T * eligible).T
+                    cost_average_renovation[key] = cost.sum().sum() / replacement_eligible.sum()
 
             del self._renovation_store['subsidies_details_households']
             gc.collect()

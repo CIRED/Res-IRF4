@@ -61,7 +61,7 @@ if __name__ == '__main__':
                 "activated": True,
                 "Policy name": policy,
                 "AP": "Reference",
-                "AP-1": True,
+                "AP-1": False,
                 "ZP": False,
                 "ZP+1": False,
                 "AP-2019": True,
@@ -69,9 +69,9 @@ if __name__ == '__main__':
                 "AP-2021": False,
                 "AP-2022": False,
                 "AP-2024": False,
-                "AP-2025": True,
-                "AP-2030": True,
-                "AP-2035": True,
+                "AP-2025": False,
+                "AP-2030": False,
+                "AP-2035": False,
                 "AP-2040": False,
                 "AP-2050": False
             }
