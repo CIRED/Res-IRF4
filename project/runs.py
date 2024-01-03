@@ -34,6 +34,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--directory', default=None, help='path config directory')
     parser.add_argument('-a', '--assessment', default=None, help='path config file with assessment')
+    parser.add_argument('-cpu', '--cpu', default=6, help='number of cpu')
 
     args = parser.parse_args()
 
