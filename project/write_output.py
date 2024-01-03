@@ -1456,7 +1456,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 title = policy_name + ' : AP - ({})'.format(s)
             elif 'ZP' in s:
                 temp = - pd.Series(temp)
-                title = policy_name + ' : ({})- ZP'.format(s)
+                title = policy_name + ' : ({}) - ZP'.format(s)
             else:
                 temp = pd.Series(temp)
                 title = '{}'.format(s)
@@ -1484,7 +1484,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'cost_benefit_analysis_counterfactual.png'.lower().replace(' ', '_')),
                                  rotation=90, left=1.3, fontxtick=30)
+
         npv.loc['NPV', :] = npv.sum()
+        npv.columns = scenarios
         return npv
 
     folder_policies = os.path.join(folder, 'policies')
@@ -1517,65 +1519,94 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     scenarios = [s for s in result.keys() if s != reference and s != 'ZP']
     comparison = {}
     for scenario in scenarios:
+        temp_comparison = {}
+
+        # selecting input
         data = result[scenario]
         ref = result[reference]
         if 'ZP' in scenario:
             ref = result['ZP']
 
-        rslt = {}
-        for var in ['Consumption standard (TWh)', 'Consumption (TWh)', 'Energy poverty (Million)',
-                    'Health cost (Billion euro)', 'Emission (MtCO2)']:
-            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None)
+        for var in ['Consumption standard (TWh)',
+                    'Consumption (TWh)',
+                    'Emission (MtCO2)',
+                    'Health cost (Billion euro)',
+                    ]:
+            temp_comparison[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None,
+                                                     discount_rate=discount_rate, years=years)
 
+        # We cannot calculate directly double difference of carbon value because carbon price will increase.
         for energy in resources_data['index']['Energy']:
             var = 'Consumption {} (TWh)'.format(energy)
-            rslt[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None)
-            rslt['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(
+            temp_comparison[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None)
+
+            temp_comparison['Carbon value {} (Billion euro)'.format(energy)] = double_difference(ref.loc[var, :],
+                                                                                      data.loc[var, :],
+                                                                                      values=carbon_emission_value[energy]) / (10 ** 9)
+
+            temp_comparison['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(
                 ref.loc[var, :],
                 data.loc[var, :],
                 values=energy_prices[energy]) / (10 ** 9)
             # On a des euros
 
-            rslt['Emission {} (tCO2)'.format(energy)] = double_difference(ref.loc[var, :],
+            temp_comparison['Emission {} (tCO2)'.format(energy)] = double_difference(ref.loc[var, :],
                                                                           data.loc[var, :],
                                                                           values=carbon_emission[energy])
 
-            rslt['Carbon value {} (Billion euro)'.format(energy)] = double_difference(ref.loc[var, :],
-                                                                                      data.loc[var, :],
-                                                                                      values=carbon_emission_value[energy]) / (
-                                                                            10 ** 9)
-
-        for var in ['Thermal comfort EE (Billion euro)', 'Thermal loss prices (Billion euro)', ]:
+        for var in ['Thermal comfort EE (Billion euro)', 'Thermal loss prices (Billion euro)']:
             simple_diff = data.loc[var, :] - ref.loc[var, :]
             simple_diff.rename(None, inplace=True)
             _discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(years)])
             _result = simple_diff * _discount.sum()
             _discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(_result.shape[0])],
                                   index=_result.index)
-            rslt[var] = (_result * _discount).sum()
+            temp_comparison[var] = (_result * _discount).sum()
 
-        # Simple diff = scenario - ref
-        for var in ['Subsidies total (Billion euro)', 'VTA (Billion euro)', 'Investment total WT (Billion euro)',
-                    'Health expenditure (Billion euro)']:
-            discount = pd.Series(
-                [1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
-                index=ref.loc[var, :].index)
+        if not isinstance(policy_name, list):
+            policy_name = [policy_name]
+
+        var = ['{} (Billion euro)'.format(i) for i in policy_name]
+        cost_name = '{} (Billion euro)'.format('-'.join(policy_name))
+
+        # We use simple diff when effect do not last
+        for var in ['Investment total WT (Billion euro)',
+                    'Subsidies total (Billion euro)',
+                    'VTA (Billion euro)',
+                    'Health expenditure (Billion euro)',
+                    'Carbon value indirect (Billion euro)',
+                    var]:
+            name = var
+
             if var == 'Health expenditure (Billion euro)':
-                rslt['Simple difference ' + var] = ((data.loc[var, :] - ref.loc[var, :]) * discount.T).sum()
-            else:
-                rslt[var] = ((data.loc[var, :] - ref.loc[var, :]) * discount.T).sum()
+                name = 'Simple difference ' + var
+            elif var == 'Carbon value indirect (Billion euro)':
+                name = 'Carbon footprint (Billion euro)'
 
-        var = 'Carbon footprint (MtCO2)'
+            if isinstance(var, list):
+                diff = (data.loc[var, :].sum() - ref.loc[var, :].sum())
+                name = cost_name
+            else:
+                diff = data.loc[var, :] - ref.loc[var, :]
+
+            discount = pd.Series(
+                [1 / (1 + discount_rate) ** i for i in range(diff.shape[0])],
+                index=diff.index)
+
+            temp_comparison[name] = (diff * discount.T).sum()
+
+        """var = 'Carbon footprint (MtCO2)'
         discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
                              index=ref.loc[var, :].index)
         rslt['Carbon footprint (Billion euro)'] = ((data.loc[var,
                                                     :] - ref.loc[var, :]) * discount.T * carbon_value).sum() / 10**3
 
-        var = '{} (Billion euro)'.format(policy_name)
-        # capture year 'AP-20{}' with regex
-        start = ref.columns[0] + 1
+       # capture year 'AP-20{}' with regex
+        start = ref.columns[0]
         try:
             year = int(re.findall(r'\d+', scenario)[0])
+            if year == 1:
+                year = ref.columns[-1]
             if 'AP' in scenario:
                 if isinstance(policy_name, list):
                     cost = - ref.loc[var, year].sum()
@@ -1590,122 +1621,118 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
             else:
                 cost = 0
-            rslt[var] = cost * (1 / (1 + discount_rate) ** (year - start))
-
+            temp_comparison[cost_name] = cost * (1 / (1 + discount_rate) ** (year - start))
         except:
-            rslt[var] = 0
+            temp_comparison[cost_name] = 0"""
 
-        comparison[scenario] = rslt
+        comparison[scenario] = temp_comparison
     comparison = pd.DataFrame(comparison)
+    comparison.round(2).to_csv(os.path.join(folder_policies, 'comparison.csv'))
 
     indicator = None
-    temp = ['AP-{}'.format(y) for y in range(2018, 2051)]
-    temp += ['ZP+{}'.format(y) for y in range(2018, 2051)]
-    efficiency_scenarios = list(set(comparison.columns).intersection(temp))
     # cost-efficiency
     if policy_name is not None:
-        # cost-efficiency: AP and AP-t scenarios
         indicator = dict()
-        if efficiency_scenarios:
-            # We want efficiency only for concerned scenario policy (that is cut at t-1)
-            comp_efficiency = comparison.loc[:, efficiency_scenarios]
+        # We want efficiency only for concerned scenario policy (that is cut at t-1)
+        # comp_efficiency = comparison.loc[:, efficiency_scenarios]
 
-            policy_cost = comp_efficiency.loc['{} (Billion euro)'.format(policy_name)]
-            indicator.update({'{} (Billion euro)'.format(policy_name): policy_cost})
-            indicator.update({'Investment total WT (Billion euro)': comp_efficiency.loc['Investment total WT (Billion euro)']})
-            indicator.update({'Consumption (TWh)': comp_efficiency.loc['Consumption (TWh)']})
-            indicator.update({'Consumption standard (TWh)': comp_efficiency.loc['Consumption standard (TWh)']})
-            indicator.update({'Emission (MtCO2)': comp_efficiency.loc['Emission (MtCO2)']})
-            indicator.update({'Cost effectiveness (euro/kWh)': - policy_cost / comp_efficiency.loc['Consumption (TWh)']})
-            indicator.update({'Cost effectiveness standard (euro/kWh)': - policy_cost / comp_efficiency.loc[
-                'Consumption standard (TWh)']})
-            indicator.update({'Cost effectiveness carbon (euro/tCO2)': - policy_cost / comp_efficiency.loc[
-                'Emission (MtCO2)'] * 10**3})
-            indicator.update({'Leverage (%)': comp_efficiency.loc['Investment total WT (Billion euro)'] / policy_cost})
-            indicator.update({'Investment / energy savings (euro/kWh)': - comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption (TWh)']})
-            indicator.update({'Investment / energy savings standard (euro/kWh)': - comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Consumption standard (TWh)']})
-            indicator.update({'Investment / emission (euro/tCO2)': - comp_efficiency.loc['Investment total WT (Billion euro)'] / comp_efficiency.loc['Emission (MtCO2)'] * 10**3})
+        policy_cost = comparison.loc[cost_name]
+        indicator.update({cost_name: policy_cost})
+        indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
+        indicator.update({'Consumption (TWh)': comparison.loc['Consumption (TWh)']})
+        indicator.update({'Consumption standard (TWh)': comparison.loc['Consumption standard (TWh)']})
+        indicator.update({'Emission (MtCO2)': comparison.loc['Emission (MtCO2)']})
+        indicator.update({'Cost effectiveness (euro/kWh)': - policy_cost / comparison.loc['Consumption (TWh)']})
+        indicator.update({'Cost effectiveness standard (euro/kWh)': - policy_cost / comparison.loc[
+            'Consumption standard (TWh)']})
+        indicator.update({'Cost effectiveness carbon (euro/tCO2)': - policy_cost / comparison.loc[
+            'Emission (MtCO2)'] * 10**3})
+        indicator.update({'Leverage (%)': comparison.loc['Investment total WT (Billion euro)'] / policy_cost})
+        indicator.update({'Investment / energy savings (euro/kWh)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Consumption (TWh)']})
+        indicator.update({'Investment / energy savings standard (euro/kWh)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Consumption standard (TWh)']})
+        indicator.update({'Investment / emission (euro/tCO2)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Emission (MtCO2)'] * 10**3})
 
-            indicator = pd.DataFrame(indicator).T
+        indicator = pd.DataFrame(indicator).T
 
-            # And impact on retrofit rate : difference in retrofit rate / cost of subvention
-            for s in efficiency_scenarios:
-                try:
-                    year = int(s[-4:])
-                except:
-                    year = result[s].columns[-1]
+        temp = ['AP-{}'.format(y) for y in range(2018, 2051)]
+        temp += ['ZP+{}'.format(y) for y in range(2018, 2051)]
+        efficiency_scenarios = list(set(comparison.columns).intersection(temp))
+        # And impact on retrofit rate : difference in retrofit rate / cost of subvention
+        for s in efficiency_scenarios:
+            try:
+                year = int(s[-4:])
+            except:
+                year = result[s].columns[-1]
 
-                ref = reference
-                if 'ZP' in s:
-                    ref = 'ZP'
+            ref = reference
+            if 'ZP' in s:
+                ref = 'ZP'
 
-                if year in result[ref].columns:
+            if year in result[ref].columns and len(policy_name) == 1:
+                p_name = policy_name[0]
+                indicator.loc['Intensive margin (euro)', s] = result[ref].loc['Average cost {} (euro)'.format(p_name), year] - result[s].loc['Average cost {} (euro)'.format(p_name), year]
+                if ref == 'ZP':
+                    indicator.loc['Intensive margin (euro)', s] = - indicator.loc['Intensive margin (euro)', s]
+                indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / result[s].loc['Average cost {} (euro)'.format(p_name), year]
 
-                    indicator.loc['Intensive margin (euro)', s] = result[ref].loc['Average cost {} (euro)'.format(policy_name), year] - result[s].loc['Average cost {} (euro)'.format(policy_name), year]
+                if 'Average cost {} insulation (euro)'.format(p_name) in result[ref].index:
+                    indicator.loc['Intensive margin insulation (euro)', s] = result[ref].loc['Average cost {} insulation (euro)'.format(p_name), year] - \
+                                                                  result[s].loc['Average cost {} insulation (euro)'.format(p_name), year]
                     if ref == 'ZP':
-                        indicator.loc['Intensive margin (euro)', s] = - indicator.loc['Intensive margin (euro)', s]
-                    indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / result[s].loc['Average cost {} (euro)'.format(policy_name), year]
+                        indicator.loc['Intensive margin insulation (euro)', s] = - indicator.loc['Intensive margin insulation (euro)', s]
+                    indicator.loc['Intensive margin insulation (%)', s] = indicator.loc['Intensive margin insulation (euro)', s] / \
+                                                               result[s].loc['Average cost {} insulation (euro)'.format(
+                                                                   p_name), year]
 
-                    if 'Average cost {} insulation (euro)'.format(policy_name) in result[ref].index:
-                        indicator.loc['Intensive margin insulation (euro)', s] = result[ref].loc['Average cost {} insulation (euro)'.format(policy_name), year] - \
-                                                                      result[s].loc['Average cost {} insulation (euro)'.format(policy_name), year]
-                        if ref == 'ZP':
-                            indicator.loc['Intensive margin insulation (euro)', s] = - indicator.loc['Intensive margin insulation (euro)', s]
-                        indicator.loc['Intensive margin insulation (%)', s] = indicator.loc['Intensive margin insulation (euro)', s] / \
-                                                                   result[s].loc['Average cost {} insulation (euro)'.format(
-                                                                       policy_name), year]
-
-                    if 'Average cost {} heater (euro)'.format(policy_name) in result[ref].index:
-                        indicator.loc['Intensive margin heater (euro)', s] = result[ref].loc['Average cost {} heater (euro)'.format(policy_name), year] - \
-                                                                      result[s].loc['Average cost {} heater (euro)'.format(policy_name), year]
-                        if ref == 'ZP':
-                            indicator.loc['Intensive margin heater (euro)', s] = - indicator.loc['Intensive margin heater (euro)', s]
-                        indicator.loc['Intensive margin heater (%)', s] = indicator.loc['Intensive margin heater (euro)', s] / \
-                                                                   result[s].loc['Average cost {} heater (euro)'.format(
-                                                                       policy_name), year]
-
-                    indicator.loc['Non additional investment (Thousand households)', s] = result[s].loc['{} (Thousand households)'.format(policy_name), year]
-                    indicator.loc['Additional investment (Thousand households)', s] = result[ref].loc['{} (Thousand households)'.format(policy_name), year] - result[s].loc['{} (Thousand households)'.format(policy_name), year]
+                if 'Average cost {} heater (euro)'.format(p_name) in result[ref].index:
+                    indicator.loc['Intensive margin heater (euro)', s] = result[ref].loc['Average cost {} heater (euro)'.format(p_name), year] - \
+                                                                  result[s].loc['Average cost {} heater (euro)'.format(p_name), year]
                     if ref == 'ZP':
-                        indicator.loc['Additional investment (Thousand households)', s] = - indicator.loc['Additional investment (Thousand households)', s]
-                    indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
-                    indicator.loc['Freeriding ratio (%)', s] = indicator.loc['Non additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
+                        indicator.loc['Intensive margin heater (euro)', s] = - indicator.loc['Intensive margin heater (euro)', s]
+                    indicator.loc['Intensive margin heater (%)', s] = indicator.loc['Intensive margin heater (euro)', s] / \
+                                                               result[s].loc['Average cost {} heater (euro)'.format(
+                                                                   p_name), year]
 
-                    if '{} insulation (Thousand households)'.format(policy_name) in result[ref].index:
-                        indicator.loc['Non additional insulation (Thousand households)', s] = result[s].loc['{} insulation (Thousand households)'.format(policy_name), year]
-                        indicator.loc['Additional insulation (Thousand households)', s] = result[ref].loc['{} insulation (Thousand households)'.format(policy_name), year] - result[s].loc['{} insulation (Thousand households)'.format(policy_name), year]
-                        if ref == 'ZP':
-                            indicator.loc['Additional insulation (Thousand households)', s] = - indicator.loc[
-                                'Additional insulation (Thousand households)', s]
-                        indicator.loc['Freeriding ratio insulation (%)', s] = indicator.loc['Non additional insulation (Thousand households)', s] / (indicator.loc['Additional insulation (Thousand households)', s] + indicator.loc['Non additional insulation (Thousand households)', s])
-                        indicator.loc['Extensive margin insulation (%)', s] = indicator.loc['Additional insulation (Thousand households)', s] / (indicator.loc['Additional insulation (Thousand households)', s] + indicator.loc['Non additional insulation (Thousand households)', s])
+                indicator.loc['Non additional investment (Thousand households)', s] = result[s].loc['{} (Thousand households)'.format(p_name), year]
+                indicator.loc['Additional investment (Thousand households)', s] = result[ref].loc['{} (Thousand households)'.format(p_name), year] - result[s].loc['{} (Thousand households)'.format(p_name), year]
+                if ref == 'ZP':
+                    indicator.loc['Additional investment (Thousand households)', s] = - indicator.loc['Additional investment (Thousand households)', s]
+                indicator.loc['Extensive margin (%)', s] = indicator.loc['Additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
+                indicator.loc['Freeriding ratio (%)', s] = indicator.loc['Non additional investment (Thousand households)', s] / (indicator.loc['Additional investment (Thousand households)', s] + indicator.loc['Non additional investment (Thousand households)', s])
 
-                    if '{} heater (Thousand households)'.format(policy_name) in result[ref].index:
-                        indicator.loc['Non additional heater (Thousand households)', s] = result[s].loc['{} heater (Thousand households)'.format(policy_name), year]
-                        indicator.loc['Additional heater (Thousand households)', s] = result[ref].loc['{} heater (Thousand households)'.format(policy_name), year] - result[s].loc['{} heater (Thousand households)'.format(policy_name), year]
-                        if ref == 'ZP':
-                            indicator.loc['Additional heater (Thousand households)', s] = - indicator.loc[
-                                'Additional heater (Thousand households)', s]
-                        indicator.loc['Freeriding ratio heater (%)', s] = indicator.loc['Non additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
-                        indicator.loc['Extensive margin heater (%)', s] = indicator.loc['Additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
+                if '{} insulation (Thousand households)'.format(p_name) in result[ref].index:
+                    indicator.loc['Non additional insulation (Thousand households)', s] = result[s].loc['{} insulation (Thousand households)'.format(p_name), year]
+                    indicator.loc['Additional insulation (Thousand households)', s] = result[ref].loc['{} insulation (Thousand households)'.format(p_name), year] - result[s].loc['{} insulation (Thousand households)'.format(p_name), year]
+                    if ref == 'ZP':
+                        indicator.loc['Additional insulation (Thousand households)', s] = - indicator.loc[
+                            'Additional insulation (Thousand households)', s]
+                    indicator.loc['Freeriding ratio insulation (%)', s] = indicator.loc['Non additional insulation (Thousand households)', s] / (indicator.loc['Additional insulation (Thousand households)', s] + indicator.loc['Non additional insulation (Thousand households)', s])
+                    indicator.loc['Extensive margin insulation (%)', s] = indicator.loc['Additional insulation (Thousand households)', s] / (indicator.loc['Additional insulation (Thousand households)', s] + indicator.loc['Non additional insulation (Thousand households)', s])
 
-                indicator.loc['Consumption saving (TWh/year)', s] = result[s].loc['Consumption (TWh)', year] - \
-                                                                    result[ref].loc['Consumption (TWh)', year]
-                indicator.loc['Emission saving (MtCO2/year)', s] = result[s].loc['Emission (MtCO2)', year] - \
-                                                                    result[ref].loc['Emission (MtCO2)', year]
-                indicator.loc['Cost-benefits analysis (Billion euro/year)', s] = result[s].loc['Cost-benefits analysis (Billion euro)', year] - \
-                                                                    result[ref].loc['Cost-benefits analysis (Billion euro)', year]
-                indicator.loc['Balance Tenant private - C1 (euro/year.household)', s] = result[s].loc['Balance Tenant private - C1 (euro/year.household)', year] - \
-                                                                    result[ref].loc['Balance Tenant private - C1 (euro/year.household)', year]
-                indicator.loc['Balance Owner-occupied - C1 (euro/year.household)', s] = result[s].loc[
-                                                                                            'Balance Owner-occupied - C1 (euro/year.household)', year] - \
-                                                                                        result[ref].loc[
-                                                                                            'Balance Owner-occupied - C1 (euro/year.household)', year]
-        else:
-            indicator = pd.DataFrame(indicator).T
+                if '{} heater (Thousand households)'.format(p_name) in result[ref].index:
+                    indicator.loc['Non additional heater (Thousand households)', s] = result[s].loc['{} heater (Thousand households)'.format(p_name), year]
+                    indicator.loc['Additional heater (Thousand households)', s] = result[ref].loc['{} heater (Thousand households)'.format(p_name), year] - result[s].loc['{} heater (Thousand households)'.format(p_name), year]
+                    if ref == 'ZP':
+                        indicator.loc['Additional heater (Thousand households)', s] = - indicator.loc[
+                            'Additional heater (Thousand households)', s]
+                    indicator.loc['Freeriding ratio heater (%)', s] = indicator.loc['Non additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
+                    indicator.loc['Extensive margin heater (%)', s] = indicator.loc['Additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
+
+            indicator.loc['Consumption saving (TWh/year)', s] = result[s].loc['Consumption (TWh)', year] - \
+                                                                result[ref].loc['Consumption (TWh)', year]
+            indicator.loc['Emission saving (MtCO2/year)', s] = result[s].loc['Emission (MtCO2)', year] - \
+                                                                result[ref].loc['Emission (MtCO2)', year]
+            indicator.loc['Cost-benefits analysis (Billion euro/year)', s] = result[s].loc['Cost-benefits analysis (Billion euro)', year] - \
+                                                                result[ref].loc['Cost-benefits analysis (Billion euro)', year]
+            indicator.loc['Balance Tenant private - C1 (euro/year.household)', s] = result[s].loc['Balance Tenant private - C1 (euro/year.household)', year] - \
+                                                                result[ref].loc['Balance Tenant private - C1 (euro/year.household)', year]
+            indicator.loc['Balance Owner-occupied - C1 (euro/year.household)', s] = result[s].loc[
+                                                                                        'Balance Owner-occupied - C1 (euro/year.household)', year] - \
+                                                                                    result[ref].loc[
+                                                                                        'Balance Owner-occupied - C1 (euro/year.household)', year]
+
         indicator.sort_index(axis=1, inplace=True)
 
-    # Effectiveness all scenarios except AP- and ZP-
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
         cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=folder_policies,
@@ -1723,7 +1750,6 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                       index=effectiveness_scenarios).T
         indicator.loc['Energy poverty (Thousand)'] = (energy_poverty.iloc[0] - energy_poverty.iloc[-1]) * 10**3
 
-    comparison.round(2).to_csv(os.path.join(folder_policies, 'comparison.csv'))
     if indicator is not None:
         indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))
 

@@ -104,49 +104,61 @@ def run(path=None, folder=None):
         if configuration['assessment']['activated']:
             config_policies = configuration['assessment']
             config_policies = {key: item for key, item in config_policies.items() if item is not None}
-            policy_name = configuration['assessment']['Policy name']
-            if policy_name not in configuration['Reference']['policies'].keys():
-                raise ValueError('Policy name not in Reference policies')
-            end = configuration['Reference']['policies'][policy_name]['end']
-            configuration['Reference']['end'] = end
+            if not isinstance(configuration['assessment']['Policy name'], list):
+                policies_name = [configuration['assessment']['Policy name']]
+            else:
+                policies_name = configuration['assessment']['Policy name']
 
-            prefix = policy_name
+            prefix = '-'.join(policies_name)
 
-            if config_policies.get('AP-1'):
-                configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
-                configuration['AP-1']['policies'][config_policies['Policy name']]['end'] = configuration['Reference']['start'] + 2
+            for policy_name in policies_name:
+                if policy_name not in configuration['Reference']['policies'].keys():
+                    raise ValueError('Policy name not in Reference policies')
+                end = configuration['Reference']['policies'][policy_name]['end']
+                configuration['Reference']['end'] = end
 
-            if config_policies.get('ZP'):
-                configuration['ZP'] = copy.deepcopy(configuration['Reference'])
-                for name, policy in configuration['ZP']['policies'].items():
-                    policy['end'] = configuration['Reference']['start'] + 2
-                    configuration['ZP']['policies'][name] = policy
+                if config_policies.get('AP-1'):
+                    if 'AP-1' not in configuration.keys():
+                        configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
 
-                temp = max(configuration['Reference']['policies'][policy_name]['start'], configuration['Reference']['start'] + 2)
-                configuration['ZP']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'] + 1)
-                configuration['ZP']['policies'][policy_name]['end'] = configuration['Reference']['policies'][policy_name]['end']
+                    temp = max(configuration['Reference']['policies'][policy_name]['start'], configuration['Reference']['start'] + 2)
+                    configuration['AP-1']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'] + 1)
 
-            if config_policies.get('ZP') and config_policies.get('ZP+1'):
-                configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
-                configuration['ZP+1']['policies'][policy_name] = copy.deepcopy(configuration['Reference']['policies'][policy_name])
+                if config_policies.get('ZP'):
+                    if 'ZP' not in configuration.keys():
+                        configuration['ZP'] = copy.deepcopy(configuration['Reference'])
+                        for name, policy in configuration['ZP']['policies'].items():
+                            policy['end'] = configuration['Reference']['start'] + 2
+                            configuration['ZP']['policies'][name] = policy
 
-            if configuration['Reference']['policies'][policy_name]['policy'] not in ['obligation', 'restriction_energy',
-                                                                                     'subsidy_cap']:
-                list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
-                              re.search('20[0-9][0-9]', key)]
-                list_years = list(set(list_years))
-                for year in list_years:
-                    if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
-                        configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
-                        configuration['AP-{}'.format(year)]['policies'][config_policies['Policy name']]['year_stop'] = year
-                        configuration['AP-{}'.format(year)]['end'] = year + 1
-                    if config_policies['ZP+{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
-                        configuration['ZP+{}'.format(year)] = copy.deepcopy(configuration['ZP'])
-                        configuration['ZP+{}'.format(year)]['policies'][policy_name] = copy.deepcopy(
-                            configuration['Reference']['policies'][policy_name])
-                        configuration['ZP+{}'.format(year)]['policies'][config_policies['Policy name']]['start'] = year
-                        configuration['ZP+{}'.format(year)]['policies'][config_policies['Policy name']]['end'] = year + 1
-                        configuration['ZP+{}'.format(year)]['end'] = year + 1
+                    temp = max(configuration['Reference']['policies'][policy_name]['start'], configuration['Reference']['start'] + 2)
+                    configuration['ZP']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'] + 1)
+                    configuration['ZP']['policies'][policy_name]['end'] = configuration['Reference']['policies'][policy_name]['end']
+
+                if config_policies.get('ZP') and config_policies.get('ZP+1'):
+                    if 'ZP+1' not in configuration.keys():
+                        configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
+                    configuration['ZP+1']['policies'][policy_name] = copy.deepcopy(configuration['Reference']['policies'][policy_name])
+
+                if configuration['Reference']['policies'][policy_name]['policy'] not in ['obligation', 'restriction_energy',
+                                                                                         'subsidy_cap']:
+                    list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
+                                  re.search('20[0-9][0-9]', key)]
+                    list_years = list(set(list_years))
+                    for year in list_years:
+                        if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
+                            if 'AP-{}'.format(year) not in configuration.keys():
+                                configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
+                            configuration['AP-{}'.format(year)]['policies'][policy_name]['year_stop'] = year
+                            configuration['AP-{}'.format(year)]['end'] = year + 1
+                        if config_policies['ZP+{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
+                            if 'ZP+{}'.format(year) not in configuration.keys():
+                                configuration['ZP+{}'.format(year)] = copy.deepcopy(configuration['ZP'])
+                            configuration['ZP+{}'.format(year)]['policies'][policy_name] = copy.deepcopy(
+                                configuration['Reference']['policies'][policy_name])
+                            configuration['ZP+{}'.format(year)]['policies'][policy_name]['start'] = year
+                            configuration['ZP+{}'.format(year)]['policies'][policy_name]['end'] = year + 1
+                            configuration['ZP+{}'.format(year)]['end'] = year + 1
 
         del configuration['assessment']
 
@@ -413,7 +425,7 @@ def run(path=None, folder=None):
         config_policies = get_json('project/input/policies/cba_inputs.json')
         if configuration.get('Reference').get('output') == 'full' and output_compare == 'full':
             if 'Reference' in result.keys() and len(result.keys()) > 1 and config_policies is not None:
-                _, indicator = indicator_policies(result, folder, config_policies, policy_name=policy_name)
+                _, indicator = indicator_policies(result, folder, config_policies, policy_name=policies_name)
                 # add NPV to result
                 for scenario in result.keys():
                     temp = 0
@@ -422,7 +434,7 @@ def run(path=None, folder=None):
                             temp = indicator.loc['NPV', scenario]
                     result[scenario].loc['NPV (Billion Euro)', result[scenario].columns[-1]] = temp
 
-            if policy_name is None:
+            if policies_name is None:
                 plot_compare_scenarios(result, folder, quintiles=configuration.get('Reference').get('simple').get('quintiles'))
                 make_summary(folder, option='comparison')
         elif output_compare == 'simple':
