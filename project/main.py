@@ -122,7 +122,7 @@ def run(path=None, folder=None):
                         configuration['AP-1'] = copy.deepcopy(configuration['Reference'])
 
                     temp = max(configuration['Reference']['policies'][policy_name]['start'], configuration['Reference']['start'] + 2)
-                    configuration['AP-1']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'] + 1)
+                    configuration['AP-1']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'])
 
                 if config_policies.get('ZP'):
                     if 'ZP' not in configuration.keys():
@@ -132,7 +132,7 @@ def run(path=None, folder=None):
                             configuration['ZP']['policies'][name] = policy
 
                     temp = max(configuration['Reference']['policies'][policy_name]['start'], configuration['Reference']['start'] + 2)
-                    configuration['ZP']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'] + 1)
+                    configuration['ZP']['policies'][policy_name]['years_stop'] = range(temp, configuration['Reference']['policies'][policy_name]['end'])
                     configuration['ZP']['policies'][policy_name]['end'] = configuration['Reference']['policies'][policy_name]['end']
 
                 if config_policies.get('ZP') and config_policies.get('ZP+1'):
@@ -156,7 +156,8 @@ def run(path=None, folder=None):
                                 configuration['ZP+{}'.format(year)] = copy.deepcopy(configuration['ZP'])
                             configuration['ZP+{}'.format(year)]['policies'][policy_name] = copy.deepcopy(
                                 configuration['Reference']['policies'][policy_name])
-                            configuration['ZP+{}'.format(year)]['policies'][policy_name]['start'] = year
+                            years_stop = [i for i in range(configuration['Reference']['start'] + 2, year + 1) if i != year]
+                            configuration['ZP+{}'.format(year)]['policies'][policy_name]['years_stop'] = years_stop
                             configuration['ZP+{}'.format(year)]['policies'][policy_name]['end'] = year + 1
                             configuration['ZP+{}'.format(year)]['end'] = year + 1
 
