@@ -156,7 +156,8 @@ def run(path=None, folder=None):
                                 configuration['ZP+{}'.format(year)] = copy.deepcopy(configuration['ZP'])
                             configuration['ZP+{}'.format(year)]['policies'][policy_name] = copy.deepcopy(
                                 configuration['Reference']['policies'][policy_name])
-                            years_stop = [i for i in range(configuration['Reference']['start'] + 2, year + 1) if i != year]
+                            temp = max(configuration['Reference']['start'] + 2, configuration['Reference']['policies'][policy_name]['start'])
+                            years_stop = [i for i in range(temp, year + 1) if i != year]
                             configuration['ZP+{}'.format(year)]['policies'][policy_name]['years_stop'] = years_stop
                             configuration['ZP+{}'.format(year)]['policies'][policy_name]['end'] = year + 1
                             configuration['ZP+{}'.format(year)]['end'] = year + 1
@@ -410,7 +411,7 @@ def run(path=None, folder=None):
             configuration[s]['simple']['detailed_output'] = False
             configuration[s]['simple']['figures'] = False
 
-    if len(configuration.keys()) > 10:
+    if len(configuration.keys()) > 10 and policies_name is None:
         output_compare = 'none'
 
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
