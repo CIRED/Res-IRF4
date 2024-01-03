@@ -7,7 +7,6 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "cite",
       "cee",
       "mpr",
       "mpr_serenite",

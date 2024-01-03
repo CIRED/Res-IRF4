@@ -63,7 +63,7 @@ def run(path=None, folder=None):
                                                              'policies_scenarios']]:
         configuration[key] = prepare_config(configuration[key])
 
-    policy_name = None
+    policies_name = None
     prefix = ''
     if 'policies_scenarios' in configuration.keys():
         if configuration['policies_scenarios']['activated']:
