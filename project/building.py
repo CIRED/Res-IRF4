@@ -5411,10 +5411,14 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_average_renovation[key] = 0
                     cost_average_renovation[key] = 0
                 else:
-                    subsidies_average_renovation[key] = sub.sum().sum() / replacement_eligible.sum().sum()
+                    subsidies_average_renovation[key] = sub.sum().sum() / replacement_eligible.sum()
                     cost = reindex_mi(self._renovation_store['cost_households'], replacement_eligible.index)
                     cost = ((cost * self._replaced_by.fillna(0)).T * eligible).T
                     cost_average_renovation[key] = cost.sum().sum() / replacement_eligible.sum()
+
+                    """energy_saved = reindex_mi(self._renovation_store['consumption_saved_households'], replacement_eligible.index)
+                    energy_saved = ((energy_saved * self._replaced_by.fillna(0)).T * eligible).T
+                    energy_saved_renovation[key] = energy_saved.sum().sum() / replacement_eligible.sum()"""
 
             del self._renovation_store['subsidies_details_households']
             gc.collect()
