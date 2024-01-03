@@ -7,10 +7,6 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "cite",
-      "mpr",
-      "cee",
-      "mpr",
       "mpr_serenite",
       "mpr_multifamily",
       "obligation"
