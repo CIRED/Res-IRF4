@@ -140,7 +140,8 @@ def run(path=None, folder=None):
                         configuration['ZP+1'] = copy.deepcopy(configuration['ZP'])
                     configuration['ZP+1']['policies'][policy_name] = copy.deepcopy(configuration['Reference']['policies'][policy_name])
 
-                if configuration['Reference']['policies'][policy_name]['policy'] not in ['obligation', 'restriction_energy',
+                if configuration['Reference']['policies'][policy_name]['policy'] not in ['obligation',
+                                                                                         'restriction_energy',
                                                                                          'subsidy_cap']:
                     list_years = [int(re.search('20[0-9][0-9]', key)[0]) for key in config_policies.keys() if
                                   re.search('20[0-9][0-9]', key)]
