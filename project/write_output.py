@@ -1667,7 +1667,6 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
             indicator = pd.DataFrame(indicator).T
 
-
             # And impact on retrofit rate : difference in retrofit rate / cost of subvention
             for s in efficiency_scenarios:
                 try:
@@ -1744,6 +1743,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
             indicator.sort_index(inplace=True)
             indicator.sort_index(axis=1, inplace=True)
+        else:
+            indicator = pd.DataFrame(indicator).T
 
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
