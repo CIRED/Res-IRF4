@@ -1566,7 +1566,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         if not isinstance(policy_name, list):
             policy_name = [policy_name]
 
-        var = ['{} (Billion euro)'.format(i) for i in policy_name]
+        var = ['{} (Billion euro)'.format(i) for i in policy_name if ('{} (Billion euro)'.format(i) in data.index)]
         cost_name = '{} (Billion euro)'.format('-'.join(policy_name))
 
         # We use simple diff when effect do not last
