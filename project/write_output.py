@@ -1563,19 +1563,23 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                   index=_result.index)
             temp_comparison[var] = (_result * _discount).sum()
 
-        if not isinstance(policy_name, list):
-            policy_name = [policy_name]
-
-        var = ['{} (Billion euro)'.format(i) for i in policy_name if ('{} (Billion euro)'.format(i) in data.index)]
-        cost_name = '{} (Billion euro)'.format('-'.join(policy_name))
-
         # We use simple diff when effect do not last
-        for var in ['Investment total WT (Billion euro)',
+        variable = ['Investment total WT (Billion euro)',
                     'Subsidies total (Billion euro)',
                     'VTA (Billion euro)',
                     'Health expenditure (Billion euro)',
                     'Carbon value indirect (Billion euro)',
-                    var]:
+                    ]
+        if policy_name is not None:
+            if not isinstance(policy_name, list):
+                policy_name = [policy_name]
+
+            cost_var = ['{} (Billion euro)'.format(i) for i in policy_name if
+                        ('{} (Billion euro)'.format(i) in data.index)]
+            cost_name = '{} (Billion euro)'.format('-'.join(policy_name))
+            variable += cost_var
+
+        for var in variable:
             name = var
 
             if var == 'Health expenditure (Billion euro)':
@@ -1603,58 +1607,27 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     index=diff.index)
                 temp_comparison[name] = (diff * discount.T).sum()
 
-        """var = 'Carbon footprint (MtCO2)'
-        discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(ref.loc[var, :].shape[0])],
-                             index=ref.loc[var, :].index)
-        rslt['Carbon footprint (Billion euro)'] = ((data.loc[var,
-                                                    :] - ref.loc[var, :]) * discount.T * carbon_value).sum() / 10**3
-
-       # capture year 'AP-20{}' with regex
-        start = ref.columns[0]
-        try:
-            year = int(re.findall(r'\d+', scenario)[0])
-            if year == 1:
-                year = ref.columns[-1]
-            if 'AP' in scenario:
-                if isinstance(policy_name, list):
-                    cost = - ref.loc[var, year].sum()
-                else:
-                    cost = - ref.loc[var, year]
-
-            elif 'ZP' in scenario:
-                if isinstance(policy_name, list):
-                    cost = data.loc[var, year].sum()
-                else:
-                    cost = data.loc[var, year]
-
-            else:
-                cost = 0
-            temp_comparison[cost_name] = cost * (1 / (1 + discount_rate) ** (year - start))
-        except:
-            temp_comparison[cost_name] = 0"""
-
         comparison[scenario] = temp_comparison
     comparison = pd.DataFrame(comparison)
     comparison.round(2).to_csv(os.path.join(folder_policies, 'comparison.csv'))
 
-    indicator = None
     temp = ['AP-{}'.format(y) for y in range(2018, 2051)]
     temp += ['ZP+{}'.format(y) for y in range(2018, 2051)]
     efficiency_scenarios = list(set(comparison.columns).intersection(temp))
     # cost-efficiency
+    indicator = dict()
+    # We want efficiency only for concerned scenario policy (that is cut at t-1)
+    # comp_efficiency = comparison.loc[:, efficiency_scenarios]
+
+    indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
+    indicator.update({'Consumption (TWh)': comparison.loc['Consumption (TWh)']})
+    indicator.update({'Consumption standard (TWh)': comparison.loc['Consumption standard (TWh)']})
+    indicator.update({'Emission (MtCO2)': comparison.loc['Emission (MtCO2)']})
+    indicator.update({'Investment / energy savings (euro/kWh)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Consumption (TWh)']})
+    indicator.update({'Investment / energy savings standard (euro/kWh)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Consumption standard (TWh)']})
+    indicator.update({'Investment / emission (euro/tCO2)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Emission (MtCO2)'] * 10**3})
+
     if policy_name is not None:
-        indicator = dict()
-        # We want efficiency only for concerned scenario policy (that is cut at t-1)
-        # comp_efficiency = comparison.loc[:, efficiency_scenarios]
-
-        indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
-        indicator.update({'Consumption (TWh)': comparison.loc['Consumption (TWh)']})
-        indicator.update({'Consumption standard (TWh)': comparison.loc['Consumption standard (TWh)']})
-        indicator.update({'Emission (MtCO2)': comparison.loc['Emission (MtCO2)']})
-        indicator.update({'Investment / energy savings (euro/kWh)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Consumption (TWh)']})
-        indicator.update({'Investment / energy savings standard (euro/kWh)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Consumption standard (TWh)']})
-        indicator.update({'Investment / emission (euro/tCO2)': - comparison.loc['Investment total WT (Billion euro)'] / comparison.loc['Emission (MtCO2)'] * 10**3})
-
         policy_cost = comparison.loc[cost_name]
         if not (policy_cost == 0).all():
             indicator.update({cost_name: policy_cost})
@@ -1746,6 +1719,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             indicator.sort_index(axis=1, inplace=True)
         else:
             indicator = pd.DataFrame(indicator).T
+    else:
+        indicator = pd.DataFrame(indicator).T
 
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
