@@ -7,9 +7,10 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "mpr_serenite"
+      "reduced_vta"
     ],
     "test": [
+      "reduced_vta",
       "cite",
       "mpr",
       "mpr_serenite",
