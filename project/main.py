@@ -114,8 +114,9 @@ def run(path=None, folder=None):
             for policy_name in policies_name:
                 if policy_name not in configuration['Reference']['policies'].keys():
                     raise ValueError('Policy name not in Reference policies')
-                end = configuration['Reference']['policies'][policy_name]['end']
-                configuration['Reference']['end'] = end
+                if len(policies_name) == 1:
+                    end = configuration['Reference']['policies'][policy_name]['end']
+                    configuration['Reference']['end'] = end
 
                 if config_policies.get('AP-1'):
                     if 'AP-1' not in configuration.keys():
