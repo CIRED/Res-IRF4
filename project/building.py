@@ -2022,6 +2022,11 @@ class AgentBuildings(ThermalBuildings):
                 eligible[eligible > 0] = 1
                 eligible = eligible.any(axis=1)
 
+            # Low carbon heating system to define extensive margin
+            low_carbon_heating_system = ['Electricity-Heat pump water',
+                                         'Electricity-Heat pump air',
+                                         'Wood fuel-Performance boiler']
+
             replacement_eligible = replacement.fillna(0).sum(axis=1) * eligible
             cost = ((cost_heater * replacement.fillna(0)).T * eligible).T
 
@@ -2357,9 +2362,6 @@ class AgentBuildings(ThermalBuildings):
                 def cournot_equilibrium(price, n=self.number_firms_heater, cost=cost, u=npv.copy()):
                     return price / cost - mark_up(price, u=u, n=n)
 
-                if self.year == 2020:
-                    # x = concat((elasticity, proba, npv), axis=1, keys=['elasticity', 'proba', 'npv'])
-                    print('break')
 
                 price = fsolve(cournot_equilibrium, cost * self._markup_heater_store)[0]
                 if price != 0:
@@ -2835,6 +2837,13 @@ class AgentBuildings(ThermalBuildings):
             else:
                 subsidies_details[policy.name] = value.copy()
 
+        # store eligible before cap and cumulative
+        eligible = {}
+        for policy in subsidies_details:
+            eligible.update({policy: (subsidies_details[policy] > 0).any(axis=1).copy()})
+        for policy in sub_non_cumulative:
+            eligible.update({policy.name: (sub_non_cumulative[policy] > 0).any(axis=1).copy()})
+
         # for non-cumulative subsidies, we compare the value of the subsidies with the sum of non-cumulative subsidies
         for policy, value in sub_non_cumulative.items():
             compare = sum([subsidies_details[p] for p in policy.non_cumulative if p in subsidies_details.keys()])
@@ -2861,11 +2870,6 @@ class AgentBuildings(ThermalBuildings):
 
         for k in subsidies_details.keys():
             subsidies_details[k].sort_index(inplace=True)
-
-        # store eligible before cap
-        eligible = {}
-        for policy in subsidies_details:
-            eligible.update({policy: (subsidies_details[policy] > 0).any(axis=1)})
 
         # overall cap for cumulated amount of subsidies
         subsidies_cap = [p for p in policies_insulation if p.policy == 'subsidies_cap']

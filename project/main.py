@@ -163,7 +163,6 @@ def run(path=None, folder=None):
                             configuration['ZP+{}'.format(year)]['policies'][policy_name]['years_stop'] = years_stop
                             configuration['ZP+{}'.format(year)]['policies'][policy_name]['end'] = year + 1
                             configuration['ZP+{}'.format(year)]['end'] = year + 1
-
         del configuration['assessment']
 
     if 'scenarios' in configuration.keys():

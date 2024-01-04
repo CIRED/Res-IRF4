@@ -7,7 +7,6 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "carbon_tax",
       [
         "reduced_vta",
         "cite",
@@ -18,7 +17,10 @@
         "mpr_efficacite",
         "mpr_multifamily_updated",
         "mpr_multifamily_deep"
-      ]
+      ],
+      "cee",
+      "obligation",
+      "carbon_tax"
     ],
     "test": [
       "cee",

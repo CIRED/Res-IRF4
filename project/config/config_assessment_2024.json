@@ -7,7 +7,16 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "reduced_vta"
+      "reduced_vta",
+      "cite",
+      "mpr",
+      "mpr_serenite",
+      "mpr_efficacite",
+      "mpr_performance",
+      "mpr_multifamily",
+      ["mpr_multifamily_updated",
+      "mpr_multifamily_deep"],
+      "cee"
     ],
     "test": [
       "reduced_vta",
