@@ -106,6 +106,22 @@
         "policy": "restriction_energy"
       }
     }},
+  "Package2024Zil": {
+    "file": "project/config/reference.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "zero_interest_loan": {
+        "start": 2024,
+        "end": 2051,
+        "cost_max": 30000,
+        "gest": ["heater", "insulation"],
+        "value": 0.0,
+        "duration": 15,
+        "policy": "zero_interest_loan"
+    }
+    }},
   "CarbonTax": {
     "file": "project/config/reference.json",
     "step": 1,
@@ -121,41 +137,7 @@
         "recycling_ini": false
       }
     }
-  },
-  "Regulation": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_calibration.json",
-      "restriction_gas": {
-        "start": 2030,
-        "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
-      },
-      "obligation": {
-      "start": 2022,
-      "end": 2051,
-      "value": "project/input/policies/current/agenda_obligation_pb.csv",
-      "frequency": {
-        "value": [
-          0,
-          0.1,
-          0
-        ],
-        "index": [
-          "Owner-occupied",
-          "Privately rented",
-          "Social-housing"
-        ],
-        "name": "Occupancy status"
-      },
-      "intensive": "market_share",
-      "minimum_performance": "D",
-      "policy": "obligation"
-    }
-    }
   }
-
 }
+
+
