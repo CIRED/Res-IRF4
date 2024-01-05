@@ -45,7 +45,8 @@
       "non_cumulative": [
         "cee",
         "cite",
-        "mpr"
+        "mpr",
+        "mpr_efficacite"
       ],
       "target": "deep_renovation",
       "policy": "subsidy_ad_valorem"
@@ -75,7 +76,7 @@
     },
     "cap": {
       "start": 2018,
-      "end": 2051,
+      "end": 2019,
       "insulation": "project/input/policies/current/subsidies_cap.csv",
       "heater": "project/input/policies/current/subsidies_cap.csv",
       "target_insulation": [
@@ -91,10 +92,11 @@
         "cite"
       ]
     },
-    "reduced_vta": {
+    "reduced_vat": {
       "start": 2018,
       "end": 2019,
-      "value": 0.055
+      "value": 0.055,
+      "policy": "reduced_vat"
     },
     "restriction_oil": {
       "start": 2018,

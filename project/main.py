@@ -148,12 +148,12 @@ def run(path=None, folder=None):
                                   re.search('20[0-9][0-9]', key)]
                     list_years = list(set(list_years))
                     for year in list_years:
-                        if config_policies['AP-{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
+                        if config_policies.get('AP-{}'.format(year)) and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
                             if 'AP-{}'.format(year) not in configuration.keys():
                                 configuration['AP-{}'.format(year)] = copy.deepcopy(configuration['Reference'])
                             configuration['AP-{}'.format(year)]['policies'][policy_name]['year_stop'] = year
                             configuration['AP-{}'.format(year)]['end'] = year + 1
-                        if config_policies['ZP+{}'.format(year)] and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
+                        if config_policies.get('ZP+{}'.format(year)) and year < configuration['Reference']['end'] and year >= configuration['Reference']['policies'][policy_name]['start'] and year < configuration['Reference']['policies'][policy_name]['end']:
                             if 'ZP+{}'.format(year) not in configuration.keys():
                                 configuration['ZP+{}'.format(year)] = copy.deepcopy(configuration['ZP'])
                             configuration['ZP+{}'.format(year)]['policies'][policy_name] = copy.deepcopy(

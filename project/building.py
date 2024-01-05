@@ -2716,6 +2716,8 @@ class AgentBuildings(ThermalBuildings):
             if isinstance(vat, dict):
                 vat = vat[self.year]
             subsidies_details.update({p[0].name: reindex_mi(cost_insulation * (VAT - vat), index)})
+            self.logger.debug('{}, {}'.format(self.year, VAT - vat))
+
         vat_insulation = cost_insulation * vat
         cost_insulation += vat_insulation
 

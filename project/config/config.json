@@ -120,7 +120,14 @@
         "option": "share_fg",
         "target": 0.35
       }
-    }
+    },
+          "file": "project/input/policies/policies_calibration.json",
+      "reduced_vat": {
+        "start": 2018,
+        "end": 2020,
+        "value": 0.055,
+        "policy": "reduced_vat"
+      }
   },
   "uncertainty": {
     "activated": false,
@@ -136,11 +143,17 @@
     ]
   },
   "Reference": {
-    "file":"project/config/reference.json",
+    "file": "project/config/reference.json",
     "step": 1,
     "end": 2020,
     "policies": {
-      "file": "project/input/policies/policies_2024.json"
+      "file": "project/input/policies/policies_calibration.json",
+      "reduced_vat": {
+        "start": 2018,
+        "end": 2020,
+        "value": 0.055,
+        "policy": "reduced_vat"
+      }
     },
     "simple": {
       "figures": true,
@@ -151,8 +164,8 @@
       "stock": false,
       "current_policies": false,
       "no_policy": false,
-      "income": false,
-      "prices_constant": false,
+      "income": true,
+      "prices_constant": true,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
@@ -164,7 +177,7 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false,
-      "no_natural_replacement": false
+      "no_natural_replacement": true
     }
   }
 }

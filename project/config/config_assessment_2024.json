@@ -7,8 +7,10 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "reduced_vat"
-    ],
+      "reduced_vat",
+      "cite",
+      "cee"
+      ],
     "test": [
       "cite",
       "mpr",

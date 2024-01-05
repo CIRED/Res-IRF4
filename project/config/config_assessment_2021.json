@@ -7,10 +7,10 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "obligation"
+      "cee"
     ],
     "test": [
-      "reduced_vta",
+      "reduced_vat",
       "cite",
       "cee",
       "mpr",
@@ -23,14 +23,14 @@
     "file": "project/config/reference.json",
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/policies_2021.json"
+      "file": "project/input/policies/policies_2024.json"
     },
     "simple": {
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": false,
+      "current_policies": true,
       "no_policy": false,
       "income": false,
       "prices_constant": false,
