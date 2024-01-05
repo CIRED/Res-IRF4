@@ -145,15 +145,9 @@
   "Reference": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2020,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/policies_calibration.json",
-      "reduced_vat": {
-        "start": 2018,
-        "end": 2020,
-        "value": 0.055,
-        "policy": "reduced_vat"
-      }
+      "file": "project/input/policies/policies_calibration.json"
     },
     "simple": {
       "figures": true,
@@ -164,8 +158,8 @@
       "stock": false,
       "current_policies": false,
       "no_policy": false,
-      "income": true,
-      "prices_constant": true,
+      "income_constant": false,
+      "prices_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
@@ -177,7 +171,7 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false,
-      "no_natural_replacement": true
+      "no_natural_replacement": false
     }
   }
 }

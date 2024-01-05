@@ -80,7 +80,7 @@
       }
     },
     "debt_income_ratio": {
-      "high": 0.05,
+      "high": 0.025,
       "low": false
     },
     "financing_cost": {

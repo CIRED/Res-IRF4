@@ -9,6 +9,13 @@
     "assessment": [
       "reduced_vat",
       "cite",
+      "mpr",
+      "mpr_serenite",
+      "mpr_efficacite",
+      "mpr_performance",
+      "mpr_multifamily",
+      ["mpr_multifamily_updated",
+      "mpr_multifamily_deep"],
       "cee"
       ],
     "test": [
@@ -36,7 +43,7 @@
       "stock": false,
       "current_policies": false,
       "no_policy": false,
-      "income": true,
+      "income_constant": true,
       "prices_constant": true,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",

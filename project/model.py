@@ -169,6 +169,9 @@ def config2inputs(config=None):
         for t in taxes:
             t.value = pd.concat([t.value.iloc[0, :]] * t.value.shape[0], axis=1, keys=t.value.index).T
 
+    if config['simple'].get('income_constant'):
+        inputs['income_rate'] = 0
+
     policies_insulation = [p for p in policies_insulation if p.end > p.start]
     policies_heater = [p for p in policies_heater if p.end > p.start]
 
