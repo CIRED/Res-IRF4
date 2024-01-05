@@ -93,11 +93,11 @@
       ],
       "policy": "subsidy_cap"
     },
-    "reduced_vta": {
+    "reduced_vat": {
       "start": 2018,
       "end": 2051,
       "value": 0.055,
-      "policy": "reduced_vta"
+      "policy": "reduced_vat"
     },
     "restriction_oil": {
       "start": 2018,

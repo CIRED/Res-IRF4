@@ -36,7 +36,7 @@ import project.thermal as thermal
 
 ACCURACY = 10 ** -5
 EPC2INT = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
-VTA = 0.1
+VAT = 0.1
 NB_MEASURES = {1: [(False, False, False, True), (False, False, True, False), (False, True, False, False),
                    (True, False, False, False)],
                2: [(False, False, True, True), (False, True, False, True), (True, False, False, True),
@@ -1508,17 +1508,17 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_details = {}
 
-        vta = VTA
-        p = [p for p in policies_heater if 'reduced_vta' == p.policy]
+        vat = VAT
+        p = [p for p in policies_heater if 'reduced_vat' == p.policy]
         if p:
-            vta = p[0].value
-            if isinstance(vta, dict):
-                vta = vta[self.year]
-            sub = cost_heater * (VTA - vta)
-            subsidies_details.update({'reduced_vta': sub})
+            vat = p[0].value
+            if isinstance(vat, dict):
+                vat = vat[self.year]
+            sub = cost_heater * (VAT - vat)
+            subsidies_details.update({'reduced_vat': sub})
 
-        vta_heater = cost_heater * vta
-        cost_heater += vta_heater
+        vat_heater = cost_heater * vat
+        cost_heater += vat_heater
 
         policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap']
         self.policies += [i.name for i in policies_heater if i.policy in policies_incentive and i.name not in self.policies]
@@ -1601,7 +1601,7 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details[policy.name] = value
 
         subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if
-                           k not in ['reduced_vta', 'over_cap']]
+                           k not in ['reduced_vat', 'over_cap']]
         if subsidies_total:
             subsidies_total = sum(subsidies_total)
         else:
@@ -1643,7 +1643,7 @@ class AgentBuildings(ThermalBuildings):
         if 'inertia_heater' in [p.name for p in regulation]:
             self.preferences_heater['inertia'] = 0
 
-        return cost_heater, vta_heater, subsidies_details, subsidies_total, eligible
+        return cost_heater, vat_heater, subsidies_details, subsidies_total, eligible
 
     def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, calib_heater=None,
                                        cost_financing=None, condition=None, flow_replace=None, drop_heater=None):
@@ -1925,7 +1925,7 @@ class AgentBuildings(ThermalBuildings):
 
         return market_share
 
-    def store_information_heater(self, cost_heater, subsidies_total, bill_saved, subsidies_details, replacement, vta_heater,
+    def store_information_heater(self, cost_heater, subsidies_total, bill_saved, subsidies_details, replacement, vat_heater,
                                  cost_financing, amount_debt, amount_saving, discount, consumption_saved,
                                  consumption_before, consumption_no_rebound, consumption_actual, epc_upgrade,
                                  flow_premature_replacement, subsidies_loan,
@@ -1942,8 +1942,8 @@ class AgentBuildings(ThermalBuildings):
             Amount of eligible subsidies by dwelling and heating system (EUR).
         replacement: Series
             Dwelling updated with a new heating system.
-        vta_heater: Series
-            VTA tax of each heating system (EUR).
+        vat_heater: Series
+            vat tax of each heating system (EUR).
         flow_premature_replacement: int
             Number of dwelling that replace their heating system before the end of its lifetime.
         cost_financing: DataFrame
@@ -1981,7 +1981,7 @@ class AgentBuildings(ThermalBuildings):
                 'replacement': replacement,
                 'cost': replacement * cost_heater,
                 'cost_financing': replacement * cost_financing,
-                'vta': (replacement * vta_heater).sum().sum(),
+                'vat': (replacement * vat_heater).sum().sum(),
                 'subsidies': replacement * subsidies_total,
                 'subsidies_loan': replacement * subsidies_loan,
                 'debt': (replacement * amount_debt).sum(axis=1).groupby('Income owner').sum(),
@@ -2028,7 +2028,7 @@ class AgentBuildings(ThermalBuildings):
                                          'Wood fuel-Performance boiler']
 
             replacement_eligible = replacement.fillna(0).sum(axis=1) * eligible
-            cost = ((cost_heater * replacement.fillna(0)).T * eligible).T
+            cost = (((cost_heater - vat_heater) * replacement.fillna(0)).T * eligible).T
 
             self._heater_store['replacement_eligible'].update(
                 {key: replacement_eligible.groupby('Housing type').sum()})
@@ -2208,7 +2208,7 @@ class AgentBuildings(ThermalBuildings):
 
         # subsidies
         cost_heater = size_heater.to_frame().dot(cost_heater.to_frame().T)
-        cost_heater, vta_heater, subsidies_details, subsidies_total, eligible = self.apply_subsidies_heater(index,
+        cost_heater, vat_heater, subsidies_details, subsidies_total, eligible = self.apply_subsidies_heater(index,
                                                                                                   policies_heater,
                                                                                                   cost_heater.copy(),
                                                                                                   consumption_saved,
@@ -2401,7 +2401,7 @@ class AgentBuildings(ThermalBuildings):
         if store_information:
             self.store_information_heater(cost_heater.copy(), subsidies_total, bill_saved, subsidies_details,
                                           stock_replacement.unstack('Heating system final'),
-                                          vta_heater, cost_financing, amount_debt, amount_saving, discount,
+                                          vat_heater, cost_financing, amount_debt, amount_saving, discount,
                                           consumption_saved,
                                           consumption_before, consumption_no_rebound, consumption_actual, epc_upgrade,
                                           flow_premature_replacement, subsidies_loan, eligible)
@@ -2500,7 +2500,7 @@ class AgentBuildings(ThermalBuildings):
         Returns
         -------
         cost_insulation: DataFrame
-        vta_insulation: DataFrame
+        vat_insulation: DataFrame
         tax : float
         subsidies_details: dict
         subsidies_total: DataFrame
@@ -2709,15 +2709,15 @@ class AgentBuildings(ThermalBuildings):
 
         subsidies_details = {}
 
-        vta = VTA
-        p = [p for p in policies_insulation if 'reduced_vta' == p.policy]
+        vat = VAT
+        p = [p for p in policies_insulation if 'reduced_vat' == p.policy]
         if p:
-            vta = p[0].value
-            if isinstance(vta, dict):
-                vta = vta[self.year]
-            subsidies_details.update({p[0].name: reindex_mi(cost_insulation * (VTA - vta), index)})
-        vta_insulation = cost_insulation * vta
-        cost_insulation += vta_insulation
+            vat = p[0].value
+            if isinstance(vat, dict):
+                vat = vat[self.year]
+            subsidies_details.update({p[0].name: reindex_mi(cost_insulation * (VAT - vat), index)})
+        vat_insulation = cost_insulation * vat
+        cost_insulation += vat_insulation
 
         if calculate_condition:
             self._list_condition_subsidies = [i.target for i in policies_insulation if
@@ -2862,7 +2862,7 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_details[policy_compare] = comp.where(comp > value, 0)
                     subsidies_details[policy.name] = value.where(value > comp, 0)"""
 
-        subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vta', 'over_cap']]
+        subsidies_total = [subsidies_details[k] for k in subsidies_details.keys() if k not in ['reduced_vat', 'over_cap']]
         if subsidies_total:
             subsidies_total = sum(subsidies_total)
         else:
@@ -2904,7 +2904,7 @@ class AgentBuildings(ThermalBuildings):
         if 'multi-family' in [p.name for p in regulation]:
             apply_regulation('Multi-family', 'Single-family', 'Housing type')
 
-        return cost_insulation, vta_insulation, vta, subsidies_details, subsidies_total, condition, eligible
+        return cost_insulation, vat_insulation, vat, subsidies_details, subsidies_total, condition, eligible
 
     def endogenous_renovation(self, stock, prices, subsidies_total, cost_insulation, lifetime,
                               calib_renovation=None, min_performance=None, subsidies_details=None,
@@ -3537,7 +3537,7 @@ class AgentBuildings(ThermalBuildings):
                 _c = 0
                 mask = _sub > 0
                 eligible = (_sub > 0).any(axis=1)
-                if key == 'reduced_vta':
+                if key == 'reduced_vat':
                     _c = _sub
                     _sub = 0
 
@@ -3547,7 +3547,7 @@ class AgentBuildings(ThermalBuildings):
                 _beneficiaries = f_replace[_sub > 0].sum().sum()
 
                 avg_cost_eligible = (f_replace_eligible * _cost_total).sum().sum() / f_replace_eligible.sum().sum()
-                if key == 'reduced_vta':
+                if key == 'reduced_vat':
                     avg_sub = (f_replace_eligible * _c).sum().sum() / f_replace_eligible.sum().sum()
                 else:
                     avg_sub = (f_replace_eligible * _sub).sum().sum() / f_replace_eligible.sum().sum()
@@ -3768,7 +3768,7 @@ class AgentBuildings(ThermalBuildings):
         return retrofit_rate, market_share
 
     def store_information_insulation(self, condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
-                                     vta_insulation, subsidies_details, subsidies_total, consumption_saved,
+                                     vat_insulation, subsidies_details, subsidies_total, consumption_saved,
                                      consumption_saved_actual, consumption_saved_no_rebound, amount_debt, amount_saving,
                                      discount, subsidies_loan, eligible):
         """Store insulation information.
@@ -3782,13 +3782,13 @@ class AgentBuildings(ThermalBuildings):
         cost_insulation_raw: Series
             Cost of insulation for each envelope component of losses surface (€/m2).
         tax: float
-            VTA to apply (%).
+            vat to apply (%).
         cost_insulation: DataFrame
             Cost total for each dwelling and each insulation gesture (€). Financing cost included.
         cost_financing: DataFrame
             Financing cost  for each dwelling and each insulation gesture (€).
-        vta_insulation: DataFrame
-            VTA applied to each insulation gesture cost (€).
+        vat_insulation: DataFrame
+            vat applied to each insulation gesture cost (€).
         subsidies_details: dict
             Amount of subsidies for each dwelling and each insulation gesture (€).
         subsidies_total: DataFrame
@@ -3810,7 +3810,7 @@ class AgentBuildings(ThermalBuildings):
             'consumption_saved_no_rebound_households': consumption_saved_no_rebound,
             'cost_households': cost_insulation * self._markup_insulation_store,
             'cost_financing_households': cost_financing,
-            'vta_households': vta_insulation,
+            'vat_households': vat_insulation,
             'subsidies_households': subsidies_total,
             'subsidies_loan_households': subsidies_loan,
             'subsidies_details_households': subsidies_details,
@@ -3890,7 +3890,7 @@ class AgentBuildings(ThermalBuildings):
             cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
             cost_insulation = cost_insulation.T.multiply(self._surface, level='Housing type').T
 
-            cost_insulation, vta_insulation, tax, subsidies_details, subsidies_total, condition, eligible = self.apply_subsidies_insulation(
+            cost_insulation, vat_insulation, tax, subsidies_details, subsidies_total, condition, eligible = self.apply_subsidies_insulation(
                 index, policies_insulation, cost_insulation, surface, certificate_after, certificate_before,
                 certificate_before_heater, energy_saved_3uses, consumption_saved, carbon_content,
                 calculate_condition=calculate_condition)
@@ -4046,7 +4046,7 @@ class AgentBuildings(ThermalBuildings):
                 consumption_saved_no_rebound = (consumption_before - consumption_after.T * heating_intensity).T
 
                 self.store_information_insulation(condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
-                                                  vta_insulation, subsidies_details, subsidies_total, consumption_saved,
+                                                  vat_insulation, subsidies_details, subsidies_total, consumption_saved,
                                                   consumption_saved_actual, consumption_saved_no_rebound,
                                                   amount_debt, amount_saving, discount, subsidies_loan, eligible)
 
@@ -5352,17 +5352,17 @@ class AgentBuildings(ThermalBuildings):
                 output.update(temp.T)
 
             # economic state impact
-            output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
+            output['VAT heater (Billion euro)'] = self._heater_store['vat'] / 10 ** 9 / step
 
-            temp = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
-            output['VTA insulation (Billion euro)'] = temp / 10 ** 9 / step
-            output['VTA (Billion euro)'] = output['VTA heater (Billion euro)'] + output['VTA insulation (Billion euro)']
+            temp = (self._replaced_by * self._renovation_store['vat_households']).sum().sum()
+            output['VAT insulation (Billion euro)'] = temp / 10 ** 9 / step
+            output['VAT (Billion euro)'] = output['VAT heater (Billion euro)'] + output['VAT insulation (Billion euro)']
             output['Investment heater WT (Billion euro)'] = output['Investment heater (Billion euro)'] - output[
-                'VTA heater (Billion euro)']
+                'VAT heater (Billion euro)']
             output['Investment insulation WT (Billion euro)'] = output['Investment insulation (Billion euro)'] - output[
-                'VTA insulation (Billion euro)']
+                'VAT insulation (Billion euro)']
             output['Investment total WT (Billion euro)'] = output['Investment total (Billion euro)'] - output[
-                'VTA (Billion euro)']
+                'VAT (Billion euro)']
             output['Investment total WT / households (Thousand euro)'] = output['Investment total WT (Billion euro)'] * 10 ** 6 / (
                                                                                      output['Retrofit (Thousand households)'] * 10 ** 3)
 
@@ -5388,7 +5388,7 @@ class AgentBuildings(ThermalBuildings):
                 output['Carbon value indirect renovation (Billion euro)'] = output['Carbon footprint renovation (MtCO2)'] * carbon_value / 10 ** 3 / step
                 output['Carbon value indirect (Billion euro)'] = output['Carbon footprint (MtCO2)'] * carbon_value / 10 ** 3 / step
 
-            output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output['Taxes expenditure (Billion euro)']
+            output['Income state (Billion euro)'] = output['VAT (Billion euro)'] + output['Taxes expenditure (Billion euro)']
             output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
                 'Subsidies insulation (Billion euro)'] + output['Health expenditure (Billion euro)']
             output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Expenditure state (Billion euro)']
@@ -5417,7 +5417,7 @@ class AgentBuildings(ThermalBuildings):
                     cost_average_renovation[key] = 0
                 else:
                     subsidies_average_renovation[key] = sub.sum().sum() / replacement_eligible.sum()
-                    cost = reindex_mi(self._renovation_store['cost_households'], replacement_eligible.index)
+                    cost = reindex_mi((self._renovation_store['cost_households'] - self._renovation_store['vat_households']), replacement_eligible.index)
                     cost = ((cost * self._replaced_by.fillna(0)).T * eligible).T
                     cost_average_renovation[key] = cost.sum().sum() / replacement_eligible.sum()
 
@@ -5609,18 +5609,18 @@ class AgentBuildings(ThermalBuildings):
         # investment
         investment_cost = (self._replaced_by * self._renovation_store['cost_households']).sum().sum()
         investment_cost = investment_cost.sum() / 10 ** 9 / step
-        vta = (self._replaced_by * self._renovation_store['vta_households']).sum().sum()
-        output['VTA insulation (Billion euro)'] = vta / 10 ** 9 / step
-        output['Investment insulation WT (Billion euro)'] = investment_cost - output['VTA insulation (Billion euro)']
+        vat = (self._replaced_by * self._renovation_store['vat_households']).sum().sum()
+        output['VAT insulation (Billion euro)'] = vat / 10 ** 9 / step
+        output['Investment insulation WT (Billion euro)'] = investment_cost - output['VAT insulation (Billion euro)']
 
-        # vta
+        # vat
         investment_heater = self._heater_store['cost'].sum().sum() / 10 ** 9 / step
-        output['VTA heater (Billion euro)'] = self._heater_store['vta'] / 10 ** 9 / step
-        output['Investment heater WT (Billion euro)'] = investment_heater - output['VTA heater (Billion euro)']
+        output['VAT heater (Billion euro)'] = self._heater_store['vat'] / 10 ** 9 / step
+        output['Investment heater WT (Billion euro)'] = investment_heater - output['VAT heater (Billion euro)']
 
         output['Health cost (Billion euro)'] = self.health_cost(inputs['health_cost_dpe'], inputs['health_cost_income'], prices)
 
-        output['VTA (Billion euro)'] = output['VTA insulation (Billion euro)'] + output['VTA heater (Billion euro)']
+        output['VAT (Billion euro)'] = output['VAT insulation (Billion euro)'] + output['VAT heater (Billion euro)']
         output['Health expenditure (Billion euro)'] = 0 # temp['Health expenditure (Billion euro)']
         output['Subsidies heater (Billion euro)'] = self._heater_store['subsidies'].sum().sum() / 10 ** 9 / step
         output['Subsidies insulation (Billion euro)'] = (self._replaced_by * self._renovation_store[
@@ -5643,7 +5643,7 @@ class AgentBuildings(ThermalBuildings):
 
             output['Taxes expenditure (Billion euro)'] = DataFrame(taxes_expenditures).sum().sum() / step
 
-        output['Income state (Billion euro)'] = output['VTA (Billion euro)'] + output['Taxes expenditure (Billion euro)']
+        output['Income state (Billion euro)'] = output['VAT (Billion euro)'] + output['Taxes expenditure (Billion euro)']
         output['Expenditure state (Billion euro)'] = output['Subsidies (Billion euro)'] + output['Health expenditure (Billion euro)']
 
         output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Expenditure state (Billion euro)']

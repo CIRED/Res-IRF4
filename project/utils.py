@@ -380,7 +380,7 @@ def make_policies_tables(policies, path, plot=True):
                    'bonus': 'Subsidy, bonus',
                    'obligation': 'Retrofitting obligation',
                    'premature_heater': 'Premature replacement',
-                   'reduced_vta': 'Reduced VTA',
+                   'reduced_vat': 'Reduced VAT',
                    'restriction_heater': 'Restriction heater',
                    'restriction_energy': 'Restriction energy',
                    'subsidies_cap': 'Subsidy, cap',

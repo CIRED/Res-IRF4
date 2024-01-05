@@ -340,7 +340,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
 
     # subsidies
     non_subsidies = ['subsidies_cap', 'obligation']
-    temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies + ['reduced_vta'] if i not in non_subsidies]
+    temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies + ['reduced_vat'] if i not in non_subsidies]
     subsidies = output.loc[[i for i in temp if i in output.index], :]
     subsidies = subsidies.loc[~(subsidies == 0).all(axis=1)]
 
@@ -403,7 +403,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                            scatter=historic, loc='left', left=1.2)
 
     # graph public finance
-    subset = output.loc[['VTA (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
+    subset = output.loc[['VAT (Billion euro)', 'Taxes expenditure (Billion euro)', 'Subsidies heater (Billion euro)',
                          'Subsidies insulation (Billion euro)'], :].T
     subset['Subsidies heater (Billion euro)'] = -subset['Subsidies heater (Billion euro)']
     subset['Subsidies insulation (Billion euro)'] = -subset['Subsidies insulation (Billion euro)']
@@ -675,7 +675,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                 # replace index with aggregated
 
                 temp = temp.rename(index=agg).groupby(temp.index.names).sum()
-                # ['Cee', 'Subsidy', 'Reduced vta', 'Zero interest loan']
+                # ['Cee', 'Subsidy', 'Reduced vat', 'Zero interest loan']
                 make_clusterstackedbar_plot(temp, 'Policy',
                                             format_y=lambda y, _: '{:.0f} B€'.format(y),
                                             save=os.path.join(folder_img, 'policy_scenario_aggregated.png'),
@@ -1432,7 +1432,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             if embodied_emission:
                 temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
             if cofp:
-                temp.update({'Opportunity cost': (df['Subsidies total (Billion euro)'] - df['VTA (Billion euro)'] +
+                temp.update({'Opportunity cost': (df['Subsidies total (Billion euro)'] - df['vat (Billion euro)'] +
                                       df['Simple difference Health expenditure (Billion euro)']
                                       ) * factor_cofp})
 
@@ -1566,7 +1566,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         # We use simple diff when effect do not last
         variable = ['Investment total WT (Billion euro)',
                     'Subsidies total (Billion euro)',
-                    'VTA (Billion euro)',
+                    'vat (Billion euro)',
                     'Health expenditure (Billion euro)',
                     'Carbon value indirect (Billion euro)',
                     ]

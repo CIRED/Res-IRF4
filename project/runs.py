@@ -75,6 +75,7 @@ if __name__ == '__main__':
                 "ZP+2030": True,
                 "ZP+2035": True,
                 "ZP+2040": True,
+                "ZP+2045": True,
                 "ZP+2050": True,
                 "AP-2019": True,
                 "AP-2020": True,
@@ -86,6 +87,7 @@ if __name__ == '__main__':
                 "AP-2030": True,
                 "AP-2035": True,
                 "AP-2040": True,
+                "AP-2045": True,
                 "AP-2050": True
             }
             del _config['scenarios']

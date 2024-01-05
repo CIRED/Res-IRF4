@@ -38,7 +38,7 @@ retrofit_comparison = get_pandas('project/input/resources_dir/retrofit_compariso
 resources_data['retrofit_comparison'] = retrofit_comparison
 
 """resources_data['public_policies_2019'] = DataFrame([1.88, 1.05, 0, 1.32, 0.56, 0.5],
-                                                   index=['Cee', 'Cite', 'Mpr', 'Reduced vta', 'Zero interest loan', 'Mpr serenite'],
+                                                   index=['Cee', 'Cite', 'Mpr', 'Reduced vat', 'Zero interest loan', 'Mpr serenite'],
                                                    columns=[2019])"""
 resources_data['policies_hist'] = get_pandas('project/input/resources_dir/hist_policies.csv', lambda x: read_csv(x, index_col=[0], header=[0]))
 
@@ -135,7 +135,7 @@ colors = {
     "D8": "lightcoral",
     "D9": "lightsalmon",
     "D10": "darksalmon",
-    "Others":"saddlebrown",
+    "Others": "saddlebrown",
     "Heat pump": "gold",
     "Electricity": "darkorange",
     "Natural gas": "slategrey",
@@ -159,9 +159,9 @@ colors = {
     "Saving heater": "royalblue",
     "Saving insulation": "darksalmon",
     "Saving prices": "grey",
-    "VTA": "grey",
+    "VAT": "grey",
     "Energy taxes": "blue",
-    "Energy vta": "red",
+    "Energy vat": "red",
     "Taxes expenditure": "darkorange",
     "Energy expenditure": "darkorange",
     "Energy": "darkorange",
@@ -209,7 +209,7 @@ colors = {
 colors_policies = {
     "Subsidies heater": "royalblue",
     "Subsidies insulation": "darksalmon",
-    "Reduced vta": "darkolivegreen",
+    "Reduced vat": "darkolivegreen",
     "Cee": "tomato",
     "Cee tax": "red",
     "Cite": "blue",
