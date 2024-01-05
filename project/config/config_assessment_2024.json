@@ -7,7 +7,9 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      "reduced_vat",
+      "reduced_vat"
+    ],
+    "test": [
       "cite",
       "mpr",
       "mpr_serenite",
@@ -17,17 +19,6 @@
       ["mpr_multifamily_updated",
       "mpr_multifamily_deep"],
       "cee"
-    ],
-    "test": [
-      "reduced_vat",
-      "cite",
-      "mpr",
-      "mpr_serenite",
-      "mpr_efficacite",
-      "mpr_performance",
-      "mpr_multifamily",
-      ["mpr_multifamily_updated",
-      "mpr_multifamily_deep"]
     ]
   },
   "Reference": {
@@ -43,8 +34,8 @@
       "stock": false,
       "current_policies": false,
       "no_policy": false,
-      "income": false,
-      "prices_constant": false,
+      "income": true,
+      "prices_constant": true,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
         "Natural gas-Standard boiler": "Natural gas-Performance boiler",
@@ -56,7 +47,7 @@
       "insulation": false,
       "no_heating_switch": false,
       "collective_boiler": false,
-      "no_natural_replacement": false
+      "no_natural_replacement": true
     }
   }
 }
