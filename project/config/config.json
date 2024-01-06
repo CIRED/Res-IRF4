@@ -120,14 +120,7 @@
         "option": "share_fg",
         "target": 0.35
       }
-    },
-          "file": "project/input/policies/policies_calibration.json",
-      "reduced_vat": {
-        "start": 2018,
-        "end": 2020,
-        "value": 0.055,
-        "policy": "reduced_vat"
-      }
+    }
   },
   "uncertainty": {
     "activated": false,

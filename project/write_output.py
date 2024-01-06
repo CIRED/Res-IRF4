@@ -1576,7 +1576,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             cost_var = ['{} (Billion euro)'.format(i) for i in policy_name if
                         ('{} (Billion euro)'.format(i) in data.index)]
             cost_name = '{} (Billion euro)'.format('-'.join(policy_name))
-            variable += cost_var
+            variable += [cost_var]
 
         for var in variable:
             name = var
@@ -1654,28 +1654,46 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 if year in result[ref].columns and len(policy_name) == 1:
                     p_name = policy_name[0]
                     if 'Average cost {} (euro)'.format(p_name) in result[ref].index:
-                        indicator.loc['Intensive margin (euro)', s] = result[ref].loc['Average cost {} (euro)'.format(p_name), year] - result[s].loc['Average cost {} (euro)'.format(p_name), year]
+
                         if ref == 'ZP':
-                            indicator.loc['Intensive margin (euro)', s] = - indicator.loc['Intensive margin (euro)', s]
-                        indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / result[s].loc['Average cost {} (euro)'.format(p_name), year]
+                            indicator.loc['Intensive margin (euro)', s] = result[s].loc['Average cost {} (euro)'.format(p_name), year] - result[ref].loc['Average cost {} (euro)'.format(p_name), year]
+                            indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / result[ref].loc['Average cost {} (euro)'.format(p_name), year]
+
+                        else:
+                            indicator.loc['Intensive margin (euro)', s] = result[ref].loc[
+                                                                              'Average cost {} (euro)'.format(
+                                                                                  p_name), year] - result[s].loc[
+                                                                              'Average cost {} (euro)'.format(
+                                                                                  p_name), year]
+                            indicator.loc['Intensive margin (%)', s] = indicator.loc['Intensive margin (euro)', s] / \
+                                                                       result[s].loc['Average cost {} (euro)'.format(
+                                                                           p_name), year]
 
                         if 'Average cost {} insulation (euro)'.format(p_name) in result[ref].index:
-                            indicator.loc['Intensive margin insulation (euro)', s] = result[ref].loc['Average cost {} insulation (euro)'.format(p_name), year] - \
-                                                                          result[s].loc['Average cost {} insulation (euro)'.format(p_name), year]
+
                             if ref == 'ZP':
-                                indicator.loc['Intensive margin insulation (euro)', s] = - indicator.loc['Intensive margin insulation (euro)', s]
-                            indicator.loc['Intensive margin insulation (%)', s] = indicator.loc['Intensive margin insulation (euro)', s] / \
-                                                                       result[s].loc['Average cost {} insulation (euro)'.format(
-                                                                           p_name), year]
+                                indicator.loc['Intensive margin insulation (euro)', s] = result[s].loc['Average cost {} insulation (euro)'.format(p_name), year] - \
+                                                                                         result[ref].loc['Average cost {} insulation (euro)'.format(p_name), year]
+                                indicator.loc['Intensive margin insulation (%)', s] = indicator.loc['Intensive margin insulation (euro)', s] / \
+                                                                           result[ref].loc['Average cost {} insulation (euro)'.format(p_name), year]
+                            else:
+                                indicator.loc['Intensive margin insulation (euro)', s] = result[ref].loc['Average cost {} insulation (euro)'.format(p_name), year] - \
+                                                                                         result[s].loc['Average cost {} insulation (euro)'.format(p_name), year]
+                                indicator.loc['Intensive margin insulation (%)', s] = indicator.loc['Intensive margin insulation (euro)', s] / \
+                                                                           result[s].loc['Average cost {} insulation (euro)'.format(
+                                                                               p_name), year]
 
                         if 'Average cost {} heater (euro)'.format(p_name) in result[ref].index:
-                            indicator.loc['Intensive margin heater (euro)', s] = result[ref].loc['Average cost {} heater (euro)'.format(p_name), year] - \
-                                                                          result[s].loc['Average cost {} heater (euro)'.format(p_name), year]
+
                             if ref == 'ZP':
-                                indicator.loc['Intensive margin heater (euro)', s] = - indicator.loc['Intensive margin heater (euro)', s]
-                            indicator.loc['Intensive margin heater (%)', s] = indicator.loc['Intensive margin heater (euro)', s] / \
-                                                                       result[s].loc['Average cost {} heater (euro)'.format(
-                                                                           p_name), year]
+                                indicator.loc['Intensive margin heater (euro)', s] = result[s].loc['Average cost {} heater (euro)'.format(p_name), year] - \
+                                                                              result[ref].loc['Average cost {} heater (euro)'.format(p_name), year]
+                                indicator.loc['Intensive margin heater (%)', s] = indicator.loc['Intensive margin heater (euro)', s] / result[ref].loc['Average cost {} heater (euro)'.format(p_name), year]
+                            else:
+                                indicator.loc['Intensive margin heater (euro)', s] = result[ref].loc['Average cost {} heater (euro)'.format(p_name), year] - \
+                                                                              result[s].loc['Average cost {} heater (euro)'.format(p_name), year]
+                                indicator.loc['Intensive margin heater (%)', s] = indicator.loc['Intensive margin heater (euro)', s] / \
+                                                                           result[s].loc['Average cost {} heater (euro)'.format(p_name), year]
 
                         if ref == 'ZP':
                             indicator.loc['Non additional investment (Thousand households)', s] = result[ref].loc['{} (Thousand households)'.format(p_name), year]
@@ -1716,6 +1734,14 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
                             indicator.loc['Freeriding ratio heater (%)', s] = indicator.loc['Non additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
                             indicator.loc['Extensive margin heater (%)', s] = indicator.loc['Additional heater (Thousand households)', s] / (indicator.loc['Additional heater (Thousand households)', s] + indicator.loc['Non additional heater (Thousand households)', s])
+
+                    if 'Average energy std saved {} insulation (MWh)'.format(p_name) in result[ref].index:
+                        if ref == 'ZP':
+                            indicator.loc['Intensive margin insulation (MWh)', s] = result[s].loc['Average energy std saved {} insulation (MWh)'.format(p_name), year] - result[ref].loc['Average energy std saved {} insulation (MWh)'.format(p_name), year]
+                            indicator.loc['Intensive margin insulation energy (%)', s] = indicator.loc['Intensive margin insulation (MWh)', s] / result[ref].loc['Average energy std saved {} insulation (MWh)'.format(p_name), year]
+                        else:
+                            indicator.loc['Intensive margin insulation (MWh)', s] = result[ref].loc['Average energy std saved {} insulation (MWh)'.format(p_name), year] - result[s].loc['Average energy std saved {} insulation (MWh)'.format(p_name), year]
+                            indicator.loc['Intensive margin insulation energy (%)', s] = indicator.loc['Intensive margin insulation (MWh)', s] / result[s].loc['Average energy std saved {} insulation (MWh)'.format(p_name), year]
 
                 indicator.loc['Consumption saving (TWh/year)', s] = result[s].loc['Consumption (TWh)', year] - \
                                                                     result[ref].loc['Consumption (TWh)', year]
