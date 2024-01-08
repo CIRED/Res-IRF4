@@ -98,6 +98,7 @@ if __name__ == '__main__':
                 "ZP": True,
                 "ZP+1": True
             }
+
             del _config['scenarios']
             if 'sensitivity' in _config.keys():
                 del _config['sensitivity']

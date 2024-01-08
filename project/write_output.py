@@ -559,10 +559,13 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     vars += ['Carbon value (Billion euro)', 'Health cost (Billion euro)', 'Energy expenditures (Billion euro)']
 
     cum_vars = ['Emission (MtCO2)', 'Renovation (Thousand households)',
-               'Investment insulation (Billion euro)', 'Subsidies insulation (Billion euro)',
-               'Investment heater (Billion euro)', 'Subsidies heater (Billion euro)']
-    avg_vars = ['Cumulated Investment insulation (Billion euro)', 'Cumulated Subsidies insulation (Billion euro)',
-               'Cumulated Investment heater (Billion euro)', ' Cumulated Subsidies heater (Billion euro)']
+                'Investment insulation (Billion euro)', 'Subsidies insulation (Billion euro)',
+                'Investment heater (Billion euro)', 'Subsidies heater (Billion euro)']
+    avg_vars = ['Cumulated Renovation (Thousand households)',
+                'Cumulated Investment insulation (Billion euro)',
+                'Cumulated Subsidies insulation (Billion euro)',
+                'Cumulated Investment heater (Billion euro)',
+                'Cumulated Subsidies heater (Billion euro)']
 
     for yr in [i for i in [2030, 2050] if i in result.get(reference).columns]:
         summary = dict()
@@ -1781,7 +1784,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             else:
                 ref = 'Reference'
 
-            variables = {
+            variables_end = {
                 'Consumption (TWh)': 'Consumption saving (TWh)',
                 'Consumption standard (TWh)': 'Consumption standard saving (TWh)',
                 'Consumption standard (kWh/m2)': 'Consumption standard saving (kWh/m2)',
@@ -1789,8 +1792,18 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 'Heating intensity (%)': 'Heating intensity diff (%)',
                 'Energy poverty (Million)': 'Energy poverty diff (Million)'
             }
+
+            variables_cumulated = {
+                'Investment heater (Billion euro)': 'Investment heater diff (Billion euro)',
+                'Subsidies heater (Billion euro)': 'Subsidies heater diff (Billion euro)',
+                'Investment insulation (Billion euro)': 'Investment insulation diff (Billion euro)',
+                'Subsidies insulation (Billion euro)': 'Subsidies insulation diff (Billion euro)',
+                'Emission (MtCO2)': 'Cumulated emission saving (MtCO2)',
+                'Consumption (TWh)': 'Cumulated energy saving (MtCO2)'
+            }
+
             end = result[ref].columns[-1]
-            for var, name in variables.items():
+            for var, name in variables_end.items():
                 if ref == 'ZP':
                     temp = result[s].loc[var, end] - result[ref].loc[var, end]
                     temp_percent = temp / result[ref].loc[var, end]
@@ -1799,7 +1812,18 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     temp_percent = temp / result[s].loc[var, end]
 
                 indicator.loc[name, s] = temp
-                indicator.loc['{} (%)'.format(name.split(' (')[0])] = temp_percent
+                indicator.loc['{} (%)'.format(name.split(' (')[0]), s] = temp_percent
+
+            for var, name in variables_cumulated.items():
+                if ref == 'ZP':
+                    temp = result[s].loc[var, :].sum() - result[ref].loc[var, :].sum()
+                    temp_percent = temp / result[ref].loc[var, :].sum()
+                else:
+                    temp = result[ref].loc[var, :].sum() - result[s].loc[var, :].sum()
+                    temp_percent = temp / result[s].loc[var, :].sum()
+
+                indicator.loc[name, s] = temp
+                indicator.loc['{} (%)'.format(name.split(' (')[0]), s] = temp_percent
 
     if indicator is not None:
         indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))
