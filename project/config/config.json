@@ -140,7 +140,7 @@
     "step": 1,
     "end": 2031,
     "policies": {
-      "file": "project/input/policies/policies_calibration.json"
+      "file": "project/input/policies/policies_2024.json"
     },
     "simple": {
       "figures": true,
