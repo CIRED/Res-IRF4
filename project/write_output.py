@@ -1775,20 +1775,31 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         else:
             indicator = cba
 
-        # Energy poverty
-        variables = [
-            'Consumption (TWh)',
-            'Consumption standard (TWh)',
-            'Consumption standard (kWh/m2)',
-            'Emission (MtCO2)',
-            'Heating intensity (%)',
-            'Energy poverty (Million)'
-        ]
-        for var in variables:
-            temp = pd.DataFrame([result[s].loc[var] for s in effectiveness_scenarios],
-                                               index=effectiveness_scenarios).T
-            indicator.loc[var] = (temp.iloc[0] - temp.iloc[-1])
-            indicator.loc['{} (%)'.format(var.split(' (')[0])] = indicator.loc[var] / temp.iloc[0]
+        for s in effectiveness_scenarios:
+            if 'ZP' in s:
+                ref = 'ZP'
+            else:
+                ref = 'Reference'
+
+            variables = {
+                'Consumption (TWh)': 'Consumption saving (TWh)',
+                'Consumption standard (TWh)': 'Consumption standard saving (TWh)',
+                'Consumption standard (kWh/m2)': 'Consumption standard saving (kWh/m2)',
+                'Emission (MtCO2)': 'Emission saving (MtCO2)',
+                'Heating intensity (%)': 'Heating intensity diff (%)',
+                'Energy poverty (Million)': 'Energy poverty diff (Million)'
+            }
+            end = result[ref].columns[-1]
+            for var, name in variables.items():
+                if ref == 'ZP':
+                    temp = result[s].loc[var, end] - result[ref].loc[var, end]
+                    temp_percent = temp / result[ref].loc[var, end]
+                else:
+                    temp = result[ref].loc[var, end] - result[s].loc[var, end]
+                    temp_percent = temp / result[s].loc[var, end]
+
+                indicator.loc[name, s] = temp
+                indicator.loc['{} (%)'.format(name.split(' (')[0])] = temp_percent
 
     if indicator is not None:
         indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))

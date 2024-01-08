@@ -90,6 +90,14 @@ if __name__ == '__main__':
                 "AP-2045": True,
                 "AP-2050": True
             }
+            _config['assessment'] = {
+                "activated": True,
+                "Policy name": policy,
+                "AP": "Reference",
+                "AP-1": True,
+                "ZP": True,
+                "ZP+1": True
+            }
             del _config['scenarios']
             if 'sensitivity' in _config.keys():
                 del _config['sensitivity']
