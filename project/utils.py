@@ -1034,7 +1034,7 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
 
 def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: '{:.0f}'.format(y), save=None,
-                                rotation=0, year_ini=None, order_scenarios=None, reference='Reference', fonttick=14):
+                                rotation=0, year_ini=None, order_scenarios=None, fonttick=14):
 
     list_keys = list(df.columns)
     y_max = df.groupby([i for i in df.index.names if i != groupby]).sum().max().max() * 1.1
@@ -1058,7 +1058,7 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
             df_temp = df[key].unstack(groupby)
 
             if key == year_ini:
-                df_temp = df_temp.loc[reference, :]
+                df_temp = df_temp.iloc[0, :]
                 df_temp = df_temp.to_frame().T
                 df_temp.index = ['Initial']
             else:

@@ -631,7 +631,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             format_y=lambda y, _: '{:.0f} {}'.format(y, unit),
                                             save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
                                             rotation=90, year_ini=start, order_scenarios=order_scenarios,
-                                            reference=reference, fonttick=20)
+                                            fonttick=20)
 
     # graph policies
     policies = []
@@ -669,7 +669,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             save=os.path.join(folder_img, 'policy_scenario_detailed.png'),
                                             rotation=90, year_ini=start + 1,
                                             order_scenarios=order,
-                                            reference=reference, fonttick=20)
+                                            fonttick=20)
 
                 agg = {'Mpr': 'Subsidy', 'Mpr multifamily': 'Subsidy', 'Mpr multifamily deep': 'Subsidy',
                        'Mpr multifamily updated': 'Subsidy',
@@ -685,7 +685,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             rotation=90, year_ini=start + 1,
                                             order_scenarios=order,
                                             colors=resources_data['colors'],
-                                            reference=reference, fonttick=20)
+                                            fonttick=20)
 
     # graph emission saving
     variables = {
@@ -945,7 +945,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
                                         format_y=lambda y, _: '{:.0f}'.format(y),
                                         save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                        rotation=90, year_ini=2018, reference=reference)
+                                        rotation=90, year_ini=2018)
     temp = df.xs(('Single-family', 'Privately rented', 'C1'), level='Household').copy()
     name = 'cost_households_renter'
     temp.dropna(how='all', inplace=True, axis=1)
@@ -954,7 +954,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
                                         format_y=lambda y, _: '{:.0f}'.format(y),
                                         save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                        rotation=90, year_ini=2018, reference=reference)
+                                        rotation=90, year_ini=2018)
 
     # graph distributive impact
     try:
@@ -1482,11 +1482,11 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             if order_scenarios is not None:
                 npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
             make_stackedbar_plot(npv.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
-                                 format_y=lambda y, _: '{:.0f}'.format(y),
+                                 format_y=lambda y, _: '{:.0f} B€'.format(y),
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'cost_benefit_analysis_counterfactual.png'.lower().replace(' ', '_')),
-                                 rotation=90, left=1.3, fontxtick=30)
+                                 rotation=0, left=1.3, fontxtick=15)
 
         npv.loc['NPV', :] = npv.sum()
         npv.columns = scenarios
@@ -1781,8 +1781,10 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         for s in effectiveness_scenarios:
             if 'ZP' in s:
                 ref = 'ZP'
-            else:
+            elif 'AP' in s:
                 ref = 'Reference'
+            else:
+                ref = reference
 
             variables_end = {
                 'Consumption (TWh)': 'Consumption saving (TWh)',

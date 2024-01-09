@@ -3940,8 +3940,8 @@ class AgentBuildings(ThermalBuildings):
                 if exogenous_social is not None:
                     index = renovation_rate[
                         renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
-                    stock = self.add_certificate(stock[index])
-                    renovation_rate_social = reindex_mi(exogenous_social.loc[:, self.year], stock.index).droplevel(
+                    s = self.add_certificate(stock[index])
+                    renovation_rate_social = reindex_mi(exogenous_social.loc[:, self.year], s.index).droplevel(
                         'Performance')
                     renovation_rate.drop(index, inplace=True)
                     renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
