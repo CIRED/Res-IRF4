@@ -16,7 +16,7 @@
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
 from pandas import DataFrame, Series, read_csv
-from project.utils import get_pandas
+from project.utils import get_pandas, get_series
 
 resources_data = dict()
 
@@ -26,6 +26,10 @@ resources_data['performance_stock'] = performance_stock
 consumption_hist = get_pandas('project/input/resources_dir/hist_consumption.csv', lambda x: read_csv(x, index_col=[0], header=[0])).T
 consumption_hist.index = consumption_hist.index.astype(int)
 resources_data['consumption_hist'] = {k: Series(item, name='Historic') for k, item in consumption_hist.to_dict().items()}
+
+consumption_hist = get_series('project/input/resources_dir/hist_consumption_total.csv')
+consumption_hist.index = consumption_hist.index.astype(int)
+resources_data['consumption_total_hist'] = consumption_hist.rename('Historic')
 
 # resources_data['consumption_total_objectives'] = Series([176, 146], index=[2030, 2050], name='Objectives')
 # resources_data['emissions_total_objectives'] = Series([0.6, 0.9], index=[2030, 2050], name='Objectives')
@@ -173,6 +177,7 @@ colors = {
     'Cost': 'firebrick',
     'Annuities heater': 'lightcoral',
     'Annuities insulation': 'firebrick',
+    'Embodied emission': 'darkgreen',
     'Embodied emission additional': 'darkgreen',
     'Indirect emission': 'darkgreen',
     'COFP': 'grey',

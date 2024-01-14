@@ -672,7 +672,10 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x)
     if df.index[-1] == 2050:
-        ax.xaxis.set_major_locator(MultipleLocator(base=5))
+        if df.index[0] < 2010:
+            ax.xaxis.set_major_locator(MultipleLocator(base=10))
+        else:
+            ax.xaxis.set_major_locator(MultipleLocator(base=5))
     if legend:
         format_legend(ax, labels=labels, loc=loc, left=left, order=order_legend)
     # plt.ticklabel_format(style='plain', axis='x')
@@ -853,7 +856,8 @@ def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
         format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
         ax.set_title(k, fontsize=15)
 
-    g.fig.suptitle(title, x=0.5, y=1.05, weight='bold', color='black', size=20)
+    if title is not None:
+        g.fig.suptitle(title, x=0.5, y=1.05, weight='bold', color='black', size=20)
 
     save_fig(g.figure, save=save)
 
@@ -1133,7 +1137,7 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
 
         y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
         for _, y in scatterplot.iterrows():
-            ax.annotate("{:,.1f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
+            ax.annotate("{:,.0f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
 

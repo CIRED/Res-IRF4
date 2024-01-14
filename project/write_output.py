@@ -985,7 +985,8 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                 make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
                              palette=colors,
                              save=os.path.join(folder_img, 'energy_income_ratio{}_{}.png'.format(k.replace(' ', '_'), year)),
-                             title='Energy expenditure{} on income ratio\n{}'.format(k, year))
+                             title=None)
+                #title = 'Energy expenditure{} on income ratio\n{}'.format(k, year)
 
                 # > 0 positive means households are loosing money compare to ref
                 if df.shape[1] > 1:
@@ -998,7 +999,8 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                     make_relplot(rate, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
                                  palette=colors,
                                  save=os.path.join(folder_img, 'energy_income_ratio_rate{}_{}.png'.format(k.replace(' ', '_'), year)),
-                                 title='Energy expenditure{} on income ratio\n{} compare to Reference'.format(k, year))
+                                 title=None)
+                   # title = 'Energy expenditure{} on income ratio\n{} compare to Reference'.format(k, year)
 
                 # > 0 positive means households are loosing money compare to ini
                 diff = (df - ini) / ini
@@ -1009,26 +1011,31 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                 make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
                              palette=colors,
                              save=os.path.join(folder_img, 'energy_income_ratio_ini{}_{}.png'.format(k.replace(' ', '_'), year)),
-                             title='Energy expenditure{} on income ratio\n{} compare to {}'.format(k, year, start))
+                             title=None)
+                #title = 'Energy expenditure{} on income ratio\n{} compare to {}'.format(k, year, start)
     except KeyError:
         print('Problem Energy expenditure')
     # graph line plot 2D comparison
-    consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
-    consumption_total_hist.index = consumption_total_hist.index.astype(int)
-    if result[reference].loc['Consumption Heating (TWh)', :].iloc[0] == 0:
-        consumption_total_hist.drop('Heating', axis=1, inplace=True)
-    consumption_total_hist = consumption_total_hist.sum(axis=1).rename('Historic')
-    # 'exogenous': consumption_total_hist to add to consumption to also capture historic values
+    if 'consumption_total_hist' in resources_data.keys():
+        consumption_total_hist = resources_data['consumption_total_hist']
+    else:
+        consumption_total_hist = pd.DataFrame(resources_data['consumption_hist'])
+        consumption_total_hist.index = consumption_total_hist.index.astype(int)
+        if result[reference].loc['Consumption Heating (TWh)', :].iloc[0] == 0:
+            consumption_total_hist.drop('Heating', axis=1, inplace=True)
+        consumption_total_hist = consumption_total_hist.sum(axis=1).rename('Historic')
 
     variables = {'Consumption (TWh)': {'name': 'consumption.png',
-                                       'format_y': lambda y, _: '{:,.0f} TWh'.format(y)
+                                       'format_y': lambda y, _: '{:,.0f} TWh'.format(y),
+                                       'y_label': 'Final energy consumption for space heating (TWh)'
                                        },
                  'Consumption standard (TWh)': {'name': 'consumption_standard.png',
                                                 'format_y': lambda y, _: '{:,.0f} TWh'.format(y)},
                  'Heating intensity (%)': {'name': 'heating_intensity.png',
                                            'format_y': lambda y, _: '{:,.0%}'.format(y)},
                  'Emission (MtCO2)': {'name': 'emission.png',
-                                      'format_y': lambda y, _: '{:,.0f} MtCO2'.format(y)
+                                      'format_y': lambda y, _: '{:,.0f} MtCO2'.format(y),
+                                      'y_label': 'GHG emission (MtCO2)'
                                       },
                  'Stock Heat pump (Million)': {'name': 'stock_heat_pump.png',
                                                'format_y': lambda y, _: '{:,.1f} M'.format(y)},
@@ -1080,6 +1087,10 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             temp = pd.concat((temp, infos['exogenous']), axis=1).astype(float)
             temp.sort_index(inplace=True)
 
+        y_label = variable
+        if infos.get('y_label') is not None:
+            y_label = infos['y_label']
+
         scatter = infos.get('scatter')
 
         colors_temp = colors
@@ -1089,7 +1100,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
         if order_scenarios is not None:
             order_temp = [i for i in temp.columns if i not in order_scenarios] + [i for i in order_scenarios if i in temp.columns]
             temp = temp.loc[:, order_temp]
-        make_plot(temp, variable, save=os.path.join(folder_img, '{}'.format(infos['name'])), format_y=infos['format_y'],
+        make_plot(temp, y_label, save=os.path.join(folder_img, '{}'.format(infos['name'])), format_y=infos['format_y'],
                   scatter=scatter, colors=colors, loc='left', left=1.2)
 
     variables_output = {
@@ -1433,7 +1444,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             temp = dict()
             temp.update({'Investment': df['Investment total WT (Billion euro)']})
             if embodied_emission:
-                temp.update({'Embodied emission additional': df['Carbon footprint (Billion euro)']})
+                temp.update({'Embodied emission': df['Carbon footprint (Billion euro)']})
             if cofp:
                 temp.update({'Opportunity cost': (df['Subsidies total (Billion euro)'] - df['VAT (Billion euro)'] +
                                       df['Simple difference Health expenditure (Billion euro)']
@@ -1486,7 +1497,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'cost_benefit_analysis_counterfactual.png'.lower().replace(' ', '_')),
-                                 rotation=0, left=1.3, fontxtick=15)
+                                 rotation=0, left=1.2, fontxtick=12)
 
         npv.loc['NPV', :] = npv.sum()
         npv.columns = scenarios
