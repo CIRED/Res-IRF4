@@ -660,11 +660,9 @@ def res_irf(config, path, level_logger='DEBUG'):
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
             if year == buildings.first_year + 1 and config['output'] == 'full' and buildings.path_ini is not None:
                 compare_results(o, buildings.path)
-
+                # inputs_dynamics['post_inputs']['implicit_discount_rate']
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
-                                               prices, 0.05,
-                                               inputs_dynamics['post_inputs']['implicit_discount_rate'],
-                                               inputs_dynamics['post_inputs']['health_cost_dpe'],
+                                               prices, 0.05, 0.05, inputs_dynamics['post_inputs']['health_cost_dpe'],
                                                inputs_dynamics['post_inputs']['carbon_value_kwh'].loc[year, :],
                                                inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :])
 

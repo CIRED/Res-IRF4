@@ -208,6 +208,15 @@
       "intensive": "market_share",
       "minimum_performance": "D",
       "policy": "obligation"
+    },
+    "zero_interest_loan": {
+        "start": 2024,
+        "end": 2051,
+        "cost_max": 30000,
+        "gest": ["heater", "insulation"],
+        "value": 0.0,
+        "duration": 15,
+        "policy": "zero_interest_loan"
     }
     }
 }

@@ -1665,6 +1665,15 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 if 'ZP' in s:
                     ref = 'ZP'
 
+                # Only work for non-cumulative policies
+                """if len(policy_name) > 1:
+                    p_name = '-'.join(policy_name)
+                    for k in [s, ref]:
+                        result[k].loc['{} (Thousand households)'.format(p_name), :] = sum([result[k].loc['{} (Thousand households)'.format(i), :] for i in policy_name])
+                        result[k].loc['{} insulation (Thousand households)'.format(p_name), :] = sum([result[k].loc['{} insulation (Thousand households)'.format(i), :] for i in policy_name])
+                        result[k].loc['{} heater (Thousand households)'.format(p_name), :] = sum([result[k].loc['{} heater (Thousand households)'.format(i), :] for i in policy_name])
+                        result[k].loc['Average energy std saved {} insulation (MWh)'.format(p_name), :] = sum([(result[k].loc['Average energy std saved {} insulation (MWh)'.format(i), :] * result[k].loc['{} insulation (Thousand households)'.format(i), :]) for i in policy_name]) / result[k].loc['{} insulation (Thousand households)'.format(p_name), :]
+                """
                 if year in result[ref].columns and len(policy_name) == 1:
                     p_name = policy_name[0]
                     if 'Average cost {} (euro)'.format(p_name) in result[ref].index:
@@ -1807,12 +1816,14 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             }
 
             variables_cumulated = {
+                'Investment total (Billion euro)': 'Investment total diff (Billion euro)',
+                'Subsidies total (Billion euro)': 'Subsidies total diff (Billion euro)',
                 'Investment heater (Billion euro)': 'Investment heater diff (Billion euro)',
                 'Subsidies heater (Billion euro)': 'Subsidies heater diff (Billion euro)',
                 'Investment insulation (Billion euro)': 'Investment insulation diff (Billion euro)',
                 'Subsidies insulation (Billion euro)': 'Subsidies insulation diff (Billion euro)',
                 'Emission (MtCO2)': 'Cumulated emission saving (MtCO2)',
-                'Consumption (TWh)': 'Cumulated energy saving (MtCO2)'
+                'Consumption (TWh)': 'Cumulated energy saving (TWh)'
             }
 
             end = result[ref].columns[-1]
