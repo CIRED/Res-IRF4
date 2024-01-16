@@ -210,13 +210,15 @@
       "policy": "obligation"
     },
     "zero_interest_loan": {
-        "start": 2024,
+        "start": 2018,
         "end": 2051,
         "cost_max": 30000,
         "gest": ["insulation"],
         "value": 0.0,
         "duration": 15,
-        "policy": "zero_interest_loan"
+        "public_cost": 0.015,
+        "policy": "zero_interest_loan",
+        "year_stop": 2020
     }
   }
 }

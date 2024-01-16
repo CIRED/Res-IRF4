@@ -1430,8 +1430,13 @@ class AgentBuildings(ThermalBuildings):
                     # Meaning we are assessing the zero_interest_loan
                     value = financing_cost['interest_rate'].loc[self.year] - 1e-4
 
+                if isinstance(policy.cost_max, dict):
+                    cost_max = policy.cost_max[self.year]
+                else:
+                    cost_max = policy.cost_max
+
                 financing_options.update({policy.name: {'price': value,
-                                                        'max': policy.cost_max,
+                                                        'max': cost_max,
                                                         'duration': policy.duration,
                                                         'type': 'debt'}})
 
@@ -1481,7 +1486,7 @@ class AgentBuildings(ThermalBuildings):
             subsidies = dict()
             if policies:
                 for policy in policies:
-                    subsidies.update({policy.name: rslt[policy.name] * 0.015 * financing_options[policy.name]['duration']})
+                    subsidies.update({policy.name: rslt[policy.name] * policy.public_cost * financing_options[policy.name]['duration']})
 
         return cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies
 
