@@ -75,7 +75,7 @@
       "ratio_surface": "project/input/technical/ratio_surface.csv",
       "residual_rate": 0,
       "hourly_profile": "project/input/technical/hourly_profile_rte.csv",
-      "constraint_heat_pumps": 10,
+      "constraint_heat_pumps": ["E", "F", "G"],
       "variable_size_heater": false
     },
     "energy": {

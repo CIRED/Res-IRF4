@@ -2150,15 +2150,19 @@ class AgentBuildings(ThermalBuildings):
         # technical restriction - removing heat-pump for low-efficient buildings
         condition.columns.names = ['Heating system final']
         if self._constraint_heat_pumps:
-            """condition = self.add_certificate(condition)
-            idx = (condition.index.get_level_values('Performance').isin(['F', 'G'])) & (
-                ~condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
-            condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
-            condition = condition.droplevel('Performance')"""
-            size = self.size_heater(index=index)
-            idx = (size > self._constraint_heat_pumps) & (
-                ~size.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
-            condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
+            if isinstance(self._constraint_heat_pumps, list):
+                _, certificate, _ = self.consumption_heating(method='3uses', full_output=True)
+                condition = concat((condition, reindex_mi(certificate.rename('Performance'), condition.index)), axis=1)
+                condition = condition.set_index('Performance', append=True)
+                idx = (condition.index.get_level_values('Performance').isin(['F', 'G'])) & (
+                    ~condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
+                condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
+                condition = condition.droplevel('Performance')
+            else:
+                size = self.size_heater(index=index)
+                idx = (size > self._constraint_heat_pumps) & (
+                    ~size.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
+                condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
 
         # technical restriction - heat pump can only be switch with heat pump
         idx = condition.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps'])
