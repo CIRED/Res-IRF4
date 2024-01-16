@@ -217,7 +217,8 @@
         "value": 0.0,
         "duration": 15,
         "public_cost": 0.015,
-        "policy": "zero_interest_loan"
+        "policy": "zero_interest_loan",
+        "target": null
     }
   }
 }

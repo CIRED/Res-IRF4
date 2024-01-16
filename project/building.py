@@ -1435,6 +1435,10 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     cost_max = policy.cost_max
 
+                # Only when policy.target otherwise cost_max = 0
+                if policy.target is not None:
+                    cost_max = cost_max * policy.target
+
                 financing_options.update({policy.name: {'price': value,
                                                         'max': cost_max,
                                                         'duration': policy.duration,
@@ -3915,6 +3919,8 @@ class AgentBuildings(ThermalBuildings):
                 calculate_condition=calculate_condition)
 
             p = [p for p in policies_insulation if p.policy == 'zero_interest_loan']
+            for pp in p:
+                pp.target = condition[pp.target]
             cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
                 reindex_mi(cost_insulation, index),
                 subsidies_total,
