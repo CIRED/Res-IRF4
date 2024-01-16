@@ -7,10 +7,12 @@
     "constant": null,
     "policies": null,
     "assessment": [
-      ["mpr_multifamily_updated",
-      "mpr_multifamily_deep"]
+      "zero_interest_loan"
     ],
     "test": [
+      "zero_interest_loan",
+      ["mpr_multifamily_updated",
+      "mpr_multifamily_deep"],
       "cite",
       "reduced_vat",
       "mpr_serenite",
@@ -18,10 +20,6 @@
       "mpr_efficacite",
       "mpr_performance",
       "mpr_multifamily",
-      ["mpr_multifamily_updated",
-      "mpr_multifamily_deep"],
-      "mpr_multifamily_deep",
-      "zero_interest_loan",
       "cee"
     ]
   },

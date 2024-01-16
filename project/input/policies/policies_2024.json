@@ -210,7 +210,7 @@
       "policy": "obligation"
     },
     "zero_interest_loan": {
-        "start": 2024,
+        "start": 2018,
         "end": 2051,
         "cost_max": 30000,
         "gest": ["insulation"],
