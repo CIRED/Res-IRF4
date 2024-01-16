@@ -55,22 +55,6 @@
         "policy": "restriction_energy"
       }
     }},
-  "Package2024Zil": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json",
-      "zero_interest_loan": {
-        "start": 2024,
-        "end": 2051,
-        "cost_max": 30000,
-        "gest": ["heater", "insulation"],
-        "value": 0.0,
-        "duration": 15,
-        "policy": "zero_interest_loan"
-    }
-    }},
   "CarbonTax": {
     "file": "project/config/reference.json",
     "step": 1,

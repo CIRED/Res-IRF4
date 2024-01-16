@@ -16,7 +16,8 @@
         "mpr_performance",
         "mpr_efficacite",
         "mpr_multifamily_updated",
-        "mpr_multifamily_deep"
+        "mpr_multifamily_deep",
+        "zero_interest_loan"
       ],
       "cee",
       "obligation",
