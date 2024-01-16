@@ -1421,7 +1421,16 @@ class AgentBuildings(ThermalBuildings):
         # only work with one zero-interest-loan
         if policies:
             for policy in policies:
-                financing_options.update({policy.name: {'price': policy.value,
+                if isinstance(policy.value, dict):
+                    value = policy.value[self.year]
+                else:
+                    value = policy.value
+
+                if value is None:
+                    # Meaning we are assessing the zero_interest_loan
+                    value = financing_cost['interest_rate'].loc[self.year] - 1e-4
+
+                financing_options.update({policy.name: {'price': value,
                                                         'max': policy.cost_max,
                                                         'duration': policy.duration,
                                                         'type': 'debt'}})
