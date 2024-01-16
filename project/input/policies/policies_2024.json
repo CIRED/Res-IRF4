@@ -212,7 +212,7 @@
     "zero_interest_loan": {
         "start": 2024,
         "end": 2051,
-        "cost_max": 30000,
+        "cost_max": 15000,
         "gest": ["insulation"],
         "value": 0.0,
         "duration": 15,
