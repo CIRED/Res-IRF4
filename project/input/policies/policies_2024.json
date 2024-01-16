@@ -213,7 +213,7 @@
         "start": 2024,
         "end": 2051,
         "cost_max": 30000,
-        "gest": ["heater", "insulation"],
+        "gest": ["insulation"],
         "value": 0.0,
         "duration": 15,
         "policy": "zero_interest_loan"
