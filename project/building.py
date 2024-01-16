@@ -3920,7 +3920,8 @@ class AgentBuildings(ThermalBuildings):
 
             p = [p for p in policies_insulation if p.policy == 'zero_interest_loan']
             for pp in p:
-                pp.target = condition[pp.target]
+                if pp.target is not None:
+                    pp.target = condition[pp.target]
             cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
                 reindex_mi(cost_insulation, index),
                 subsidies_total,
