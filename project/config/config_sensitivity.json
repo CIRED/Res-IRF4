@@ -110,16 +110,6 @@
         "option": "price_elasticity",
         "target": -1.2
       }
-    },
-    "scale_renovation": {
-      "low": {
-        "option": "share_fg",
-        "target": 0.27
-      },
-      "high": {
-        "option": "share_fg",
-        "target": 0.35
-      }
     }
   },
   "uncertainty": {

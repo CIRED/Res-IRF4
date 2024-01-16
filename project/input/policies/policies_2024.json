@@ -190,7 +190,7 @@
     },
     "obligation": {
       "start": 2022,
-      "end": 2051,
+      "end": 2022,
       "value": "project/input/policies/current/agenda_obligation_pb.csv",
       "frequency": {
         "value": [
@@ -217,8 +217,7 @@
         "value": 0.0,
         "duration": 15,
         "public_cost": 0.015,
-        "policy": "zero_interest_loan",
-        "year_stop": 2020
+        "policy": "zero_interest_loan"
     }
   }
 }
