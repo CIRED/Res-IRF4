@@ -1665,8 +1665,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 if 'ZP' in s:
                     ref = 'ZP'
 
-                # Only work for non-cumulative insulation policies
-                if len(policy_name) > 1:
+                # Only work for non-cumulative insulation policies that we want to assess together
+                if len(policy_name) == 2:
                     p_name = '-'.join(policy_name)
                     for k in [s, ref]:
                         result[k].loc['{} (Thousand households)'.format(p_name), :] = sum([result[k].loc['{} (Thousand households)'.format(i), :] for i in policy_name])
@@ -1675,7 +1675,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                         result[k].loc['Average cost {} insulation (euro)'.format(p_name), :] = sum([(result[k].loc['Average cost {} insulation (euro)'.format(i), :] * result[k].loc['{} insulation (Thousand households)'.format(i), :]) for i in policy_name]) / result[k].loc['{} insulation (Thousand households)'.format(p_name), :]
                         result[k].loc['Average energy std saved {} insulation (MWh)'.format(p_name), :] = sum([(result[k].loc['Average energy std saved {} insulation (MWh)'.format(i), :] * result[k].loc['{} insulation (Thousand households)'.format(i), :]) for i in policy_name]) / result[k].loc['{} insulation (Thousand households)'.format(p_name), :]
 
-                if year in result[ref].columns:
+                if year in result[ref].columns and len(policy_name) <= 2:
                     p_name = '-'.join(policy_name)
                     if 'Average cost {} (euro)'.format(p_name) in result[ref].index:
 
