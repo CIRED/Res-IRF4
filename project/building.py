@@ -4515,6 +4515,9 @@ class AgentBuildings(ThermalBuildings):
         output['Consumption new (TWh)'] = output['Consumption (TWh)'] - output['Consumption existing (TWh)']
         output['Consumption existing (kWh/m2)'] = (output['Consumption existing (TWh)'] * 10 ** 9) / (
                 output['Surface existing (Million m2)'] * 10 ** 6)
+
+        output['Consumption PE (TWh)'] = thermal.final2primary(consumption_energy, Series(consumption_energy.index, index=consumption_energy.index)).sum()
+
         if surface_new > 0:
             output['Consumption new (kWh/m2)'] = (output['Consumption new (TWh)'] * 10 ** 9) / (
                     output['Surface new (Million m2)'] * 10 ** 6)

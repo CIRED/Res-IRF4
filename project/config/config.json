@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": false,
+    "activated": true,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": null,
