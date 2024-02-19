@@ -545,15 +545,14 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     # ini
     emission_ini = result.get(reference).loc['Emission (MtCO2)', :].iloc[0]
     consumption_ini = result.get(reference).loc['Consumption (TWh)', :].iloc[0]
-    consumption_pe_ini = result.get(reference).loc['Consumption PE (TWh)', :].iloc[0]
+    # consumption_pe_ini = result.get(reference).loc['Consumption PE (TWh)', :].iloc[0]
     energy_poverty_ini = result.get(reference).loc['Energy poverty (Million)', :].iloc[0]
 
     start = result.get(reference).columns[0]
     end = result.get(reference).columns[-1]
 
     # make table summary
-    vars = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)',
-            'Consumption PE (TWh)']
+    vars = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)'] # 'Consumption PE (TWh)'
     vars += ['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']]
     vars += ['Energy poverty (Million)', 'Emission (MtCO2)']
     vars += ['Stock {} (Million)'.format(i) for i in resources_data['index']['Performance']]
@@ -583,7 +582,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             temp = pd.concat((temp, t), axis=0)
 
             temp['Consumption saving (%)'] = (consumption_ini - temp['Consumption (TWh)']) / consumption_ini
-            temp['Consumption PE saving (%)'] = (consumption_pe_ini - temp['Consumption PE (TWh)']) / consumption_pe_ini
+            # temp['Consumption PE saving (%)'] = (consumption_pe_ini - temp['Consumption PE (TWh)']) / consumption_pe_ini
             temp['Emission saving (%)'] = (emission_ini - temp['Emission (MtCO2)']) / emission_ini
             temp['Energy poverty reduction (%)'] = (energy_poverty_ini - temp['Energy poverty (Million)']) / energy_poverty_ini
             summary.update({key: temp})
@@ -681,6 +680,12 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                 # replace index with aggregated
 
                 temp = temp.rename(index=agg).groupby(temp.index.names).sum()
+                rename = {'Subsidy': 'Direct subsidies',
+                          'Cee': 'White certificate',
+                          'Reduced vat': 'Reduced VAT',
+                          'Zero interest': 'Zero interest loan'}
+                temp = temp.rename(index=rename)
+
                 # ['Cee', 'Subsidy', 'Reduced vat', 'Zero interest loan']
                 make_clusterstackedbar_plot(temp, 'Policy',
                                             format_y=lambda y, _: '{:.0f} B€'.format(y),

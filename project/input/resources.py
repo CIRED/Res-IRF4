@@ -215,10 +215,14 @@ colors_policies = {
     "Subsidies heater": "royalblue",
     "Subsidies insulation": "darksalmon",
     "Reduced vat": "darkolivegreen",
+    "Reduced VAT": "darkolivegreen",
     "Cee": "tomato",
+    "White certificate": "tomato",
+    "White certificate obligations": "tomato",
     "Cee tax": "red",
     "Cite": "blue",
     "Zero interest loan": "darkred",
+    "Zero interest": "darkred",
     "Over cap": "grey",
     "Carbon tax": "darkgreen",
     "Mpr": "darkmagenta",
@@ -232,7 +236,8 @@ colors_policies = {
     'Sub ad valorem': "darkorange",
     "Sub merit": "slategrey",
     "Sub obligation": "darkorange",
-    "Subsidy": "darkmagenta"
+    "Subsidy": "darkmagenta",
+    "Direct subsidies": "blue"
 }
 
 colors.update(colors_policies)

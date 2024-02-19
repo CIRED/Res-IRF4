@@ -71,26 +71,37 @@ scenarios). Each scenario setting is described in a json dictionary.
 Among the possible parameters used to describe a scenario:
 - `name` : name of the scenario,
 - `end` : end year of the simulation,
-- `file` : use another calibration file as a starting point to run the simulation. This feature allows to run a scenario
-with the same calibration but with different settings (e.g. different energy prices). It also facilitates the modification
-of one parameter in the Reference scenario without changing all configuration files.
+- `file` : use another setting file as a reference. This feature facilitates the modification
+of one parameter compared to the Reference scenario without repeating all parameters.
 - `policies`: policies can be included directly in the configuration file or by making reference to an independent policy file (
 see `input/policies/policies_ref.json`). This feature ensures that different scenarios have the same policies setting.
+- `simple`: modification of one specific feature of the scenario. For example, it is possible to run a scenario with
+quintiles instead of deciles, or to run a scenario with a limited number of heating systems. It also allows to
+simplify the simulation by running with price or income constant. 
+  - `figures`: create additional graphs for the `Reference` scenario.
+  - `detailed_output`: allows to create a detailed output for the scenario.
 
 An example of configuration file is in the `config` folder under the name of `config.json`.
 
-Headers are a way to easily create variants of scenario while ensuring to keep the same main settings for all scenarios:
+
+##### Headers of the configuration file
+Headers are an easy way to create additional variants of scenario.
+The advantage is to ensure that all other parameters are the same as in the main settings.
+There are different headers:
+
 - `scenarios` : basic variant of the Reference scenario. An example of such header can be found in `test/config_validation.json`.
 Among the possible variants that can be created automatically:
-  - "Current Policies" keeps the same public policies used during calibration throughout the simulation.
-  - "No policy" deletes all public policies in the year after calibration.
-  - "Constant Prices" retains the same energy prices as used during calibration.
-- `sensitivity` : modify one or multiple parameters of the Reference scenario,
-- `uncertainty` : run all possible permutation of modified parameters, 
+  - `current_policies: True`. Keep the same public policies used during calibration throughout the simulation ("Current Policies").
+  - `no_policy: True`. Removing all public policies in the year after calibration ("No policy").
+  - `prices_constant: True`. Retain the same energy prices as used during calibration ("Constant Prices").
+- `sensitivity` : modify one or multiple parameters of the Reference scenario.
+It has been implemented for a limited number of parameters. 
+Check `config/list_sensitivity.json` for a comprehensive list of available parameters.
+- `uncertainty` : run all possible permutation of modified parameters (still in progress). 
 - `policies_scenarios` : simplified output for large number of scenarios,
-- `assessment_test` : run assessment indicators for one policy.
+- `assessment_test` : run assessment indicators for one policy (still in progress).
 
-##### Run large number of policies scenarios
+##### Running large number of  scenarios
 
 A notebook stored in `project/input/policies/proposals/variant_current_policies` allows to create a configuration file with
 different variants of the current policies.

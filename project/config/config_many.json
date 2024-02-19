@@ -1,38 +1,37 @@
 {
   "scenarios": {
-    "activated": true,
+    "activated": false,
     "current_policies": null,
     "no_policy": null,
     "prices_constant": null,
     "constant": null,
     "policies": null,
-    "assessment": [
-      "cee"
-    ],
-    "test": [
-      "reduced_vat",
-      "cite",
-      "cee",
-      "mpr",
-      "mpr_serenite",
-      "mpr_multifamily",
-      "obligation"
-    ]
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "policies_scenarios": {
+    "activated": true,
+    "file": "project/input/policies/efficiency_gap/policies_scenarios.json"
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2051,
+    "step": 1,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/policies_2024.json"
+      "file": "project/input/policies/policies_calibration.json"
     },
     "simple": {
+      "figures": false,
+      "detailed_output": true,
       "quintiles": true,
       "surface": false,
       "ratio_surface": false,
       "stock": false,
-      "current_policies": true,
+      "current_policies": false,
       "no_policy": false,
-      "income": false,
+      "income_constant": false,
       "prices_constant": false,
       "heating_system": {
         "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",

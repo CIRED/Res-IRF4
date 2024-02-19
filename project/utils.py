@@ -373,6 +373,35 @@ def calculate_average(df, lifetime=50, discount_rate=0.032):
     return df
 
 
+def add_no_renovation(df):
+    temp = df.copy()
+    no_renovation = temp.iloc[:, 0].rename((False, False, False, False))
+    no_renovation[:] = 0
+    temp = pd.concat((no_renovation, temp), axis=1)
+    temp.columns.names = df.columns.names
+    return temp
+
+def conditional_expectation(x):
+    """
+    Calculate the conditional expectation of epsilon given epsilon > x,
+    where epsilon follows a logistic distribution.
+
+    Parameters:
+    x (float): The deterministic value greater than which epsilon is considered.
+
+    Returns:
+    float: The conditional expectation of epsilon given epsilon > x.
+    """
+    # Calculate the parts of the formula
+    part1 = -x * np.exp(x)
+    part2 = (x + np.log(np.exp(x) + 1) - np.log(np.exp(x))) * (np.exp(x) + 1)
+
+    # Combine parts to form the conditional expectation
+    conditional_exp = part1 + part2
+
+    return conditional_exp
+
+
 def make_policies_tables(policies, path, plot=True):
     sub_replace = {'subsidy_target': 'Subsidy, per unit',
                    'subsidy_ad_valorem': 'Subsidy, ad valorem',
