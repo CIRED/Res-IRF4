@@ -1,12 +1,13 @@
-Electricity-Heat pump water,2.5
-Electricity-Performance boiler,0.95
-Natural gas-Performance boiler,0.76
-Natural gas-Standard boiler,0.6
-Oil fuel-Performance boiler,0.76
-Oil fuel-Standard boiler,0.6
-Wood fuel-Performance boiler,0.76
-Wood fuel-Standard boiler,0.6
-Electricity-Heat pump air,2
-Natural gas-Collective boiler,0.76
-Oil fuel-Collective boiler,0.76
-Heating-District heating,0.76
+Year,Heating system,
+2015,Electricity-Heat pump water,2.5
+2015,Electricity-Performance boiler,0.95
+2015,Natural gas-Performance boiler,0.76
+2015,Natural gas-Standard boiler,0.6
+2015,Oil fuel-Performance boiler,0.76
+2015,Oil fuel-Standard boiler,0.6
+2015,Wood fuel-Performance boiler,0.76
+2015,Wood fuel-Standard boiler,0.6
+2015,Electricity-Heat pump air,2
+2015,Natural gas-Collective boiler,0.76
+2015,Oil fuel-Collective boiler,0.76
+2015,Heating-District heating,0.76

@@ -416,7 +416,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                                air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
                                temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
-                               efficiency_hour=False, hourly_profile=None):
+                               efficiency_hour=False, hourly_profile=None, temp_sink=None):
     """Monthly stead-state space heating final energy delivered.
 
 
@@ -463,7 +463,9 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
 
         data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
         temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
-        delta_temperature = TEMP_SINK - temp_ext
+        if temp_sink is None:
+            temp_sink = TEMP_SINK
+        delta_temperature = temp_sink - temp_ext
         # TODO replace 0 by nan
         efficiency_hp = 6.81 - 0.121 * delta_temperature + 0.00063 * (delta_temperature ** 2)
 
