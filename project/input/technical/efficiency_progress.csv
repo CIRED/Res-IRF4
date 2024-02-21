@@ -1,0 +1,49 @@
+Year,Heating system,
+2015,Electricity-Heat pump water,2.5
+2015,Electricity-Performance boiler,0.95
+2015,Natural gas-Performance boiler,0.76
+2015,Natural gas-Standard boiler,0.6
+2015,Oil fuel-Performance boiler,0.76
+2015,Oil fuel-Standard boiler,0.6
+2015,Wood fuel-Performance boiler,0.76
+2015,Wood fuel-Standard boiler,0.6
+2015,Electricity-Heat pump air,2
+2015,Natural gas-Collective boiler,0.76
+2015,Oil fuel-Collective boiler,0.76
+2015,Heating-District heating,0.76
+2030,Electricity-Heat pump water,3
+2030,Electricity-Performance boiler,0.95
+2030,Natural gas-Performance boiler,0.76
+2030,Natural gas-Standard boiler,0.6
+2030,Oil fuel-Performance boiler,0.76
+2030,Oil fuel-Standard boiler,0.6
+2030,Wood fuel-Performance boiler,0.76
+2030,Wood fuel-Standard boiler,0.6
+2030,Electricity-Heat pump air,2
+2030,Natural gas-Collective boiler,0.76
+2030,Oil fuel-Collective boiler,0.76
+2030,Heating-District heating,0.76
+2040,Electricity-Heat pump water,4
+2040,Electricity-Performance boiler,0.95
+2040,Natural gas-Performance boiler,0.76
+2040,Natural gas-Standard boiler,0.6
+2040,Oil fuel-Performance boiler,0.76
+2040,Oil fuel-Standard boiler,0.6
+2040,Wood fuel-Performance boiler,0.76
+2040,Wood fuel-Standard boiler,0.6
+2040,Electricity-Heat pump air,2
+2040,Natural gas-Collective boiler,0.76
+2040,Oil fuel-Collective boiler,0.76
+2040,Heating-District heating,0.76
+2050,Electricity-Heat pump water,4
+2050,Electricity-Performance boiler,0.95
+2050,Natural gas-Performance boiler,0.76
+2050,Natural gas-Standard boiler,0.6
+2050,Oil fuel-Performance boiler,0.76
+2050,Oil fuel-Standard boiler,0.6
+2050,Wood fuel-Performance boiler,0.76
+2050,Wood fuel-Standard boiler,0.6
+2050,Electricity-Heat pump air,2
+2050,Natural gas-Collective boiler,0.76
+2050,Oil fuel-Collective boiler,0.76
+2050,Heating-District heating,0.76

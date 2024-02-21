@@ -563,7 +563,7 @@ class ThermalBuildings:
         if standard is False:
             if freq == 'year':
                 # TODO: if climate is none consumption_heating_store ?
-                consumption = self.consumption_heating(freq=freq, climate=climate)
+                consumption = self.consumption_heating(freq=freq, climate=climate, temp_sink=self._temp_sink)
                 consumption = reindex_mi(consumption, self.stock.index) * self.surface
                 if existing is True:
                     consumption = consumption[consumption.index.get_level_values('Existing')]

@@ -321,7 +321,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               sub_insulation=sub_insulation,
                                               climate=2006,
                                               smooth=False,
-                                              efficiency_hour=False,
+                                              efficiency_hour=True,
                                               flow_district_heating=inputs_dynamics['flow_district_heating'],
                                               demolition_rate=inputs_dynamics['demolition_rate'],
                                               output_consumption=output_consumption,
