@@ -138,7 +138,7 @@
   "Reference": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2020,
+    "end": 2041,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     },
