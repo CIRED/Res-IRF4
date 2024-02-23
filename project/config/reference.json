@@ -129,6 +129,8 @@
       "stock": false,
       "current_policies": false,
       "no_policy": false,
+      "no_policy_insulation": false,
+      "no_policy_heater": false,
       "income_constant": false,
       "prices_constant": false,
       "heating_system": {

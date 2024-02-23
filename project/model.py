@@ -745,7 +745,7 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
         prices = energy_prices.loc[year, :]
         p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
         p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-        f_built = inputs_dynamics['flow_built'].loc[:, year]
+        f_built = inputs_dynamics['flow_built'].loc[:, year].dropna()
         flow_district_heating = None
         if inputs_dynamics['flow_district_heating'] is not None:
             flow_district_heating = inputs_dynamics['flow_district_heating'].loc[year]
