@@ -630,6 +630,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             f_built = inputs_dynamics['flow_built'].loc[:, yrs]
             if isinstance(f_built, pd.DataFrame):
                 f_built = f_built.sum(axis=1).rename(year)
+            f_built = f_built.dropna()
 
             flow_district_heating = None
             if inputs_dynamics['flow_district_heating'] is not None:
@@ -643,25 +644,25 @@ def res_irf(config, path, level_logger='DEBUG'):
                     inputs_dynamics['cost_heater'].loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
             buildings, s, o = stock_turnover(buildings, prices, taxes,
-                                              inputs_dynamics['cost_heater'],
-                                              inputs_dynamics['cost_insulation'],
-                                              inputs_dynamics['lifetime_insulation'],
-                                              p_heater, p_insulation, f_built, year,
-                                              inputs_dynamics['post_inputs'],
-                                              calib_renovation=inputs_dynamics['calibration_renovation'],
-                                              calib_heater=inputs_dynamics['calibration_heater'],
-                                              premature_replacement=inputs_dynamics['premature_replacement'],
-                                              financing_cost=inputs_dynamics['financing_cost'],
-                                              supply=inputs_dynamics['supply'],
-                                              district_heating=flow_district_heating,
-                                              demolition_rate=inputs_dynamics['demolition_rate'],
-                                              exogenous_social=inputs.get('exogenous_social'),
-                                              output_options=config['output'],
-                                              climate=config.get('climate'),
-                                              prices_before=prices_before,
-                                              carbon_content=carbon_content,
-                                              carbon_content_before=carbon_content_before,
-                                              step=step)
+                                             inputs_dynamics['cost_heater'],
+                                             inputs_dynamics['cost_insulation'],
+                                             inputs_dynamics['lifetime_insulation'],
+                                             p_heater, p_insulation, f_built, year,
+                                             inputs_dynamics['post_inputs'],
+                                             calib_renovation=inputs_dynamics['calibration_renovation'],
+                                             calib_heater=inputs_dynamics['calibration_heater'],
+                                             premature_replacement=inputs_dynamics['premature_replacement'],
+                                             financing_cost=inputs_dynamics['financing_cost'],
+                                             supply=inputs_dynamics['supply'],
+                                             district_heating=flow_district_heating,
+                                             demolition_rate=inputs_dynamics['demolition_rate'],
+                                             exogenous_social=inputs.get('exogenous_social'),
+                                             output_options=config['output'],
+                                             climate=config.get('climate'),
+                                             prices_before=prices_before,
+                                             carbon_content=carbon_content,
+                                             carbon_content_before=carbon_content_before,
+                                             step=step)
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
