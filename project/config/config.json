@@ -43,7 +43,7 @@
     }
     },
     "simple": {
-      "no_policy_insulation": true
+      "no_policy_insulation": false
     }
   }
 }

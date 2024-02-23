@@ -90,7 +90,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     prices = energy_prices.loc[year, :]
     p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
     p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
-    f_built = inputs_dynamics['flow_built'].loc[:, year]
+    f_built = inputs_dynamics['flow_built'].loc[:, year].dropna()
     c_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
 
     flow_district_heating = None
