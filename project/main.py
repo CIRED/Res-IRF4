@@ -175,6 +175,20 @@ def run(path=None, folder=None):
                 configuration['NoPolicy']['simple']['no_policy'] = True
                 configuration['NoPolicy']['simple']['current_policies'] = False
 
+            if config_scenarios.get('no_policy_heater') is not None:
+                configuration['NoPolicyHeater'] = copy.deepcopy(configuration['Reference'])
+                configuration['NoPolicyHeater']['simple']['no_policy_heater'] = True
+                configuration['NoPolicyHeater']['simple']['no_policy'] = False
+                configuration['NoPolicyHeater']['simple']['no_policy_insulation'] = False
+                configuration['NoPolicyHeater']['simple']['current_policies'] = False
+
+            if config_scenarios.get('no_policy_insulation') is not None:
+                configuration['NoPolicyInsulation'] = copy.deepcopy(configuration['Reference'])
+                configuration['NoPolicyInsulation']['simple']['no_policy_insulation'] = True
+                configuration['NoPolicyInsulation']['simple']['no_policy'] = False
+                configuration['NoPolicyInsulation']['simple']['no_policy_heater'] = False
+                configuration['NoPolicyInsulation']['simple']['current_policies'] = False
+
             if config_scenarios.get('current_policies') is not None:
                 configuration['CurrentPolicies'] = copy.deepcopy(configuration['Reference'])
                 configuration['CurrentPolicies']['simple']['current_policies'] = True
@@ -317,6 +331,11 @@ def run(path=None, folder=None):
                 for key, item in config_sensitivity['ms_heater_built'].items():
                     configuration['heater_construction_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
                     configuration['heater_construction_{}'.format(key)]['switch_heater']['ms_heater_built'] = item
+
+            if config_sensitivity.get('efficiency') is not None:
+                for key, item in config_sensitivity['efficiency'].items():
+                    configuration['efficiency_{}'.format(key)] = copy.deepcopy(configuration['Reference'])
+                    configuration['efficiency_{}'.format(key)]['technical']['efficiency'] = item
 
             if config_sensitivity.get('turnover') is not None:
                 for key, item in config_sensitivity['turnover'].items():

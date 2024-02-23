@@ -595,6 +595,14 @@ def res_irf(config, path, level_logger='DEBUG'):
         if inputs_dynamics['supply']['insulation'] is not None:
             inputs_dynamics['cost_insulation'] /= inputs_dynamics['supply']['insulation']['markup_insulation']
 
+        if config['simple'].get('no_policy_insulation'):
+            for p in policies_insulation:
+                p.end = config['start'] + 2
+
+        if config['simple'].get('no_policy_heater'):
+            for p in policies_heater:
+                p.end = config['start'] + 2
+
         for k, year in enumerate(years):
             start = time()
 

@@ -4752,12 +4752,6 @@ class AgentBuildings(ThermalBuildings):
         energy_expenditure += consumption_calib * (1 - coefficient_heater) * prices.loc['Wood fuel']
         output['Energy expenditures wt (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
 
-        # TODO: add rebate - decomposition of energy_expenditures and rebate
-        energy_expenditure = energy_expenditure.groupby('Income tenant').sum()
-        temp = energy_expenditure.loc[self._resources_data['index']['Income tenant']]
-        temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
-        output.update(temp.T / 10 ** 9)
-
         # taxes expenditures
         if taxes is not None:
             taxes_expenditures = dict()
@@ -5271,6 +5265,16 @@ class AgentBuildings(ThermalBuildings):
             temp = temp.groupby('Income tenant').sum()
             temp.index = temp.index.map(lambda x: 'To pay heater {} (Billion euro/year)'.format(x))
             output.update(temp.T / 10 ** 9 / step)
+
+            temp = [output['To pay heater {} (Billion euro/year)'.format(i)] + output['To pay insulation {} (Billion euro/year)'.format(i)] +
+                    output['Energy expenditures {} (Billion euro)'.format(i)] for i in self._resources_data['index']['Income tenant']]
+            temp = Series(temp, index=self._resources_data['index']['Income tenant'])
+            t = self.stock.groupby('Income tenant').sum() / 1e6
+            t = temp / t
+            temp.index = temp.index.map(lambda x: 'Total expenditure {} (Billion euro)'.format(x))
+            t.index = t.index.map(lambda x: 'Total expenditure {} (Thousand euro/hh)'.format(x))
+            output.update(temp.T / step)
+            output.update(t.T)
 
             # subsidies_heater_hh = calculate_annuities(subsidies_heater, lifetime=10, discount_rate=0.05)
             annuities_heater_hh = calculate_annuities(to_pay, lifetime=10, discount_rate=0.05)
