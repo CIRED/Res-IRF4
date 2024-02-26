@@ -1072,6 +1072,13 @@ class AgentBuildings(ThermalBuildings):
         self._condition_store = None
         self.income = self._income_yrs.loc[:, year]
 
+        if isinstance(self._efficiency_yrs, DataFrame):
+            self._efficiency = self._efficiency_yrs.loc[:, year]
+        if self._temp_sink_yrs is not None:
+            self._temp_sink = self._temp_sink_yrs.loc[year]
+
+        print(self._temp_sink)
+
         self._replaced_by = None
         self._only_heater = None
         self._flow_obligation = {}
