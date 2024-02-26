@@ -85,10 +85,19 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'])
     output = pd.concat((output, o), axis=1)
 
+    if config['simple'].get('no_policy_insulation'):
+        for p in policies_insulation:
+            p.end = config['start'] + 2
+
+    if config['simple'].get('no_policy_heater'):
+        for p in policies_heater:
+            p.end = config['start'] + 2
+
     # run second year - renovation
     year = buildings.first_year + 1
     prices = energy_prices.loc[year, :]
     p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
+
     p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
     f_built = inputs_dynamics['flow_built'].loc[:, year].dropna()
     c_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
