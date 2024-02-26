@@ -1077,8 +1077,6 @@ class AgentBuildings(ThermalBuildings):
         if self._temp_sink_yrs is not None:
             self._temp_sink = self._temp_sink_yrs.loc[year]
 
-        print(self._temp_sink)
-
         self._replaced_by = None
         self._only_heater = None
         self._flow_obligation = {}

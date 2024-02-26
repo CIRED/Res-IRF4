@@ -601,7 +601,8 @@ def res_irf(config, path, level_logger='DEBUG'):
 
         if config['simple'].get('no_policy_heater'):
             for p in policies_heater:
-                p.end = config['start'] + 2
+                if p.variable:
+                    p.end = config['start'] + 2
 
         for k, year in enumerate(years):
             start = time()

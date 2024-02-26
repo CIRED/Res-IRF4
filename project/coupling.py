@@ -91,7 +91,8 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
 
     if config['simple'].get('no_policy_heater'):
         for p in policies_heater:
-            p.end = config['start'] + 2
+            if p.variable:
+                p.end = config['start'] + 2
 
     # run second year - renovation
     year = buildings.first_year + 1
