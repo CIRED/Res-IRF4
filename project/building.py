@@ -2854,6 +2854,7 @@ class AgentBuildings(ThermalBuildings):
                 value = value.where(value < cap, cap)
 
             if not policy.social_housing:
+                print('ok')
                 value.loc[value.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
 
             if policy.non_cumulative is None:
@@ -2881,6 +2882,7 @@ class AgentBuildings(ThermalBuildings):
             value.fillna(0, inplace=True)
 
             if not policy.social_housing:
+                print('ok')
                 value.loc[value.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
 
             # if policy defined by insulation
@@ -5367,11 +5369,11 @@ class AgentBuildings(ThermalBuildings):
                               keys=['annuities', 'annuities_cumulated', 'energy_expenditures_std',
                                     'energy_expenditures', 'stock', 'income'])
 
-                temp['total_std'] = temp['energy_expenditures_std'] + temp['annuities']
+                temp['total_std'] = temp['energy_expenditures_std'] + temp['annuities_cumulated']
                 temp['ratio_bill_std'] = temp['energy_expenditures_std'] / temp['income']
                 temp['ratio_total_std'] = temp['total_std'] / temp['income']
 
-                temp['total'] = temp['energy_expenditures'] + temp['annuities']
+                temp['total'] = temp['energy_expenditures'] + temp['annuities_cumulated']
                 temp['ratio_bill'] = temp['energy_expenditures'] / temp['income']
                 temp['ratio_total'] = temp['total'] / temp['income']
 

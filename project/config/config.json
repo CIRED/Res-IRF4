@@ -32,7 +32,7 @@
   "Reference": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2022,
+    "end": 2023,
     "policies": {
       "file": "project/input/policies/policies_2024.json",
       "restriction_gas": {
@@ -44,7 +44,7 @@
     }
     },
     "simple": {
-      "no_policy_heater": true
+      "no_policy_heater": false
     }
   }
 }
