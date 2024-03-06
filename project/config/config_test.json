@@ -1,40 +1,90 @@
 {
+  "scenarios": {
+    "activated": false,
+    "current_policies": null,
+    "no_policy": true,
+    "no_policy_insulation": true,
+    "no_policy_heater": true,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "sensitivity": {
+    "activated": false
+  },
+  "uncertainty": {
+    "activated": false,
+    "energy_prices_factor": [2, 5],
+    "carbon_emission" : [
+      "project/input/energy/carbon_emission_tend.csv"
+    ],
+    "scale_renovation": [
+      {
+        "option": "share_fg",
+        "target": 0.4
+      }
+    ]
+  },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2021,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
+    "step": 1,
+    "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     },
-    "method_health_cost": "epc",
+    "simple": {
+      "no_policy_heater": false
+    }
+  },
+  "NoPolicyHeater": {
+    "file": "project/config/reference.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
     "simple": {
       "no_policy_heater": true
+    }
+  },
+  "Ban": {
+    "file": "project/config/reference.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "restriction_gas": {
+            "start": 2025,
+            "end": 2051,
+            "value": "Natural gas",
+            "policy": "restriction_energy",
+            "variable": false
+      }
     },
-    "renovation": {
-      "endogenous": true,
-      "exogenous_social": null,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
-      "scale": {
-        "option": "share_fg",
-        "target": 0.31
-      },
-      "ms_insulation": {
-        "ms_insulation_ini": "project/input/investment/market_share_insulation_ini.csv",
-        "minimum_performance": null
-      },
-      "rational_behavior": {
-        "activated": false,
-        "social": true,
-        "calibration": true
-      },
-      "exogenous": {
-        "number": 700000,
-        "target": "worst"
-      },
-      "lifetime_insulation": 5,
-      "preferences_insulation": "project/input/investment/stated_preferences_insulation.csv"
+    "simple": {
+      "no_policy_heater": false
+    }
+  },
+  "BanNoPolicyHeater": {
+    "file": "project/config/reference.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "restriction_gas": {
+            "start": 2025,
+            "end": 2051,
+            "value": "Natural gas",
+            "policy": "restriction_energy",
+            "variable": false
+      }
+    },
+    "simple": {
+      "no_policy_heater": true
     }
   }
 }
-
-

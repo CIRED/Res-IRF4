@@ -138,6 +138,17 @@ def timing(f):
     return wrap
 
 
+def memory_object(buildings):
+    temp = {}
+    for k, item in buildings.__dict__.items():
+        if isinstance(item, dict):
+            temp.update(item)
+        else:
+            temp.update({k: item})
+
+    return temp
+
+
 def create_logger(path=None, level='DEBUG'):
     """Create logger for one run.
 
@@ -337,6 +348,38 @@ def deciles2quintiles_dict(inputs):
                                     inputs[key][k][kk][kkk] = deciles2quintiles_pandas(iii)
 
     return inputs
+
+
+def deciles2quintiles(stock, policies_heater, policies_insulation, inputs):
+    """Change all inputs from deciles to quintiles.
+
+    Parameters
+    ----------
+    stock
+    policies_heater
+    policies_insulation
+    inputs
+
+    Returns
+    -------
+
+    """
+
+    inputs = deciles2quintiles_dict(inputs)
+
+    stock = deciles2quintiles_pandas(stock, func='sum')
+
+    for policy in policies_insulation + policies_heater:
+        attributes = [a for a in dir(policy) if not a.startswith('__') and getattr(policy, a) is not None]
+        for att in attributes:
+            item = getattr(policy, att)
+            if isinstance(item, (pd.Series, pd.DataFrame)):
+                setattr(policy, att, deciles2quintiles_pandas(item, func='mean'))
+            if isinstance(item, dict):
+                new_item = {k: deciles2quintiles_pandas(i, func='mean') for k, i in item.items()}
+                setattr(policy, att, new_item)
+
+    return stock, policies_heater, policies_insulation, inputs
 
 
 def parse_policies(config):
@@ -566,7 +609,7 @@ def make_sensitivity_tables(table_result, path):
 
 
 def format_ax(ax, y_label=None, title=None, format_x=None,
-              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None):
+              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None):
     """
 
     Parameters
@@ -607,6 +650,9 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
         ax.set_xlim(xmin=xmin)
         _, x_max = ax.get_xlim()
         ax.set_xlim(xmax=x_max * 1.1)
+
+    if xmax is not None:
+        ax.set_xlim(xmax=xmax, xmin=xmin)
 
     if ymin is not None:
         ax.set_ylim(ymin=0)
@@ -671,7 +717,7 @@ def save_fig(fig, save=None, bbox_inches='tight'):
 
 
 def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True, integer=True,
-              ymin=0, ymax=None, hlines=None, labels=None, loc='upper', left=1.04, order_legend='reverse'):
+              ymin=0, ymax=None, hlines=None, labels=None, loc='upper', left=1.04, order_legend='reverse', ncol=3):
     """Make plot.
 
     Parameters
@@ -706,7 +752,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
         else:
             ax.xaxis.set_major_locator(MultipleLocator(base=5))
     if legend:
-        format_legend(ax, labels=labels, loc=loc, left=left, order=order_legend)
+        format_legend(ax, labels=labels, loc=loc, left=left, order=order_legend, ncol=ncol)
     # plt.ticklabel_format(style='plain', axis='x')
 
     save_fig(fig, save=save)
@@ -714,7 +760,8 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 
 def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
                integer=False, loc='upper', left=1.04, ymax=None, ymin=0, format_x=None, hlines=None,
-               scatter_dict=None, labels=None, order_legend='reverse'):
+               scatter_dict=None, labels=None, order_legend='reverse', x_tick_interval=None, ncol=3, xmin=None,
+               xmax=None):
     """Make plot.
 
     Parameters
@@ -754,9 +801,15 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x)
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x,
+                   xmin=xmin, xmax=xmax)
+
+    if x_tick_interval is not None:
+        # Set the x-axis major locator to a multiple of the x_tick_interval
+        ax.xaxis.set_major_locator(MultipleLocator(x_tick_interval))
+
     if legend:
-        format_legend(ax, loc=loc, left=left, labels=labels, order=order_legend)
+        format_legend(ax, loc=loc, left=left, labels=labels, order=order_legend, ncol=ncol)
     save_fig(fig, save=save)
 
 

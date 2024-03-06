@@ -1,18 +1,65 @@
+# Copyright 2020-2021 Ecole Nationale des Ponts et Chaussées
+#
+# This file is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Original author Lucas Vivier <vivier@centre-cired.fr>
+
+
+"""Main module of the model.
+
+This module contains the main functions to run the model. The main function is res_irf that runs the model for a given
+scenario.
+
+
+Functions
+---------
+res_irf
+    Res-IRF model.
+calibration_res_irf
+    Calibrate Res-IRF and returns calibrated parameters.
+get_inputs
+    Initialize thermal buildings object based on input dictionary.
+config2inputs
+    Create main Python object from configuration file.
+initialize
+    Create main Python objects read by model.
+stock_turnover
+    Update stock vintage due to renovation, demolition and construction.
+select_post_inputs
+    Inputs used during post-treatment but not used during the iteration.
+get_config
+    Get the configuration file.
+prepare_config
+    Prepare the configuration file.
+"""
+
+
 import os
 import pandas as pd
-import logging
 from time import time
 import json
 from importlib import resources
 from pickle import load, dump
-# import psutil
 from copy import deepcopy
+import logging
+# import psutil
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy
 from project.write_output import plot_scenario, compare_results
-from project.utils import reindex_mi, deciles2quintiles_pandas, deciles2quintiles_dict, get_json, get_size, size_dict, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies
-from project.utils import create_logger
+from project.utils import reindex_mi, deciles2quintiles, get_json, create_logger, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies
+from project.utils import memory_object, get_size, size_dict
 from project.input.resources import resources_data
 
 
@@ -183,49 +230,6 @@ def config2inputs(config=None):
         config['simple']['detailed_output'] = True
 
     return config, inputs, stock, year, policies_heater, policies_insulation, taxes
-
-
-def deciles2quintiles(stock, policies_heater, policies_insulation, inputs):
-    """Change all inputs from deciles to quintiles.
-
-    Parameters
-    ----------
-    stock
-    policies_heater
-    policies_insulation
-    inputs
-
-    Returns
-    -------
-
-    """
-
-    inputs = deciles2quintiles_dict(inputs)
-
-    stock = deciles2quintiles_pandas(stock, func='sum')
-
-    for policy in policies_insulation + policies_heater:
-        attributes = [a for a in dir(policy) if not a.startswith('__') and getattr(policy, a) is not None]
-        for att in attributes:
-            item = getattr(policy, att)
-            if isinstance(item, (pd.Series, pd.DataFrame)):
-                setattr(policy, att, deciles2quintiles_pandas(item, func='mean'))
-            if isinstance(item, dict):
-                new_item = {k: deciles2quintiles_pandas(i, func='mean') for k, i in item.items()}
-                setattr(policy, att, new_item)
-
-    return stock, policies_heater, policies_insulation, inputs
-
-
-def memory_object(buildings):
-    temp = {}
-    for k, item in buildings.__dict__.items():
-        if isinstance(item, dict):
-            temp.update(item)
-        else:
-            temp.update({k: item})
-
-    return temp
 
 
 def select_post_inputs(parsed_inputs):
@@ -674,8 +678,8 @@ def res_irf(config, path, level_logger='DEBUG'):
                 # inputs_dynamics['post_inputs']['implicit_discount_rate']
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
                                                prices, 0.05, 0.05, inputs_dynamics['post_inputs']['health_cost_dpe'],
-                                               inputs_dynamics['post_inputs']['carbon_value_kwh'].loc[year, :],
-                                               inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :])
+                                               inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :],
+                                               carbon_value=50)
 
                 with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
                     dump({
@@ -792,180 +796,3 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
     except Exception as e:
         logger.exception(e)
         raise e
-
-
-def social_planner(aggregation_archetype=None, climate=2006, smooth=False, freq='hour',
-                   percent=True, marginal=False, hourly_profile=None):
-    """Calculate cost of mitigation potential of the building sector.
-
-
-    Example: Function used when coupling with power system model.
-
-    Parameters
-    ----------
-    aggregation_archetype
-    climate
-    smooth
-    freq: optional, {'hour', 'day', 'month', 'year'}
-    percent: bool, default True
-    marginal: bool, default
-    hourly_profile
-
-    Returns
-    -------
-
-    """
-
-    def cost_curve(consumption_saved, cost_insulation, percent=True, marginal=False, consumption_before=None):
-        """Create cost curve.
-
-        Parameters
-        ----------
-        consumption_before
-        consumption_saved
-        cost_insulation
-        percent: bool, default True
-        marginal: bool, default False
-
-        Returns
-        -------
-
-        """
-
-        insulation = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
-                      'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
-        insulation = pd.MultiIndex.from_frame(pd.DataFrame(insulation))
-
-        consumption_saved = consumption_saved.loc[:, insulation]
-        cost_insulation = cost_insulation.loc[:, insulation]
-
-        cost_efficiency = cost_insulation / consumption_saved
-
-        x = consumption_saved.stack(consumption_saved.columns.names).squeeze().rename('Consumption saved')
-        y = cost_efficiency.stack(cost_efficiency.columns.names).squeeze().rename('Cost efficiency (euro/kWh/year)')
-        c = (x * y).rename('Cost (Billion euro)') / 10 ** 9
-        df = pd.concat((x, y, c), axis=1)
-
-        # sort by marginal cost
-        df.sort_values(y.name, inplace=True)
-
-        if percent is True:
-            if consumption_before is None:
-                raise AttributeError
-            df[x.name] = x / consumption_before.sum()
-            # x.name = '{} (%/initial)'.format(x.name)
-        else:
-            df[x.name] /= 10 ** 9
-            # x.name = '{} (TWh/an)'.format(x.name)
-
-        if marginal is False:
-            df['{} cumulated'.format(x.name)] = df[x.name].cumsum()
-            df['{} cumulated'.format(c.name)] = df[c.name].cumsum()
-            df.dropna(inplace=True)
-            df = df.set_index('{} cumulated'.format(x.name))['{} cumulated'.format(c.name)]
-        else:
-            df.dropna(inplace=True)
-            df[y.name] = df[y.name].round(1)
-            df = df.groupby([y.name]).agg({x.name: 'sum', y.name: 'first'})
-            df = df.set_index(x.name)[y.name]
-        return df
-
-    resirf_inputs = get_inputs(variables=['buildings', 'energy_prices', 'cost_insulation'])
-    buildings = resirf_inputs['buildings']
-    energy_prices = resirf_inputs['energy_prices']
-    cost_insulation = resirf_inputs['cost_insulation']
-
-    heating_need = buildings.need_heating(freq=freq, climate=climate, smooth=smooth, hourly_profile=hourly_profile)
-    heating_need_class = heating_need.sum(axis=1) / (buildings.stock * reindex_mi(buildings._surface, buildings.stock.index))
-
-    insulation_class = heating_need_class.copy()
-    insulation_class[insulation_class <= 100] = 1
-    insulation_class[(insulation_class > 100) & (insulation_class <= 200)] = 2
-    insulation_class[(insulation_class > 200) & (insulation_class <= 300)] = 3
-    insulation_class[insulation_class > 300] = 4
-    insulation_class = insulation_class.astype(str).rename('Insulation')
-
-    wall_class = heating_need_class.copy()
-    wall_class[wall_class.index.get_level_values('Wall') < 1] = 1
-    wall_class[(wall_class.index.get_level_values('Wall') >= 1) & (wall_class.index.get_level_values('Wall') < 2)] = 2
-    wall_class[wall_class.index.get_level_values('Wall') >= 2] = 3
-    wall_class = wall_class.astype(str).rename('Wall class')
-
-    heating_intensity = buildings.to_heating_intensity(heating_need.index, energy_prices.loc[buildings.first_year, :])
-
-    heating_need = (heating_intensity * heating_need.T).T
-
-    output = buildings.mitigation_potential(energy_prices, cost_insulation)
-
-    consumption_saved = output['Need saved (kWh/segment)']
-
-    cost_insulation = output['Cost insulation (euro/segment)']
-    cost_insulation[consumption_saved == 0] = 0
-
-    consumption_before = output['Need before (kWh/segment)']
-
-    if aggregation_archetype is not None:
-        if 'Performance' in aggregation_archetype:
-            heating_need = buildings.add_certificate(heating_need)
-
-            consumption_saved = buildings.add_certificate(consumption_saved)
-            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
-
-            cost_insulation = buildings.add_certificate(cost_insulation)
-            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
-
-            consumption_before = buildings.add_certificate(consumption_before)
-
-        if 'Energy' in aggregation_archetype:
-            heating_need = buildings.add_energy(heating_need)
-
-            consumption_saved = buildings.add_energy(consumption_saved)
-            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
-
-            cost_insulation = buildings.add_energy(cost_insulation)
-            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
-
-            consumption_before = buildings.add_energy(consumption_before)
-
-        if 'Insulation' in aggregation_archetype:
-            heating_need = pd.concat((heating_need, insulation_class), axis=1).set_index('Insulation', append=True)
-
-            consumption_saved = pd.concat((consumption_saved, insulation_class), axis=1).set_index('Insulation', append=True)
-            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
-
-            cost_insulation = pd.concat((cost_insulation, insulation_class), axis=1).set_index('Insulation', append=True)
-            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
-
-            consumption_before = pd.concat((consumption_before, insulation_class), axis=1).set_index('Insulation', append=True).squeeze()
-
-        if 'Wall class' in aggregation_archetype:
-            heating_need = pd.concat((heating_need, wall_class), axis=1).set_index('Wall class', append=True)
-
-            consumption_saved = pd.concat((consumption_saved, wall_class), axis=1).set_index('Wall class',
-                                                                                                   append=True)
-            consumption_saved.columns = output['Need saved (kWh/segment)'].columns
-
-            cost_insulation = pd.concat((cost_insulation, wall_class), axis=1).set_index('Wall class',
-                                                                                               append=True)
-            cost_insulation.columns = output['Cost insulation (euro/segment)'].columns
-
-            consumption_before = pd.concat((consumption_before, wall_class), axis=1).set_index('Wall class',
-                                                                                                     append=True).squeeze()
-
-    dict_cost, dict_heat = dict(), dict()
-    if aggregation_archetype is not None:
-        dict_cost = {n: cost_curve(g, cost_insulation.loc[g.index, :], percent=percent,
-                                   marginal=marginal, consumption_before=consumption_before.loc[g.index]) for n, g in consumption_saved.groupby(aggregation_archetype)}
-        heating_need_grouped = heating_need.groupby(aggregation_archetype).sum()
-        dict_heat = {i: heating_need_grouped.loc[i, :] for i in heating_need_grouped.index}
-    else:
-        dict_cost['global'] = cost_curve(consumption_saved, cost_insulation, marginal=marginal,
-                                         percent=percent, consumption_before=consumption_before)
-        dict_heat['global'] = heating_need.sum()
-
-    return dict_cost, dict_heat
-
-
-
-
-

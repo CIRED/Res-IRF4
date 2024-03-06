@@ -32,16 +32,16 @@
   "Reference": {
     "file": "project/config/reference.json",
     "step": 1,
-    "end": 2023,
+    "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json",
       "restriction_gas": {
-            "start": 2020,
+            "start": 2025,
             "end": 2051,
             "value": "Natural gas",
             "policy": "restriction_energy",
             "variable": false
-    }
+      }
     },
     "simple": {
       "no_policy_heater": false
