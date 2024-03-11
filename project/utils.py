@@ -1120,10 +1120,14 @@ def make_area_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None,
 
 
 def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: '{:.0f}'.format(y), save=None,
-                                rotation=0, year_ini=None, order_scenarios=None, fonttick=14):
+                                rotation=0, year_ini=None, order_scenarios=None, fonttick=14, ymin=0, legend=True,
+                                figtitle=None, ymax=None, display_total=False):
 
     list_keys = list(df.columns)
-    y_max = df.groupby([i for i in df.index.names if i != groupby]).sum().max().max() * 1.1
+    if ymax is None:
+        temp = df.copy()
+        temp[temp < 0] = 0
+        ymax = temp.groupby([i for i in temp.index.names if i != groupby]).sum().max().max() * 1.1
     n_columns = int(len(list_keys))
     n_scenario = df.index.get_level_values([i for i in df.index.names if i != groupby][0]).unique()
     n_rows = 1
@@ -1150,14 +1154,18 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
             else:
                 if order_scenarios is not None:
                     df_temp = df_temp.loc[order_scenarios, :]
-            if colors is not None:
-                df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors)
-            else:
-                df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0)
 
-            ax = format_ax(ax, format_y=format_y, ymin=0, xinteger=True)
+            df_temp.plot(ax=ax, kind='bar', stacked=True, linewidth=0, color=colors if colors is not None else None)
+
+            if display_total:
+                for i, (index, row) in enumerate(df_temp.iterrows()):
+                    total = row.sum()
+                    # Format the number as an integer without decimals
+                    ax.annotate(f'{int(total)}€', (i, total), ha='center', va='bottom', fontsize=fonttick)
+                    ax.plot(i, total, marker='d', color='black', markersize=5)
+
+            ax = format_ax(ax, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax)
             ax.spines['left'].set_visible(False)
-            ax.set_ylim(ymax=y_max)
             ax.set_xlabel('')
 
             plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
@@ -1177,9 +1185,81 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
         except IndexError:
             ax.axis('off')
 
-    fig.legend(handles[::-1], labels[::-1], loc='center left', frameon=False, ncol=1,
-               bbox_to_anchor=(1, 0.5), fontsize=MEDIUM_SIZE)
+    if figtitle is not None:
+        fig.suptitle(figtitle, x=0.5, y=1.05, weight='bold', color='black', size=20)
+
+    if legend:
+        fig.legend(handles[::-1], labels[::-1], loc='center left', frameon=False, ncol=1,
+                   bbox_to_anchor=(1, 0.5), fontsize=MEDIUM_SIZE)
     save_fig(fig, save=save)
+
+
+def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18, color=None,
+                             save=None, subplot_groups=['Housing type', 'Occupancy status'],
+                             index_group='Income tenant', stack_group='Type', ncol=None,
+                             annotate='{:.0f}€', bottom=0.1):
+    """Make stacked bar plot.
+
+    Parameters
+    ----------
+    df: pd.Series with 4 levels of index
+    fonttick: int, default 18
+    color: str, optional
+    format_y: function, optional
+    save: str, optional
+    """
+
+    # Pivot the DataFrame to get the necessary structure for a stacked bar plot
+    df.name = 'Value'
+    pivot_df = df.reset_index().pivot_table(index=subplot_groups + [index_group],
+                                                 columns=stack_group,
+                                                 values='Value').reset_index()
+
+    fig, axes = plt.subplots(2, 2, figsize=(12.8, 9.6), sharey=True)
+    axes = axes.flatten()
+
+    for i, ((housing_type, occupancy_status), group) in enumerate(
+            pivot_df.groupby(subplot_groups)):
+        group.set_index(index_group, inplace=True)
+        group.drop(subplot_groups, axis=1, inplace=True)
+        group.plot(kind='bar', stacked=True, ax=axes[i], title=f'{housing_type} | {occupancy_status}', rot=0,
+                   color=color)
+        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick)
+        axes[i].set_xlabel('')
+        axes[i].set_ylabel('')
+        axes[i].spines['top'].set_visible(False)
+        axes[i].spines['right'].set_visible(False)
+        axes[i].spines['left'].set_visible(False)
+        axes[i].set_xticklabels(group.index, rotation=0)
+        axes[i].tick_params(axis='x', labelsize=fonttick, length=0)
+        axes[i].tick_params(axis='y', labelsize=fonttick, length=0)
+
+        # use the function format_y to format the y-ticks
+        axes[i].yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+
+        if i == 0:
+            handles, labels = axes[i].get_legend_handles_labels()
+        # remove individual legend
+        axes[i].get_legend().remove()
+
+        if annotate is not None:
+            for index, row in group.iterrows():
+                total = row.sum()
+                axes[i].annotate(annotate.format(total), (index, total), ha='center', va='bottom', fontsize=fonttick)
+                axes[i].plot(index, total, marker='d', color='black', markersize=5)
+
+        # group.sum(axis=1)
+
+    # Adjust legend
+    if ncol is None:
+        ncol = len(labels)
+    fig.legend(handles, labels, loc='lower center', ncol=ncol, fontsize=fonttick, frameon=False,
+               bbox_to_anchor=(0.5, 0))
+
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=bottom)  # Adjust the bottom margin
+    if save is not None:
+        plt.savefig(save, bbox_inches='tight')
 
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,

@@ -27,6 +27,7 @@ from itertools import product
 from PIL import Image
 from numpy import log
 import re
+from project.utils import calculate_annuities
 
 
 def decomposition_analysis(output, save=None):
@@ -592,7 +593,6 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             summary = summary.loc[:, order_scenarios]
         summary.to_csv(os.path.join(folder, 'summary_{}.csv'.format(yr)))
 
-
     # calculate cumulated annuities
     lifetime_insulation, lifetime_heater = 35, 20
     for scenario in result.keys():
@@ -607,8 +607,9 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
         annuities_heater = annuities_heater.rename(
             columns={'CBA Annuities heater (Billion euro)': 'CBA Annuities cumulated heater (Billion euro)'})
         result[scenario] = pd.concat((result[scenario], annuities_heater.T), axis=0)
+    # ----------------
 
-    # graph comparison stock
+    # graph clusterstackedbar
     variables = [('Stock {} (Million)', 'Heater', 'M'),
                  ('Stock {} (Million)', 'Performance', 'M'),
                  ('Consumption {} (TWh)', 'Heater', 'TWh'),
@@ -634,6 +635,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
                                             rotation=90, year_ini=start, order_scenarios=order_scenarios,
                                             fonttick=20)
+    # ----------------
 
     # graph policies
     policies = []
@@ -694,6 +696,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                             order_scenarios=order,
                                             colors=resources_data['colors'],
                                             fonttick=20)
+    # ----------------
 
     # graph emission saving
     variables = {
@@ -748,7 +751,9 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     consumption_saving = pd.Series([result[s].loc['Consumption (TWh)', start] - result[s].loc['Consumption (TWh)', end] for s in result.keys()],
                                       index=result.keys()) / consumption_ini
 
-    # graph cba
+    # ----------------
+
+    # graph cost benefit analysis
     try:
         energy_poverty = pd.Series({k: i.loc['Energy poverty (Million)', end] for k, i in result.items()})
         npv = pd.Series({k: i.loc['NPV (Billion Euro)', end] for k, i in result.items()})
@@ -921,8 +926,61 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                               )
     except KeyError:
         pass
+    # ----------------
+    # graph distributive impact - cost for households
 
-    # graph cost
+    if False:
+        for k in result.keys():
+            subsidies = result[k].loc['Subsidies total (Billion euro)', :]
+            annuities_subsidies = calculate_annuities(subsidies, lifetime=10, discount_rate=0.05)
+            subsidies = annuities_subsidies.rolling(window=10, min_periods=1).sum()
+            subsidies.fillna(0, inplace=True)
+            stock = result[reference].loc['Stock (Million)', :]
+            subsidies_households = (subsidies / stock) * 1e3
+            result[k].loc['Subsidies households (euro)', :] = subsidies_households
+
+        counterfactual = None
+        levels = ['Housing type', 'Occupancy status', 'Income tenant']
+        idx = list(product(*[resources_data['index'][i] for i in levels]))
+        year = 2030
+        cost = ['Annuities {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        idx = pd.MultiIndex.from_tuples(idx, names=levels)
+        dict_subsidies = {k: pd.Series(i.loc['Subsidies households (euro)', year], index=idx) for k, i in result.items()}
+        dict_cost = {k: (i.loc[cost, year].set_axis(idx, axis=0) / i.loc[stock, year].set_axis(idx, axis=0)) for k, i in result.items()}
+        dict_energy = {k: (i.loc[energy, year].set_axis(idx, axis=0) / i.loc[stock, year].set_axis(idx, axis=0)) for k, i in result.items()}
+        df_energy = pd.DataFrame(dict_energy)
+        df_cost = pd.DataFrame(dict_cost)
+        df_subsidies = pd.DataFrame(dict_subsidies)
+        df = pd.concat((df_cost, df_energy, df_subsidies), axis=0, keys=['Cost', 'Energy', 'Subsidies'], names=['Type'])
+        df.columns.names = ['Scenario']
+        levels_group = ['Housing type', 'Occupancy status']
+        # counterfactual = 'NoPolicyHeater'
+        counterfactual = reference
+        # df = df.loc[:, ['Ban', 'Reference']]
+        df_diff = df['Ban'] - df[counterfactual]
+
+        # remove social housing from df_diff
+        df_diff = df_diff.drop('Social-housing', level='Occupancy status')
+
+        for n, g in df.groupby(levels_group):
+            g = g.droplevel(levels_group, axis=0)
+            if counterfactual is not None:
+                g = (g.T - g.loc[:, counterfactual]).T
+                g.drop(counterfactual, axis=1, inplace=True)
+            g = g.stack('Scenario').unstack('Income tenant')
+            # Creating a larger figure outside the function
+
+            make_clusterstackedbar_plot(g, 'Type', colors=resources_data['colors'],
+                                        format_y=lambda y, _: '{:.0f} €/year'.format(y),
+                                        save=os.path.join(folder_img, 'cost_households_{}.png'.format('_'.join(n))), rotation=90,
+                                        ymin=-60, ymax=60,
+                                        legend=False, figtitle=' | '.join(n), display_total=True)
+
+    # ----------------
+
+    # graph distributive impact - cost for households
     data = pd.concat(result).rename_axis(['Scenario', 'Variable'], axis=0).rename_axis('Years', axis=1).unstack('Scenario')
     levels = ['Housing type', 'Occupancy status', 'Income tenant']
     idx = list(product(*[resources_data['index'][i] for i in levels]))
@@ -1024,6 +1082,9 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     except KeyError:
         print('Problem Energy expenditure')
     # graph line plot 2D comparison
+
+
+
     if 'consumption_total_hist' in resources_data.keys():
         consumption_total_hist = resources_data['consumption_total_hist']
     else:

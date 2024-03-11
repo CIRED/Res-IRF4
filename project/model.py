@@ -271,7 +271,7 @@ def get_inputs(path=None, config=None, variables=None):
     """
     if variables is None:
         variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh',
-                     'health_cost', 'income']
+                     'health_cost', 'income', 'cost_heater', 'health_cost_dpe']
 
     config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
@@ -282,8 +282,8 @@ def get_inputs(path=None, config=None, variables=None):
               'cost_heater': inputs_dynamics['cost_heater'],
               'carbon_emission': inputs_dynamics['post_inputs']['carbon_emission'],
               'carbon_value_kwh': inputs_dynamics['post_inputs']['carbon_value_kwh'],
-              'health_cost': inputs_dynamics['post_inputs']['health_expenditure'] + inputs_dynamics['post_inputs']['mortality_cost'] + inputs_dynamics['post_inputs']['loss_well_being'],
               'efficiency': inputs['efficiency'],
+              'health_cost_dpe': inputs_dynamics['health_cost_dpe'],
               'implicit_discount_rate': inputs_dynamics['post_inputs']['implicit_discount_rate']
               }
     output = {k: item for k, item in output.items() if k in variables}
@@ -701,8 +701,9 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
-            if config['output'] == 'full' and buildings.path_ini is not None:
+            if config['output'] == 'full':
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
+            if buildings.path_ini is not None:
                 buildings.logger.info('Creating standard figures')
                 plot_scenario(output, stock, buildings)
 

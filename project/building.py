@@ -6280,6 +6280,13 @@ class AgentBuildings(ThermalBuildings):
         df_efficiency_carbon = sort_cum(df_efficiency_carbon, round=0)
         _output.update({'efficiency_carbon': df_efficiency_carbon})
 
+        x = stock.rename('Stock (Million)')
+        y = cost_efficiency_carbon.rename('Cost efficiency (euro/tCO2)') * 10**6
+        df_efficiency_pop = concat((x, y), axis=1)
+        df_efficiency_pop = sort_cum(df_efficiency_pop, round=0)
+        df_efficiency_pop.index = df_efficiency_pop.index * 10 ** 3
+        _output.update({'efficiency_pop': df_efficiency_pop})
+
         if plot:
             make_plot(df_efficiency, 'Cost efficiency (euro/kWh)', ymax=0.5, legend=False,
                       format_y=lambda y, _: '{:.1f}'.format(y),
@@ -6302,7 +6309,6 @@ class AgentBuildings(ThermalBuildings):
             df_npv = df_npv[df_npv['Emission saved (MtCO2)'] > 0]
             df_npv = sort_cum(df_npv, round=0)
             _output.update({'npv_carbon': df_npv})
-
 
             if _output_statistics:
                 _output_statistics.update({'npv': (
@@ -6329,7 +6335,7 @@ class AgentBuildings(ThermalBuildings):
 
     def make_static_analysis(self, cost_insulation, cost_heater, prices, discount_rate,
                              implicit_discount_rate, health_cost, carbon_content,
-                             path_out=None, carbon_value=50):
+                             path_out=None, carbon_value=50, selected_options=None, sufix=''):
         # select only stock mobile and existing before the first year
         if path_out is None:
             path_out = self.path_ini
@@ -6423,53 +6429,85 @@ class AgentBuildings(ThermalBuildings):
                                         'carbon_saved': emission_saved_value,
                                         'measures': 'deep_renovation',
                                         'health_cost': health_cost},
-            "Coût d'investissement social potentiel": {
+            "I, isolation": {
+                'discount_rate': 0.05,
+                'cash_flow_option': False,
+                'carbon_saved': None,
+                'measures': 'deep_insulation'
+            },
+            "I-E, isolation": {
+                'discount_rate': 0.05,
+                'carbon_saved': None,
+                'measures': 'deep_insulation'
+            },
+            "I-E-C, isolation": {
+                'discount_rate': 0.05,
+                'carbon_saved': emission_saved_value,
+                'health_cost': None,
+                'measures': 'deep_insulation'
+            },
+            "I-C-S, isolation": {
+                'discount_rate': 0.05,
+                'cash_flow_option': False,
+                'carbon_saved': emission_saved_value,
+                'health_cost': health_cost,
+                'measures': 'deep_insulation'
+            },
+            "I-E-S, isolation": {
+                'discount_rate': 0.05,
+                'carbon_saved': None,
+                'health_cost': health_cost,
+                'measures': 'deep_insulation'
+            },
+            "I-E-C-S, isolation": {
                 'discount_rate': 0.05,
                 'carbon_saved': emission_saved_value,
                 'health_cost': health_cost,
-                'measures': 'global_renovation'
+                'measures': 'deep_insulation'
             },
-            "Coût d'investissement": {
+            "I, isolation & chauffage": {
                 'discount_rate': 0.05,
                 'cash_flow_option': False,
                 'carbon_saved': None,
                 'measures': 'deep_renovation'
             },
-            "Coût d'investissement net facture d'énergie": {
+            "I-E, isolation & chauffage": {
                 'discount_rate': 0.05,
                 'carbon_saved': None,
                 'measures': 'deep_renovation'
             },
-            "Coût d'investissement net facture d'énergie et des économies de CO2": {
+            "I-E-C, isolation & chauffage": {
                 'discount_rate': 0.05,
                 'carbon_saved': emission_saved_value,
                 'health_cost': None,
                 'measures': 'deep_renovation'
             },
-            "Coût d'investissement net facture d'énergie et des coûts de santé": {
+            "I-C-S, isolation & chauffage": {
+                'discount_rate': 0.05,
+                'cash_flow_option': False,
+                'carbon_saved': emission_saved_value,
+                'health_cost': health_cost,
+                'measures': 'deep_renovation'
+            },
+            "I-E-S, isolation & chauffage": {
                 'discount_rate': 0.05,
                 'carbon_saved': None,
                 'health_cost': health_cost,
                 'measures': 'deep_renovation'
             },
-            "Coût d'investissement social": {
+            "I-E-C-S, isolation & chauffage": {
                 'discount_rate': 0.05,
                 'carbon_saved': emission_saved_value,
                 'health_cost': health_cost,
                 'measures': 'deep_renovation'
             }
         }
-
-        selected_options = ['Deep insulation, private',
+        if selected_options is None:
+            selected_options = ['Deep insulation, private',
                             'Deep renovation, social',
                             'Deep renovation, private']
 
-        selected_options = ["Coût d'investissement",
-                            "Coût d'investissement net facture d'énergie",
-                            "Coût d'investissement net facture d'énergie et des économies de CO2",
-                            "Coût d'investissement net facture d'énergie et des coûts de santé",
-                            "Coût d'investissement social"
-                            ]
+
         # "Coût d'investissement net facture d'énergie et des coûts de santé"
 
         options = {k: i for k, i in options.items() if
@@ -6480,11 +6518,18 @@ class AgentBuildings(ThermalBuildings):
                   'Deep insulation, private': 'darkmagenta',
                   'Global insulation, private': 'darkblue',
                   'Deep renovation, private': 'royalblue',
-                  "Coût d'investissement": 'darkblue',
-                  "Coût d'investissement net facture d'énergie": 'royalblue',
-                  "Coût d'investissement net facture d'énergie et des économies de CO2": 'darkmagenta',
-                  "Coût d'investissement net facture d'énergie et des coûts de santé": 'orangered',
-                  "Coût d'investissement social": 'darkred'
+                  "I, isolation": 'darkblue',
+                  "I-E, isolation": 'royalblue',
+                  "I-E-C, isolation": 'darkmagenta',
+                  "I-C-S, isolation": 'orangered',
+                  "I-E-S, isolation": 'darkred',
+                  "I-E-C-S, isolation": 'black',
+                  "I, isolation & chauffage": 'darkblue',
+                  "I-E, isolation & chauffage": 'royalblue',
+                  "I-E-C, isolation & chauffage": 'darkmagenta',
+                  "I-C-S, isolation & chauffage": 'orangered',
+                  "I-E-S, isolation & chauffage": 'darkred',
+                  "I-E-C-S, isolation & chauffage": 'black'
                 }
 
         dict_rslt, dict_stats = {}, {}
@@ -6505,6 +6550,8 @@ class AgentBuildings(ThermalBuildings):
         c_content = carbon_content.reindex(self.to_energy(c_before)).set_axis(c_before.index)
         e_before = (c_before * c_content).sum()
 
+        stock_ini = self._stock_ref.sum() / 1e6
+
         # percentage of initial value
         for key in dict_rslt.keys():
             if key in ['efficiency_carbon', 'npv_carbon']:
@@ -6513,7 +6560,12 @@ class AgentBuildings(ThermalBuildings):
                     dict_rslt[key][k].name = 'Emission saving (% / 2018)'
                     dict_rslt[key][k].index.rename('Emission saved (% / 2018)', inplace=True)
                     dict_rslt[key][k].index.rename('Emission évitée (/2018)', inplace=True)
-
+            elif 'pop' in key:
+                for k in dict_rslt[key].keys():
+                    dict_rslt[key][k].index = dict_rslt[key][k].index / stock_ini
+                    dict_rslt[key][k].name = 'Stock de résidences principales (% / 2018)'
+                    dict_rslt[key][k].index.rename('Stock de résidences principales (% / 2018)', inplace=True)
+                    dict_rslt[key][k].index.rename('Stock de résidences principales (/2018)', inplace=True)
             else:
                 for k in dict_rslt[key].keys():
                     dict_rslt[key][k].index = dict_rslt[key][k].index / (c_before.sum() / 10 ** 9)
@@ -6521,205 +6573,76 @@ class AgentBuildings(ThermalBuildings):
                     dict_rslt[key][k].index.rename('Consumption saved (% / 2018)', inplace=True)
                     dict_rslt[key][k].index.rename("Économie d'énergie (/2018)", inplace=True)
 
-        make_plots(dict_rslt['efficiency'], "Coût d'abattement énergie (euro par kWh cumac)",
-                   save=os.path.join(path_out, 'cout_abattement_energie.png'), ymax=0.3, ymin=0,
-                   format_y=lambda y, _: '{:.2f}€/kWh'.format(y), loc='upper', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False, x_tick_interval=0.1,
-                   xmin=0, xmax=1, ncol=1)
+        if False:
+            temp = {k: i for k, i in dict_rslt['efficiency'].items() if k.split(',')[0] in ['I', 'I-C', 'I-C-S']}
+            make_plots(temp, "Coût d'abattement énergie (€ par kWh cumac)",
+                       save=os.path.join(path_out, 'cout_abattement_energie{}.png'.format(sufix)), ymax=0.3, ymin=0,
+                       format_y=lambda y, _: '{:.2f}€/kWh'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False, x_tick_interval=0.1,
+                       xmin=0, xmax=1, ncol=1)
 
-        make_plots(dict_rslt['efficiency_carbon'], "Coût d'abattement émission (euro par tCO2 évitée)",
-                   save=os.path.join(path_out, 'cout_abattement_emission.png'), ymax=1000, ymin=0,
-                   format_y=lambda y, _: '{:.0f}€/tCO2'.format(y), loc='upper', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False, x_tick_interval=0.1,
-                   xmin=0, xmax=1, ncol=1)
+            temp = {k: i for k, i in dict_rslt['efficiency_carbon'].items() if k.split(',')[0] in ['I', 'I-E', 'I-E-S']}
+            make_plots(temp, "Coût d'abattement émission (€ par tCO2 évitée)",
+                       save=os.path.join(path_out, 'cout_abattement_emission{}.png'.format(sufix)), ymax=1000, ymin=0,
+                       format_y=lambda y, _: '{:.0f}€/tCO2'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False, x_tick_interval=0.1,
+                       xmin=0, xmax=1, ncol=1)
 
-        make_plots(dict_rslt['npv'], 'Coût actuel net (Milliers euro)',
-                   save=os.path.join(path_out, 'van.png'),
-                   format_y=lambda y, _: '{:.0f}k€'.format(y / 10 ** 3), loc='upper', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), hlines=0, order_legend=False, x_tick_interval=0.1,
-                   ymax=40*1e3, ymin=-20*1e3, xmin=0, xmax=1, ncol=1)
+            temp = {k: i for k, i in dict_rslt['efficiency_pop'].items() if k.split(',')[0] in ['I', 'I-E', 'I-E-S']}
+            make_plots(temp, "Coût d'abattement émission (€ par tCO2 évitée)",
+                       save=os.path.join(path_out, 'cout_abattement_logement{}.png'.format(sufix)), ymax=1000, ymin=0,
+                       format_y=lambda y, _: '{:.0f}€/tCO2'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False, x_tick_interval=0.1,
+                       xmin=0, xmax=1, ncol=1)
 
-        make_plots(dict_rslt['npv_carbon'], 'Coût actuel net (Milliers euro)',
-                   save=os.path.join(path_out, 'van_emission.png'),
-                   format_y=lambda y, _: '{:.0f}k€'.format(y / 10 ** 3), loc='upper', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), hlines=0, order_legend=False, x_tick_interval=0.1,
-                   ymax=40*1e3, ymin=-20*1e3, xmin=0, xmax=1, ncol=1)
+            temp = {k: i for k, i in dict_rslt['npv'].items() if k.split(',')[0] in ['I', 'I-E', 'I-E-C', 'I-E-C-S']}
+            make_plots(temp, 'Coût actualisé (Milliers €)',
+                       save=os.path.join(path_out, 'van{}.png'.format(sufix)),
+                       format_y=lambda y, _: '{:.0f}k€'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), hlines=0, order_legend=False, x_tick_interval=0.1,
+                       ymax=40*1e3, ymin=-20*1e3, xmin=0, xmax=1, ncol=1)
 
-        make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
-                   save=os.path.join(path_out, 'abatement_curve.png'), ymax=1, ymin=-1,
-                   format_y=lambda y, _: '{:.2f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
+            temp = {k: i for k, i in dict_rslt['npv_pop'].items() if k.split(',')[0] in ['I', 'I-E', 'I-E-C', 'I-E-C-S']}
+            make_plots(temp, 'Coût actualisé (Milliers €)',
+                       save=os.path.join(path_out, 'van_logement{}.png'.format(sufix)),
+                       format_y=lambda y, _: '{:.0f}k€'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), hlines=0, order_legend=False, x_tick_interval=0.1,
+                       ymax=40*1e3, ymin=-20*1e3, xmin=0, xmax=1, ncol=1)
 
-        make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
-                   save=os.path.join(path_out, 'abatement_curve_zoom.png'), ymax=0.3, ymin=0,
-                   format_y=lambda y, _: '{:.2f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
+            temp = {k: i for k, i in dict_rslt['npv_carbon'].items() if k.split(',')[0] in ['I', 'I-E', 'I-E-C', 'I-E-C-S']}
+            make_plots(temp, 'Coût actualisé (Milliers €)',
+                       save=os.path.join(path_out, 'van_emission{}.png'.format(sufix)),
+                       format_y=lambda y, _: '{:.0f}k€'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), hlines=0, order_legend=False, x_tick_interval=0.1,
+                       ymax=40*1e3, ymin=-20*1e3, xmin=0, xmax=1, ncol=1)
 
-        make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
-                   save=os.path.join(path_out, 'abatement_curve_carbon.png'), ymax=5000, ymin=-1000,
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
+        if False:
+            make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
+                       save=os.path.join(path_out, 'abatement_curve.png'), ymax=1, ymin=-1,
+                       format_y=lambda y, _: '{:.2f}'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
 
-        make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
-                   save=os.path.join(path_out, 'abatement_curve_carbon_zoom.png'), ymax=500, ymin=0,
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
+            make_plots(dict_rslt['efficiency'], 'Cost efficiency (euro per kWh saved)',
+                       save=os.path.join(path_out, 'abatement_curve_zoom.png'), ymax=0.3, ymin=0,
+                       format_y=lambda y, _: '{:.2f}'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
 
-        make_plots(dict_rslt['npv'], 'Net present cost (Thousand euro)',
-                   save=os.path.join(path_out, 'npv_insulation_curve.png'),
-                   format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), ymin=None, hlines=0, order_legend=False)
+            make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
+                       save=os.path.join(path_out, 'abatement_curve_carbon.png'), ymax=5000, ymin=-1000,
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
 
-        make_plots(dict_rslt['roi'], 'Return Time on Investment (years)',
-                   save=os.path.join(path_out, 'roi_insulation_curve.png'),
-                   format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
-                   format_x=lambda x, _: '{:.0%}'.format(x), ymax=50, order_legend=False)
+            make_plots(dict_rslt['efficiency_carbon'], 'Cost efficiency (euro per tCO2 saved)',
+                       save=os.path.join(path_out, 'abatement_curve_carbon_zoom.png'), ymax=500, ymin=0,
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), order_legend=False)
 
-    def mitigation_potential(self, prices, cost_insulation_raw, carbon_emission=None, carbon_value=None,
-                             health_cost=None, index=None):
-        """Function returns bill saved and cost for buildings stock retrofit.
+            make_plots(dict_rslt['npv'], 'Net present cost (Thousand euro)',
+                       save=os.path.join(path_out, 'npv_insulation_curve.png'),
+                       format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 3), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), ymin=None, hlines=0, order_legend=False)
 
-        Not implemented yet but should be able to calculate private and social indicator.
-        Make cost abatement cost graphs, payback period graphs.
-
-        Parameters
-        ----------
-        index
-        prices
-        cost_insulation_raw
-        carbon_emission
-        carbon_value
-        health_cost
-
-        Returns
-        -------
-
-        """
-
-        output = dict()
-
-        if index is None:
-            index = self.stock.index
-
-        consumption_before = self.consumption_heating_store(index, full_output=False)
-        consumption_after, _, certificate_after = self.prepare_consumption(self._choice_insulation, index=index)
-        consumption_saved = (consumption_before - consumption_after.T).T
-
-        self._efficiency.index.names = ['Heating system']
-        efficiency = reindex_mi(self._efficiency, consumption_before.index)
-        need_before = consumption_before * efficiency
-
-        consumption_before = reindex_mi(consumption_before, index)
-        need_before = reindex_mi(need_before, index)
-        consumption_after = reindex_mi(consumption_after, index)
-        consumption_saved = reindex_mi(consumption_saved, index)
-        efficiency = reindex_mi(self._efficiency, consumption_saved.index)
-        need_saved = (consumption_saved.T * efficiency).T
-
-        consumption_actual_before = self.consumption_actual(prices.loc[self.year, :], consumption_before)
-        consumption_actual_after = self.consumption_actual(prices.loc[self.year, :], consumption_after)
-        consumption_actual_saved = (consumption_actual_before - consumption_actual_after.T).T
-
-        consumption_before = reindex_mi(self._surface, index) * consumption_before
-        consumption_after = (reindex_mi(self._surface, index) * consumption_after.T).T
-        consumption_saved = (reindex_mi(self._surface, index) * consumption_saved.T).T
-
-        need_before = reindex_mi(self._surface, index) * need_before
-        need_saved = (reindex_mi(self._surface, index) * need_saved.T).T
-
-        consumption_actual_before = (reindex_mi(self._surface, index) * consumption_actual_before.T).T
-        consumption_actual_after = (reindex_mi(self._surface, index) * consumption_actual_after.T).T
-        consumption_actual_saved = (reindex_mi(self._surface, index) * consumption_actual_saved.T).T
-
-        output.update({'Stock (dwellings/segment)': self.stock,
-                       'Surface (m2/segment)': self.stock * reindex_mi(self._surface, index),
-                       'Consumption before (kWh/dwelling)': consumption_before,
-                       'Consumption before (kWh/segment)': consumption_before * self.stock,
-                       'Need before (kWh/segment)': need_before * self.stock,
-                       'Consumption actual before (kWh/dwelling)': consumption_actual_before,
-                       'Consumption actual before (kWh/segment)': consumption_actual_before * self.stock,
-                       'Consumption actual after (kWh/dwelling)': consumption_actual_after,
-                       'Consumption actual after (kWh/segment)': (consumption_actual_after.T * self.stock).T,
-                       'Consumption saved (kWh/dwelling)': consumption_saved,
-                       'Consumption saved (kWh/segment)': (consumption_saved.T * self.stock).T,
-                       'Need saved (kWh/segment)': (need_saved.T * self.stock).T,
-                       'Consumption actual saved (kWh/dwelling)': consumption_actual_saved,
-                       'Consumption actual saved (kWh/segment)': (consumption_actual_saved.T * self.stock).T
-                       })
-
-        consumption_saved_agg = (self.stock * consumption_saved.T).T
-        consumption_actual_saved_agg = (self.stock * consumption_actual_saved.T).T
-
-        if carbon_emission is not None:
-            c = self.add_energy(consumption_actual_before)
-            emission_before = reindex_mi(carbon_emission.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                              self.year] * c
-
-            c = self.add_energy(consumption_actual_after)
-            emission_after = (reindex_mi(carbon_emission.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                              self.year] * c.T).T
-
-            emission_saved = - emission_after.sub(emission_before, axis=0).dropna()
-
-            output.update({'Emission before (gCO2/dwelling)': emission_before,
-                           'Emission after (gCO2/dwelling)': emission_after,
-                           'Emission saved (gCO2/dwelling)': emission_saved,
-                           })
-
-            if carbon_value is not None:
-                c = self.add_energy(consumption_actual_before)
-                emission_value_before = reindex_mi(carbon_value.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                                        self.year] * c
-
-                c = self.add_energy(consumption_actual_after)
-                emission_value_after = (reindex_mi(carbon_value.T.rename_axis('Energy', axis=0), c.index).loc[:,
-                                        self.year] * c.T).T
-
-                emission_value_saved = - emission_value_after.sub(emission_value_before, axis=0).dropna()
-
-                output.update({'Emission value before (euro/dwelling)': emission_value_before,
-                               'Emission value after (euro/dwelling)': emission_value_after,
-                               'Emission value saved (euro/dwelling)': emission_value_saved
-                               })
-
-        cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
-        cost_insulation = reindex_mi(cost_insulation, index)
-        potential_cost_insulation = (reindex_mi(self._surface, index) * cost_insulation.T).T
-
-        output.update({'Cost insulation (euro/dwelling)': potential_cost_insulation,
-                       'Cost insulation (euro/segment)': (potential_cost_insulation.T * self.stock).T
-                       })
-
-        index = self.stock.index
-        energy = Series(index.get_level_values('Heating system'), index=index).str.split('-').str[0].rename('Energy')
-        energy_prices = prices.loc[self.year, :].reindex(energy).set_axis(index)
-
-        bill_before = consumption_before * energy_prices
-        bill_after = (consumption_after.T * energy_prices).T
-        bill_saved = - bill_after.sub(bill_before, axis=0).dropna()
-
-        output.update({'Bill before (euro/dwelling)': bill_before,
-                       'Bill after (euro/dwelling)': bill_after,
-                       'Bill saved (euro/dwelling)': bill_saved
-                       })
-
-        discount_rate, lifetime = 0.05, 30
-        discount_factor = (1 - (1 + discount_rate) ** -lifetime) / discount_rate
-        npv = bill_saved * discount_factor - potential_cost_insulation
-
-        out = AgentBuildings.find_best_option(npv, {'bill_saved': bill_saved,
-                                                    'cost': potential_cost_insulation,
-                                                    'consumption_saved': consumption_saved,
-                                                    'consumption_saved_agg': consumption_saved_agg,
-                                                    'consumption_actual_saved_agg': consumption_actual_saved_agg
-                                                    })
-        output.update({'Best NPV': out})
-
-        out = AgentBuildings.find_best_option(consumption_saved_agg, {'bill_saved': bill_saved,
-                                                                      'cost': potential_cost_insulation,
-                                                                      'consumption_saved': consumption_saved,
-                                                                      'consumption_saved_agg': consumption_saved_agg,
-                                                                      'consumption_actual_saved_agg': consumption_actual_saved_agg})
-
-        output.update({'Max consumption saved': out})
-        return output
+            make_plots(dict_rslt['roi'], 'Return Time on Investment (years)',
+                       save=os.path.join(path_out, 'roi_insulation_curve.png'),
+                       format_y=lambda y, _: '{:.0f}'.format(y), loc='left', left=1.25, colors=colors,
+                       format_x=lambda x, _: '{:.0%}'.format(x), ymax=50, order_legend=False)
