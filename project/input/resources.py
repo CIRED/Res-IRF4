@@ -213,6 +213,7 @@ colors = {
 
 colors_policies = {
     "Subsidies": "royalblue",
+    "Taxes": "royalblue",
     "Subsidies heater": "royalblue",
     "Subsidies insulation": "darksalmon",
     "Reduced vat": "darkolivegreen",

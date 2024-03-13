@@ -21,7 +21,7 @@ import os
 import seaborn as sns
 from project.input.resources import resources_data
 from project.utils import make_plot, make_grouped_subplots, make_area_plot, waterfall_chart, \
-    make_uncertainty_plot, format_table, select, make_clusterstackedbar_plot, plot_ldmi_method
+    make_uncertainty_plot, format_table, select, make_clusterstackedbar_plot, plot_ldmi_method, make_stacked_bar_subplot
 from project.utils import stack_catplot, make_relplot, make_stackedbar_plot, make_scatter_plot, get_pandas, get_series
 from itertools import product
 from PIL import Image
@@ -463,7 +463,8 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                   colors=resources_data['colors'], ymin=None)
 
 
-def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None, reference='Reference', colors=None):
+def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None, reference='Reference', colors=None,
+                           scenario=None):
     """Grouped scenarios output.
 
     Parameters
@@ -929,7 +930,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     # ----------------
     # graph distributive impact - cost for households
 
-    if False:
+    if scenario is not None:
         for k in result.keys():
             subsidies = result[k].loc['Subsidies total (Billion euro)', :]
             annuities_subsidies = calculate_annuities(subsidies, lifetime=10, discount_rate=0.05)
@@ -942,41 +943,60 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
         counterfactual = None
         levels = ['Housing type', 'Occupancy status', 'Income tenant']
         idx = list(product(*[resources_data['index'][i] for i in levels]))
-        year = 2030
         cost = ['Annuities {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
         energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
         stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
         idx = pd.MultiIndex.from_tuples(idx, names=levels)
-        dict_subsidies = {k: pd.Series(i.loc['Subsidies households (euro)', year], index=idx) for k, i in result.items()}
-        dict_cost = {k: (i.loc[cost, year].set_axis(idx, axis=0) / i.loc[stock, year].set_axis(idx, axis=0)) for k, i in result.items()}
-        dict_energy = {k: (i.loc[energy, year].set_axis(idx, axis=0) / i.loc[stock, year].set_axis(idx, axis=0)) for k, i in result.items()}
+        # average over time
+        year = range(2025, 2051, 1)
+        year = [i for i in year if i in result.get(reference).columns]
+        dict_cost, dict_energy, dict_subsidies = {}, {}, {}
+        for k, i in result.items():
+            temp = (i.loc[cost, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_cost.update({k: temp.copy()})
+            temp = (i.loc[energy, year].set_axis(idx, axis=0)).sum(axis=1) / \
+                   i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_energy.update({k: temp.copy()})
+            temp = pd.concat([i.loc['Subsidies households (euro)', year]] * len(idx), keys=idx, axis=1).T
+            temp = (temp * i.loc[stock, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_subsidies.update({k: temp.copy()})
+
         df_energy = pd.DataFrame(dict_energy)
         df_cost = pd.DataFrame(dict_cost)
         df_subsidies = pd.DataFrame(dict_subsidies)
-        df = pd.concat((df_cost, df_energy, df_subsidies), axis=0, keys=['Cost', 'Energy', 'Subsidies'], names=['Type'])
+        df = pd.concat((df_cost, df_energy, df_subsidies), axis=0, keys=['Cost', 'Energy', 'Taxes'], names=['Type'])
         df.columns.names = ['Scenario']
         levels_group = ['Housing type', 'Occupancy status']
         # counterfactual = 'NoPolicyHeater'
         counterfactual = reference
         # df = df.loc[:, ['Ban', 'Reference']]
-        df_diff = df['Ban'] - df[counterfactual]
+        df_diff = df[scenario] - df[counterfactual]
+        # df_diff = df[counterfactual]
 
         # remove social housing from df_diff
         df_diff = df_diff.drop('Social-housing', level='Occupancy status')
+        if not df_diff.empty:
+            make_stacked_bar_subplot(df_diff, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18,
+                                     color=resources_data['colors'],
+                                     save=os.path.join(folder_img, 'cost_households_{}.png'.format(scenario)),
+                                     subplot_groups=['Housing type', 'Occupancy status'],
+                                     index_group='Income tenant', stack_group='Type', ncol=None,
+                                     annotate='{:.0f}', bottom=0.1)
 
-        for n, g in df.groupby(levels_group):
-            g = g.droplevel(levels_group, axis=0)
-            if counterfactual is not None:
-                g = (g.T - g.loc[:, counterfactual]).T
-                g.drop(counterfactual, axis=1, inplace=True)
-            g = g.stack('Scenario').unstack('Income tenant')
-            # Creating a larger figure outside the function
+        if False:
+            for n, g in df.groupby(levels_group):
+                g = g.droplevel(levels_group, axis=0)
+                if counterfactual is not None:
+                    g = (g.T - g.loc[:, counterfactual]).T
+                    g.drop(counterfactual, axis=1, inplace=True)
+                g = g.stack('Scenario').unstack('Income tenant')
+                # Creating a larger figure outside the function
 
-            make_clusterstackedbar_plot(g, 'Type', colors=resources_data['colors'],
-                                        format_y=lambda y, _: '{:.0f} €/year'.format(y),
-                                        save=os.path.join(folder_img, 'cost_households_{}.png'.format('_'.join(n))), rotation=90,
-                                        ymin=-60, ymax=60,
-                                        legend=False, figtitle=' | '.join(n), display_total=True)
+                make_clusterstackedbar_plot(g, 'Type', colors=resources_data['colors'],
+                                            format_y=lambda y, _: '{:.0f} €/year'.format(y),
+                                            save=os.path.join(folder_img, 'cost_households_{}.png'.format('_'.join(n))), rotation=90,
+                                            ymin=-60, ymax=60,
+                                            legend=False, figtitle=' | '.join(n), display_total=True)
 
     # ----------------
 

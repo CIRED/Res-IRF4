@@ -43,6 +43,8 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
             if os.path.isfile(config):
                 with open(config) as file:
                     config = json.load(file).get('Reference')
+            else:
+                raise FileNotFoundError('File not found')
         elif isinstance(config, dict):
             pass
         else:

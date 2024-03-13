@@ -950,7 +950,7 @@ class AgentBuildings(ThermalBuildings):
     def __init__(self, stock, surface, ratio_surface, efficiency, income, preferences,
                  performance_insulation_renovation, lifetime_heater=None, path=None, year=2018,
                  endogenous=True, exogenous=None, expected_utility=None,
-                 logger=None, calib_scale=True, quintiles=None, financing_cost=True,
+                 logger=None, calib_scale=True, quintiles=None,
                  rational_behavior_insulation=None, rational_behavior_heater=None,
                  resources_data=None, detailed_output=True, figures=None,
                  method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
@@ -971,8 +971,6 @@ class AgentBuildings(ThermalBuildings):
 
         self._flow_obligation = {}
         self.policies = []
-
-        self.financing_cost = financing_cost
 
         self._target_demolition = ['E', 'F', 'G']
 
@@ -995,7 +993,17 @@ class AgentBuildings(ThermalBuildings):
             self._expected_utility = 'market_share'
 
         self.preferences_heater = deepcopy(preferences['heater'])
+        discount_factor = (1 - (1 + self.preferences_heater['present_discount_rate']) ** -self.preferences_heater[
+            'lifetime']) / self.preferences_heater['present_discount_rate']
+        discount_factor *= abs(self.preferences_heater['cost'])
+        self.preferences_heater['bill_saved'] = discount_factor.copy()
+
         self.preferences_insulation = deepcopy(preferences['insulation'])
+        discount_factor = (1 - (1 + self.preferences_insulation['present_discount_rate']) ** -self.preferences_insulation[
+            'lifetime']) / self.preferences_insulation['present_discount_rate']
+        discount_factor *= abs(self.preferences_insulation['cost'])
+        self.preferences_insulation['bill_saved'] = discount_factor.copy()
+
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
         self.scale_insulation, self.scale_heater = 1.0, 1.0
@@ -1513,7 +1521,7 @@ class AgentBuildings(ThermalBuildings):
         # sort financing_options by price
         financing_options = {k: v for k, v in sorted(financing_options.items(), key=lambda item: item[1]['price'])}
 
-        if financing_cost is not None and self.financing_cost:
+        if financing_cost is not None:
 
             remaining = to_pay.copy()
             rslt = {}
@@ -3510,7 +3518,10 @@ class AgentBuildings(ThermalBuildings):
                 temp.to_csv(os.path.join(self.path_calibration, 'parameters_insulation.csv'))
 
                 # export hidden cost for each renovation work type that result from calibration
-                self.hidden_cost_insulation.to_csv(os.path.join(self.path_calibration, 'hidden_cost_insulation.csv'))
+                temp = self.hidden_cost_insulation.copy()
+                temp = temp + self.hidden_cost.loc[('Single-family', 'Owner-occupied')]
+                temp = concat((temp, pd.Series(self.preferences_insulation['cost'], index=temp.index)), axis=1, keys=['Hidden cost', 'Coeff cost'])
+                temp.to_csv(os.path.join(self.path_calibration, 'hidden_cost_insulation.csv'))
 
                 # TODO: Clean this part
                 ms_full = (_market_share.T * _renovation_rate).T

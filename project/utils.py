@@ -399,6 +399,9 @@ def parse_policies(config):
 
 
 def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
+    if isinstance(discount_rate, (float, int, np.float64, np.int64)):
+        if discount_rate == 0:
+            return capex / lifetime
     factor = discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
     if isinstance(factor, (pd.Series, pd.DataFrame)):
         factor.fillna(1 / lifetime, inplace=True)

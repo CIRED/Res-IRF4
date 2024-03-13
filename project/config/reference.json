@@ -104,7 +104,7 @@
       "income_rate": 0.008,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
       "consumption_ini": "project/input/macro/consumption_ini.csv",
-      "preferences_saving": "project/input/investment/stated_preferences_saving.csv",
+      "present_discount_rate": "project/input/investment/present_discount_rate.csv",
       "population": null,
       "surface_built": null,
       "stock_ini": null,
