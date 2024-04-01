@@ -112,7 +112,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     buildings, _, o = stock_turnover(buildings, prices, taxes,
                                      inputs_dynamics['cost_heater'],
                                      inputs_dynamics['cost_insulation'],
-                                     inputs_dynamics['lifetime_insulation'],
+                                     inputs_dynamics['frequency_insulation'],
                                      p_heater, p_insulation, f_built, year,
                                      inputs_dynamics['post_inputs'],
                                      calib_renovation=inputs_dynamics['calibration_renovation'],
@@ -211,7 +211,7 @@ def read_proportional(data):
 
 
 def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_insulation,
-                 lifetime_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
+                 frequency_insulation, flow_built, post_inputs, policies_heater, policies_insulation,
                  financing_cost, output_options='full',
                  sub_heater=None, sub_insulation=None, climate=2006, smooth=False, efficiency_hour=False,
                  demolition_rate=None,
@@ -257,7 +257,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
 
         buildings, s, o = stock_turnover(buildings, prices, taxes,
                                          cost_heater,
-                                         cost_insulation, lifetime_insulation,
+                                         cost_insulation, frequency_insulation,
                                          p_heater, p_insulation, f_built, year,
                                          post_inputs,
                                          premature_replacement=premature_replacement,
@@ -323,7 +323,7 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
     output, stock, consumption = simu_res_irf(buildings, start, end,
                                               inputs_dynamics['energy_prices'], inputs_dynamics['taxes'],
                                               inputs_dynamics['cost_heater'], inputs_dynamics['cost_insulation'],
-                                              inputs_dynamics['lifetime_insulation'],
+                                              inputs_dynamics['frequency_insulation'],
                                               inputs_dynamics['flow_built'],
                                               inputs_dynamics['post_inputs'],
                                               policies_heater,

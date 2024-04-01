@@ -248,7 +248,7 @@ def select_post_inputs(parsed_inputs):
             'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
             'health_cost_dpe', 'health_cost_income', 'carbon_value_kwh', 'carbon_value',
-            'use_subsidies', 'implicit_discount_rate', 'energy_prices_wt']
+            'use_subsidies', 'energy_prices_wt']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
@@ -271,7 +271,7 @@ def get_inputs(path=None, config=None, variables=None):
     """
     if variables is None:
         variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh',
-                     'health_cost', 'income', 'cost_heater', 'health_cost_dpe']
+                     'health_cost', 'income', 'cost_heater', 'health_cost_dpe', 'present_discount_rate']
 
     config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
@@ -284,7 +284,8 @@ def get_inputs(path=None, config=None, variables=None):
               'carbon_value_kwh': inputs_dynamics['post_inputs']['carbon_value_kwh'],
               'efficiency': inputs['efficiency'],
               'health_cost_dpe': inputs_dynamics['health_cost_dpe'],
-              'implicit_discount_rate': inputs_dynamics['post_inputs']['implicit_discount_rate']
+              'present_discount_rate': inputs['preferences']['insulation']['present_discount_rate'],
+              'frequency_insulation': inputs_dynamics['frequency_insulation']
               }
     output = {k: item for k, item in output.items() if k in variables}
 
@@ -360,7 +361,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         'calibration_heater': parsed_inputs['calibration_heater'],
         'flow_district_heating': parsed_inputs['flow_district_heating'],
         'cost_insulation': parsed_inputs['cost_insulation'],
-        'lifetime_insulation': parsed_inputs['lifetime_insulation'],
+        'frequency_insulation': parsed_inputs['frequency_insulation'],
         'calibration_renovation': parsed_inputs['calibration_renovation'],
         'demolition_rate': parsed_inputs['demolition_rate'],
         'flow_built': parsed_inputs['flow_built'],
@@ -377,7 +378,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
     return inputs_dynamic
 
 
-def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifetime_insulation,
+def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequency_insulation,
                    p_heater, p_insulation, flow_built, year,
                    post_inputs,  calib_heater=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
@@ -439,7 +440,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
                                                                             carbon_content_before,
                                                                             bill_rebate=bill_rebate_before)
 
-    flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation, lifetime_insulation,
+    flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation, frequency_insulation,
                                             financing_cost=financing_cost,
                                             policies_heater=p_heater,
                                             policies_insulation=p_insulation,
@@ -650,7 +651,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             buildings, s, o = stock_turnover(buildings, prices, taxes,
                                              inputs_dynamics['cost_heater'],
                                              inputs_dynamics['cost_insulation'],
-                                             inputs_dynamics['lifetime_insulation'],
+                                             inputs_dynamics['frequency_insulation'],
                                              p_heater, p_insulation, f_built, year,
                                              inputs_dynamics['post_inputs'],
                                              calib_renovation=inputs_dynamics['calibration_renovation'],
@@ -674,9 +675,8 @@ def res_irf(config, path, level_logger='DEBUG'):
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
             if year == buildings.first_year + 1 and config['output'] == 'full' and buildings.path_ini is not None:
                 compare_results(o, buildings.path)
-                # inputs_dynamics['post_inputs']['implicit_discount_rate']
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
-                                               prices, 0.05, 0.05, inputs_dynamics['post_inputs']['health_cost_dpe'],
+                                               prices, inputs_dynamics['post_inputs']['health_cost_dpe'],
                                                inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :],
                                                carbon_value=50)
 
@@ -759,7 +759,7 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
 
         buildings, s, o = stock_turnover(buildings, prices, taxes,
                                          inputs_dynamics['cost_heater'],
-                                         inputs_dynamics['cost_insulation'], inputs_dynamics['lifetime_insulation'],
+                                         inputs_dynamics['cost_insulation'], inputs_dynamics['frequency_insulation'],
                                          p_heater, p_insulation, f_built, year, inputs_dynamics['post_inputs'],
                                          district_heating=flow_district_heating,
                                          calib_renovation=inputs_dynamics['calibration_renovation'],

@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10405492.svg)](https://doi.org/10.5281/zenodo.10405492)
 
+![input/resources_dir/logo_resirf.png](/Users/lucas/PycharmProjects/Res-IRF4/project/input/resources_dir/logo_resirf.png "Res-IRF")
+
 ## Disclaimer
 
 **_The contents of this repository are all in-progress and should not be expected to be free of errors or to perform any
@@ -167,12 +169,10 @@ If you find `Res-IRF` useful, please kindly cite our last paper:
 
 ```
 @article{
-  author  = {Giraudet, Louis-Gaëtan and Bourgeois, Cyril and Quirion, Philippe},
-  title   = {Policies for low-carbon and affordable home heating: A French outlook},
-  journal = {Energy Policy},
-  year    = {2021},
-  volume  = {151},
-  url     = {https://www.sciencedirect.com/science/article/pii/S0301421521000094}
+  author = {Vivier, Lucas and Giraudet, Louis-Gaëtan},
+  title = {Is {{France}} on Track for Decarbonizing Its Residential Sector? {{Assessing}} Recent Policy Changes and the Way Forward.},
+  date = {2024-01},
+  url = {https://hal.science/hal-04510798},
 }
 ```
 

@@ -658,7 +658,7 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
         ax.set_xlim(xmax=xmax, xmin=xmin)
 
     if ymin is not None:
-        ax.set_ylim(ymin=0)
+        ax.set_ylim(ymin=ymin)
         _, y_max = ax.get_ylim()
         ax.set_ylim(ymax=y_max * 1.1)
 
@@ -804,7 +804,7 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x,
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x,
                    xmin=xmin, xmax=xmax)
 
     if x_tick_interval is not None:
@@ -1471,6 +1471,7 @@ def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
     ax.tick_params(axis='both', which='major', labelsize=14)
     save_fig(fig, save=save)
+
 
 def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ymin=0, save=None, scatter=None,
                           columns=None, ncol=3, offset=1, loc='upper', left=1.04, reference='Reference'):
