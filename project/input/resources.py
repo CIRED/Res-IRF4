@@ -177,6 +177,9 @@ colors = {
     'Cost': 'firebrick',
     'Annuities heater': 'lightcoral',
     'Annuities insulation': 'firebrick',
+    "Insulation": 'firebrick',
+    "Heater": 'lightblue',
+    "Subsidies heater": 'royalblue',
     'Embodied emission': 'darkgreen',
     'Embodied emission additional': 'darkgreen',
     'Indirect emission': 'darkgreen',
@@ -213,7 +216,7 @@ colors = {
 
 colors_policies = {
     "Subsidies": "royalblue",
-    "Taxes": "royalblue",
+    "Taxes": "grey",
     "Subsidies heater": "royalblue",
     "Subsidies insulation": "darksalmon",
     "Reduced vat": "darkolivegreen",

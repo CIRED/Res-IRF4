@@ -35,6 +35,8 @@ from pathlib import Path, PosixPath, WindowsPath
 import sys
 import json
 import re
+from matplotlib.lines import Line2D
+
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
                      'D5': 'C3', 'D6': 'C3',
@@ -1200,7 +1202,7 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
 def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18, color=None,
                              save=None, subplot_groups=['Housing type', 'Occupancy status'],
                              index_group='Income tenant', stack_group='Type', ncol=None,
-                             annotate='{:.0f}€', bottom=0.1):
+                             annotate='{:.0f}€', annotate_bis=None, replace_legend=None):
     """Make stacked bar plot.
 
     Parameters
@@ -1215,8 +1217,8 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
     # Pivot the DataFrame to get the necessary structure for a stacked bar plot
     df.name = 'Value'
     pivot_df = df.reset_index().pivot_table(index=subplot_groups + [index_group],
-                                                 columns=stack_group,
-                                                 values='Value').reset_index()
+                                            columns=stack_group,
+                                            values='Value').reset_index()
 
     fig, axes = plt.subplots(2, 2, figsize=(12.8, 9.6), sharey=True)
     axes = axes.flatten()
@@ -1233,9 +1235,12 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         axes[i].spines['top'].set_visible(False)
         axes[i].spines['right'].set_visible(False)
         axes[i].spines['left'].set_visible(False)
+        axes[i].spines['bottom'].set_visible(False)
         axes[i].set_xticklabels(group.index, rotation=0)
         axes[i].tick_params(axis='x', labelsize=fonttick, length=0)
         axes[i].tick_params(axis='y', labelsize=fonttick, length=0)
+
+        axes[i].axhline(y=0, color='black', linewidth=1.3)
 
         # use the function format_y to format the y-ticks
         axes[i].yaxis.set_major_formatter(plt.FuncFormatter(format_y))
@@ -1251,16 +1256,31 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
                 axes[i].annotate(annotate.format(total), (index, total), ha='center', va='bottom', fontsize=fonttick)
                 axes[i].plot(index, total, marker='d', color='black', markersize=5)
 
+                if annotate_bis is not None:
+                    total = row[annotate_bis].sum()
+                    axes[i].plot(index, total, marker='x', color='red', markersize=5)
+
         # group.sum(axis=1)
 
     # Adjust legend
-    if ncol is None:
-        ncol = len(labels)
-    fig.legend(handles, labels, loc='lower center', ncol=ncol, fontsize=fonttick, frameon=False,
-               bbox_to_anchor=(0.5, 0))
+    if replace_legend is not None:
+        labels = [replace_legend[i] for i in labels]
+
+    fig.legend(handles, labels, loc='center left', fontsize=fonttick, frameon=False,
+               bbox_to_anchor=(1, 0.5))
+
+    if annotate_bis is not None:
+        custom_handles = [
+            Line2D([0], [0], marker='d', color='black', lw=0, label='With subsidies'),
+            Line2D([0], [0], marker='x', color='red', lw=0, label='Without subsidy'),
+        ]
+
+        # Add the additional legend
+        # Adjust the bbox_to_anchor values as needed to place the second legend
+        fig.legend(handles=custom_handles, loc='upper left', bbox_to_anchor=(1, 0.8), fontsize=fonttick, frameon=False)
 
     plt.tight_layout()
-    plt.subplots_adjust(bottom=bottom)  # Adjust the bottom margin
+    # plt.subplots_adjust(right=0.2)  # Adjust the bottom margin
     if save is not None:
         plt.savefig(save, bbox_inches='tight')
 
@@ -1602,6 +1622,13 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
 
     for k in range(n_rows * n_columns):
 
+        row = floor(k / n_columns)
+        column = k % n_columns
+        if n_rows == 1:
+            ax = axes[column]
+        else:
+            ax = axes[row, column]
+
         try:
             label = labels[k]
         except IndexError:
@@ -1618,12 +1645,7 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
         else:
             format_y = lambda y, _: '{:,.0f}M'.format(y / 1000000)
 
-        row = floor(k / n_columns)
-        column = k % n_columns
-        if n_rows == 1:
-            ax = axes[column]
-        else:
-            ax = axes[row, column]
+
 
         if dict_color is not None:
             stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
@@ -1710,7 +1732,7 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
                 ax.set_title(stock_label.index.name, fontsize=12)
             else:
                 stock_label.plot.pie(ax=ax, explode=None, labels=stock_label.index, autopct='%1.1f%%', shadow=False,
-                                     textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+                                     textprops={'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
         else:
             if dict_color is not None:
                 stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
@@ -1739,7 +1761,7 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
 
 
 def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_order={}, dict_color={}, percent=False,
-                             save=None):
+                             save=None, legend=True, left=1.1):
     fig, ax = plt.subplots(figsize=(12.8, 9.6))
     if suptitle is not None:
         fig.suptitle(suptitle, fontsize=20, fontweight='bold')
@@ -1763,9 +1785,11 @@ def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.legend(loc='best', frameon=False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+
+    if legend:
+        format_legend(ax, loc='left', left=left)
 
     if save is not None:
         fig.savefig(save, bbox_inches='tight')

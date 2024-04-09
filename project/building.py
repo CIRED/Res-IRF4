@@ -4577,7 +4577,7 @@ class AgentBuildings(ThermalBuildings):
 
     def parse_output_run(self, prices, inputs, climate=None, step=1, taxes=None,
                          lifetime_insulation=30, social_discount_rate=0.032, bill_rebate=0,
-                         coefficient_public_funding=0.2):
+                         coefficient_public_funding=0.2, duration_financing=10, discount_financing=0.05):
         """Parse output.
 
         Renovation : envelope
@@ -5242,9 +5242,12 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T / 10 ** 9 / step)
             investment_heater = self._heater_store['cost'].sum(axis=1)
 
-            x = self._heater_store['hidden_cost'].groupby('Housing type').sum() / 10 ** 9 / step
-
             output['Hidden cost heater (Billion euro)'] = self._heater_store['hidden_cost'].sum().sum() / 10 ** 9 / step
+
+            temp = self._heater_store['hidden_cost'].groupby('Housing type').sum() / 10 ** 9 / step
+            temp = temp.stack().squeeze()
+            temp.index = temp.index.map(lambda x: 'Hidden cost {} - {} (Billion euro)'.format(x[0], x[1]))
+            output.update(temp.T)
 
             output['Financing heater (Billion euro)'] = self._heater_store[
                                                             'cost_financing'].sum().sum() / 10 ** 9 / step
@@ -5343,8 +5346,13 @@ class AgentBuildings(ThermalBuildings):
             output.update(t.T)
 
             # subsidies_heater_hh = calculate_annuities(subsidies_heater, lifetime=10, discount_rate=0.05)
-            annuities_heater_hh = calculate_annuities(to_pay, lifetime=10, discount_rate=0.05)
+            annuities_heater_hh = calculate_annuities(to_pay, lifetime=duration_financing, discount_rate=discount_financing)
             output['Annuities heater households (Billion euro/year)'] = annuities_heater_hh.sum().sum() / 10 ** 9 / step
+
+            annuities_cost_heater_hh = calculate_annuities(investment_heater, lifetime=duration_financing,
+                                                           discount_rate=discount_financing)
+            annuities_subsidies_heater_hh = calculate_annuities(subsidies_heater, lifetime=duration_financing,
+                                                                discount_rate=discount_financing)
 
             output['Subsidies heater (Billion euro)'] = subsidies_heater.sum() / 10 ** 9 / step
             subsidies_loan_heater = self._heater_store['subsidies_loan'].sum(axis=1)
@@ -5403,46 +5411,82 @@ class AgentBuildings(ThermalBuildings):
 
                 annuities_insulation_year = self.add_level(annuities_insulation_hh, self._stock_ref, 'Income tenant')
                 annuities_insulation_year = annuities_insulation_year.groupby(lvls).sum().sum(axis=1)
+                temp = annuities_insulation_year.copy()
+                temp.index = temp.index.map(lambda x: 'Annuities insulation {} - {} - {}'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
                 annuities_heater_rented = annuities_heater_hh[annuities_heater_hh.index.get_level_values('Occupancy status').isin(['Privately rented', 'Social-housing'])]
                 annuities_heater_rented = annuities_heater_rented.groupby(['Housing type', 'Income owner']).sum()
 
                 annuities_heater_year = self.add_level(annuities_heater_hh, self._stock_ref, 'Income tenant')
                 annuities_heater_year = annuities_heater_year.groupby(lvls).sum()
+                temp = annuities_heater_year.copy()
+                temp.index = temp.index.map(lambda x: 'Annuities heater {} - {} - {}'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
+                temp = self.add_level(annuities_cost_heater_hh, self._stock_ref, 'Income tenant')
+                temp = temp.groupby(lvls).sum()
+                temp.index = temp.index.map(lambda x: 'Annuities cost heater {} - {} - {}'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
+                temp = self.add_level(annuities_subsidies_heater_hh, self._stock_ref, 'Income tenant')
+                temp = temp.groupby(lvls).sum()
+                temp.index = temp.index.map(lambda x: 'Annuities subsidies heater {} - {} - {}'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
                 annuities_year = annuities_insulation_year + annuities_heater_year
                 annuities_rented_year = annuities_insulation_rented + annuities_heater_rented
-                # Assuming annuities_rented_year is your DataFrame
+                # annuities_rented_year add Landlord as occupancy status to account for cost
                 index_arrays = [
                     annuities_rented_year.index.get_level_values(0),  # Housing type
                     annuities_rented_year.index.get_level_values(1),  # Income owner
                     ['Landlord'] * len(annuities_rented_year)  # Occupancy status
                 ]
-
                 new_index = pd.MultiIndex.from_arrays(index_arrays,
                                                       names=['Housing type', 'Income tenant', 'Occupancy status'])
                 annuities_rented_year.index = new_index
                 annuities_rented_year = annuities_rented_year.reorder_levels(['Housing type', 'Occupancy status', 'Income tenant'])
                 annuities_year = concat((annuities_year, annuities_rented_year), axis=0)
+                temp = annuities_year.copy()
+                temp.index = temp.index.map(lambda x: 'Annuities {} - {} - {}'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
-                duration = 10
+                """duration = 10
                 years = [y for y in self.expenditure_store.keys() if y > self.year - duration]
                 annuities_cumulated = sum([self.expenditure_store[y]['annuities'] for y in years])
                 annuities_cumulated += annuities_year
+                """
 
                 consumption_std = reindex_mi(self.consumption_heating(full_output=False), self.stock.index)
                 consumption_std *= reindex_mi(self._surface, self.stock.index)
                 energy_exp_std = self.energy_bill(prices, consumption_std, bill_rebate=0)
                 energy_exp_std *= self.stock
                 energy_exp_std = energy_exp_std.groupby(lvls).sum()
+                temp = energy_exp_std.copy()
+                temp.index = temp.index.map(
+                    lambda x: 'Energy expenditures standard {} - {} - {} (euro)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
                 consumption = self.consumption_actual(prices, bill_rebate=bill_rebate)
                 energy_exp = self.energy_bill(prices, consumption, bill_rebate=bill_rebate)
                 energy_exp *= self.stock
                 energy_exp = energy_exp.groupby(lvls).sum()
+                temp = energy_exp.copy()
+                temp.index = temp.index.map(
+                    lambda x: 'Energy expenditures {} - {} - {} (euro)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
 
                 s = self.stock.groupby(lvls).sum()
+                temp = s.copy()
+                temp.index = temp.index.map(lambda x: 'Stock {} - {} - {}'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
                 i = (reindex_mi(self._income_tenant, s.index) * s)
+                temp = i.copy()
+                temp.index = temp.index.map(lambda x: 'Income {} - {} - {} (euro)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
+                """
                 temp = concat((annuities_year, annuities_cumulated, energy_exp_std, energy_exp, s, i), axis=1,
                               keys=['annuities', 'annuities_cumulated', 'energy_expenditures_std',
                                     'energy_expenditures', 'stock', 'income'])
@@ -5454,9 +5498,10 @@ class AgentBuildings(ThermalBuildings):
                 temp['total'] = temp['energy_expenditures'] + temp['annuities_cumulated']
                 temp['ratio_bill'] = temp['energy_expenditures'] / temp['income']
                 temp['ratio_total'] = temp['total'] / temp['income']
-
                 # temp.to_csv(os.path.join(self.path, 'test_{}.csv'.format(self.year)))
+                """
 
+                """
                 self.expenditure_store.update({self.year: temp.copy()})
 
                 if self.year in self.expenditure_store.keys():
@@ -5466,7 +5511,7 @@ class AgentBuildings(ThermalBuildings):
                     output.update(temp.T)
 
                     temp = self.expenditure_store[self.year]['annuities_cumulated'].copy().dropna()
-                    temp.index = temp.index.map(lambda x: 'Annuities {} - {} - {} (euro)'.format(x[0], x[1], x[2]))
+                    temp.index = temp.index.map(lambda x: 'Annuities cumulated {} - {} - {} (euro)'.format(x[0], x[1], x[2]))
                     output.update(temp.T)
 
                     temp = self.expenditure_store[self.year]['energy_expenditures'].copy().dropna()
@@ -5484,7 +5529,7 @@ class AgentBuildings(ThermalBuildings):
                     temp = self.expenditure_store[self.year]['ratio_total'].copy().dropna()
                     temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
                     output.update(temp.T)
-
+                """
                 # ------------------------------------------------------------------------------------------------------
                 # following is not used most of it are just for testing
                 owner = replaced_by_grouped.sum(axis=1).groupby(levels_owner).sum()

@@ -1,37 +1,6 @@
 {
-  "scenarios": {
-    "activated": false,
-    "current_policies": null,
-    "no_policy": true,
-    "no_policy_insulation": null,
-    "no_policy_heater": null,
-    "prices_constant": null,
-    "constant": null,
-    "policies": null,
-    "add_policies": null,
-    "remove_policies": null,
-    "policies_scenarios": null,
-    "no_natural_replacement": null
-  },
-  "sensitivity": {
-    "activated": false
-  },
-  "uncertainty": {
-    "activated": false,
-    "energy_prices_factor": [2, 5],
-    "carbon_emission" : [
-      "project/input/energy/carbon_emission_tend.csv"
-    ],
-    "scale_renovation": [
-      {
-        "option": "share_fg",
-        "target": 0.4
-      }
-    ]
-  },
   "Reference": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
@@ -42,7 +11,6 @@
   },
   "NoPolicyHeater": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
@@ -53,7 +21,6 @@
   },
   "Ban": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json",
@@ -64,14 +31,10 @@
             "policy": "restriction_energy",
             "variable": false
       }
-    },
-    "simple": {
-      "no_policy_heater": false
     }
   },
   "BanNoPolicyHeater": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json",
