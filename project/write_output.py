@@ -965,7 +965,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                      idx]
         result[k] = pd.concat((result[k], temp), axis=0)
 
-        result[k].to_csv(os.path.join(folder, 'output_{}.csv'.format(k)))
+        # result[k].to_csv(os.path.join(folder, 'output_{}.csv'.format(k)))
 
     counterfactual = reference
     #scenario_assessment, counterfactual = 'BanNoPolicyHeater', 'NoPolicyHeater'

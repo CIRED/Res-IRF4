@@ -1,14 +1,18 @@
 {
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2023,
+    "end": 2031,
     "policies": {
         "file": "project/input/policies/policies_calibration.json"
+    },
+    "simple": {
+      "figures": false
+
     }
   },
-  "CreditConstraint": {
+  "CreditConstraintInsulation": {
     "file": "project/config/reference.json",
-    "end": 2023,
+    "end": 2031,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
         "credit_constraint": {
@@ -19,9 +23,22 @@
         }
     }
   },
+  "CreditConstraintHeater": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "policies": {
+        "file": "project/input/policies/policies_calibration.json",
+        "credit_constraint": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "regulation",
+          "gest": "heater"
+        }
+    }
+  },
   "GhgExternality": {
     "file": "project/config/reference.json",
-    "end": 2023,
+    "end": 2031,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
         "carbon_tax_vsc": {
@@ -36,10 +53,10 @@
   },
   "LandlordDilemma": {
     "file": "project/config/reference.json",
-    "end": 2023,
+    "end": 2031,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
-        "landlord_tenant": {
+        "landlord_dilemma": {
     "start": 2019,
     "end": 2051,
     "policy": "regulation",
@@ -49,10 +66,10 @@
   },
   "MultiFamily": {
       "file": "project/config/reference.json",
-      "end": 2023,
+      "end": 2031,
       "policies": {
         "file": "project/input/policies/policies_calibration.json",
-          "multi-family": {
+          "multi_family": {
     "start": 2019,
     "end": 2051,
     "policy": "regulation",
@@ -62,7 +79,7 @@
     },
   "PresentBias": {
   "file": "project/config/reference.json",
-  "end": 2023,
+  "end": 2031,
   "policies": {
     "file": "project/input/policies/policies_calibration.json",
       "present_bias": {
@@ -76,7 +93,7 @@
 },
   "StatusQuoBias": {
   "file": "project/config/reference.json",
-  "end": 2023,
+  "end": 2031,
   "policies": {
     "file": "project/input/policies/policies_calibration.json",
     "status_quo_bias": {

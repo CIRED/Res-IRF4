@@ -3045,12 +3045,11 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total -= subsidies_details['over_cap']
 
         regulation = [p for p in policies_insulation if p.policy == 'regulation']
-        if 'landlord' in [p.name for p in regulation]:
+        if 'landlord_dilemma' in [p.name for p in regulation]:
             apply_regulation('Privately rented', 'Owner-occupied', 'Occupancy status')
-        if 'multi-family' in [p.name for p in regulation]:
+        if 'multi_family' in [p.name for p in regulation]:
             apply_regulation('Multi-family', 'Single-family', 'Housing type')
-        if 'present_bias' in [p.name for p in regulation]:
-            print('ok')
+
 
         return cost_insulation, vat_insulation, vat, subsidies_details, subsidies_total, condition, eligible
 
