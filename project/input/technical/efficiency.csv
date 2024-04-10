@@ -1,6 +1,7 @@
 Year,Heating system,
 2015,Electricity-Heat pump water,2.5
-2015,Electricity-Performance boiler,0.95
+2015,Electricity-Direct electric,0.95
+2015,Electricity-Wood stove,0.76
 2015,Natural gas-Performance boiler,0.76
 2015,Natural gas-Standard boiler,0.6
 2015,Oil fuel-Performance boiler,0.76

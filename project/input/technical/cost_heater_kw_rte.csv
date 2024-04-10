@@ -1,7 +1,7 @@
 ﻿Heating system final,
 Electricity-Heat pump water,1625
 Electricity-Heat pump air,1000
-Electricity-Performance boiler,450
+Electricity-Direct electric,450
 Natural gas-Performance boiler,750
 Natural gas-Collective boiler,750
 Oil fuel-Performance boiler,1063

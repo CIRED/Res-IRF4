@@ -1,48 +1,48 @@
 ﻿Housing type,Heating system,Year,Value
 Multi-family,Electricity-Heat pump water,2015,0.01
 Multi-family,Electricity-Heat pump air,2015,0.04
-Multi-family,Electricity-Performance boiler,2015,0.07
+Multi-family,Electricity-Direct electric,2015,0.07
 Multi-family,Heating-District heating,2015,0.10
 Multi-family,Natural gas-Performance boiler,2015,0.78
 Multi-family,Oil fuel-Performance boiler,2015,0.00
 Single-family,Electricity-Heat pump water,2015,0.04
-Single-family,Electricity-Performance boiler,2015,0.20
+Single-family,Electricity-Direct electric,2015,0.20
 Single-family,Electricity-Heat pump air,2015,0.32
 Single-family,Natural gas-Performance boiler,2015,0.35
 Single-family,Oil fuel-Performance boiler,2015,0.00
 Single-family,Wood fuel-Performance boiler,2015,0.08
 Multi-family,Electricity-Heat pump water,2020,0.52
 Multi-family,Electricity-Heat pump air,2020,0.25
-Multi-family,Electricity-Performance boiler,2020,0.04
+Multi-family,Electricity-Direct electric,2020,0.04
 Multi-family,Heating-District heating,2020,0.11
 Multi-family,Natural gas-Performance boiler,2020,0.09
 Multi-family,Oil fuel-Performance boiler,2020,0.00
 Single-family,Electricity-Heat pump water,2020,0.32
-Single-family,Electricity-Performance boiler,2020,0.09
+Single-family,Electricity-Direct electric,2020,0.09
 Single-family,Electricity-Heat pump air,2020,0.47
 Single-family,Natural gas-Performance boiler,2020,0.07
 Single-family,Oil fuel-Performance boiler,2020,0.00
 Single-family,Wood fuel-Performance boiler,2020,0.06
 Multi-family,Electricity-Heat pump water,2030,0.62
 Multi-family,Electricity-Heat pump air,2030,0.25
-Multi-family,Electricity-Performance boiler,2030,0.02
+Multi-family,Electricity-Direct electric,2030,0.02
 Multi-family,Heating-District heating,2030,0.11
 Multi-family,Natural gas-Performance boiler,2030,0.00
 Multi-family,Oil fuel-Performance boiler,2030,0.00
 Single-family,Electricity-Heat pump water,2030,0.52
-Single-family,Electricity-Performance boiler,2030,0.05
+Single-family,Electricity-Direct electric,2030,0.05
 Single-family,Electricity-Heat pump air,2030,0.35
 Single-family,Natural gas-Performance boiler,2030,0.05
 Single-family,Oil fuel-Performance boiler,2030,0.00
 Single-family,Wood fuel-Performance boiler,2030,0.02
 Multi-family,Electricity-Heat pump water,2040,0.64
 Multi-family,Electricity-Heat pump air,2040,0.24
-Multi-family,Electricity-Performance boiler,2040,0.02
+Multi-family,Electricity-Direct electric,2040,0.02
 Multi-family,Heating-District heating,2040,0.10
 Multi-family,Natural gas-Performance boiler,2040,0.00
 Multi-family,Oil fuel-Performance boiler,2040,0.00
 Single-family,Electricity-Heat pump water,2040,0.61
-Single-family,Electricity-Performance boiler,2040,0.06
+Single-family,Electricity-Direct electric,2040,0.06
 Single-family,Electricity-Heat pump air,2040,0.34
 Single-family,Natural gas-Performance boiler,2040,0.00
 Single-family,Oil fuel-Performance boiler,2040,0.00

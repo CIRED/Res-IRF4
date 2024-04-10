@@ -33,3 +33,5 @@ __pycache__/
 **/__pycache__
 *.py[cod]
 /project/config/hidden_cost/
+/project/input/stock/buildingstock_sdes2018_medium_3_update.csv
+/project/input/stock/buildingstock_sdes2018_update.csv

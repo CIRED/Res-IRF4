@@ -2,8 +2,6 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10405492.svg)](https://doi.org/10.5281/zenodo.10405492)
 
-![input/resources_dir/logo_resirf.png](/Users/lucas/PycharmProjects/Res-IRF4/project/input/resources_dir/logo_resirf.png "Res-IRF")
-
 ## Disclaimer
 
 **_The contents of this repository are all in-progress and should not be expected to be free of errors or to perform any

@@ -123,7 +123,7 @@ def config2inputs(config=None):
         stock = stock.set_index('Heating system', append=True).squeeze()
         stock = stock.groupby(stock.index.names).sum()
         shape_out = stock.shape[0]
-        print('From {} to {}'.format(shape_ini, shape_out))
+        # print('From {} to {}'.format(shape_ini, shape_out))
         to_drop = []
         if 'Heating-District heating' in config['simple']['heating_system'].keys():
             if config['simple']['heating_system']['Heating-District heating'] is None:
@@ -271,7 +271,8 @@ def get_inputs(path=None, config=None, variables=None):
     """
     if variables is None:
         variables = ['buildings', 'energy_prices', 'cost_insulation', 'carbon_emission', 'carbon_value_kwh',
-                     'health_cost', 'income', 'cost_heater', 'health_cost_dpe', 'present_discount_rate']
+                     'health_cost', 'income', 'cost_heater', 'health_cost_dpe', 'present_discount_rate',
+                     'efficiency', 'ratio_surface']
 
     config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
     inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
@@ -285,7 +286,8 @@ def get_inputs(path=None, config=None, variables=None):
               'efficiency': inputs['efficiency'],
               'health_cost_dpe': inputs_dynamics['health_cost_dpe'],
               'present_discount_rate': inputs['preferences']['insulation']['present_discount_rate'],
-              'frequency_insulation': inputs_dynamics['frequency_insulation']
+              'frequency_insulation': inputs_dynamics['frequency_insulation'],
+              'ratio_surface': inputs['ratio_surface']
               }
     output = {k: item for k, item in output.items() if k in variables}
 
@@ -609,6 +611,8 @@ def res_irf(config, path, level_logger='DEBUG'):
                     p.end = config['start'] + 2
 
         for k, year in enumerate(years):
+            buildings.logger.info('Iteration {}'.format(year))
+
             start = time()
 
             if year == config['end'] - 1:
@@ -683,7 +687,7 @@ def res_irf(config, path, level_logger='DEBUG'):
                 with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
                     dump({
                         'coefficient_global': buildings.coefficient_global,
-                        'coefficient_heater': buildings.coefficient_heater,
+                        'coefficient_backup': buildings.coefficient_backup,
                         'constant_insulation_extensive': buildings.constant_insulation_extensive,
                         'constant_insulation_intensive': buildings.constant_insulation_intensive,
                         'constant_heater': buildings.constant_heater,
@@ -779,7 +783,7 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
 
         calibration = {
             'coefficient_global': buildings.coefficient_global,
-            'coefficient_heater': buildings.coefficient_heater,
+            'coefficient_backup': buildings.coefficient_backup,
             'constant_heater': buildings.constant_heater,
             'scale_heater': buildings.scale_heater,
             'constant_insulation_intensive': buildings.constant_insulation_intensive,

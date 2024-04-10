@@ -113,7 +113,7 @@ class ThermalBuildings:
                 if not os.path.isdir(self.path_ini):
                     os.mkdir(self.path_ini)
 
-        self.coefficient_global, self.coefficient_heater = None, None
+        self.coefficient_global, self.coefficient_backup = None, None
 
         self._surface_yrs = surface
         self._surface = surface.loc[:, year]
@@ -477,6 +477,9 @@ class ThermalBuildings:
         else:
             raise NotImplemented
 
+        if self.coefficient_global is not None:
+            heating_intensity *= self.coefficient_global
+
         if not full_output:
             return heating_intensity
         else:
@@ -599,16 +602,16 @@ class ThermalBuildings:
             consumption = consumption.rename_axis(index={'Heating system final': 'Heating system'})
 
         consumption_heater = consumption.groupby('Heating system').sum()
-        consumption_heater *= self.coefficient_global
+        # consumption_heater *= self.coefficient_global, included in heating intensity
 
         if isinstance(consumption, Series):
-            _consumption_heater = self.coefficient_heater * consumption_heater
-            consumption_secondary = (1 - self.coefficient_heater) * consumption_heater
+            _consumption_heater = self.coefficient_backup * consumption_heater
+            consumption_backup = (1 - self.coefficient_backup) * consumption_heater
             _consumption_energy = _consumption_heater.groupby(
                 _consumption_heater.index.str.split('-').str[0].rename('Energy')).sum()
-            _consumption_energy['Wood fuel'] += consumption_secondary.sum()
+            _consumption_energy['Wood fuel'] += consumption_backup.sum()
 
-            _consumption_heater['Wood fuel-Performance boiler'] += consumption_secondary.sum()
+            _consumption_heater['Wood fuel-Performance boiler'] += consumption_backup.sum()
             if agg == 'energy':
                 return _consumption_energy
             elif agg == 'heater':
@@ -617,11 +620,11 @@ class ThermalBuildings:
                 raise ValueError
 
         elif isinstance(consumption, DataFrame):
-            _consumption_heater = (consumption_heater.T * self.coefficient_heater).T
-            consumption_secondary = (consumption_heater.T * (1 - self.coefficient_heater)).T.sum()
+            _consumption_heater = (consumption_heater.T * self.coefficient_backup).T
+            consumption_backup = (consumption_heater.T * (1 - self.coefficient_backup)).T.sum()
             _consumption_energy = _consumption_heater.groupby(
                 _consumption_heater.index.str.split('-').str[0].rename('Energy')).sum()
-            _consumption_energy.loc['Wood fuel', :] += consumption_secondary
+            _consumption_energy.loc['Wood fuel', :] += consumption_backup
 
             return _consumption_energy
 
@@ -663,85 +666,86 @@ class ThermalBuildings:
             _consumption_actual, heating_intensity, budget_share = self.consumption_actual(prices,
                                                                                            consumption=consumption,
                                                                                            full_output=True)
-            # calibration health_cost on heating intensity
-            total_health_cost = self.health_cost(health_cost_dpe, health_cost_income, prices,
-                                                 method_health_cost='epc')
-            """_, certificate, _ = self.consumption_heating(method='3uses', full_output=True)
-            temp = concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
-            temp = concat((temp, reindex_mi(certificate, temp.index).rename('Performance')), axis=1)
-            temp.set_index('Performance', append=True, inplace=True)
-            # temp = concat((temp, reindex_mi(health_probability, temp.index).rename('Share')), axis=1)
+            # Test to calibrate health cost based on heating intensity
+            if False:
+                # calibration health_cost on heating intensity
+                total_health_cost = self.health_cost(health_cost_dpe, health_cost_income, prices,
+                                                     method_health_cost='epc')
+                def find_threshold(x, df, total_health_cost):
+                    d = df.loc[df['Heating intensity'] <= float(x), 'Stock']
+                    cost = (d * health_cost_income).sum() / 1e9
+                    return cost - total_health_cost
 
-            def threshold(df, target_households):
-                df = df.sort_values(by='Heating intensity', ascending=True)
-                df['cumulative_stock'] = df['Stock'].cumsum()
-                return df[df['cumulative_stock'] >= target_households]['Heating intensity'].iloc[0]
+                df = concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
+                root = fsolve(find_threshold, 0.5, args=(df, total_health_cost), xtol=1e-3)
+                self.hi_threshold = root[0]
 
-            target_households = (health_probability * temp['Stock'].groupby(health_probability.index.names).sum()).sum()
-            # condition = temp.index.get_level_values('Income tenant').isin(['C1', 'C2'])
-            hi_threshold = threshold(temp, target_households)
-            # temp.loc[temp.loc[condition, 'Heating intensity'] <= hi_threshold, 'Stock'].sum()
-            self.hi_threshold = hi_threshold"""
+                # heating intensity threshold by income, performance group
 
-            def find_threshold(x, df, total_health_cost):
-                d = df.loc[df['Heating intensity'] <= float(x), 'Stock']
-                cost = (d * health_cost_income).sum() / 1e9
-                return cost - total_health_cost
+                try:
+                    df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
+                    df = df.reset_index('Income tenant')
+                    make_hist(df, 'Heating intensity', 'Income tenant', 'Housing (Million)',
+                              format_y=lambda y, _: '{:.1f}'.format(y / 10 ** 6),
+                              save=os.path.join(self.path_ini, 'heating_intensity_ini.png'),
+                              palette=self._resources_data['colors'], kde=True)
 
-            df = concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
-            root = fsolve(find_threshold, 0.5, args=(df, total_health_cost), xtol=1e-3)
-            self.hi_threshold = root[0]
-
-            # heating intensity threshold by income, performance group
-
-            try:
-                df = pd.concat((heating_intensity, self.stock), axis=1, keys=['Heating intensity', 'Stock'])
-                df = df.reset_index('Income tenant')
-                make_hist(df, 'Heating intensity', 'Income tenant', 'Housing (Million)',
-                          format_y=lambda y, _: '{:.1f}'.format(y / 10 ** 6),
-                          save=os.path.join(self.path_ini, 'heating_intensity_ini.png'),
-                          palette=self._resources_data['colors'], kde=True)
-
-                df = pd.concat((budget_share, self.stock), axis=1, keys=['Budget share', 'Stock'])
-                df = df.reset_index('Income tenant')
-                make_hist(df, 'Budget share', 'Income tenant', 'Housing (Million)',
-                          format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
-                          save=os.path.join(self.path_ini, 'budget_share_ini.png'),
-                          palette=self._resources_data['colors'], kde=True)
-            except:
-                pass
+                    df = pd.concat((budget_share, self.stock), axis=1, keys=['Budget share', 'Stock'])
+                    df = df.reset_index('Income tenant')
+                    make_hist(df, 'Budget share', 'Income tenant', 'Housing (Million)',
+                              format_y=lambda y, _: '{:.0f}'.format(y / 10 ** 6),
+                              save=os.path.join(self.path_ini, 'budget_share_ini.png'),
+                              palette=self._resources_data['colors'], kde=True)
+                except:
+                    pass
 
             _consumption_actual *= self.stock
-            consumption_energy = _consumption_actual.groupby(self.energy).sum()
-            if 'Heating' in consumption_energy.index:
-                consumption_energy = consumption_energy.drop('Heating')
-            consumption_ini = consumption_ini.drop('Heating')
+
+            consumption_before_calibration = _consumption_actual.copy()
+
+            consumption_ini = consumption_ini.groupby('Energy').sum()
+
+            # 0. Test before any calibration
+            consumption_energy = self.add_energy(_consumption_actual)
+            consumption_energy = consumption_energy.groupby(consumption_ini.index.names).sum()
+            consumption_energy = consumption_energy[consumption_energy > 0]
+            test = concat((consumption_ini, consumption_energy / 1e9), axis=1, keys=['Observed', 'Simulated'])
 
             # 1. consumption total
-            coefficient_global = consumption_ini.sum() * 10 ** 9 / consumption_energy.sum()
+            consumption_ini = consumption_ini[consumption_ini > 0]
+            coefficient_global = consumption_ini.sum() * 10 ** 9 / _consumption_actual.sum()
             self.coefficient_global = coefficient_global
-            consumption_energy *= coefficient_global
+            _consumption_actual *= self.coefficient_global
 
             # 2. coefficient among energies
-            coefficient = consumption_ini * 10 ** 9 / consumption_energy
-            coefficient['Wood fuel'] = 1
+            consumption_energy = self.add_energy(_consumption_actual)
+            consumption_energy = consumption_energy.groupby(consumption_ini.index.names).sum()
+            consumption_energy = consumption_energy[consumption_energy > 0]
 
-            # 3. apply coefficient
+            test = concat((consumption_ini, consumption_energy / 1e9), axis=1, keys=['Observed', 'Simulated'])
+            coefficient = consumption_ini * 10 ** 9 / consumption_energy
+
+            # coefficient[abs(1 - coefficient) < 0.05] = 1
+            coefficient[coefficient.index.get_level_values('Energy') == 'Wood fuel'] = 1
+            coefficient[coefficient.index.get_level_values('Energy') == 'Heating'] = 1
+
+            # test
             _consumption_energy = coefficient * consumption_energy
             _consumption_energy['Wood fuel'] += ((1 - coefficient) * consumption_energy).sum()
-            concat((_consumption_energy / 10 ** 9, consumption_ini), axis=1)
+            test = concat((consumption_ini, _consumption_energy / 10 ** 9), axis=1, keys=['Observed', 'Simulated'])
+
+            # 3. coefficient energy is the share of the consumption used for other uses
+            
             idx_heater = _consumption_actual.index.get_level_values('Heating system').unique()
-            if 'Heating' in consumption_energy.index:
-                idx_heater = idx_heater.drop('Heating-District heating')
+
             energy = idx_heater.str.split('-').str[0].rename('Energy')
-            self.coefficient_heater = coefficient.reindex(energy)
-            self.coefficient_heater.index = idx_heater
+            self.coefficient_backup = coefficient.reindex(energy).set_axis(idx_heater)
 
-            self.coefficient_heater['Electricity-Heat pump air'] = 1
-            self.coefficient_heater['Electricity-Heat pump water'] = 1
-            self.coefficient_heater['Heating-District heating'] = 1
+            self.coefficient_backup['Electricity-Heat pump air'] = 1
+            self.coefficient_backup['Electricity-Heat pump water'] = 1
+            self.coefficient_backup['Heating-District heating'] = 1
 
-            self.apply_calibration(_consumption_actual)
+            temp = self.apply_calibration(_consumption_actual)
             validation = dict()
             # stock initial
             temp = concat((self.stock, self.energy), axis=1).groupby(
@@ -775,7 +779,7 @@ class ThermalBuildings:
 
             validation.update({'Coefficient calibration global (%)': self.coefficient_global})
 
-            temp = self.coefficient_heater.copy()
+            temp = self.coefficient_backup.copy()
             temp.index = temp.index.map(lambda x: 'Coefficient calibration {} (%)'.format(x))
             validation.update(temp)
 
@@ -1850,7 +1854,7 @@ class AgentBuildings(ThermalBuildings):
             else:
                 ms = _ms_heater.copy()
 
-            ref = MultiIndex.from_tuples([('Multi-family', 'Electricity-Performance boiler'), ('Single-family', 'Electricity-Performance boiler')], names=['Housing type', 'Heating system final'])
+            ref = MultiIndex.from_tuples([('Multi-family', 'Electricity-Direct electric'), ('Single-family', 'Electricity-Direct electric')], names=['Housing type', 'Heating system final'])
             x0 = pd.Series(0, index=ms.index).drop(ref)
             idx = x0.index
             x0 = x0.copy().to_numpy()
@@ -2000,7 +2004,7 @@ class AgentBuildings(ThermalBuildings):
                                   'Oil fuel-Performance boiler': 'Electricity-Heat pump water',
                                   'Natural gas-Standard boiler': 'Natural gas-Performance boiler',
                                   'Natural gas-Performance boiler': 'Natural gas-Performance boiler',
-                                  'Electricity-Performance boiler': 'Electricity-Heat pump air',
+                                  'Electricity-Direct electric': 'Electricity-Heat pump air',
                                   'Electricity-Heat pump air': 'Electricity-Heat pump air',
                                   'Electricity-Heat pump water': 'Electricity-Heat pump water',
                                   }
@@ -2256,7 +2260,7 @@ class AgentBuildings(ThermalBuildings):
 
         # technical restriction - direct electric cannot switch to fossil
         fossil_boilers = ['Natural gas-Performance boiler', 'Oil fuel-Performance boiler']
-        idx = condition.index.get_level_values('Heating system') == 'Electricity-Performance boiler'
+        idx = condition.index.get_level_values('Heating system') == 'Electricity-Direct electric'
         condition.loc[idx, [i for i in condition.columns if i in fossil_boilers]] = False
 
         # technical restriction - wood boiler can only be switch with wood boiler
@@ -4684,7 +4688,7 @@ class AgentBuildings(ThermalBuildings):
         output.update(temp.T)
 
         output.update({'Consumption Heat pump (TWh)': consumption_hp})
-        output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity-Performance boiler (TWh)']})
+        output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity-Direct electric (TWh)']})
         output.update({'Consumption District heating (TWh)': output['Consumption Heating (TWh)']})
 
         consumption_energy_climate = None
@@ -4716,14 +4720,15 @@ class AgentBuildings(ThermalBuildings):
                       format_y=lambda y, _: '{:.0f}'.format(y / 1e6), integer=False, legend=False)
 
         consumption = self.consumption_actual(prices) * self.stock
-        consumption_calib = consumption * self.coefficient_global
+        coefficient_backup = reindex_mi(self.coefficient_backup, consumption.index)
+
         # correct that do consider secondary heating system
-        temp = consumption_calib.groupby('Existing').sum()
+        temp = consumption.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
 
-        temp = consumption_calib.groupby(self.certificate).sum()
+        temp = consumption.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))
         output.update(temp.T / 10 ** 9)
 
@@ -4767,9 +4772,8 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T / 10 ** 3)
 
         emission_reindex = emission.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        coefficient_heater = reindex_mi(self.coefficient_heater, consumption_calib.index)
-        emission_stock = consumption_calib * coefficient_heater * emission_reindex
-        emission_stock += consumption_calib * (1 - coefficient_heater) * emission.loc['Wood fuel']
+        emission_stock = consumption * coefficient_backup * emission_reindex
+        emission_stock += consumption * (1 - coefficient_backup) * emission.loc['Wood fuel']
 
         temp = emission_stock.groupby('Existing').sum()
         temp.rename(index={True: 'Existing', False: 'New'}, inplace=True)
@@ -4787,7 +4791,7 @@ class AgentBuildings(ThermalBuildings):
 
         temp = self.stock.groupby('Heating system').sum()
 
-        output['Stock Direct electric (Million)'] = temp['Electricity-Performance boiler'] / 10 ** 6
+        output['Stock Direct electric (Million)'] = temp['Electricity-Direct electric'] / 10 ** 6
         output['Stock Heat pump (Million)'] = temp['Electricity-Heat pump water'] / 10 ** 6
         if 'Electricity-Heat pump air' in temp.keys():
             output['Stock Heat pump (Million)'] += temp['Electricity-Heat pump air'] / 10 ** 6
@@ -4805,20 +4809,18 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
 
-        # energy expenditures : do we really need it ?
+        # energy expenditures considering back-up cost
         prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        coefficient_heater = reindex_mi(self.coefficient_heater, consumption_calib.index)
-        energy_expenditure = consumption_calib * coefficient_heater * prices_reindex
-        energy_expenditure += consumption_calib * (1 - coefficient_heater) * prices.loc['Wood fuel']
+        energy_expenditure = consumption * coefficient_backup * prices_reindex
+        energy_expenditure += consumption * (1 - coefficient_backup) * prices.loc['Wood fuel']
         temp = energy_expenditure.groupby('Income tenant').sum()
         temp.index = temp.index.map(lambda x: 'Energy expenditures {} (Billion euro)'.format(x))
         output.update(temp.T / 10 ** 9)
         output['Energy expenditures (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
 
         prices_wt_reindex = prices_wt.reindex(self.energy).set_axis(self.stock.index, axis=0)
-        coefficient_heater = reindex_mi(self.coefficient_heater, consumption_calib.index)
-        energy_expenditure = consumption_calib * coefficient_heater * prices_wt_reindex
-        energy_expenditure += consumption_calib * (1 - coefficient_heater) * prices.loc['Wood fuel']
+        energy_expenditure = consumption * coefficient_backup * prices_wt_reindex
+        energy_expenditure += consumption * (1 - coefficient_backup) * prices.loc['Wood fuel']
         output['Energy expenditures wt (Billion euro)'] = energy_expenditure.sum() / 10 ** 9
 
         # taxes expenditures
@@ -6020,7 +6022,7 @@ class AgentBuildings(ThermalBuildings):
             self.preferences_heater['inertia'] *= scale
             self.hidden_cost_heater = - self.constant_heater / abs(self.preferences_heater['cost']) * 1000
 
-    def calibration_exogenous(self, coefficient_global=None, coefficient_heater=None, constant_heater=None,
+    def calibration_exogenous(self, coefficient_global=None, coefficient_backup=None, constant_heater=None,
                               scale_heater=None, constant_insulation_intensive=None, constant_insulation_extensive=None,
                               scale_insulation=None, energy_prices=None, rational_hidden_cost=None,
                               number_firms_insulation=None, number_firms_heater=None, hi_threshold=None):
@@ -6030,7 +6032,7 @@ class AgentBuildings(ThermalBuildings):
         Parameters
         ----------
         coefficient_global: float
-        coefficient_heater: Series
+        coefficient_backup: Series
         constant_heater: Series
         scale_heater: float
         constant_insulation_intensive: Series
@@ -6046,7 +6048,7 @@ class AgentBuildings(ThermalBuildings):
             self.calibration_consumption(energy_prices.loc[self.first_year, :], None)
         else:
             self.coefficient_global = coefficient_global
-            self.coefficient_heater = coefficient_heater
+            self.coefficient_backup = coefficient_backup
 
         if rational_hidden_cost is not None:
             self.rational_hidden_cost = rational_hidden_cost
@@ -6073,7 +6075,7 @@ class AgentBuildings(ThermalBuildings):
     def remove_calibration(self):
 
         self.coefficient_global = None
-        self.coefficient_heater = None
+        self.coefficient_backup = None
 
         self.preferences_insulation['subsidy'] /= self.scale_insulation
         self.preferences_insulation['cost'] /= self.scale_insulation

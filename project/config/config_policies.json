@@ -29,7 +29,6 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2021.json"
@@ -37,14 +36,12 @@
   },
   "Package2024": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     }},
   "Package2024Ban": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json",
@@ -57,7 +54,6 @@
     }},
   "CarbonTax": {
     "file": "project/config/reference.json",
-    "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
