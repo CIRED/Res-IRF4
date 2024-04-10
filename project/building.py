@@ -1000,15 +1000,13 @@ class AgentBuildings(ThermalBuildings):
         discount_factor = (1 - (1 + self.preferences_heater['present_discount_rate']) ** -self.preferences_heater[
             'lifetime']) / self.preferences_heater['present_discount_rate']
         self.preferences_heater['discount_factor'] = discount_factor.copy()
-        discount_factor *= abs(self.preferences_heater['cost'])
-        self.preferences_heater['bill_saved'] = discount_factor.copy()
+        self.preferences_heater['bill_saved'] = abs(self.preferences_heater['cost']) * discount_factor
 
         self.preferences_insulation = deepcopy(preferences['insulation'])
         discount_factor = (1 - (1 + self.preferences_insulation['present_discount_rate']) ** -self.preferences_insulation[
             'lifetime']) / self.preferences_insulation['present_discount_rate']
         self.preferences_insulation['discount_factor'] = discount_factor.copy()
-        discount_factor *= abs(self.preferences_insulation['cost'])
-        self.preferences_insulation['bill_saved'] = discount_factor.copy()
+        self.preferences_insulation['bill_saved'] = abs(self.preferences_insulation['cost']) * discount_factor
 
         self._calib_scale = calib_scale
         self.constant_insulation_extensive, self.constant_insulation_intensive, self.constant_heater = None, None, None
@@ -1548,9 +1546,12 @@ class AgentBuildings(ThermalBuildings):
                         reimbursement = calculate_annuities(amount, lifetime=item['duration'], discount_rate=item['price'])
                     debt_reimbursement += reimbursement
 
-                cost_financing += amount * item['price'] * item['duration']
+                # could be better calculated
+                c = (calculate_annuities(amount, lifetime=item['duration'], discount_rate=item['price']) * item['duration'] - amount)
+                cost_financing += c
                 rslt.update({key: amount.copy()})
                 remaining -= amount
+
 
             assert remaining.sum().sum().round(0) == 0, 'Not all cost have been financed'
             assert allclose(sum(rslt.values()), to_pay), 'Not all cost have been financed'
@@ -1738,16 +1739,23 @@ class AgentBuildings(ThermalBuildings):
             subsidies_total -= subsidies_details['over_cap']
 
         regulation = [p for p in policies_heater if p.policy == 'regulation']
-        if 'inertia_heater' in [p.name for p in regulation]:
-            self.preferences_heater['inertia'] = 0
+        if 'status_quo_bias' in [p.name for p in regulation]:
+            self.preferences_heater['status_quo_bias'] = 0
+        if 'present_bias' in [p.name for p in regulation]:
+            v = [p for p in regulation if p.name == 'present_bias'][0].value
+            discount_factor = (1 - (1 + v) ** -self.preferences_heater['lifetime']) / v
+            idx = self.preferences_heater['bill_saved'].index
+            self.preferences_heater['bill_saved'] = Series(discount_factor * abs(self.preferences_heater['cost']),
+                                                           index=idx)
 
         return cost_heater, vat_heater, subsidies_details, subsidies_total, eligible
 
-    def endogenous_market_share_heater(self, index, bill_saved, subsidies_total, cost_heater, calib_heater=None,
-                                       cost_financing=None, condition=None, flow_replace=None, drop_heater=None):
+    def endogenous_market_share_heater(self, index, _bill_saved, _subsidies_total, _cost_heater, calib_heater=None,
+                                       _cost_financing=None, condition=None, flow_replace=None, drop_heater=None,
+                                       _credit_constraint=None):
 
         def test_sensitivity_hp(_utility_cost, _utility_bill_saving, _utility_financing, _utility_inertia, _condition,
-                                  _flow_replace, _cost_heater):
+                                _flow_replace, _cost_heater):
             # assessing sensitivity to subsidies_heat_pump
             _utility = _utility_cost + _utility_bill_saving + _utility_financing + _utility_inertia
             _utility_constant = reindex_mi(self.constant_heater.reindex(_utility.columns, axis=1), _utility.index)
@@ -1772,7 +1780,7 @@ class AgentBuildings(ThermalBuildings):
                 _market_share = (exp(u).T / exp(u).sum(axis=1)).T
                 temp = (_flow_replace * _market_share.T).T
                 rslt.update({sub: temp.loc[:, 'Electricity-Heat pump water'].sum()})
-            dict_rslt.update({'With inertia': Series(rslt) / 10**3})
+            dict_rslt.update({'With inertia': Series(rslt) / 10 ** 3})
 
             _utility -= _utility_inertia
             rslt = dict()
@@ -1789,7 +1797,7 @@ class AgentBuildings(ThermalBuildings):
                 _market_share = (exp(u).T / exp(u).sum(axis=1)).T
                 temp = (_flow_replace * _market_share.T).T
                 rslt.update({sub: temp.loc[:, 'Electricity-Heat pump water'].sum()})
-            dict_rslt.update({'Without inertia': Series(rslt) / 10**3})
+            dict_rslt.update({'Without inertia': Series(rslt) / 10 ** 3})
 
             make_plots(dict_rslt, 'Heat pumps function of ad valorem subsidy (Thousand per year)',
                        save=os.path.join(self.path_calibration, 'sensi_hp.png'), integer=False, legend=True)
@@ -1829,7 +1837,7 @@ class AgentBuildings(ThermalBuildings):
 
                 elif _option == 'price_elasticity':
                     heater_ref = 'Electricity-Heat pump water'
-                    _price_elasticity = self.preferences_heater['cost'] * _scale * cost_heater.loc[:, heater_ref].iloc[0] / 1000 * (1 - _market_share.loc[:, heater_ref])
+                    _price_elasticity = self.preferences_heater['cost'] * _scale * _cost_heater.loc[:, heater_ref].iloc[0] / 1000 * (1 - _market_share.loc[:, heater_ref])
                     _price_elasticity_average = (_flow * _price_elasticity).sum() / _flow.sum()
                     _rslt = append(_price_elasticity_average - _target, _rslt)
 
@@ -1908,43 +1916,64 @@ class AgentBuildings(ThermalBuildings):
 
             return constant
 
-        choice_heater = cost_heater.columns
+        _bill_saved, _subsidies_total, _cost_heater = _bill_saved.loc[index, :], _subsidies_total.loc[index, :], _cost_heater.loc[index, :]
+
+        choice_heater = _cost_heater.columns
         if drop_heater:
             choice_heater = [i for i in choice_heater if i not in drop_heater]
 
         if condition is not None:
             condition = condition.loc[index, choice_heater]
 
-        utility_bill_saving = (bill_saved.T * reindex_mi(self.preferences_heater['bill_saved'],
-                                                         bill_saved.index)).T / 1000
+        utility_bill_saving = (_bill_saved.T * reindex_mi(self.preferences_heater['bill_saved'],
+                                                         _bill_saved.index)).T / 1000
         utility_bill_saving = utility_bill_saving.loc[:, choice_heater]
 
-        utility_subsidies = subsidies_total * self.preferences_heater['subsidy'] / 1000
+        utility_subsidies = _subsidies_total * self.preferences_heater['subsidy'] / 1000
 
-        cost_heater = cost_heater.reindex(index).reindex(choice_heater, axis=1)
+        _cost_heater = _cost_heater.reindex(index).reindex(choice_heater, axis=1)
         pref_investment = reindex_mi(self.preferences_heater['cost'], index)
-        utility_cost = (pref_investment * cost_heater.T).T / 1000
+        utility_cost = (pref_investment * _cost_heater.T).T / 1000
 
         utility_inertia = DataFrame(0, index=utility_bill_saving.index, columns=utility_bill_saving.columns)
         for hs in choice_heater:
             utility_inertia.loc[
-                utility_inertia.index.get_level_values('Heating system') == hs, hs] = self.preferences_heater['inertia']
+                utility_inertia.index.get_level_values('Heating system') == hs, hs] = self.preferences_heater['status_quo_bias']
 
         utility = utility_inertia + utility_cost + utility_bill_saving + utility_subsidies
 
-        if cost_financing is not None:
-            pref_financing = reindex_mi(self.preferences_heater['cost'], cost_financing.index).rename(None)
-            utility_financing = (cost_financing.T * pref_financing).T / 1000
+        if _cost_financing is not None:
+            _cost_financing = _cost_financing.loc[index, :]
+            pref_financing = reindex_mi(self.preferences_heater['cost'], _cost_financing.index).rename(None)
+            utility_financing = (_cost_financing.T * pref_financing).T / 1000
             utility += utility_financing
 
         if condition is not None:
+            condition = condition.loc[index, :]
             condition = condition.astype(float)
             condition = condition.replace(0, float('nan'))
             utility *= condition
             utility.dropna(how='all', axis=1, inplace=True)
 
-        utility = utility.loc[index, :]
+        if _credit_constraint is not None:
+            _credit_constraint = _credit_constraint.loc[index, utility.columns]
+            _credit_constraint = _credit_constraint.astype(float)
+            _credit_constraint = _credit_constraint.replace(0, float('nan'))
+            utility_constraint = utility * _credit_constraint
 
+            # there are cases where hh cannot afford any investment, we therefore let them keep the same heating system
+            temp = utility_constraint.loc[utility_constraint.isna().all(axis=1), :]
+            t = DataFrame(index=temp.index, columns=temp.columns)
+            for i in temp.index.get_level_values('Heating system').unique():
+                idx = temp[temp.index.get_level_values('Heating system') == i].index
+                t.loc[idx, i] = utility.loc[idx, i]
+
+            # u = utility.copy()
+            utility *= _credit_constraint
+            utility.dropna(how='all', inplace=True)
+            utility = concat((utility, t), axis=0)
+
+        utility = utility.loc[index, :]
         if (self.constant_heater is None) and (calib_heater is not None):
             self.logger.info('Calibration market-share heating system')
             sub_shock = - utility_cost - utility_financing
@@ -1967,7 +1996,7 @@ class AgentBuildings(ThermalBuildings):
             utility_inertia *= self.scale_heater
             if self.path_calibration:
                 test_sensitivity_hp(utility_cost, utility_bill_saving, utility_financing, utility_inertia, condition,
-                                      flow_replace, cost_heater)
+                                      flow_replace, _cost_heater)
 
             utility *= self.scale_heater
 
@@ -2147,7 +2176,7 @@ class AgentBuildings(ThermalBuildings):
     def heater_replacement(self, stock, prices, cost_heater, policies_heater, calib_heater=None,
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
                            prices_before=None, supply=None, store_information=True, bill_rebate=0,
-                           carbon_content=None, carbon_value=None):
+                           carbon_content=None, carbon_value=None, credit_constraint=False):
         """Function returns building stock updated after switching heating system.
 
 
@@ -2281,8 +2310,6 @@ class AgentBuildings(ThermalBuildings):
         choice_heater = cost_heater.index
         choice_heater_idx = Index(choice_heater, name='Heating system final')
 
-        energy = Series(choice_heater).str.split('-').str[0].set_axis(choice_heater_idx)
-
         temp = Series(0, index=index, dtype='float').to_frame().dot(Series(0, index=choice_heater_idx, dtype='float').to_frame().T)
         index_final = temp.stack().index
 
@@ -2358,8 +2385,11 @@ class AgentBuildings(ThermalBuildings):
         epc_upgrade = - certificate.replace(EPC2INT).sub(
             certificate_before.replace(EPC2INT), axis=0)
 
-        # temp = self.credit_constraint(amount_debt, financing_cost)
-        # condition = condition & temp
+        p = [p for p in policies_heater if p.name == 'credit_constraint']
+        if credit_constraint and not p:
+            credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
+        else:
+            credit_constraint = None
 
         # district heating are automatically excluded from endogenous market share
         index_endogenous = index
@@ -2376,15 +2406,14 @@ class AgentBuildings(ThermalBuildings):
                 market_share, error_conditional = self.endogenous_market_share_heater(index_endogenous, bill_saved,
                                                                                       subsidies_total, cost_heater,
                                                                                       calib_heater=calib_heater,
-                                                                                      cost_financing=cost_financing,
+                                                                                      _cost_financing=cost_financing,
                                                                                       condition=condition,
                                                                                       flow_replace=flow_replace,
                                                                                       drop_heater=[
-                                                                                          'Heating-District heating'])
+                                                                                          'Heating-District heating'],
+                                                                                      _credit_constraint=credit_constraint)
 
                 hidden_benefits_heater = (error_conditional / abs(self.preferences_heater['cost'])) * 1000
-                # hidden_cost_heater += reindex_mi(self.hidden_cost_heater, hidden_cost_heater.index)
-
                 # to reduce number of combination if market_shares for one technology is too small it is removed
                 market_share[market_share < 10 ** -2] = 0
                 market_share = (market_share.T / market_share.sum(axis=1)).T
@@ -3020,6 +3049,8 @@ class AgentBuildings(ThermalBuildings):
             apply_regulation('Privately rented', 'Owner-occupied', 'Occupancy status')
         if 'multi-family' in [p.name for p in regulation]:
             apply_regulation('Multi-family', 'Single-family', 'Housing type')
+        if 'present_bias' in [p.name for p in regulation]:
+            print('ok')
 
         return cost_insulation, vat_insulation, vat, subsidies_details, subsidies_total, condition, eligible
 
@@ -3041,7 +3072,7 @@ class AgentBuildings(ThermalBuildings):
         prices: Series
         subsidies_total: DataFrame
         cost_insulation: DataFrame
-        lifetime: Series
+        frequency_insulation: float
         stock: Series, default None
         calib_renovation: dict, optional
         min_performance: str, optional
@@ -3051,6 +3082,7 @@ class AgentBuildings(ThermalBuildings):
         discount: float, optional
         carbon_value: float, optional
         credit_constraint: float, optional
+        performance_gap: float, default 1
 
 
         Returns
@@ -3059,6 +3091,8 @@ class AgentBuildings(ThermalBuildings):
             Retrofit rate
         DataFrame
             Market-share insulation
+        DataFrame
+            Utility insulation
         """
 
         def market_share_func(u):
@@ -4061,7 +4095,7 @@ class AgentBuildings(ThermalBuildings):
             bill_saved = reindex_mi(bill_saved, index)
             bill_saved = (bill_saved.T * reindex_mi(self._surface, bill_saved.index)).T
 
-            p = [p for p in policies_insulation if p.name == 'credit-constraint']
+            p = [p for p in policies_insulation if p.name == 'credit_constraint']
             if credit_constraint and not p:
                 credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
             else:
@@ -6019,7 +6053,7 @@ class AgentBuildings(ThermalBuildings):
             self.preferences_heater['subsidy'] *= scale
             self.preferences_heater['cost'] *= scale
             self.preferences_heater['bill_saved'] *= scale
-            self.preferences_heater['inertia'] *= scale
+            self.preferences_heater['status_quo_bias'] *= scale
             self.hidden_cost_heater = - self.constant_heater / abs(self.preferences_heater['cost']) * 1000
 
     def calibration_exogenous(self, coefficient_global=None, coefficient_backup=None, constant_heater=None,

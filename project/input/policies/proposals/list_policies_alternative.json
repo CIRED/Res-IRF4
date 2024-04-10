@@ -45,7 +45,7 @@
     "policy": "regulation",
     "gest": "insulation"
   },
-  "inertia_heater": {
+  "status_quo_bias": {
     "start": 2020,
     "end": 2051,
     "policy": "regulation",

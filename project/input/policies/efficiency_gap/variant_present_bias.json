@@ -1,0 +1,9 @@
+{
+  "present_bias": {
+    "start": 2019,
+    "end": 2051,
+    "value": 0.032,
+    "policy": "regulation",
+    "gest": ["heater", "insulation"]
+  }
+}

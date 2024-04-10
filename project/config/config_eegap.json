@@ -1,0 +1,91 @@
+{
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2023,
+    "policies": {
+        "file": "project/input/policies/policies_calibration.json"
+    }
+  },
+  "CreditConstraint": {
+    "file": "project/config/reference.json",
+    "end": 2023,
+    "policies": {
+        "file": "project/input/policies/policies_calibration.json",
+        "credit_constraint": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "regulation",
+          "gest": "insulation"
+        }
+    }
+  },
+  "GhgExternality": {
+    "file": "project/config/reference.json",
+    "end": 2023,
+    "policies": {
+        "file": "project/input/policies/policies_calibration.json",
+        "carbon_tax_vsc": {
+      "start": 2019,
+      "end": 2051,
+      "tax": "project/input/policies/carbon_value.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": null,
+      "policy": "carbon_tax"
+  }
+    }
+  },
+  "LandlordDilemma": {
+    "file": "project/config/reference.json",
+    "end": 2023,
+    "policies": {
+        "file": "project/input/policies/policies_calibration.json",
+        "landlord_tenant": {
+    "start": 2019,
+    "end": 2051,
+    "policy": "regulation",
+    "gest": "insulation"
+  }
+    }
+  },
+  "MultiFamily": {
+      "file": "project/config/reference.json",
+      "end": 2023,
+      "policies": {
+        "file": "project/input/policies/policies_calibration.json",
+          "multi-family": {
+    "start": 2019,
+    "end": 2051,
+    "policy": "regulation",
+    "gest": "insulation"
+  }
+      }
+    },
+  "PresentBias": {
+  "file": "project/config/reference.json",
+  "end": 2023,
+  "policies": {
+    "file": "project/input/policies/policies_calibration.json",
+      "present_bias": {
+      "start": 2019,
+      "end": 2051,
+      "value": 0.032,
+      "policy": "regulation",
+      "gest": ["heater", "insulation"]
+    }
+  }
+},
+  "StatusQuoBias": {
+  "file": "project/config/reference.json",
+  "end": 2023,
+  "policies": {
+    "file": "project/input/policies/policies_calibration.json",
+    "status_quo_bias": {
+"start": 2019,
+"end": 2051,
+"policy": "regulation",
+"gest": "heater",
+"value": 0.2
+}
+  }
+}
+}

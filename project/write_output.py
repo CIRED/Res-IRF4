@@ -386,6 +386,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             temp = df.copy()
             temp.set_index(['Years', 'Source', 'Policies'], inplace=True)
             temp = temp.squeeze().unstack('Years')
+
             make_clusterstackedbar_plot(temp, 'Policies', colors=resources_data['colors'],
                                         format_y=lambda y, _: '{:.0f} B€'.format(y),
                                         save=os.path.join(path, 'policies_validation.png'),
