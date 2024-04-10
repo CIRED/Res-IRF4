@@ -1,18 +1,33 @@
 {
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
         "file": "project/input/policies/policies_calibration.json"
     },
     "simple": {
-      "figures": false
-
+      "figures": false,
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
+    }
+  },
+  "Counterfactual": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+        "file": "project/input/policies/policies_calibration.json"
+    },
+    "simple": {
+      "figures": false,
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": false
     }
   },
   "CreditConstraintInsulation": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
         "credit_constraint": {
@@ -21,11 +36,16 @@
           "policy": "regulation",
           "gest": "insulation"
         }
+    },
+    "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
     }
   },
   "CreditConstraintHeater": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
         "credit_constraint": {
@@ -34,11 +54,17 @@
           "policy": "regulation",
           "gest": "heater"
         }
+    },
+    "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
     }
+
   },
   "GhgExternality": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
         "carbon_tax_vsc": {
@@ -48,12 +74,18 @@
       "emission": "project/input/policies/current/carbon_tax_emission.csv",
       "recycling": null,
       "policy": "carbon_tax"
-  }
+  },
+          "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
+    }
+
     }
   },
   "LandlordDilemma": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
         "file": "project/input/policies/policies_calibration.json",
         "landlord_dilemma": {
@@ -61,12 +93,18 @@
     "end": 2051,
     "policy": "regulation",
     "gest": "insulation"
-  }
+  },
+          "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
+    }
+
     }
   },
   "MultiFamily": {
       "file": "project/config/reference.json",
-      "end": 2031,
+      "end": 2051,
       "policies": {
         "file": "project/input/policies/policies_calibration.json",
           "multi_family": {
@@ -74,12 +112,18 @@
     "end": 2051,
     "policy": "regulation",
     "gest": "insulation"
-  }
+  },
+            "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
+    }
+
       }
     },
   "PresentBias": {
   "file": "project/config/reference.json",
-  "end": 2031,
+  "end": 2051,
   "policies": {
     "file": "project/input/policies/policies_calibration.json",
       "present_bias": {
@@ -89,11 +133,17 @@
       "policy": "regulation",
       "gest": ["heater", "insulation"]
     }
-  }
+  },
+        "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
+    }
+
 },
   "StatusQuoBias": {
   "file": "project/config/reference.json",
-  "end": 2031,
+  "end": 2051,
   "policies": {
     "file": "project/input/policies/policies_calibration.json",
     "status_quo_bias": {
@@ -103,6 +153,12 @@
 "gest": "heater",
 "value": 0.2
 }
-  }
+  },
+    "simple": {
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
+    }
+
 }
 }
