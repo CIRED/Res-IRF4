@@ -1963,7 +1963,7 @@ class AgentBuildings(ThermalBuildings):
 
             # there are cases where hh cannot afford any investment, we therefore let them keep the same heating system
             temp = utility_constraint.loc[utility_constraint.isna().all(axis=1), :]
-            t = DataFrame(index=temp.index, columns=temp.columns)
+            t = DataFrame(index=temp.index, columns=temp.columns, dtype=float)
             for i in temp.index.get_level_values('Heating system').unique():
                 idx = temp[temp.index.get_level_values('Heating system') == i].index
                 t.loc[idx, i] = utility.loc[idx, i]
@@ -2176,7 +2176,7 @@ class AgentBuildings(ThermalBuildings):
     def heater_replacement(self, stock, prices, cost_heater, policies_heater, calib_heater=None,
                            step=1, financing_cost=None, district_heating=None, premature_replacement=None,
                            prices_before=None, supply=None, store_information=True, bill_rebate=0,
-                           carbon_content=None, carbon_value=None, credit_constraint=False):
+                           carbon_content=None, carbon_value=None, credit_constraint=True):
         """Function returns building stock updated after switching heating system.
 
 
@@ -3545,7 +3545,7 @@ class AgentBuildings(ThermalBuildings):
 
             compare = concat((compare_rate, compare_share), ignore_index=True)
             if allclose(compare['Calculated'], compare['Observed'], rtol=10 ** -2):
-                self.logger.debug('Coupled optim worked')
+                self.logger.debug('Calibration investment decision insulation worked')
             else:
                 assert allclose(compare['Calculated'], compare['Observed'],
                                 rtol=10 ** -2), 'Calibration insulation did not work'
