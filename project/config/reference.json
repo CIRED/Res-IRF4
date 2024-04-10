@@ -3,7 +3,7 @@
     "step": 1,
     "output": "full",
     "start": 2017,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_medium_3.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update.csv",
     "financing_cost": {
       "activated": true,
       "interest_rate": "project/input/macro/interest_rate.csv",
