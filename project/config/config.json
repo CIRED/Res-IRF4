@@ -31,12 +31,22 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2022,
+    "end": 2021,
     "policies": {
-        "file": "project/input/policies/policies_calibration.json"
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax_vsc": {
+        "start": 2019,
+        "end": 2051,
+        "tax": "project/input/policies/carbon_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": null,
+        "policy": "carbon_tax"
+      }
     },
     "simple": {
-            "figures": false
+      "income_constant": true,
+      "prices_constant": true,
+      "no_natural_replacement": true
     }
-    }
+  }
 }
