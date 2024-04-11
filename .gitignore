@@ -33,3 +33,6 @@ __pycache__/
 **/__pycache__
 *.py[cod]
 /project/config/hidden_cost/
+
+/venv/*
+/.vscode/launch.json
