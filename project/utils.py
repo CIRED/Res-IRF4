@@ -1254,10 +1254,13 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         # group.sum(axis=1)
 
     # Adjust legend
-    if ncol is None:
-        ncol = len(labels)
-    fig.legend(handles, labels, loc='lower center', ncol=ncol, fontsize=fonttick, frameon=False,
-               bbox_to_anchor=(0.5, 0))
+    try:
+        if ncol is None:
+            ncol = len(labels)
+        fig.legend(handles, labels, loc='lower center', ncol=ncol, fontsize=fonttick, frameon=False,
+                bbox_to_anchor=(0.5, 0))
+    except UnboundLocalError:
+        pass
 
     plt.tight_layout()
     plt.subplots_adjust(bottom=bottom)  # Adjust the bottom margin
