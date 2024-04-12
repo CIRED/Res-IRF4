@@ -4883,8 +4883,8 @@ class AgentBuildings(ThermalBuildings):
         for key, item in heater.items():
             output['Stock {} (Million)'.format(key)] = temp[[i for i in item if i in temp.index]].sum() / 10 ** 6
 
-        temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x)) # A SUPPRIMER APRES AVOIR TESTE
-        output.update(temp.T / 10 ** 6) # A SUPPRIMER APRES AVOIR TESTE
+        temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
+        output.update(temp.T / 10 ** 6)
 
         temp = self.stock.groupby(['Heating system', 'Housing type']).sum()
         temp.index = ['Stock {} '.format(y) + '{} (Million)'.format(x) for (x,y) in temp.index]
