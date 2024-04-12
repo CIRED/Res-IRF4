@@ -3979,7 +3979,7 @@ class AgentBuildings(ThermalBuildings):
             None
         """
 
-        # In obligation_flow everyone targeted renovates
+        # In obligation_flow everyone in the replaced_by df renovates
         if call_from_obligation:
             renovation_rate.values.fill(1)
 
@@ -4883,7 +4883,11 @@ class AgentBuildings(ThermalBuildings):
         for key, item in heater.items():
             output['Stock {} (Million)'.format(key)] = temp[[i for i in item if i in temp.index]].sum() / 10 ** 6
 
-        temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
+        temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x)) # A SUPPRIMER APRES AVOIR TESTE
+        output.update(temp.T / 10 ** 6) # A SUPPRIMER APRES AVOIR TESTE
+
+        temp = self.stock.groupby(['Heating system', 'Housing type']).sum()
+        temp.index = ['Stock {} '.format(y) + '{} (Million)'.format(x) for (x,y) in temp.index]
         output.update(temp.T / 10 ** 6)
 
         # energy expenditures : do we really need it ?
@@ -5802,6 +5806,13 @@ class AgentBuildings(ThermalBuildings):
             temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
             temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
             output.update(temp.T / 10 ** 6 / step)
+
+            temp = subsidies_total.groupby(['Income owner']).sum()
+            temp.index = temp.index.map(lambda x: 'Subsidies total {} (Million euro)'.format(x))
+            output.update(temp.T / 10 ** 6 / step)
+
+            temp = subsidies_total[subsidies_total.index.get_level_values('Occupancy status') == 'Social-housing'].sum() / subsidies_total.sum()
+            output['Share of subsidies going to Social-housing (Million euro)'] = temp.sum()
 
             self.store_over_years[self.year].update(
                 {'Annuities heater (Billion euro/year)': output['Annuities heater (Billion euro/year)'],
