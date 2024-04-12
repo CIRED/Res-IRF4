@@ -1213,8 +1213,9 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
 
 def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18, color=None,
                              save=None, subplot_groups=['Housing type', 'Occupancy status'],
-                             index_group='Income tenant', stack_group='Type', ncol=None,
-                             annotate='{:.0f}€', annotate_bis=None, replace_legend=None):
+                             index_group='Income tenant', stack_group='Type',
+                             annotate='{:.0f}€', annotate_bis=None, replace_legend=None,
+                             figtitle=None):
     """Make stacked bar plot.
 
     Parameters
@@ -1241,7 +1242,9 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         group.drop(subplot_groups, axis=1, inplace=True)
         group.plot(kind='bar', stacked=True, ax=axes[i], title=f'{housing_type} | {occupancy_status}', rot=0,
                    color=color)
-        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick)
+        # remove bold from ax title
+
+        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick, fontweight='normal')
         axes[i].set_xlabel('')
         axes[i].set_ylabel('')
         axes[i].spines['top'].set_visible(False)
@@ -1265,7 +1268,9 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         if annotate is not None:
             for index, row in group.iterrows():
                 total = row.sum()
-                axes[i].annotate(annotate.format(total), (index, total), ha='center', va='bottom', fontsize=fonttick)
+                # add margin to the total value
+                margin = 0.05
+                axes[i].annotate(annotate.format(total), (index, total + margin), ha='center', va='bottom', fontsize=fonttick)
                 axes[i].plot(index, total, marker='d', color='black', markersize=5)
 
                 if annotate_bis is not None:
@@ -1280,6 +1285,9 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
 
     fig.legend(handles, labels, loc='center left', fontsize=fonttick, frameon=False,
                bbox_to_anchor=(1, 0.5))
+
+    if figtitle is not None:
+        fig.suptitle(figtitle, x=0.2, y=1.05, weight='bold', color='black', size=fonttick)
 
     if annotate_bis is not None:
         custom_handles = [

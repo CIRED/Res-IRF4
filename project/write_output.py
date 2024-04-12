@@ -965,6 +965,19 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                      idx]
         result[k] = pd.concat((result[k], temp), axis=0)
 
+        """idx_temp = ['Annuities subsidies insulation {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        temp = result[k].loc[idx_temp, :].fillna(0)
+        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
+        temp.index = ['Annuities subsidies insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
+                                     idx]
+        result[k] = pd.concat((result[k], temp), axis=0)
+
+        idx_temp = ['Annuities cost insulation {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        temp = result[k].loc[idx_temp, :].fillna(0)
+        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
+        temp.index = ['Annuities cost insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
+                                     idx]
+        result[k] = pd.concat((result[k], temp), axis=0)"""
         # result[k].to_csv(os.path.join(folder, 'output_{}.csv'.format(k)))
 
     counterfactual = reference
@@ -972,20 +985,28 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     if scenario_assessment is not None:
         levels = ['Housing type', 'Occupancy status', 'Income tenant']
         idx = list(product(*[resources_data['index'][i] for i in levels]))
-        cost_insulation = ['Annuities insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        cost_insulation = ['Annuities cost insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        subsidies_insulation = ['Annuities subsidies insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
         cost_heater = ['Annuities cost heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
         subsidies_heater = ['Annuities subsidies heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
 
         energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
         stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        income = ['Income {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+
         idx = pd.MultiIndex.from_tuples(idx, names=levels)
         # average over time
         year = range(2025, 2051, 1)
         year = [i for i in year if i in result.get(reference).columns]
-        dict_cost_insulation, dict_cost_heater, dict_subsidies_heater, dict_energy, dict_taxes = {}, {}, {}, {}, {}
+        dict_cost_insulation, dict_subsidies_insulation, dict_cost_heater, dict_subsidies_heater, dict_energy, dict_taxes = {}, {}, {}, {}, {}, {}
+        dict_income = {}
         for k, i in result.items():
+            temp = (i.loc[income, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_income.update({k: temp.copy()})
             temp = (i.loc[cost_insulation, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
             dict_cost_insulation.update({k: temp.copy()})
+            temp = (i.loc[subsidies_insulation, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_subsidies_insulation.update({k: temp.copy()})
             temp = (i.loc[cost_heater, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
             dict_cost_heater.update({k: temp.copy()})
             temp = - (i.loc[subsidies_heater, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
@@ -997,16 +1018,25 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             temp = (temp * i.loc[stock, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
             dict_taxes.update({k: temp.copy()})
 
+
         df_energy = pd.DataFrame(dict_energy)
         dict_cost_insulation = pd.DataFrame(dict_cost_insulation)
+        dict_subsidies_insulation = pd.DataFrame(dict_subsidies_insulation)
         dict_cost_heater = pd.DataFrame(dict_cost_heater)
         dict_subsidies_heater = pd.DataFrame(dict_subsidies_heater)
         dict_taxes = pd.DataFrame(dict_taxes)
+        dict_income = pd.DataFrame(dict_income)
 
-        df = pd.concat((dict_cost_insulation, dict_cost_heater, dict_subsidies_heater, df_energy, dict_taxes), axis=0,
-                       keys=['Insulation', 'Heater', 'Subsidies heater', 'Energy', 'Taxes'], names=['Type'])
+        df = pd.concat((dict_cost_insulation, dict_subsidies_insulation, dict_cost_heater, dict_subsidies_heater, df_energy, dict_taxes, dict_income), axis=0,
+                       keys=['Insulation', 'Subsidies insulation', 'Heater', 'Subsidies heater', 'Energy', 'Taxes', 'Income'], names=['Type'])
         df.columns.names = ['Scenario']
-        df_diff = df[scenario_assessment] - df[counterfactual]
+        if not isinstance(scenario_assessment, list):
+            scenario_assessment = [scenario_assessment]
+
+        if len(scenario_assessment) == 1:
+            df_diff = df.loc[:, scenario_assessment] - df.loc[:, counterfactual]
+        else:
+            df_diff = (df.loc[:, scenario_assessment].T - df.loc[:, counterfactual]).T
 
         # remove social housing from df_diff
         df_diff = df_diff.drop('Social-housing', level='Occupancy status')
@@ -1016,13 +1046,20 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                               'Subsidies heater': 'Subsidies heating system',
                               'Taxes': 'Taxes to cover subsidies',
                               'Energy': 'Energy expenditures'}
-            make_stacked_bar_subplot(df_diff, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18,
-                                     color=resources_data['colors'],
-                                     save=os.path.join(folder_img, 'cost_households_{}.png'.format(scenario_assessment)),
-                                     subplot_groups=['Housing type', 'Occupancy status'],
-                                     index_group='Income tenant', stack_group='Type', ncol=None,
-                                     annotate='{:.0f}', annotate_bis=['Energy', 'Heater', 'Insulation'],
-                                     replace_legend=replace_legend)
+            for s_assessment in scenario_assessment:
+                temp = df_diff.loc[:, s_assessment].copy()
+                # impact in euro
+                make_stacked_bar_subplot(temp.drop('Income', level='Type'), format_y=lambda y, _: '{:.0f}€'.format(y),
+                                         fonttick=18,
+                                         color=resources_data['colors'],
+                                         save=os.path.join(folder_img, 'cost_households_{}.png'.format(s_assessment)),
+                                         subplot_groups=['Housing type', 'Occupancy status'],
+                                         index_group='Income tenant', stack_group='Type', ncol=None,
+                                         annotate='{:.0f}', annotate_bis=['Energy', 'Heater', 'Insulation'],
+                                         replace_legend=replace_legend)
+                # impact in share of income
+                print('ok')
+                # temp = df_diff.loc[:, s_assessment].drop('Income', level='Type') / temp.loc
 
         if False:
             for n, g in df.groupby(levels_group):
