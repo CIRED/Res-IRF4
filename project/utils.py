@@ -473,6 +473,7 @@ def make_policies_tables(policies, path, plot=True):
                    'restriction_energy': 'Restriction energy',
                    'subsidies_cap': 'Subsidy, cap',
                    'regulation': 'Regulation instrument',
+                   'credit_constraint': 'Regulation instrument',
                    'zero_interest_loan': 'Regulated loan'
                    }
 

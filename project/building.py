@@ -2385,7 +2385,7 @@ class AgentBuildings(ThermalBuildings):
         epc_upgrade = - certificate.replace(EPC2INT).sub(
             certificate_before.replace(EPC2INT), axis=0)
 
-        p = [p for p in policies_heater if p.name == 'credit_constraint']
+        p = [p for p in policies_heater if p.policy == 'credit_constraint']
         if credit_constraint and not p:
             credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
         else:
@@ -4094,7 +4094,7 @@ class AgentBuildings(ThermalBuildings):
             bill_saved = reindex_mi(bill_saved, index)
             bill_saved = (bill_saved.T * reindex_mi(self._surface, bill_saved.index)).T
 
-            p = [p for p in policies_insulation if p.name == 'credit_constraint']
+            p = [p for p in policies_insulation if p.policy == 'credit_constraint']
             if credit_constraint and not p:
                 credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
             else:
