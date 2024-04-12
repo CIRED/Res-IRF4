@@ -1491,7 +1491,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None, reference='Ref
 
 
 def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None,
-                       reference='Reference', order_scenarios=None):
+                       reference='Reference', order_scenarios=None, figure=True):
 
     def double_difference(ref, scenario, values=None, discount_rate=discount_rate, years=years):
         """Calculate double difference.
@@ -1585,14 +1585,15 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
 
-            temp.update({'Comfort EE': - df['Thermal comfort EE (Billion euro)']})
-
-            temp.update({'Comfort prices': + df['Thermal loss prices (Billion euro)']})
+            # temp.update({'Comfort EE': - df['Thermal comfort EE (Billion euro)']})
+            # temp.update({'Comfort prices': + df['Thermal loss prices (Billion euro)']})
+            temp.update({'Thermal comfort': - df['Thermal comfort EE (Billion euro)'] + df['Thermal loss prices (Billion euro)']})
 
             temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
                                                 for i in resources_data['index']['Energy'])})
 
             temp.update({'Health cost': df['Health cost (Billion euro)']})
+            temp.update({'Unobserved value': df['Hidden cost (Billion euro)']})
 
             if isinstance(policy_name, list):
                 policy_name = '-'.join(policy_name)
@@ -1622,14 +1623,16 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
         npv = - pd.DataFrame(npv)
         if save:
+            npv.drop('Embodied emission', axis=0, inplace=True, errors='ignore')
             if order_scenarios is not None:
                 npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
+            npv_private = npv.loc[['Investment', 'Energy saving', 'Thermal comfort', 'Unobserved value'], :].sum()
             make_stackedbar_plot(npv.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
                                  format_y=lambda y, _: '{:.0f} B€'.format(y),
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'cost_benefit_analysis_counterfactual.png'.lower().replace(' ', '_')),
-                                 rotation=0, left=1.2, fontxtick=12)
+                                 rotation=0, left=1.2, fontxtick=12, scatterplot_bis=npv_private)
 
         npv.loc['NPV', :] = npv.sum()
         npv.columns = scenarios
@@ -1710,6 +1713,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
         # We use simple diff when effect do not last
         variable = ['Investment total WT (Billion euro)',
+                    'Hidden cost heater (Billion euro)',
+                    'Hidden cost insulation (Billion euro)',
                     'Subsidies total (Billion euro)',
                     'VAT (Billion euro)',
                     'Health expenditure (Billion euro)',
@@ -1754,6 +1759,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
         comparison[scenario] = temp_comparison
     comparison = pd.DataFrame(comparison)
+    comparison.loc['Hidden cost (Billion euro)', :] = comparison.loc['Hidden cost heater (Billion euro)', :] + comparison.loc['Hidden cost insulation (Billion euro)', :]
     comparison.sort_index(axis=1, inplace=True)
     comparison.round(2).to_csv(os.path.join(folder_policies, 'comparison.csv'))
 
@@ -1921,7 +1927,11 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
     effectiveness_scenarios = [s for s in comparison.columns if s not in efficiency_scenarios]
     if effectiveness_scenarios:
-        cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=folder_policies,
+        if figure is True:
+            save = folder_policies
+        else:
+            save = None
+        cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=save,
                                     order_scenarios=order_scenarios)
         if indicator is not None:
             if set(list(cba.index)).issubset(list(indicator.index)):

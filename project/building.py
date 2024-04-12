@@ -4461,6 +4461,13 @@ class AgentBuildings(ThermalBuildings):
 
         self.logger.debug('Formatting switch heater flow')
         flow_only_heater = flow_only_heater.stack('Heating system final')
+
+        if False:
+            t = add_no_renovation(replaced_by)
+            t = t.reorder_levels(flow_only_heater.index.names)
+            t = t.reindex(flow_only_heater.index).fillna(0)
+            t.iloc[:, 0] = flow_only_heater
+
         to_replace_heater = - flow_only_heater.droplevel('Heating system final')
 
         replaced_by_heater = flow_only_heater.droplevel('Heating system')
@@ -5980,7 +5987,7 @@ class AgentBuildings(ThermalBuildings):
 
     def apply_scale(self, scale, gest='insulation'):
         def calculate_indicators_insulation():
-            # discount_factor
+            # discount_factor TODO: check that
             discount_factor = - self.preferences_insulation['bill_saved'] / self.preferences_insulation['cost']
             self.discount_factor = discount_factor
             discount_rate = find_discount_rate(discount_factor)

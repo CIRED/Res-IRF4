@@ -1298,7 +1298,7 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
-                         scatterplot=None, fontxtick=16):
+                         scatterplot=None, fontxtick=16, scatterplot_bis=None):
     """Make stackedbar plot.
 
     Parameters
@@ -1333,20 +1333,49 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
 
         y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
         for _, y in scatterplot.iterrows():
-            ax.annotate("{:,.0f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
+            ax.annotate("{:,.0f}".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 40), ha="center")
+
+    if scatterplot_bis is not None:
+        scatterplot_bis.index = scatterplot_bis.index.astype(str)
+        scatterplot_bis = scatterplot_bis.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+        scatterplot_bis.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
+                             color='black', s=50, xlabel=None, marker='d')
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
 
     ax.spines['left'].set_visible(False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
-    # ax.set_xticklabels(df.index, rotation=rotation)
 
     ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
     ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
     ax.set(xlabel=None, ylabel=None)
 
     format_legend(ax, loc=loc, left=left)
+
+    if scatterplot_bis is not None:
+        custom_handles = [
+            Line2D([0], [0], marker='o', color='black', lw=0, label='Social benefits'),
+            Line2D([0], [0], marker='d', color='black', lw=0, label='Private benefits'),
+        ]
+
+        # Add the additional legend
+        # Adjust the bbox_to_anchor values as needed to place the second legend
+        # Retrieve the existing handles and labels
+        existing_handles, existing_labels = ax.get_legend_handles_labels()
+
+        # Combine existing handles/labels with the new ones
+        all_handles = existing_handles + custom_handles
+        all_labels = existing_labels + [handle.get_label() for handle in custom_handles]
+
+        # Create a unified legend with all handles and labels
+        # Adjust the bbox_to_anchor values as needed to place the legend
+        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7), frameon=False)
+
+        texts = leg.get_texts()
+        for text in texts:
+            text.set_color(COLOR)
+
     save_fig(fig, save=save)
 
 
@@ -1936,3 +1965,103 @@ def plot_thermal_insulation(stock, save=None):
         x = stock / 10 ** 6
         temp.update({i: cumulated_plot(x, y, plot=False)})
     cumulated_plots(temp, 'Thermal transmittance U (W/m2.K)', ylim=3, save=save)
+
+
+def horizontal_stack_bar_plot(df, columns=None, title=None, order=None, save_path=None):
+    """
+    Create a horizontal stacked bar plot from a DataFrame.
+
+    Examples: horizontal_stack_bar_plot(sobol_df.rename(index=NAME_COLUMNS), columns=['First order', 'Total order'],
+        title='Influence of parameters that the ban i', order='Total order',
+        save_path=folder_name / Path('sobol_ban.png'))
+
+    Parameters
+    ----------
+    df
+    columns
+    title
+    order
+    save_path
+
+    Returns
+    -------
+
+    """
+    # If no specific columns are provided, use all columns in the DataFrame
+    if columns is None:
+        columns = df.columns
+
+    if order is not None:
+        df = df.sort_values(by=order, ascending=True)
+
+    # Number of rows and bars to plot
+    n_rows = len(df)
+    n_cols = len(columns)
+    bar_width = 0.8 / n_cols  # Adjust bar width based on number of columns
+    y_positions = np.arange(n_rows)
+    fig, ax = plt.subplots(1, 1, figsize=(14, 9.6))
+
+    # Plot each column
+    for i, col in enumerate(columns):
+        ax.barh(y_positions - 0.4 + (i + 0.5) * bar_width, df[col], height=bar_width, label=col,
+                )
+
+    # Set the y-ticks to use the index of the DataFrame
+    ax.set_yticks(y_positions, df.index)
+    #ax.yticks(y_positions, df.index)
+
+    # Hide the top, right, and left spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    # size of x-axis and y-axis ticks
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    # size of title
+
+    # Remove the x-axis and y-axis titles
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+
+
+    # Set title if provided align on the left
+    if title:
+        ax.set_title(title, fontsize=20, fontweight='bold', loc='left')
+
+    # Place legend to the right of the figure, without frame
+    ax.legend(frameon=False, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=18)
+
+    if save_path:
+        fig.savefig(save_path, bbox_inches='tight', dpi=300)
+        plt.close(fig)
+
+
+def manual_sobol_analysis(scenarios, list_features, y):
+    """Computes manually the Sobol indices for a given set of scenarios and a given output variable y
+
+    scenarios: DataFrame
+        DataFrame containing the scenarios
+    list_features: list
+        List of features to consider
+    y: str
+        Output variable
+    """
+    sobol_df = pd.DataFrame(index=list_features, columns=['First order', 'Total order'])
+
+    expectation, variance = scenarios[y].mean(), scenarios[y].var()
+
+    for col in list_features:
+        # first order
+        conditional_means = scenarios.groupby(col)[y].mean()
+        counts = scenarios.groupby(col).size() / len(scenarios)
+        sobol_first_order = (counts * (conditional_means - expectation) ** 2).sum() / variance
+        sobol_df.loc[col, 'First order'] = sobol_first_order
+
+        # total order
+        list_features_minus_i = list_features.copy()
+        list_features_minus_i.remove(col)
+        conditional_means = scenarios.groupby(list_features_minus_i)[y].mean()
+        counts = scenarios.groupby(list_features_minus_i).size() / len(scenarios)
+        sobol_total_order = 1 - (counts * (conditional_means - expectation) ** 2).sum() / variance
+        sobol_df.loc[col, 'Total order'] = sobol_total_order
+    return sobol_df
