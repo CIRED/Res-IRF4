@@ -308,6 +308,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                          lineplot=lineplot)
 
     # total running cost
+    """
     variables = {'Cost energy (Billion euro)': 'Energy expenditure',
                  'Loss thermal comfort (Billion euro)': 'Comfort',
                  'Cost emission (Billion euro)': 'Direct emission',
@@ -320,7 +321,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     make_stackedbar_plot(df.T, 'Running cost (Billion euro)', ncol=2, ymin=None, format_y=lambda y, _: '{:.0f}'.format(y),
                          colors=resources_data['colors'], save=os.path.join(path, 'running_cost.png'), left=1.2,
                          lineplot=lineplot)
-
+    
     # cost-benefit analysis
     variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
                  'CBA Consumption saving prices (Billion euro)': 'Saving price',
@@ -338,7 +339,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
     make_stackedbar_plot(df.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None, format_y=lambda y, _: '{:.1f}'.format(y),
                          hline=0, lineplot=lineplot, colors=resources_data['colors'],
                          save=os.path.join(path, 'cost_benefit_analysis.png'), left=1.2)
-
+    """
     # subsidies
     non_subsidies = ['subsidies_cap', 'obligation']
     temp = ['{} (Billion euro)'.format(i.capitalize().replace('_', ' ')) for i in buildings.policies + ['reduced_vat'] if i not in non_subsidies]
@@ -445,27 +446,28 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                        colors=['darkred', 'darkgrey', 'darkgreen'])
 
     # balance
-    subset = output.loc[['Balance Tenant private - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
-    subset.dropna(how='any', inplace=True)
-    subset.columns = resources_data['index']['Income tenant']
-    if not subset.empty:
-        make_plot(subset, 'Balance Tenant private (euro per year)',
-                  save=os.path.join(path, 'balance_tenant.png'),
-                  format_y=lambda y, _: '{:.0f}'.format(y),
-                  colors=resources_data['colors'], ymin=None)
+    if False:
+        subset = output.loc[['Balance Tenant private - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
+        subset.dropna(how='any', inplace=True)
+        subset.columns = resources_data['index']['Income tenant']
+        if not subset.empty:
+            make_plot(subset, 'Balance Tenant private (euro per year)',
+                      save=os.path.join(path, 'balance_tenant.png'),
+                      format_y=lambda y, _: '{:.0f}'.format(y),
+                      colors=resources_data['colors'], ymin=None)
 
-    subset = output.loc[['Balance Owner-occupied - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
-    subset.dropna(how='any', inplace=True)
-    subset.columns = resources_data['index']['Income tenant']
-    if not subset.empty:
-        make_plot(subset, 'Balance Owner occupied (euro per year)',
-                  save=os.path.join(path, 'balance_owner.png'),
-                  format_y=lambda y, _: '{:.0f}'.format(y),
-                  colors=resources_data['colors'], ymin=None)
+        subset = output.loc[['Balance Owner-occupied - {} (euro/year.household)'.format(i) for i in resources_data['index']['Income tenant']], :].T
+        subset.dropna(how='any', inplace=True)
+        subset.columns = resources_data['index']['Income tenant']
+        if not subset.empty:
+            make_plot(subset, 'Balance Owner occupied (euro per year)',
+                      save=os.path.join(path, 'balance_owner.png'),
+                      format_y=lambda y, _: '{:.0f}'.format(y),
+                      colors=resources_data['colors'], ymin=None)
 
 
 def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None, reference='Reference', colors=None,
-                           scenario_assessment=None):
+                           scenario_assessment=None, social_discount_rate=0.032):
     """Grouped scenarios output.
 
     Parameters
@@ -555,8 +557,207 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
     start = result.get(reference).columns[0]
     end = result.get(reference).columns[-1]
 
+    # ----------------
+    # graph distributive impact - cost for households
+
+    # post-treatment
+    for k in result.keys():
+        subsidies = result[k].loc['Subsidies total (Billion euro)', :]
+        annuities_subsidies = calculate_annuities(subsidies, lifetime=10, discount_rate=social_discount_rate)
+        subsidies = annuities_subsidies.rolling(window=10, min_periods=1).sum()
+        subsidies.fillna(0, inplace=True)
+
+        taxes = result[k].loc['Taxes expenditure (Billion euro)', :]
+        bill_rebates = 0
+        if 'Bill rebates (Billion euro)' in result[k].index:
+            bill_rebates = result[k].loc['Bill rebates (Billion euro)', :]
+
+        government_spending = subsidies - taxes + bill_rebates
+
+        stock = result[reference].loc['Stock (Million)', :]
+        cost_public_households = (government_spending / stock) * 1e3
+        result[k].loc['Cost public households (euro)', :] = cost_public_households
+
+        #result[k].loc['Cost public households (euro)', :] = subsidies_households
+
+        levels = ['Housing type', 'Occupancy status', 'Income tenant']
+        idx = list(product(*[resources_data['index'][i] for i in levels]))
+        for j in ['', ' insulation', ' heater']:
+            idx_temp = ['Annuities{} {} - {} - {}'.format(j, i[0], i[1], i[2]) for i in idx]
+            annuities = result[k].loc[idx_temp, :].fillna(0)
+            annuities_cumulated = annuities.rolling(window=10, min_periods=1, axis=1).sum()
+            annuities_cumulated.index = ['Annuities{} cumulated {} - {} - {} (euro)'.format(j, i[0], i[1], i[2]) for i in idx]
+            result[k] = pd.concat((result[k], annuities_cumulated), axis=0)
+
+        idx_temp = ['Annuities subsidies heater {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        temp = result[k].loc[idx_temp, :].fillna(0)
+        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
+        temp.index = ['Annuities subsidies heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
+                      idx]
+        result[k] = pd.concat((result[k], temp), axis=0)
+
+        idx_temp = ['Annuities cost heater {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        temp = result[k].loc[idx_temp, :].fillna(0)
+        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
+        temp.index = ['Annuities cost heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
+                      idx]
+        result[k] = pd.concat((result[k], temp), axis=0)
+
+        idx_temp = ['Annuities subsidies insulation {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        temp = result[k].loc[idx_temp, :].fillna(0)
+        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
+        temp.index = ['Annuities subsidies insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
+                      idx]
+        result[k] = pd.concat((result[k], temp), axis=0)
+
+        idx_temp = ['Annuities cost insulation {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        temp = result[k].loc[idx_temp, :].fillna(0)
+        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
+        temp.index = ['Annuities cost insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
+                      idx]
+        result[k] = pd.concat((result[k], temp), axis=0)
+        # result[k].to_csv(os.path.join(folder, 'output_{}.csv'.format(k)))
+
+    # graph distributive impact - cost for households by scenario
+    counterfactual = reference
+    #scenario_assessment, counterfactual = 'BanNoPolicyHeater', 'NoPolicyHeater'
+    if scenario_assessment is not None:
+        levels = ['Housing type', 'Occupancy status', 'Income tenant']
+        idx = list(product(*[resources_data['index'][i] for i in levels]))
+        cost_insulation = ['Annuities cost insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        subsidies_insulation = ['Annuities subsidies insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        cost_heater = ['Annuities cost heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        subsidies_heater = ['Annuities subsidies heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+
+        energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        income = ['Income {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+
+        idx = pd.MultiIndex.from_tuples(idx, names=levels)
+        # average over time
+        year = range(start, end, 1)
+        year = [i for i in year if i in result.get(reference).columns]
+        dict_cost_insulation, dict_subsidies_insulation, dict_cost_heater, dict_subsidies_heater, dict_energy, dict_taxes = {}, {}, {}, {}, {}, {}
+        for k, i in result.items():
+            temp = (i.loc[cost_insulation, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_cost_insulation.update({k: temp.copy()})
+            temp = - (i.loc[subsidies_insulation, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_subsidies_insulation.update({k: temp.copy()})
+            temp = (i.loc[cost_heater, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_cost_heater.update({k: temp.copy()})
+            temp = - (i.loc[subsidies_heater, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_subsidies_heater.update({k: temp.copy()})
+            temp = (i.loc[energy, year].set_axis(idx, axis=0)).sum(axis=1) / \
+                   i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_energy.update({k: temp.copy()})
+            temp = pd.concat([i.loc['Cost public households (euro)', year]] * len(idx), keys=idx, axis=1).T
+            temp = (temp * i.loc[stock, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+            dict_taxes.update({k: temp.copy()})
+
+        df_energy = pd.DataFrame(dict_energy)
+        dict_cost_insulation = pd.DataFrame(dict_cost_insulation)
+        dict_subsidies_insulation = pd.DataFrame(dict_subsidies_insulation)
+        dict_cost_heater = pd.DataFrame(dict_cost_heater)
+        dict_subsidies_heater = pd.DataFrame(dict_subsidies_heater)
+        dict_taxes = pd.DataFrame(dict_taxes)
+        df = pd.concat((dict_cost_insulation, dict_subsidies_insulation, dict_cost_heater, dict_subsidies_heater, df_energy, dict_taxes), axis=0,
+                       keys=['Insulation', 'Subsidies insulation', 'Heater', 'Subsidies heater', 'Energy', 'Taxes'], names=['Type'])
+        df.columns.names = ['Scenario']
+
+        i = result[reference]
+        df_income =  (i.loc[income, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+
+        if not isinstance(scenario_assessment, list):
+            scenario_assessment = [scenario_assessment]
+
+        if len(scenario_assessment) == 1:
+            df_diff = df.loc[:, scenario_assessment] - df.loc[:, counterfactual]
+        else:
+            df_diff = (df.loc[:, scenario_assessment].T - df.loc[:, counterfactual]).T
+
+        # remove social housing from df_diff
+        df_diff = df_diff.drop('Social-housing', level='Occupancy status')
+        df_income = df_income.drop('Social-housing', level='Occupancy status')
+        if not df_diff.empty:
+            replace_legend = {'Insulation': 'Insulation cost',
+                              'Subsidies insulation': 'Subsidies insulation',
+                              'Heater': 'Heating system cost',
+                              'Subsidies heater': 'Subsidies heating system',
+                              'Taxes': 'Taxes to cover subsidies',
+                              'Energy': 'Energy expenditures'}
+            for s_assessment in scenario_assessment:
+                temp = df_diff.loc[:, s_assessment].copy()
+                # impact in euro
+                make_stacked_bar_subplot(temp, format_y=lambda y, _: '{:.0f}€'.format(y),
+                                         fonttick=18, color=resources_data['colors'],
+                                         save=os.path.join(folder_img, 'cost_households_{}.png'.format(s_assessment)),
+                                         subplot_groups=['Housing type', 'Occupancy status'],
+                                         index_group='Income tenant', stack_group='Type',
+                                         annotate='{:.0f}', annotate_bis=['Energy', 'Heater', 'Insulation'],
+                                         replace_legend=replace_legend,
+                                         figtitle='Households cost in {} compared to {}'.format(s_assessment, counterfactual))
+                # impact in share of income
+                make_stacked_bar_subplot(temp / df_income, format_y=lambda y, _: '{:.1%}'.format(y),
+                                         fonttick=18, color=resources_data['colors'],
+                                         save=os.path.join(folder_img, 'ratio_cost_households_{}.png'.format(s_assessment)),
+                                         subplot_groups=['Housing type', 'Occupancy status'],
+                                         index_group='Income tenant', stack_group='Type',
+                                         annotate='{:.0%}', annotate_bis=['Energy', 'Heater', 'Insulation'],
+                                         replace_legend=replace_legend,
+                                         figtitle='Ratio households cost on income for in {} compared to {}'.format(s_assessment, counterfactual))
+            # all scenarios same graphic in euro
+            t = df_diff.groupby(['Housing type', 'Occupancy status', 'Income tenant']).sum()
+            t = select(t, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+            t = format_table(t, name='Scenario')
+            t['Decision maker'] = t['Housing type'] + ' | ' + t['Occupancy status']
+            make_relplot(t, x='Income tenant', y='Data', col='Decision maker', hue='Scenario',
+                         palette=colors,
+                         save=os.path.join(folder_img, 'cost_households_scenario_euro.png'),
+                         title=None, format_y=lambda y, _: '{:.0f} €'.format(y))
+
+            # all scenarios same graphic in share of income
+            t = df_diff.groupby(['Housing type', 'Occupancy status', 'Income tenant']).sum()
+            t = (t.T / df_income).T
+            t = select(t, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+            t = format_table(t, name='Scenario')
+            t['Decision maker'] = t['Housing type'] + ' | ' + t['Occupancy status']
+            make_relplot(t, x='Income tenant', y='Data', col='Decision maker', hue='Scenario',
+                         palette=colors, format_y=lambda y, _: '{:.1%}'.format(y),
+                         save=os.path.join(folder_img, 'cost_households_scenario_income.png'),
+                         title=None)
+
+            #
+
+        if False:
+            for n, g in df.groupby(levels_group):
+                g = g.droplevel(levels_group, axis=0)
+                if counterfactual is not None:
+                    g = (g.T - g.loc[:, counterfactual]).T
+                    g.drop(counterfactual, axis=1, inplace=True)
+                g = g.stack('Scenario').unstack('Income tenant')
+                # Creating a larger figure outside the function
+
+                make_clusterstackedbar_plot(g, 'Type', colors=resources_data['colors'],
+                                            format_y=lambda y, _: '{:.0f} €/year'.format(y),
+                                            save=os.path.join(folder_img, 'cost_households_{}.png'.format('_'.join(n))), rotation=90,
+                                            ymin=-60, ymax=60,
+                                            legend=False, figtitle=' | '.join(n), display_total=True)
+
+    # ----------------
+    """
+    data = select(df, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+    data = format_table(data, name='Scenarios')
+    data['Decision maker'] = data['Housing type'] + ' - ' + data['Occupancy status']
+
+    make_relplot(data, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                 palette=colors,
+                 save=os.path.join(folder_img, 'energy_income_ratio{}_{}.png'.format(k.replace(' ', '_'), year)),
+                 title=None)
+    """
+
+
     # make table summary
-    vars = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)'] # 'Consumption PE (TWh)'
+    vars = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)', 'Consumption PE (TWh)'] #
     vars += ['Consumption {} (TWh)'.format(i) for i in resources_data['index']['Energy']]
     vars += ['Energy poverty (Million)', 'Emission (MtCO2)']
     vars += ['Stock {} (Million)'.format(i) for i in resources_data['index']['Performance']]
@@ -755,7 +956,6 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                       index=result.keys()) / consumption_ini
 
     # ----------------
-
     # graph cost benefit analysis
     try:
         energy_poverty = pd.Series({k: i.loc['Energy poverty (Million)', end] for k, i in result.items()})
@@ -795,339 +995,190 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
 
     # graph scatter plot - cba/runnning cost
     try:
-        subsidies_total = pd.Series(
-            {k: i.loc['Subsidies total (Billion euro)', :].sum() for k, i in result.items()})
-        variables = {'Cost energy (Billion euro)': 'Energy expenditure',
-                     'Loss thermal comfort (Billion euro)': 'Comfort',
-                     'Cost emission (Billion euro)': 'Direct emission',
-                     'Cost heath (Billion euro)': 'Health cost',
-                     'Cost heater (Billion euro)': 'Annuities heater',
-                     'Cost insulation (Billion euro)': 'Annuities insulation',
-                     'COFP (Billion euro)': 'COFP'
-                     }
-        # graph running cost
-        df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
-        df = df.rename(index=variables)
-        cost_total = df.sum(axis=0).rename('Total')
-        make_stackedbar_plot(df.T, 'Running cost to {} (Billion euro)'.format(end), ncol=3, ymin=None,
-                             format_y=lambda y, _: '{:.0f}'.format(y),
-                             hline=0, scatterplot=cost_total, colors=resources_data['colors'],
-                             save=os.path.join(folder_img, 'running_cost.png'),
-                             rotation=0, left=1.3)
-
-        # colors
-        diff = (df.T - df[reference]).T
-        if not diff.empty and diff.shape[1] > 1:
-            cost_diff_total = diff.T.sum(axis=1).rename('Total')
-            make_stackedbar_plot(diff.drop(reference, axis=1).T,
-                                 'Running cost compare to Reference to {} (Billion euro)'.format(end), ncol=3, ymin=None,
+        if False:
+            subsidies_total = pd.Series(
+                {k: i.loc['Subsidies total (Billion euro)', :].sum() for k, i in result.items()})
+            variables = {'Cost energy (Billion euro)': 'Energy expenditure',
+                         'Loss thermal comfort (Billion euro)': 'Comfort',
+                         'Cost emission (Billion euro)': 'Direct emission',
+                         'Cost heath (Billion euro)': 'Health cost',
+                         'Cost heater (Billion euro)': 'Annuities heater',
+                         'Cost insulation (Billion euro)': 'Annuities insulation',
+                         'COFP (Billion euro)': 'COFP'
+                         }
+            # graph running cost
+            df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
+            df = df.rename(index=variables)
+            cost_total = df.sum(axis=0).rename('Total')
+            make_stackedbar_plot(df.T, 'Running cost to {} (Billion euro)'.format(end), ncol=3, ymin=None,
                                  format_y=lambda y, _: '{:.0f}'.format(y),
-                                 hline=0, scatterplot=cost_diff_total.drop(reference), colors=resources_data['colors'],
-                                 save=os.path.join(folder_img, 'running_cost_comparison.png'), rotation=0,
-                                 left=1.3)
+                                 hline=0, scatterplot=cost_total, colors=resources_data['colors'],
+                                 save=os.path.join(folder_img, 'running_cost.png'),
+                                 rotation=0, left=1.3)
 
-            df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors), subsidies_total), axis=1,
-                           keys=['Consumption saving (TWh)',
-                                 'Emission saving (MtCO2)',
-                                 'Running cost (Billion euro)',
-                                 'Running cost diff (Billion euro)',
-                                 'colors',
-                                 'Subsidies (Billion euro)'
-                                 ])
-            df.dropna(inplace=True)
+            # colors
+            diff = (df.T - df[reference]).T
+            if not diff.empty and diff.shape[1] > 1:
+                cost_diff_total = diff.T.sum(axis=1).rename('Total')
+                make_stackedbar_plot(diff.drop(reference, axis=1).T,
+                                     'Running cost compare to Reference to {} (Billion euro)'.format(end), ncol=3, ymin=None,
+                                     format_y=lambda y, _: '{:.0f}'.format(y),
+                                     hline=0, scatterplot=cost_diff_total.drop(reference), colors=resources_data['colors'],
+                                     save=os.path.join(folder_img, 'running_cost_comparison.png'), rotation=0,
+                                     left=1.3)
 
-            make_scatter_plot(df, 'Consumption saving (TWh)', 'Running cost diff (Billion euro)',
-                              'Consumption saving to {} (TWh)'.format(end),
-                              'Running cost to {} (Billion euro)'.format(end),
-                              hlines=0,
-                              format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                              format_y=lambda y, _: '{:.1f}'.format(y),
-                              save=os.path.join(folder_img, 'running_cost_consumption.png'),
-                              col_colors='colors',
-                              col_size='Subsidies (Billion euro)'
-                              )
+                df = pd.concat((consumption_saving, emission_saving, cost_total, cost_diff_total, pd.Series(colors), subsidies_total), axis=1,
+                               keys=['Consumption saving (TWh)',
+                                     'Emission saving (MtCO2)',
+                                     'Running cost (Billion euro)',
+                                     'Running cost diff (Billion euro)',
+                                     'colors',
+                                     'Subsidies (Billion euro)'
+                                     ])
+                df.dropna(inplace=True)
 
-            make_scatter_plot(df, 'Emission saving (MtCO2)', 'Running cost diff (Billion euro)',
-                              'Emission saving to {}(MtCO2)'.format(end),
-                              'Running cost to {} (Billion euro)'.format(end),
-                              hlines=0,
-                              format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
-                              format_y=lambda y, _: '{:.1f}'.format(y),
-                              save=os.path.join(folder_img, 'running_cost_emission.png'),
-                              col_colors='colors',
-                              col_size='Subsidies (Billion euro)'
-                              )
+                make_scatter_plot(df, 'Consumption saving (TWh)', 'Running cost diff (Billion euro)',
+                                  'Consumption saving to {} (TWh)'.format(end),
+                                  'Running cost to {} (Billion euro)'.format(end),
+                                  hlines=0,
+                                  format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                                  format_y=lambda y, _: '{:.1f}'.format(y),
+                                  save=os.path.join(folder_img, 'running_cost_consumption.png'),
+                                  col_colors='colors',
+                                  col_size='Subsidies (Billion euro)'
+                                  )
 
-        # graph Annualized CBA
-        variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
-                     'CBA Consumption saving prices (Billion euro)': 'Saving price',
-                     'CBA Thermal comfort EE (Billion euro)': 'Comfort EE',
-                     'CBA Emission direct (Billion euro)': 'Direct emission',
-                     'CBA Thermal loss prices (Billion euro)': 'Comfort prices',
-                     'CBA Annuities heater (Billion euro)': 'Annuities heater',
-                     'CBA Annuities insulation (Billion euro)': 'Annuities insulation',
-                     'CBA Carbon Emission indirect (Billion euro)': 'Indirect emission',
-                     'CBA Health cost (Billion euro)': 'Health cost',
-                     'CBA COFP (Billion euro)': 'COFP'
-                     }
-
-        df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
-        df = df.rename(index=variables)
-        cba_total = df.sum(axis=0).rename('Total')
-        make_stackedbar_plot(df.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
-                             format_y=lambda y, _: '{:.0f}'.format(y),
-                             hline=0, scatterplot=cba_total, colors=resources_data['colors'],
-                             save=os.path.join(folder_img, 'cost_benefit_analysis.png'),
-                             rotation=90, left=1.3)
-
-        diff = (df.T - df[reference]).T
-        if not diff.empty and diff.shape[1] > 1:
-            cba_diff_total = diff.T.sum(axis=1).rename('Total')
-
-            make_stackedbar_plot(diff.drop(reference, axis=1).T,
-                                 'Cost-benefits analysis compare to Reference to {} (Billion euro)'.format(end),
-                                 ncol=3, ymin=None,
-                                 format_y=lambda y, _: '{:.0f}'.format(y),
-                                 hline=0, scatterplot=cba_diff_total.drop(reference), colors=resources_data['colors'],
-                                 save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), rotation=0,
-                                 left=1.3)
-
-
-            energy_poverty = pd.Series({k: i.loc['Energy poverty (Million)', end] for k, i in result.items()})
-            df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors),
-                            subsidies_total, energy_poverty), axis=1,
-                           keys=['Consumption saving (TWh)',
-                                 'Emission saving (MtCO2)',
-                                 'CBA (Billion euro)',
-                                 'CBA diff (Billion euro)',
-                                 'colors',
-                                 'Subsidies (Billion euro)',
-                                 'Energy poverty (Million)'
-                                 ])
-            df.dropna(inplace=True)
-
-            make_scatter_plot(df, 'CBA diff (Billion euro)', 'Consumption saving (TWh)',
-                              'Cost benefit analysis to {} (Billion euro)'.format(end),
-                              'Consumption saving to {} (TWh)'.format(end),
-                              hlines=0,
-                              format_x=lambda y, _: '{:.1f}'.format(y), ymin=0,
-                              format_y=lambda x, _: '{:.0%}'.format(x),
-                              save=os.path.join(folder_img, 'cba_annualized_consumption.png'),
-                              col_colors='colors',
-                              col_size='Energy poverty (Million)'
-                              )
-
-            make_scatter_plot(df, 'CBA diff (Billion euro)', 'Emission saving (MtCO2)',
-                              'Cost benefit analysis to {} (Billion euro)'.format(end),
-                              'Emission saving to {} (MtCO2)'.format(end),
-                              hlines=0,
-                              format_x=lambda y, _: '{:.1f}'.format(y), ymin=0,
-                              format_y=lambda x, _: '{:.0%}'.format(x),
-                              save=os.path.join(folder_img, 'cba_annualized_emission.png'),
-                              col_colors='colors',
-                              col_size='Subsidies (Billion euro)'
-                              )
-    except KeyError:
-        pass
-    # ----------------
-    # graph distributive impact - cost for households
-
-    # post-treatment
-    for k in result.keys():
-        subsidies = result[k].loc['Subsidies total (Billion euro)', :]
-        annuities_subsidies = calculate_annuities(subsidies, lifetime=10, discount_rate=0.05)
-        subsidies = annuities_subsidies.rolling(window=10, min_periods=1).sum()
-        subsidies.fillna(0, inplace=True)
-        stock = result[reference].loc['Stock (Million)', :]
-        subsidies_households = (subsidies / stock) * 1e3
-        result[k].loc['Subsidies households (euro)', :] = subsidies_households
-
-        levels = ['Housing type', 'Occupancy status', 'Income tenant']
-        idx = list(product(*[resources_data['index'][i] for i in levels]))
-        for j in ['', ' insulation', ' heater']:
-            idx_temp = ['Annuities{} {} - {} - {}'.format(j, i[0], i[1], i[2]) for i in idx]
-            annuities = result[k].loc[idx_temp, :].fillna(0)
-            annuities_cumulated = annuities.rolling(window=10, min_periods=1, axis=1).sum()
-            annuities_cumulated.index = ['Annuities{} cumulated {} - {} - {} (euro)'.format(j, i[0], i[1], i[2]) for i in idx]
-            result[k] = pd.concat((result[k], annuities_cumulated), axis=0)
-
-        idx_temp = ['Annuities subsidies heater {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
-        temp = result[k].loc[idx_temp, :].fillna(0)
-        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
-        temp.index = ['Annuities subsidies heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
-                                     idx]
-        result[k] = pd.concat((result[k], temp), axis=0)
-
-        idx_temp = ['Annuities cost heater {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
-        temp = result[k].loc[idx_temp, :].fillna(0)
-        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
-        temp.index = ['Annuities cost heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
-                                     idx]
-        result[k] = pd.concat((result[k], temp), axis=0)
-
-        """idx_temp = ['Annuities subsidies insulation {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
-        temp = result[k].loc[idx_temp, :].fillna(0)
-        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
-        temp.index = ['Annuities subsidies insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
-                                     idx]
-        result[k] = pd.concat((result[k], temp), axis=0)
-
-        idx_temp = ['Annuities cost insulation {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
-        temp = result[k].loc[idx_temp, :].fillna(0)
-        temp = temp.rolling(window=10, min_periods=1, axis=1).sum()
-        temp.index = ['Annuities cost insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in
-                                     idx]
-        result[k] = pd.concat((result[k], temp), axis=0)"""
-        # result[k].to_csv(os.path.join(folder, 'output_{}.csv'.format(k)))
-
-    counterfactual = reference
-    #scenario_assessment, counterfactual = 'BanNoPolicyHeater', 'NoPolicyHeater'
-    if scenario_assessment is not None:
-        levels = ['Housing type', 'Occupancy status', 'Income tenant']
-        idx = list(product(*[resources_data['index'][i] for i in levels]))
-        cost_insulation = ['Annuities cost insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-        subsidies_insulation = ['Annuities subsidies insulation cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-        cost_heater = ['Annuities cost heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-        subsidies_heater = ['Annuities subsidies heater cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-
-        energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-        stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
-        income = ['Income {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-
-        idx = pd.MultiIndex.from_tuples(idx, names=levels)
-        # average over time
-        year = range(2025, 2051, 1)
-        year = [i for i in year if i in result.get(reference).columns]
-        dict_cost_insulation, dict_subsidies_insulation, dict_cost_heater, dict_subsidies_heater, dict_energy, dict_taxes = {}, {}, {}, {}, {}, {}
-        dict_income = {}
-        for k, i in result.items():
-            temp = (i.loc[income, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_income.update({k: temp.copy()})
-            temp = (i.loc[cost_insulation, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_cost_insulation.update({k: temp.copy()})
-            temp = (i.loc[subsidies_insulation, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_subsidies_insulation.update({k: temp.copy()})
-            temp = (i.loc[cost_heater, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_cost_heater.update({k: temp.copy()})
-            temp = - (i.loc[subsidies_heater, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_subsidies_heater.update({k: temp.copy()})
-            temp = (i.loc[energy, year].set_axis(idx, axis=0)).sum(axis=1) / \
-                   i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_energy.update({k: temp.copy()})
-            temp = pd.concat([i.loc['Subsidies households (euro)', year]] * len(idx), keys=idx, axis=1).T
-            temp = (temp * i.loc[stock, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
-            dict_taxes.update({k: temp.copy()})
-
-
-        df_energy = pd.DataFrame(dict_energy)
-        dict_cost_insulation = pd.DataFrame(dict_cost_insulation)
-        dict_subsidies_insulation = pd.DataFrame(dict_subsidies_insulation)
-        dict_cost_heater = pd.DataFrame(dict_cost_heater)
-        dict_subsidies_heater = pd.DataFrame(dict_subsidies_heater)
-        dict_taxes = pd.DataFrame(dict_taxes)
-        dict_income = pd.DataFrame(dict_income)
-
-        df = pd.concat((dict_cost_insulation, dict_subsidies_insulation, dict_cost_heater, dict_subsidies_heater, df_energy, dict_taxes, dict_income), axis=0,
-                       keys=['Insulation', 'Subsidies insulation', 'Heater', 'Subsidies heater', 'Energy', 'Taxes', 'Income'], names=['Type'])
-        df.columns.names = ['Scenario']
-        if not isinstance(scenario_assessment, list):
-            scenario_assessment = [scenario_assessment]
-
-        if len(scenario_assessment) == 1:
-            df_diff = df.loc[:, scenario_assessment] - df.loc[:, counterfactual]
-        else:
-            df_diff = (df.loc[:, scenario_assessment].T - df.loc[:, counterfactual]).T
-
-        # remove social housing from df_diff
-        df_diff = df_diff.drop('Social-housing', level='Occupancy status')
-        if not df_diff.empty:
-            replace_legend = {'Insulation': 'Insulation cost',
-                              'Heater': 'Heating system cost',
-                              'Subsidies heater': 'Subsidies heating system',
-                              'Taxes': 'Taxes to cover subsidies',
-                              'Energy': 'Energy expenditures'}
-            for s_assessment in scenario_assessment:
-                temp = df_diff.loc[:, s_assessment].copy()
-                # impact in euro
-                make_stacked_bar_subplot(temp.drop('Income', level='Type'), format_y=lambda y, _: '{:.0f}€'.format(y),
-                                         fonttick=18,
-                                         color=resources_data['colors'],
-                                         save=os.path.join(folder_img, 'cost_households_{}.png'.format(s_assessment)),
-                                         subplot_groups=['Housing type', 'Occupancy status'],
-                                         index_group='Income tenant', stack_group='Type', ncol=None,
-                                         annotate='{:.0f}', annotate_bis=['Energy', 'Heater', 'Insulation'],
-                                         replace_legend=replace_legend)
-                # impact in share of income
-                print('ok')
-                # temp = df_diff.loc[:, s_assessment].drop('Income', level='Type') / temp.loc
+                make_scatter_plot(df, 'Emission saving (MtCO2)', 'Running cost diff (Billion euro)',
+                                  'Emission saving to {}(MtCO2)'.format(end),
+                                  'Running cost to {} (Billion euro)'.format(end),
+                                  hlines=0,
+                                  format_x=lambda x, _: '{:.0%}'.format(x), xmin=0,
+                                  format_y=lambda y, _: '{:.1f}'.format(y),
+                                  save=os.path.join(folder_img, 'running_cost_emission.png'),
+                                  col_colors='colors',
+                                  col_size='Subsidies (Billion euro)'
+                                  )
 
         if False:
-            for n, g in df.groupby(levels_group):
-                g = g.droplevel(levels_group, axis=0)
-                if counterfactual is not None:
-                    g = (g.T - g.loc[:, counterfactual]).T
-                    g.drop(counterfactual, axis=1, inplace=True)
-                g = g.stack('Scenario').unstack('Income tenant')
-                # Creating a larger figure outside the function
+            # graph Annualized CBA
+            variables = {'CBA Consumption saving EE (Billion euro)': 'Saving EE',
+                         'CBA Consumption saving prices (Billion euro)': 'Saving price',
+                         'CBA Thermal comfort EE (Billion euro)': 'Comfort EE',
+                         'CBA Emission direct (Billion euro)': 'Direct emission',
+                         'CBA Thermal loss prices (Billion euro)': 'Comfort prices',
+                         'CBA Annuities heater (Billion euro)': 'Annuities heater',
+                         'CBA Annuities insulation (Billion euro)': 'Annuities insulation',
+                         'CBA Carbon Emission indirect (Billion euro)': 'Indirect emission',
+                         'CBA Health cost (Billion euro)': 'Health cost',
+                         'CBA COFP (Billion euro)': 'COFP'
+                         }
 
-                make_clusterstackedbar_plot(g, 'Type', colors=resources_data['colors'],
-                                            format_y=lambda y, _: '{:.0f} €/year'.format(y),
-                                            save=os.path.join(folder_img, 'cost_households_{}.png'.format('_'.join(n))), rotation=90,
-                                            ymin=-60, ymax=60,
-                                            legend=False, figtitle=' | '.join(n), display_total=True)
+            df = pd.DataFrame({k: i.loc[variables.keys(), :].sum(axis=1) for k, i in result.items()}).round(3)
+            df = df.rename(index=variables)
+            cba_total = df.sum(axis=0).rename('Total')
+            make_stackedbar_plot(df.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
+                                 format_y=lambda y, _: '{:.0f}'.format(y),
+                                 hline=0, scatterplot=cba_total, colors=resources_data['colors'],
+                                 save=os.path.join(folder_img, 'cost_benefit_analysis.png'),
+                                 rotation=90, left=1.3)
 
-    # ----------------
+            diff = (df.T - df[reference]).T
+            if not diff.empty and diff.shape[1] > 1:
+                cba_diff_total = diff.T.sum(axis=1).rename('Total')
+
+                make_stackedbar_plot(diff.drop(reference, axis=1).T,
+                                     'Cost-benefits analysis compare to Reference to {} (Billion euro)'.format(end),
+                                     ncol=3, ymin=None,
+                                     format_y=lambda y, _: '{:.0f}'.format(y),
+                                     hline=0, scatterplot=cba_diff_total.drop(reference), colors=resources_data['colors'],
+                                     save=os.path.join(folder_img, 'cost_benefit_analysis_comparison.png'), rotation=0,
+                                     left=1.3)
+
+
+                energy_poverty = pd.Series({k: i.loc['Energy poverty (Million)', end] for k, i in result.items()})
+                df = pd.concat((consumption_saving, emission_saving, cba_total, cba_diff_total, pd.Series(colors),
+                                subsidies_total, energy_poverty), axis=1,
+                               keys=['Consumption saving (TWh)',
+                                     'Emission saving (MtCO2)',
+                                     'CBA (Billion euro)',
+                                     'CBA diff (Billion euro)',
+                                     'colors',
+                                     'Subsidies (Billion euro)',
+                                     'Energy poverty (Million)'
+                                     ])
+                df.dropna(inplace=True)
+
+                make_scatter_plot(df, 'CBA diff (Billion euro)', 'Consumption saving (TWh)',
+                                  'Cost benefit analysis to {} (Billion euro)'.format(end),
+                                  'Consumption saving to {} (TWh)'.format(end),
+                                  hlines=0,
+                                  format_x=lambda y, _: '{:.1f}'.format(y), ymin=0,
+                                  format_y=lambda x, _: '{:.0%}'.format(x),
+                                  save=os.path.join(folder_img, 'cba_annualized_consumption.png'),
+                                  col_colors='colors',
+                                  col_size='Energy poverty (Million)'
+                                  )
+
+                make_scatter_plot(df, 'CBA diff (Billion euro)', 'Emission saving (MtCO2)',
+                                  'Cost benefit analysis to {} (Billion euro)'.format(end),
+                                  'Emission saving to {} (MtCO2)'.format(end),
+                                  hlines=0,
+                                  format_x=lambda y, _: '{:.1f}'.format(y), ymin=0,
+                                  format_y=lambda x, _: '{:.0%}'.format(x),
+                                  save=os.path.join(folder_img, 'cba_annualized_emission.png'),
+                                  col_colors='colors',
+                                  col_size='Subsidies (Billion euro)'
+                                  )
+    except KeyError:
+        pass
+
+
 
     # graph distributive impact - cost for households
-    data = pd.concat(result).rename_axis(['Scenario', 'Variable'], axis=0).rename_axis('Years', axis=1).unstack('Scenario')
-    levels = ['Housing type', 'Occupancy status', 'Income tenant']
-    idx = list(product(*[resources_data['index'][i] for i in levels]))
+    if False:
+        data = pd.concat(result).rename_axis(['Scenario', 'Variable'], axis=0).rename_axis('Years', axis=1).unstack('Scenario')
+        levels = ['Housing type', 'Occupancy status', 'Income tenant']
+        idx = list(product(*[resources_data['index'][i] for i in levels]))
 
-    stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
-    stock = data.loc[stock, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
+        stock = ['Stock {} - {} - {}'.format(i[0], i[1], i[2]) for i in idx]
+        stock = data.loc[stock, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
 
-    cost = ['Annuities cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-    cost = data.loc[cost, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
-    cost_avg = cost / stock
+        cost = ['Annuities cumulated {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        cost = data.loc[cost, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
+        cost_avg = cost / stock
 
-    energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
-    energy = data.loc[energy, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
-    energy_avg = energy / stock
+        energy = ['Energy expenditures {} - {} - {} (euro)'.format(i[0], i[1], i[2]) for i in idx]
+        energy = data.loc[energy, :].set_axis(idx, axis=0).rename_axis('Household', axis=0)
+        energy_avg = energy / stock
 
-    df = pd.concat((cost_avg, energy_avg), axis=0, keys=['Cost', 'Energy'], names=['Type'])
-    df = df.stack('Scenario')
+        df = pd.concat((cost_avg, energy_avg), axis=0, keys=['Cost', 'Energy'], names=['Type'])
+        df = df.stack('Scenario')
 
-    years = [2018, 2030, 2050]
-    df = df.loc[:, [i for i in years if i in df.columns]]
+        years = [2018, 2030, 2050]
+        df = df.loc[:, [i for i in years if i in df.columns]]
 
-    groupby = 'Type'
-    name = 'cost_households_owner'
-    temp = df.xs(('Single-family', 'Owner-occupied', 'C1'), level='Household').copy()
-    temp.dropna(how='all', inplace=True, axis=1)
-    if not temp.empty:
-        if len(temp.columns) > 1:
-            make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
-                                        format_y=lambda y, _: '{:.0f}'.format(y),
-                                        save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                        rotation=90, year_ini=2018)
-    temp = df.xs(('Single-family', 'Privately rented', 'C1'), level='Household').copy()
-    name = 'cost_households_renter'
-    temp.dropna(how='all', inplace=True, axis=1)
-    if not temp.empty:
-        if len(temp.columns) > 1:
-            make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
-                                        format_y=lambda y, _: '{:.0f}'.format(y),
-                                        save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
-                                        rotation=90, year_ini=2018)
+        groupby = 'Type'
+        name = 'cost_households_owner'
+        temp = df.xs(('Single-family', 'Owner-occupied', 'C1'), level='Household').copy()
+        temp.dropna(how='all', inplace=True, axis=1)
+        if not temp.empty:
+            if len(temp.columns) > 1:
+                make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                            format_y=lambda y, _: '{:.0f}'.format(y),
+                                            save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                            rotation=90, year_ini=2018)
+        temp = df.xs(('Single-family', 'Privately rented', 'C1'), level='Household').copy()
+        name = 'cost_households_renter'
+        temp.dropna(how='all', inplace=True, axis=1)
+        if not temp.empty:
+            if len(temp.columns) > 1:
+                make_clusterstackedbar_plot(temp, groupby, colors=resources_data['colors'],
+                                            format_y=lambda y, _: '{:.0f}'.format(y),
+                                            save=os.path.join(folder_img, '{}_{}.png'.format(name, groupby.lower())),
+                                            rotation=90, year_ini=2018)
 
     # graph distributive impact - Calculate cumulated annuities
     if False:
-
-        """duration = 10
-        years = [y for y in self.expenditure_store.keys() if y > self.year - duration]
-        annuities_cumulated = sum([self.expenditure_store[y]['annuities'] for y in years])
-        annuities_cumulated += annuities_year"""
-
         levels = ['Housing type', 'Occupancy status', 'Income tenant']
         idx = list(product(*[resources_data['index'][i] for i in levels]))
 
@@ -1172,17 +1223,19 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                  title=None)
                    # title = 'Energy expenditure{} on income ratio\n{} compare to Reference'.format(k, year)
 
-                # > 0 positive means households are loosing money compare to ini
-                diff = (df - ini) / ini
-                diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
-                diff = format_table(diff, name='Scenarios')
-                diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
+                # compare to initial
+                if False:
+                    # > 0 positive means households are loosing money compare to ini
+                    diff = (df - ini) / ini
+                    diff = select(diff, {'Occupancy status': ['Owner-occupied', 'Privately rented']})
+                    diff = format_table(diff, name='Scenarios')
+                    diff['Decision maker'] = diff['Housing type'] + ' - ' + diff['Occupancy status']
 
-                make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
-                             palette=colors,
-                             save=os.path.join(folder_img, 'energy_income_ratio_ini{}_{}.png'.format(k.replace(' ', '_'), year)),
-                             title=None)
-                #title = 'Energy expenditure{} on income ratio\n{} compare to {}'.format(k, year, start)
+                    make_relplot(diff, x='Income tenant', y='Data', col='Decision maker', hue='Scenarios',
+                                 palette=colors,
+                                 save=os.path.join(folder_img, 'energy_income_ratio_ini{}_{}.png'.format(k.replace(' ', '_'), year)),
+                                 title=None)
+                    #title = 'Energy expenditure{} on income ratio\n{} compare to {}'.format(k, year, start)
 
     # graph line plot 2D comparison
     if 'consumption_total_hist' in resources_data.keys():
@@ -1198,6 +1251,10 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                                        'format_y': lambda y, _: '{:,.0f} TWh'.format(y),
                                        'y_label': 'Final energy consumption for space heating (TWh)'
                                        },
+                 'Consumption PE (TWh)': {'name': 'consumption_pe.png',
+                                          'format_y': lambda y, _: '{:,.0f} TWh'.format(y),
+                                          'y_label': 'Primary energy consumption for space heating (TWh)'
+                                          },
                  'Consumption standard (TWh)': {'name': 'consumption_standard.png',
                                                 'format_y': lambda y, _: '{:,.0f} TWh'.format(y)},
                  'Heating intensity (%)': {'name': 'heating_intensity.png',
@@ -1948,12 +2005,13 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                                     result[ref].loc['Emission (MtCO2)', year]
                 indicator.loc['Cost-benefits analysis (Billion euro/year)', s] = result[s].loc['Cost-benefits analysis (Billion euro)', year] - \
                                                                     result[ref].loc['Cost-benefits analysis (Billion euro)', year]
-                indicator.loc['Balance Tenant private - C1 (euro/year.household)', s] = result[s].loc['Balance Tenant private - C1 (euro/year.household)', year] - \
-                                                                    result[ref].loc['Balance Tenant private - C1 (euro/year.household)', year]
-                indicator.loc['Balance Owner-occupied - C1 (euro/year.household)', s] = result[s].loc[
-                                                                                            'Balance Owner-occupied - C1 (euro/year.household)', year] - \
-                                                                                        result[ref].loc[
-                                                                                            'Balance Owner-occupied - C1 (euro/year.household)', year]
+                if False:
+                    indicator.loc['Balance Tenant private - C1 (euro/year.household)', s] = result[s].loc['Balance Tenant private - C1 (euro/year.household)', year] - \
+                                                                        result[ref].loc['Balance Tenant private - C1 (euro/year.household)', year]
+                    indicator.loc['Balance Owner-occupied - C1 (euro/year.household)', s] = result[s].loc[
+                                                                                                'Balance Owner-occupied - C1 (euro/year.household)', year] - \
+                                                                                            result[ref].loc[
+                                                                                                'Balance Owner-occupied - C1 (euro/year.household)', year]
 
             indicator.sort_index(inplace=True)
             indicator.sort_index(axis=1, inplace=True)

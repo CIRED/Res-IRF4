@@ -415,7 +415,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
             recycling_revenue = t.recycling_ini
         elif year - 1 in buildings.taxes_revenues.keys():
             if t.name in buildings.taxes_revenues[year - 1].index:
-                recycling_revenue = buildings.taxes_revenues[year - 1][t.name] * 10**9
+                recycling_revenue = buildings.taxes_revenues[year - 1][t.name] * 1e9
         else:
             continue
 

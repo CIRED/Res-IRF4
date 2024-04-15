@@ -942,7 +942,7 @@ def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=
 
 
 def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
-                 title=None):
+                 title=None, format_y=lambda y, _: y):
 
     g = sns.relplot(
         data=df, x=x, y=y,
@@ -952,7 +952,7 @@ def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
     )
     for k, ax in g.axes_dict.items():
         ax.set(xlabel=None, ylabel=None)
-        format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
+        format_ax(ax, format_y=format_y, ymin=None, ymax=None, xinteger=False)
         ax.set_title(k, fontsize=15)
 
     if title is not None:
@@ -1287,7 +1287,7 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
                bbox_to_anchor=(1, 0.5))
 
     if figtitle is not None:
-        fig.suptitle(figtitle, x=0.2, y=1.05, weight='bold', color='black', size=fonttick)
+        fig.suptitle(figtitle, x=0.5, y=1, weight='bold', color='black', size=fonttick)
 
     if annotate_bis is not None:
         custom_handles = [
@@ -1302,7 +1302,8 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
     plt.tight_layout()
     # plt.subplots_adjust(right=0.2)  # Adjust the bottom margin
     if save is not None:
-        plt.savefig(save, bbox_inches='tight')
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
 
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,

@@ -1,8 +1,10 @@
 {
   "scenarios": {
-    "activated": true,
-    "current_policies": true,
+    "activated": false,
+    "current_policies": null,
     "no_policy": true,
+    "no_policy_insulation": true,
+    "no_policy_heater": true,
     "prices_constant": null,
     "constant": null,
     "policies": null,
@@ -29,32 +31,12 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2021.json"
-    }
-  },
-  "Package2024": {
-    "file": "project/config/reference.json",
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
-    }},
-  "Package2024Ban": {
-    "file": "project/config/reference.json",
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json",
-      "restriction_gas": {
-        "start": 2030,
-        "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
-      }
-    }},
-  "CarbonTax": {
-    "file": "project/config/reference.json",
-    "end": 2051,
+    "end": 2031,
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": false
+    },
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
       "carbon_tax": {
@@ -66,7 +48,28 @@
         "recycling_ini": null
       }
     }
+
+  },
+  "NoRecycling": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": false
+    },
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+        "start": 2017,
+        "end": 2051,
+        "tax": "project/input/policies/current/carbon_tax_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": null,
+        "recycling_ini": null
+      }
+    }
+
   }
+
 }
-
-
