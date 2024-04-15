@@ -244,6 +244,7 @@ colors_policies = {
     "Sub merit": "slategrey",
     "Sub obligation": "darkorange",
     "Subsidy": "darkmagenta",
+    "Subsidy proportional": "lightblue",
     "Direct subsidies": "blue"
 }
 

@@ -39,14 +39,15 @@
     },
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "carbon_tax": {
-        "start": 2017,
-        "end": 2051,
-        "tax": "project/input/policies/current/carbon_tax_value.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": true,
-        "recycling_ini": null
-      }
+      "sub_proportional": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "subsidy_proportional",
+          "gest": ["heater", "insulation"],
+          "value": "project/input/policies/current/carbon_tax_value.csv",
+          "proportional": "tCO2_cumac",
+          "growth": null
+        }
     }
   }
 }
