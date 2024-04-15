@@ -569,8 +569,8 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
 
         taxes = result[k].loc['Taxes expenditure (Billion euro)', :]
         bill_rebates = 0
-        if 'Bill rebates (Billion euro)' in result[k].index:
-            bill_rebates = result[k].loc['Bill rebates (Billion euro)', :]
+        if 'Bill rebate (Billion euro)' in result[k].index:
+            bill_rebates = result[k].loc['Bill rebate (Billion euro)', :]
 
         government_spending = subsidies - taxes + bill_rebates
 

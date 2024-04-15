@@ -5682,7 +5682,11 @@ class AgentBuildings(ThermalBuildings):
                 output['Carbon value indirect renovation (Billion euro)'] = output['Carbon footprint renovation (MtCO2)'] * carbon_value / 10 ** 3 / step
                 output['Carbon value indirect (Billion euro)'] = output['Carbon footprint (MtCO2)'] * carbon_value / 10 ** 3 / step
 
-            output['Bill rebate (Billion euro)'] = (self.energy_bill(prices, consumption, bill_rebate=0).sum() - self.energy_bill(prices, consumption, bill_rebate=bill_rebate).sum()) / 1e9
+            output['Bill rebate (euro/(household.year))'] = bill_rebate
+            consumption = self.consumption_actual(prices, bill_rebate=bill_rebate)
+            temp = (self.energy_bill(prices, consumption, bill_rebate=0) - self.energy_bill(prices, consumption, bill_rebate=bill_rebate))
+            temp *= self.stock
+            output['Bill rebate (Billion euro)'] = temp.sum() / 1e9
             output['Income state (Billion euro)'] = output['VAT (Billion euro)'] + output['Taxes expenditure (Billion euro)']
             output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
                 'Subsidies insulation (Billion euro)'] + output['Health expenditure (Billion euro)'] + output['Bill rebate (Billion euro)']
