@@ -4016,9 +4016,8 @@ class AgentBuildings(ThermalBuildings):
                 hidden_cost = - (error_conditional / abs(self.preferences_insulation['cost'])) * 1000
             else:
                 hidden_cost = DataFrame(0, index=error_conditional.index, columns=error_conditional.columns)
-                hidden_cost = (hidden_cost.T + reindex_mi(self.hidden_cost, hidden_cost.index)).T
-                hidden_cost += self.hidden_cost_insulation
-                hidden_cost = - hidden_cost
+                hidden_cost = (hidden_cost.T + reindex_mi(- self.hidden_cost, hidden_cost.index)).T
+                # hidden_cost += self.hidden_cost_insulation
 
         else:
             # TODO: Not updated
@@ -4144,8 +4143,7 @@ class AgentBuildings(ThermalBuildings):
             'debt_households': amount_debt,
             'saving_households': amount_saving,
             'discount': discount,
-            'eligible': eligible,
-            'hidden_cost': hidden_cost
+            'eligible': eligible
         })
 
     def insulation_replacement(self, stock_ini, prices, cost_insulation_raw, frequency_insulation,
@@ -4153,7 +4151,7 @@ class AgentBuildings(ThermalBuildings):
                                calib_renovation=None, min_performance=None,
                                exogenous_social=None, prices_before=None, supply=None, carbon_value=None,
                                carbon_content=None, calculate_condition=True, bill_rebate=0,
-                               credit_constraint=True):
+                               credit_constraint=True, mandatory=False):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -4161,9 +4159,9 @@ class AgentBuildings(ThermalBuildings):
         Calibrate function first year.
 
         Consumption saving only depends on insulation work.
-        However, certificate upgrade also consider the heat
+        However, certificate upgrade also consider if heating system have switched.
 
-        To reduce calculation time attributes are grouped.
+        To reduce calculation time, we reduce the number of combination by grouping.
         Cost, subsidies and constant depends on Housing type, Occupancy status, Housing type and Insulation performance.
 
         Parameters
@@ -4172,11 +4170,20 @@ class AgentBuildings(ThermalBuildings):
         prices: Series
         cost_insulation_raw: Series
             €/m2 of losses area by component.
-        policies_insulation: list
-        financing_cost: dict
-        calib_renovation: dict
-        min_performance
-
+        policies_insulation: list, optional
+        frequency_insulation: float or int
+        financing_cost: dict, optional
+        calib_renovation: dict, optional
+        min_performance: str, optional
+        exogenous_social: DataFrame, optional
+        prices_before: Series; optional
+        supply: dict, optional
+        carbon_value: float, optional
+        carbon_content: float, optional
+        calculate_condition: bool, optional
+        bill_rebate: float, optional
+        credit_constraint: bool, optional
+        mandatory: bool, optional
 
         Returns
         -------
@@ -4270,7 +4277,10 @@ class AgentBuildings(ThermalBuildings):
                     discount=discount,
                     supply=supply,
                     carbon_value=carbon_value,
-                    credit_constraint=credit_constraint)
+                    credit_constraint=credit_constraint,
+                    mandatory=mandatory)
+
+                self._renovation_store.update({'hidden_cost': hidden_cost})
 
                 if exogenous_social is not None:
                     index = renovation_rate[
@@ -4583,7 +4593,7 @@ class AgentBuildings(ThermalBuildings):
         if 'hidden_cost' in self._renovation_store.keys():
             temp = add_no_renovation(replaced_by)
             temp.iloc[:, 0] = (stock * frequency_insulation - flow_insulation)[temp.index]
-            self._renovation_store['hidden_cost'] = self._renovation_store['hidden_cost'] * temp
+            self._renovation_store['hidden_cost_agg'] = self._renovation_store['hidden_cost'] * temp
 
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
@@ -4647,7 +4657,8 @@ class AgentBuildings(ThermalBuildings):
 
         return flow_retrofit
 
-    def flow_obligation(self, policies_insulation, prices, cost_insulation, financing_cost=True):
+    def flow_obligation(self, policies_insulation, prices, cost_insulation, financing_cost=None,
+                        frequency_insulation=1):
         """Account for flow obligation if defined in policies_insulation.
 
         Parameters
@@ -4656,7 +4667,7 @@ class AgentBuildings(ThermalBuildings):
             Check if obligation.
         prices: Series
         cost_insulation: Series
-        financing_cost: bool, optional
+        financing_cost: dict
 
         Returns
         -------
@@ -4699,45 +4710,26 @@ class AgentBuildings(ThermalBuildings):
             # formatting replace_by
             replaced_by = to_replace.copy()
             replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Income tenant']).sum()
-            condition_hp = replaced_by.index.get_level_values('Heating system').isin(self._resources_data['index']['Fossil'])
 
             if 'Heater replacement' not in replaced_by:
-                # replaced_by_hp = concat([replaced_by[condition_hp]], keys=[True], names=['Heater replacement'])
                 replaced_by = concat([replaced_by], keys=[False], names=['Heater replacement'])
             if 'Heating system final' not in replaced_by.index.names:
                 temp = replaced_by.reset_index('Heating system')
                 temp['Heating system final'] = temp['Heating system']
                 replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
-                # replaced_by_hp = replaced_by_hp.reset_index('Heating system')
-                # replaced_by_hp['Heating system final'] = 'Electricity-Heat pump water'
-                # replaced_by_hp = replaced_by_hp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
-                # replaced_by = concat([replaced_by, replaced_by_hp], axis=0)
-
-            # add heat-pump as heating system final option if fossil fuel
 
             replaced_by.index = replaced_by.index.reorder_levels(
                 ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
                  'Roof', 'Windows', 'Heating system', 'Heating system final'])
 
             # economic of switch to heat-pumps
-            """discount = 0.05
-            duration = 15
-            discount_factor =  (1 - (1 + discount) ** -duration) / discount
-
-            temp = self._heater_store['cost_households'] - self._heater_store['subsidies_households']
-            temp = temp.loc[:, 'Electricity-Heat pump water']
-            t = self._heater_store['bill_saved_households'].loc[:, 'Electricity-Heat pump water']
-            t = t * self.discount_factor
-            temp = temp - t
-            temp = temp.reset_index('Heating system')
-            temp['Heating system final'] = 'Electricity-Heat pump water'
-            temp = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()"""
-
-            _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation, 1,
+            _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
+                                                          frequency_insulation,
                                                           policies_insulation=policies_insulation,
                                                           financing_cost=financing_cost,
                                                           min_performance=obligation.min_performance,
-                                                          credit_constraint=False)
+                                                          credit_constraint=False,
+                                                          mandatory=True)
 
             if obligation.intensive == 'market_share':
                 # market_share endogenously calculated by insulation_replacement
@@ -4756,8 +4748,12 @@ class AgentBuildings(ThermalBuildings):
             replaced_by = (replaced_by.rename(None) * market_share.T).T
             replaced_by = replaced_by.fillna(0)
 
-            self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
+            if 'hidden_cost' in self._renovation_store.keys():
+                temp = (self._renovation_store['hidden_cost'] * replaced_by).loc[replaced_by.index, :]
+                temp = temp.reindex(self._renovation_store['hidden_cost_agg'].index).fillna(0)
+                self._renovation_store['hidden_cost_agg'] += temp
 
+            self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
             replaced_by = self.frame_to_flow(replaced_by)
 
             assert to_replace.sum().round(0) == replaced_by.sum().round(0), 'Sum problem'
@@ -5437,9 +5433,9 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T / 10 ** 9 / step)
             investment_heater = self._heater_store['cost'].sum(axis=1)
 
-            output['Hidden cost heater (Billion euro)'] = self._heater_store['hidden_cost'].sum().sum() / 10 ** 9 / step
+            output['Hidden cost heater (Billion euro)'] = self._heater_store['hidden_cost_agg'].sum().sum() / 10 ** 9 / step
 
-            temp = self._heater_store['hidden_cost'].groupby('Housing type').sum() / 10 ** 9 / step
+            temp = self._heater_store['hidden_cost_agg'].groupby('Housing type').sum() / 10 ** 9 / step
             temp = temp.stack().squeeze()
             temp.index = temp.index.map(lambda x: 'Hidden cost {} - {} (Billion euro)'.format(x[0], x[1]))
             output.update(temp.T)
