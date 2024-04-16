@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": true,
+    "activated": false,
     "current_policies": null,
     "no_policy": null,
     "no_policy_insulation": null,
@@ -9,7 +9,9 @@
     "constant": null,
     "policies": null,
     "add_policies": null,
-    "remove_policies": ["obligation"],
+    "remove_policies": [
+      "obligation"
+    ],
     "policies_scenarios": null,
     "no_natural_replacement": null
   },
@@ -18,8 +20,11 @@
   },
   "uncertainty": {
     "activated": false,
-    "energy_prices_factor": [2, 5],
-    "carbon_emission" : [
+    "energy_prices_factor": [
+      2,
+      5
+    ],
+    "carbon_emission": [
       "project/input/energy/carbon_emission_tend.csv"
     ],
     "scale_renovation": [
@@ -31,14 +36,22 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "simple": {
       "income_constant": false,
       "prices_constant": false,
       "no_natural_replacement": false
     },
     "policies": {
-      "file": "project/input/policies/policies_2024.json"
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+        "start": 2017,
+        "end": 2051,
+        "tax": "project/input/policies/current/carbon_tax_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": null,
+        "recycling_ini": null
+      }
     }
   }
 }
