@@ -713,7 +713,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
             make_relplot(t, x='Income tenant', y='Data', col='Decision maker', hue='Scenario',
                          palette=colors,
                          save=os.path.join(folder_img, 'cost_households_scenario_euro.png'),
-                         title=None, format_y=lambda y, _: '{:.0f} €'.format(y))
+                         title=None, format_y=lambda y, _: '{:.0f}€'.format(y))
 
             # all scenarios same graphic in share of income
             t = df_diff.groupby(['Housing type', 'Occupancy status', 'Income tenant']).sum()
@@ -738,7 +738,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                 # Creating a larger figure outside the function
 
                 make_clusterstackedbar_plot(g, 'Type', colors=resources_data['colors'],
-                                            format_y=lambda y, _: '{:.0f} €/year'.format(y),
+                                            format_y=lambda y, _: '{:.0f}€/year'.format(y),
                                             save=os.path.join(folder_img, 'cost_households_{}.png'.format('_'.join(n))), rotation=90,
                                             ymin=-60, ymax=60,
                                             legend=False, figtitle=' | '.join(n), display_total=True)
