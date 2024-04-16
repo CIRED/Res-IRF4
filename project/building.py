@@ -78,6 +78,7 @@ class ThermalBuildings:
                  resources_data=None, detailed_output=None, figures=None, residual_rate=0, temp_sink=None):
 
         # default values
+        self.heating_intensity_max = None
         self.hi_threshold = None
         if figures is None:
             figures = True
@@ -506,13 +507,15 @@ class ThermalBuildings:
             consumption = reindex_mi(self.consumption_heating_store(index, full_output=False), index) * reindex_mi(
                 self._surface, index)
         energy_bill = self.energy_bill(prices, consumption, level_heater=level_heater,
-                                                 bill_rebate=bill_rebate)
+                                       bill_rebate=bill_rebate)
         if isinstance(energy_bill, Series):
             budget_share = energy_bill / reindex_mi(self._income_tenant, index)
         elif isinstance(energy_bill, DataFrame):
             budget_share = (energy_bill.T / reindex_mi(self._income_tenant, energy_bill.index)).T
 
+        energy_bill[energy_bill < 0] = 0.1
         heating_intensity = energy_bill**(-1/rho)
+        heating_intensity[heating_intensity > self.heating_intensity_max] = self.heating_intensity_max
 
         if self.coefficient_global is not None:
             heating_intensity *= self.coefficient_global
@@ -701,29 +704,6 @@ class ThermalBuildings:
 
             consumption = reindex_mi(consumption, self.stock.index) * self.surface
 
-            # test
-            """
-            conso_std = self.add_energy(consumption)
-            p = reindex_mi(prices, conso_std.index)
-            rho = 5
-            coeff = 1
-            s = coeff * (conso_std * p)**(-1/rho)
-
-            conso_sum = (s * conso_std * self.stock).sum() / 1e9
-            coeff = consumption_ini.sum() / conso_sum
-
-            s = coeff * (conso_std * p)**(-1/rho)
-            conso = s * conso_std
-            conso_actual_energy = (conso * self.stock).groupby('Energy').sum()
-
-            income = self.income.rename_axis('Income tenant')
-            income = reindex_mi(income, conso.index)
-
-            test = conso_std * p / income
-            test = concat((test, conso), axis=1, keys=['Budget share', 'Consumption'])
-            test.plot(kind='scatter', x='Budget share', y='Consumption', alpha=0.5)
-            """
-
             _consumption_actual, heating_intensity, budget_share = self.consumption_actual(prices,
                                                                                            consumption=consumption,
                                                                                            full_output=True)
@@ -777,6 +757,9 @@ class ThermalBuildings:
             coefficient_global = consumption_ini.sum() * 10 ** 9 / _consumption_actual.sum()
             self.coefficient_global = coefficient_global
             _consumption_actual *= self.coefficient_global
+
+            heating_intensity = self.to_heating_intensity(_consumption_actual.index, prices)
+            self.heating_intensity_max = heating_intensity.max()
 
             # 2. coefficient among energies
             consumption_energy = self.add_energy(_consumption_actual)
@@ -2344,6 +2327,7 @@ class AgentBuildings(ThermalBuildings):
                 condition.loc[idx, [i for i in self._resources_data['index']['Heat pumps'] if i in condition.columns]] = False
                 condition = condition.droplevel('Performance')
             else:
+                raise NotImplementedError
                 size = self.size_heater(index=index)
                 idx = (size > self._constraint_heat_pumps) & (
                     ~size.index.get_level_values('Heating system').isin(self._resources_data['index']['Heat pumps']))
@@ -2418,13 +2402,14 @@ class AgentBuildings(ThermalBuildings):
         bill_std_saved = self.add_attribute(bill_std_saved, 'Income tenant')
         bill_std_saved = bill_std_saved.reorder_levels(self.stock.index.names)
         bill_std_saved = bill_std_saved.loc[index_consumption]
+        # x = pd.concat((consumption_std_before, reindex_mi(certificate_before, index=)))
 
         # bill saved that include rebound effect so increase of thermal comfort
         bill_saved = (bill_std_saved.T * heating_intensity_before).T
         bill_saved = bill_saved.groupby(index.names).mean()
 
         # emission saved
-        consumption_before =  consumption_std_before * heating_intensity_before
+        consumption_before = consumption_std_before * heating_intensity_before
         emission_before = self.energy_bill(carbon_content, consumption_before, level_heater='Heating system')
 
         consumption_std = self.add_attribute(consumption_std, 'Income tenant')
@@ -2559,6 +2544,7 @@ class AgentBuildings(ThermalBuildings):
 
         else:
             market_share = self.exogenous_market_share_heater(index, cost_heater.columns)
+
 
         assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
 
@@ -3999,9 +3985,12 @@ class AgentBuildings(ThermalBuildings):
         bill_saved = bill_saved.loc[index_consumption]
 
         bill_saved = (bill_saved.T * heating_intensity_before).T
-        bill_saved = bill_saved.groupby(index.names).sum()
+        weights = self.add_level(stock, self.stock_mobile, 'Income tenant')
 
-        bill_saved = - 1 * energy_bill_after.sub(energy_bill_before, axis=0).dropna()
+        test = (bill_saved.T * weights).T
+        bill_saved = (test.groupby(index.names).sum().T / weights.groupby(index.names).sum()).T
+
+        # bill_saved = - energy_bill_after.sub(energy_bill_before, axis=0).dropna()
 
         if self.constant_insulation_intensive is None and self.rational_behavior_insulation is None:
 
