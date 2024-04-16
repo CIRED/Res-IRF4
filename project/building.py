@@ -4504,6 +4504,7 @@ class AgentBuildings(ThermalBuildings):
         supply_insulation = None
         if supply is not None:
             supply_insulation = supply['insulation']
+
         renovation_rate, market_share = self.insulation_replacement(stock, prices, cost_insulation,
                                                                     frequency_insulation,
                                                                     calib_renovation=calib_renovation,
@@ -4581,7 +4582,7 @@ class AgentBuildings(ThermalBuildings):
         # hidden cost must be calculated now to separate the mandatory renovation flows.
         if 'hidden_cost' in self._renovation_store.keys():
             temp = add_no_renovation(replaced_by)
-            temp.iloc[:, 0] = (stock - flow_insulation)[temp.index]
+            temp.iloc[:, 0] = (stock * frequency_insulation - flow_insulation)[temp.index]
             self._renovation_store['hidden_cost'] = self._renovation_store['hidden_cost'] * temp
 
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
