@@ -18,8 +18,11 @@
   },
   "uncertainty": {
     "activated": false,
-    "energy_prices_factor": [2, 5],
-    "carbon_emission" : [
+    "energy_prices_factor": [
+      2,
+      5
+    ],
+    "carbon_emission": [
       "project/input/energy/carbon_emission_tend.csv"
     ],
     "scale_renovation": [
@@ -39,40 +42,27 @@
     },
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "ObligationD": {
-    "file": "project/config/reference.json",
-    "end": 2041,
-    "policies": {
-      "file": "project/input/policies/policies_calibration.json",
       "obligation": {
-      "start": 2022,
-      "end": 2051,
-      "value": "project/input/policies/current/agenda_obligation_test.csv",
-      "frequency": {
-        "value": [
-          0,
-          0.1,
-          0
-        ],
-        "index": [
-          "Owner-occupied",
-          "Privately rented",
-          "Social-housing"
-        ],
-        "name": "Occupancy status"
-      },
-      "intensive": "market_share",
-      "minimum_performance": "D",
-      "policy": "obligation"
+        "start": 2019,
+        "end": 2051,
+        "value": "project/input/policies/current/agenda_obligation_test.csv",
+        "frequency": {
+          "value": [
+            0,
+            0.1,
+            0
+          ],
+          "index": [
+            "Owner-occupied",
+            "Privately rented",
+            "Social-housing"
+          ],
+          "name": "Occupancy status"
+        },
+        "intensive": "market_share",
+        "minimum_performance": "D",
+        "policy": "obligation"
+      }
     }
-    },
-    "simple": {
-      "income_constant": false,
-      "prices_constant": false,
-      "no_natural_replacement": true
-    }
-  }
-    }
-
   }
 }

@@ -4758,6 +4758,7 @@ class AgentBuildings(ThermalBuildings):
             if 'hidden_cost' in self._renovation_store.keys():
                 temp = (self._renovation_store['hidden_cost'] * replaced_by).loc[replaced_by.index, :]
                 temp = temp.reindex(self._renovation_store['hidden_cost_agg'].index).fillna(0)
+                temp = temp.reindex(self._renovation_store['hidden_cost_agg'].columns, axis=1).fillna(0)
                 self._renovation_store['hidden_cost_agg'] += temp
 
             self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
