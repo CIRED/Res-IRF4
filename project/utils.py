@@ -626,7 +626,8 @@ def make_sensitivity_tables(table_result, path):
 
 
 def format_ax(ax, y_label=None, title=None, format_x=None,
-              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None):
+              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None,
+              horizontal=False):
     """
 
     Parameters
@@ -645,13 +646,14 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(True)
     ax.spines['left'].set_visible(True)
-
     ax.set_facecolor('none')
     ax.grid(False)
 
     ax.xaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_tick_params(which=u'both', length=0)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+    if horizontal is False:
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+
     if format_x is not None:
         ax.xaxis.set_major_formatter(plt.FuncFormatter(format_x))
 
@@ -1405,6 +1407,109 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
             text.set_color(COLOR)
 
     save_fig(fig, save=save)
+
+
+def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y, _: y, save=None, ncol=3,
+                                    ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
+                                    scatterplot=None, fontxtick=16, scatterplot_bis=None,
+                                    legend_label='Social benefits',
+                                    annotate='{:.0f}'):
+    """Make stackedbar plot.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+    y_label: str
+    colors: dict
+    format_x: function
+    save: str, optional
+    ncol: int, default 3
+    ymin: float, optional
+    hline: float, optional
+    lineplot: pd.Series, default None
+    rotation: int, default 0
+    loc: str, default 'left'
+    left: float, default 1.04
+    xmin: int, default None
+    scatterplot: pd.Series, default None
+    fontxtick: int, default 16
+    scatterplot_bis: dict, default None
+    legend_label: str, default 'Social benefits'
+    annotate: str, default '{:.0f}'
+    """
+    df.index = df.index.astype(str)
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    markers = ['o', 'd', 's', '^', 'v', '<', '>', 'p', 'h', 'H', 'D', 'P', 'X']
+
+    if colors is None:
+        df.plot(ax=ax, kind='barh', stacked=True, linewidth=0)
+    else:
+        df.plot(ax=ax, kind='barh', stacked=True, color=colors, linewidth=0)
+
+    if hline is not None:
+        ax.axvline(x=hline, linewidth=1, color='grey')
+
+    if lineplot is not None:
+        lineplot.index = lineplot.index.astype(str)
+        lineplot.plot(ax=ax, kind='line', color='black', marker='*')
+
+    custom_handles, i = [], 0
+    if scatterplot is not None:
+        scatterplot.index = scatterplot.index.astype(str)
+        scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+        scatterplot.plot(kind='scatter', x='Value', y='Attribute', legend=False, zorder=10, ax=ax,
+                         color='black', s=50, ylabel=None, marker=markers[i])
+        custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=legend_label))
+        i += 1
+
+        x_range = abs(ax.get_xlim()[1] - ax.get_xlim()[0])
+        for _, x in scatterplot.iterrows():
+            ax.annotate(annotate.format(x['Value']), (x['Value'] + x_range / 40, x['Attribute']), va="center")
+
+    if scatterplot_bis is not None:
+        for k, item in scatterplot_bis.items():
+            item.index = item.index.astype(str)
+            item = item.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+            item.plot(kind='scatter', x='Value', y='Attribute', legend=False, zorder=10, ax=ax,
+                      color='black', s=50, ylabel=None, marker=markers[i])
+            custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=k))
+            i += 1
+
+    ax = format_ax(ax, title=y_label, format_x=format_x, xmin=xmin, horizontal=True, ymin=None)
+
+    ax.spines['bottom'].set_visible(False)
+
+    # plt.setp(ax.yaxis.get_majorticklabels(), rotation=rotation)
+
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
+    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
+    ax.set(xlabel=None, ylabel=None)
+
+    format_legend(ax, loc=loc, left=left)
+
+    if scatterplot_bis is not None:
+
+        # Add the additional legend
+        # Adjust the bbox_to_anchor values as needed to place the second legend
+        # Retrieve the existing handles and labels
+        existing_handles, existing_labels = ax.get_legend_handles_labels()
+
+        # Combine existing handles/labels with the new ones
+        all_handles = custom_handles + existing_handles
+        all_labels = [handle.get_label() for handle in custom_handles] + existing_labels
+
+        # Create a unified legend with all handles and labels
+        # Adjust the bbox_to_anchor values as needed to place the legend
+        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
+                        frameon=False)
+
+        texts = leg.get_texts()
+        for text in texts:
+            text.set_color('black')
+
+    save_fig(fig, save=save)
+
+
 
 
 def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):

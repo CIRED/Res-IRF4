@@ -1,0 +1,8 @@
+{
+  "restriction_gas": {
+        "start": 2019,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+}

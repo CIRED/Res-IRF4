@@ -1738,6 +1738,14 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'social_welfare_total.png'.lower().replace(' ', '_')),
                                  rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis)
+            from project.utils import make_horizontal_stackedbar_plot
+            make_horizontal_stackedbar_plot(npv.T, 'Social welfare (Billion euro)', ncol=3, ymin=None,
+                                 format_x=lambda y, _: '{:.0f} B€'.format(y),
+                                 hline=0, colors=resources_data['colors'],
+                                 scatterplot=npv.sum(),
+                                 save=os.path.join(save, 'social_welfare_total_horizontal.png'.lower().replace(' ', '_')),
+                                 rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis,
+                                        )
 
             if years:
                 npv_annual = npv / years
@@ -1752,6 +1760,16 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                        'social_welfare_annual.png'.lower().replace(' ','_')),
                                      rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis,
                                      annotate='{:.1f}')
+
+                make_horizontal_stackedbar_plot(npv_annual.T, 'Social welfare (Billion euro per year)', ncol=3, ymin=None,
+                                                format_x=lambda y, _: '{:.0f} B€'.format(y),
+                                                hline=0, colors=resources_data['colors'],
+                                                scatterplot=npv_annual.sum(),
+                                                save=os.path.join(save,
+                                                                  'social_welfare_annual_horizontal.png'.lower().replace(
+                                                                      ' ', '_')),
+                                                rotation=rotation, left=1.2, fontxtick=12,
+                                                scatterplot_bis=scatterplot_bis)
 
         npv.loc['NPV', :] = npv.sum()
         npv.columns = scenarios
