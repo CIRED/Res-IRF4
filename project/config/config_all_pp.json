@@ -332,7 +332,7 @@
         "target": null
     },
   "BanGas": {
-        "start": 2030,
+        "start": 2019,
         "end": 2051,
         "value": "Natural gas",
         "policy": "restriction_energy"
