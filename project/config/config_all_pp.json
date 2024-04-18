@@ -281,6 +281,11 @@
     }
   },
   "WCO2024": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "cee": {
       "start": 2017,
       "end": 2051,
       "cumac_heater": "project/input/policies/current/cumac_heater_per_year.csv",
@@ -299,8 +304,20 @@
       "value": "project/input/policies/current/cee_value.csv",
       "growth": null,
       "policy": "subsidy_targeted"
+    }
     },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
   "WCO2018": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "cee": {
       "start": 2017,
       "end": 2051,
       "cumac_heater": "project/input/policies/current/cumac_heater_per_year.csv",
@@ -319,8 +336,20 @@
       "policy": "subsidy_targeted",
       "value": "project/input/policies/current/cee_value.csv",
       "growth": null
+    }
     },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
   "ZIL": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "zero_interest_loan": {
         "start": 2019,
         "end": 2051,
         "cost_max": 15000,
@@ -330,11 +359,30 @@
         "public_cost": 0.015,
         "policy": "zero_interest_loan",
         "target": null
+    }
     },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
   "BanGas": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "restriction_gas": {
         "start": 2019,
         "end": 2051,
         "value": "Natural gas",
         "policy": "restriction_energy"
       }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  }
 }
