@@ -76,7 +76,7 @@
     "simple": {
       "income_constant": false,
       "prices_constant": false,
-      "no_natural_replacement": true
+      "no_natural_replacement": false
     }
   },
   "ObligationE": {
@@ -109,7 +109,7 @@
     "simple": {
       "income_constant": false,
       "prices_constant": false,
-      "no_natural_replacement": true
+      "no_natural_replacement": false
     }
   }
 }

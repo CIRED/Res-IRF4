@@ -7,8 +7,8 @@
     },
     "simple": {
       "figures": false,
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -27,8 +27,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -47,8 +47,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -138,8 +138,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -207,8 +207,8 @@
       }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -242,8 +242,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -275,8 +275,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -307,8 +307,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -339,8 +339,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -362,8 +362,8 @@
     }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   },
@@ -380,8 +380,8 @@
       }
     },
     "simple": {
-      "income_constant": false,
-      "prices_constant": false,
+      "income_constant": true,
+      "prices_constant": true,
       "no_natural_replacement": true
     }
   }
