@@ -39,14 +39,39 @@
     },
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "carbon_tax": {
-        "start": 2017,
-        "end": 2051,
-        "tax": "project/input/policies/current/carbon_tax_value.csv",
-        "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": true,
-        "recycling_ini": null
-      }
+      "ObligationD": {
+    "file": "project/config/reference.json",
+    "end": 2041,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "obligation": {
+      "start": 2022,
+      "end": 2051,
+      "value": "project/input/policies/current/agenda_obligation_test.csv",
+      "frequency": {
+        "value": [
+          0,
+          0.1,
+          0
+        ],
+        "index": [
+          "Owner-occupied",
+          "Privately rented",
+          "Social-housing"
+        ],
+        "name": "Occupancy status"
+      },
+      "intensive": "market_share",
+      "minimum_performance": "D",
+      "policy": "obligation"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  }
     }
 
   }

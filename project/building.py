@@ -5482,7 +5482,7 @@ class AgentBuildings(ThermalBuildings):
                 'Financing heater (Billion euro)']
 
             # hidden cost
-            hidden_cost = (self._renovation_store['hidden_cost']).groupby(levels).sum()
+            hidden_cost = (self._renovation_store['hidden_cost_agg']).groupby(levels).sum()
             output['Hidden cost insulation (Billion euro)'] = hidden_cost.sum().sum() / 10 ** 9 / step
 
             # financing - how households finance renovation - state  / debt / saving ?
