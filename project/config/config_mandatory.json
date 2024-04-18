@@ -1,8 +1,8 @@
 {
   "scenarios": {
     "activated": false,
-    "current_policies": null,
-    "no_policy": null,
+    "current_policies": false,
+    "no_policy": true,
     "no_policy_insulation": null,
     "no_policy_heater": null,
     "prices_constant": null,
@@ -36,18 +36,25 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2051,
+    "end": 2041,
     "simple": {
       "income_constant": false,
       "prices_constant": false,
       "no_natural_replacement": false
     },
     "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    }
+  },
+  "ObligationD": {
+    "file": "project/config/reference.json",
+    "end": 2041,
+    "policies": {
       "file": "project/input/policies/policies_calibration.json",
       "obligation": {
-      "start": 2018,
+      "start": 2022,
       "end": 2051,
-      "value": "project/input/policies/current/agenda_obligation_test.csv",
+      "value": "project/input/policies/current/agenda_obligation_pb.csv",
       "frequency": {
         "value": [
           0,
@@ -65,6 +72,44 @@
       "minimum_performance": "D",
       "policy": "obligation"
     }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "ObligationE": {
+    "file": "project/config/reference.json",
+    "end": 2041,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "obligation": {
+      "start": 2022,
+      "end": 2051,
+      "value": "project/input/policies/current/agenda_obligation_pb.csv",
+      "frequency": {
+        "value": [
+          0,
+          0.1,
+          0
+        ],
+        "index": [
+          "Owner-occupied",
+          "Privately rented",
+          "Social-housing"
+        ],
+        "name": "Occupancy status"
+      },
+      "intensive": "market_share",
+      "minimum_performance": "E",
+      "policy": "obligation"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
     }
   }
 }

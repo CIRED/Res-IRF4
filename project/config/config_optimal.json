@@ -2,7 +2,7 @@
   "scenarios": {
     "activated": false,
     "current_policies": null,
-    "no_policy": true,
+    "no_policy": null,
     "prices_constant": null,
     "constant": null,
     "policies": null,

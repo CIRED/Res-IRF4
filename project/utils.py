@@ -1308,7 +1308,8 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
-                         scatterplot=None, fontxtick=16, scatterplot_bis=None):
+                         scatterplot=None, fontxtick=16, scatterplot_bis=None, legend_label='Social benefits',
+                         annotate='{:.0f}'):
     """Make stackedbar plot.
 
     Parameters
@@ -1318,9 +1319,23 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     colors: dict
     format_y: function
     save: str, optional
+    ncol: int, default 3
+    ymin: float, optional
+    hline: float, optional
+    lineplot: pd.Series, default None
+    rotation: int, default 0
+    loc: str, default 'left'
+    left: float, default 1.04
+    xmin: int, default None
+    scatterplot: pd.Series, default None
+    fontxtick: int, default 16
+    scatterplot_bis: dict, default None
+    legend_label: str, default 'Social benefits'
+    annotate: str, default '{:.0f}'
     """
     df.index = df.index.astype(str)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    markers = ['o', 'd', 's', '^', 'v', '<', '>', 'p', 'h', 'H', 'D', 'P', 'X']
 
     if colors is None:
         df.plot(ax=ax, kind='bar', stacked=True, linewidth=0)
@@ -1335,21 +1350,27 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
         lineplot.plot(ax=ax, kind='line', color='black', marker='*')
         # lineplot.rename('data').reset_index().plot(ax=ax, kind='scatter', x='index', y='data')
 
+    custom_handles, i = [], 0
     if scatterplot is not None:
         scatterplot.index = scatterplot.index.astype(str)
         scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
         scatterplot.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
-                         color='black', s=50, xlabel=None)
+                         color='black', s=50, xlabel=None, marker=markers[i])
+        custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=legend_label))
+        i += 1
 
         y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
         for _, y in scatterplot.iterrows():
-            ax.annotate("{:,.0f}".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 40), ha="center")
+            ax.annotate(annotate.format(y['Value']), (y['Attribute'], y['Value'] + y_range / 40), ha="center")
 
     if scatterplot_bis is not None:
-        scatterplot_bis.index = scatterplot_bis.index.astype(str)
-        scatterplot_bis = scatterplot_bis.reset_index().set_axis(['Attribute', 'Value'], axis=1)
-        scatterplot_bis.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
-                             color='black', s=50, xlabel=None, marker='d')
+        for k, item in scatterplot_bis.items():
+            item.index = item.index.astype(str)
+            item = item.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+            item.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
+                      color='black', s=50, xlabel=None, marker=markers[i])
+            custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=k))
+            i += 1
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
 
@@ -1364,10 +1385,6 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     format_legend(ax, loc=loc, left=left)
 
     if scatterplot_bis is not None:
-        custom_handles = [
-            Line2D([0], [0], marker='o', color='black', lw=0, label='Social benefits'),
-            Line2D([0], [0], marker='d', color='black', lw=0, label='Private benefits'),
-        ]
 
         # Add the additional legend
         # Adjust the bbox_to_anchor values as needed to place the second legend
@@ -1375,12 +1392,13 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
         existing_handles, existing_labels = ax.get_legend_handles_labels()
 
         # Combine existing handles/labels with the new ones
-        all_handles = existing_handles + custom_handles
-        all_labels = existing_labels + [handle.get_label() for handle in custom_handles]
+        all_handles = custom_handles + existing_handles
+        all_labels = [handle.get_label() for handle in custom_handles] + existing_labels
 
         # Create a unified legend with all handles and labels
         # Adjust the bbox_to_anchor values as needed to place the legend
-        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7), frameon=False)
+        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
+                        frameon=False)
 
         texts = leg.get_texts()
         for text in texts:

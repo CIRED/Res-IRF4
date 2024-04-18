@@ -63,7 +63,7 @@
         "end": 2051,
         "tax": "project/input/policies/current/carbon_tax_value.csv",
         "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": null,
+        "recycling": true,
         "recycling_ini": null
       }
     }

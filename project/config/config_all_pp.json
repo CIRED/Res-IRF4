@@ -1,0 +1,340 @@
+{
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    },
+    "simple": {
+      "figures": false,
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "CarbonTax": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+      "start": 2017,
+      "end": 2051,
+      "tax": "project/input/policies/current/carbon_tax.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": null,
+      "policy": "carbon_tax"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "CarbonTaxHigh": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+      "start": 2017,
+      "end": 2051,
+      "tax": "project/input/policies/current/carbon_tax_growth.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": null,
+      "policy": "carbon_tax"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "Subsidies2024": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "mpr_performance": {
+      "start": 2019,
+      "end": 2051,
+      "insulation": "project/input/policies/current/mpr_performance.csv",
+      "growth_insulation": null,
+      "non_cumulative": [
+        "mpr",
+        "mpr_efficacite"
+      ],
+      "target": "deep_renovation",
+      "cap": "project/input/policies/current/mpr_performance_cap.csv",
+      "policy": "subsidy_ad_valorem"
+    },
+      "mpr_efficacite": {
+      "start": 2019,
+      "end": 2051,
+      "heater": "project/input/policies/current/mpr_heater.csv",
+      "growth_heater": null,
+      "insulation": "project/input/policies/current/mpr_insulation.csv",
+      "growth_insulation": null,
+      "bonus": "project/input/policies/current/mpr_bonus.csv",
+      "target": "mpr_no_fg_heater_replacement",
+      "policy": "subsidy_targeted"
+    },
+      "mpr_multifamily_updated": {
+      "start": 2019,
+      "end": 2051,
+      "insulation": "project/input/policies/current/mpr_multifamily_updated.csv",
+      "cap": "project/input/policies/current/mpr_multifamily_updated_cap.csv",
+      "non_cumulative": [
+        "cite",
+        "mpr",
+        "mpr_efficacite",
+        "mpr_serenite",
+        "mpr_performance",
+        "mpr_multifamily_deep"
+      ],
+      "target": "energy_condition_35",
+      "policy": "subsidy_ad_valorem"
+    },
+      "mpr_multifamily_deep": {
+      "start": 2019,
+      "end": 2051,
+      "insulation": "project/input/policies/current/mpr_multifamily_deep_updated.csv",
+      "cap": "project/input/policies/current/mpr_multifamily_deep_updated_cap.csv",
+      "non_cumulative": [
+        "cite",
+        "mpr",
+        "mpr_efficacite",
+        "mpr_serenite",
+        "mpr_performance",
+        "mpr_multifamily"
+      ],
+      "target": "energy_condition_50",
+      "policy": "subsidy_ad_valorem"
+    },
+      "cap_updated": {
+      "start": 2019,
+      "end": 2051,
+      "insulation": "project/input/policies/current/subsidies_cap_updated.csv",
+      "heater": "project/input/policies/current/subsidies_cap_updated.csv",
+      "target_insulation": [
+        "mpr_serenite",
+        "mpr_performance",
+        "mpr_multifamily",
+        "mpr_multifamily_deep",
+        "mpr",
+        "mpr_efficacite",
+        "cite",
+        "cee"
+      ],
+      "target_heater": [
+        "cee",
+        "mpr",
+        "mpr_efficacite",
+        "cite"
+      ],
+      "policy": "subsidy_cap"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "Subsidies2021": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "mpr_serenite": {
+        "start": 2018,
+        "end": 2051,
+        "insulation": "project/input/policies/current/mpr_serenite.csv",
+        "cap": "project/input/policies/current/mpr_serenite_cap.csv",
+        "growth_insulation": null,
+        "non_cumulative": [
+          "cee",
+          "cite",
+          "mpr"
+        ],
+        "target": "deep_renovation",
+        "policy": "subsidy_ad_valorem"
+
+      },
+      "mpr": {
+        "start": 2019,
+        "end": 2051,
+        "heater": "project/input/policies/current/mpr_heater.csv",
+        "growth_heater": null,
+        "insulation": "project/input/policies/current/mpr_insulation.csv",
+        "growth_insulation": null,
+        "bonus": "project/input/policies/current/mpr_bonus.csv",
+        "policy": "subsidy_targeted"
+      },
+      "mpr_multifamily": {
+        "start": 2019,
+        "end": 2051,
+        "insulation": "project/input/policies/current/mpr_multifamily.csv",
+        "cap": "project/input/policies/current/mpr_multifamily_cap.csv",
+        "non_cumulative": [
+          "cite",
+          "mpr",
+          "mpr_serenite"
+        ],
+        "target": "energy_condition_35",
+        "policy": "subsidy_ad_valorem"
+      },
+      "cap": {
+        "start": 2019,
+        "end": 2051,
+        "insulation": "project/input/policies/current/subsidies_cap.csv",
+        "heater": "project/input/policies/current/subsidies_cap.csv",
+        "target_insulation": [
+          "mpr_serenite",
+          "mpr_multifamily",
+          "mpr",
+          "cite",
+          "cee"
+        ],
+        "target_heater": [
+          "cee",
+          "mpr",
+          "cite"
+        ],
+        "policy": "subsidy_cap"
+      }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "Subsidies2018": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "mpr_serenite": {
+        "start": 2018,
+        "end": 2051,
+        "insulation": "project/input/policies/current/mpr_serenite.csv",
+        "cap": "project/input/policies/current/mpr_serenite_cap.csv",
+        "growth_insulation": null,
+        "non_cumulative": [
+          "cee",
+          "cite",
+          "mpr"
+        ],
+        "target": "deep_renovation",
+        "policy": "subsidy_ad_valorem"
+
+      },
+      "cite": {
+      "start": 2018,
+      "end": 2051,
+      "heater": "project/input/policies/current/cite_heater_sf.csv",
+      "insulation": "project/input/policies/current/cite_insulation_sf.csv",
+      "cap": 4800,
+      "policy": "subsidy_ad_valorem"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "Obligation": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "obligation": {
+      "start": 2022,
+      "end": 2051,
+      "value": "project/input/policies/current/agenda_obligation_pb.csv",
+      "frequency": {
+        "value": [
+          0,
+          0.1,
+          0
+        ],
+        "index": [
+          "Owner-occupied",
+          "Privately rented",
+          "Social-housing"
+        ],
+        "name": "Occupancy status"
+      },
+      "intensive": "market_share",
+      "minimum_performance": "D",
+      "policy": "obligation"
+    }
+    },
+    "simple": {
+      "income_constant": false,
+      "prices_constant": false,
+      "no_natural_replacement": true
+    }
+  },
+  "WCO2024": {
+      "start": 2017,
+      "end": 2051,
+      "cumac_heater": "project/input/policies/current/cumac_heater_per_year.csv",
+      "cumac_insulation": "project/input/policies/current/cumac_insulation_per_year.csv",
+      "bonus_insulation": {
+        "value": "project/input/policies/current/cee_bonus_insulation.csv",
+        "start": 2019,
+        "end": 2022
+      },
+      "bonus_heater": {
+        "value": "project/input/policies/current/cee_bonus_heater.csv",
+        "start": 2019,
+        "end": 2051
+      },
+      "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
+      "value": "project/input/policies/current/cee_value.csv",
+      "growth": null,
+      "policy": "subsidy_targeted"
+    },
+  "WCO2018": {
+      "start": 2017,
+      "end": 2051,
+      "cumac_heater": "project/input/policies/current/cumac_heater_per_year.csv",
+      "cumac_insulation": "project/input/policies/current/cumac_insulation_per_year.csv",
+      "bonus_insulation": {
+        "value": "project/input/policies/current/cee_bonus_insulation.csv",
+        "start": 2019,
+        "end": 2022
+      },
+      "bonus_heater": {
+        "value": "project/input/policies/current/cee_bonus_heater.csv",
+        "start": 2019,
+        "end": 2026
+      },
+      "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
+      "policy": "subsidy_targeted",
+      "value": "project/input/policies/current/cee_value.csv",
+      "growth": null
+    },
+  "ZIL": {
+        "start": 2019,
+        "end": 2051,
+        "cost_max": 15000,
+        "gest": ["insulation"],
+        "value": 0.0,
+        "duration": 15,
+        "public_cost": 0.015,
+        "policy": "zero_interest_loan",
+        "target": null
+    },
+  "BanGas": {
+        "start": 2030,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+}

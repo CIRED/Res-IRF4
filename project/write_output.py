@@ -388,16 +388,19 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             temp.set_index(['Years', 'Source', 'Policies'], inplace=True)
             temp = temp.squeeze().unstack('Years')
 
-            make_clusterstackedbar_plot(temp, 'Policies', colors=resources_data['colors'],
-                                        format_y=lambda y, _: '{:.0f} B€'.format(y),
-                                        save=os.path.join(path, 'policies_validation.png'),
-                                        rotation=90,
-                                        fonttick=20)
+            try:
+                make_clusterstackedbar_plot(temp, 'Policies', colors=resources_data['colors'],
+                                            format_y=lambda y, _: '{:.0f} B€'.format(y),
+                                            save=os.path.join(path, 'policies_validation.png'),
+                                            rotation=90,
+                                            fonttick=20)
 
-            subset = subset.iloc[1:, :]
-            make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
-                           colors=resources_data['colors'], format_y=lambda y, _: '{:.0f} B€'.format(y),
-                           loc='left', left=1.2)
+                subset = subset.iloc[1:, :]
+                make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
+                               colors=resources_data['colors'], format_y=lambda y, _: '{:.0f} B€'.format(y),
+                               loc='left', left=1.2)
+            except TypeError:
+                pass
 
         else:
             subset = subset.iloc[1:, :]
@@ -754,7 +757,6 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                  save=os.path.join(folder_img, 'energy_income_ratio{}_{}.png'.format(k.replace(' ', '_'), year)),
                  title=None)
     """
-
 
     # make table summary
     vars = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)', 'Consumption PE (TWh)'] #
@@ -1631,7 +1633,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         return (result * discount).sum()
 
     def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True,
-                              cofp=True, order_scenarios=None):
+                              cofp=True, order_scenarios=None, years=None):
         """Calculate socioeconomic NPV.
 
         Double difference is calculated with : scenario - reference
@@ -1721,12 +1723,35 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             if order_scenarios is not None:
                 npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
             npv_private = npv.loc[['Investment', 'Energy saving', 'Thermal comfort', 'Unobserved value'], :].sum()
-            make_stackedbar_plot(npv.T, 'Cost-benefits analysis (Billion euro)', ncol=3, ymin=None,
+            npv_financial = npv.loc[['Investment', 'Energy saving'], :].sum()
+            scatterplot_bis = {
+                'Social observed benefits': npv.loc[[i for i in npv.index if i != 'Unobserved value'], :].sum(),
+                'Private benefits': npv_private,
+                #'Financial benefits': npv_financial
+            }
+            rotation = 0
+            if len(npv.columns) > 5:
+                rotation = 90
+            make_stackedbar_plot(npv.T, 'Social welfare (Billion euro)', ncol=3, ymin=None,
                                  format_y=lambda y, _: '{:.0f} B€'.format(y),
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
-                                 save=os.path.join(save, 'cost_benefit_analysis_counterfactual.png'.lower().replace(' ', '_')),
-                                 rotation=0, left=1.2, fontxtick=12, scatterplot_bis=npv_private)
+                                 save=os.path.join(save, 'social_welfare_total.png'.lower().replace(' ', '_')),
+                                 rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis)
+
+            if years:
+                npv_annual = npv / years
+                scatterplot_bis = {k: i / years for k, i in scatterplot_bis.items()}
+
+                make_stackedbar_plot(npv_annual.T, 'Social welfare (Billion euro per year)',
+                                     ncol=3, ymin=None,
+                                     format_y=lambda y, _: '{:.1f} B€'.format(y),
+                                     hline=0, colors=resources_data['colors'],
+                                     scatterplot=npv_annual.sum(),
+                                     save=os.path.join(save,
+                                                       'social_welfare_annual.png'.lower().replace(' ','_')),
+                                     rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis,
+                                     annotate='{:.1f}')
 
         npv.loc['NPV', :] = npv.sum()
         npv.columns = scenarios
@@ -1750,6 +1775,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
     # euro/tCO2 * tCO2/TWh  = euro/TWh
     carbon_emission_value = (carbon_value * carbon_emission.T).T  # euro/TWh
     carbon_emission_value.dropna(how='all', inplace=True)
+
+    # first two years are calibration so do not account for differences
+    years = result[reference].columns[-1] - (result[reference].columns[0] + 2) + 1
 
     if policy_name is not None:
         if isinstance(policy_name, list):
@@ -2027,7 +2055,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         else:
             save = None
         cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=save,
-                                    order_scenarios=order_scenarios)
+                                    order_scenarios=order_scenarios, years=years)
         if indicator is not None:
             if set(list(cba.index)).issubset(list(indicator.index)):
                 indicator.loc[list(cba.index), s] = cba[s]
