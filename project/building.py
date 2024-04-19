@@ -1002,7 +1002,8 @@ class AgentBuildings(ThermalBuildings):
                  rational_behavior_insulation=None, rational_behavior_heater=None,
                  resources_data=None, detailed_output=True, figures=None,
                  method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
-                 variable_size_heater=True, temp_sink=None
+                 variable_size_heater=True, temp_sink=None, social_discount_rate=0.032,
+                 lifetime_insulation=30
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
@@ -1039,6 +1040,9 @@ class AgentBuildings(ThermalBuildings):
             self._expected_utility = expected_utility
         else:
             self._expected_utility = 'market_share'
+
+        self.social_discount_rate = social_discount_rate
+        self.lifetime_insulation = lifetime_insulation
 
         self.preferences_heater = deepcopy(preferences['heater'])
         discount_factor = (1 - (1 + self.preferences_heater['present_discount_rate']) ** -self.preferences_heater[
@@ -1706,7 +1710,8 @@ class AgentBuildings(ThermalBuildings):
             elif policy.policy == 'subsidy_proportional':
                 # reindex_mi(cost_insulation, index) / consumption_saved_cumac
                 if policy.proportional == 'tCO2_cumac':
-                    emission_saved_cumac = self.to_cumac(emission_saved) / 10**3
+                    emission_saved_cumac = self.to_cumac(emission_saved, discount=self.social_discount_rate,
+                                                         duration=self.lifetime_heater) / 10**3
                     emission_saved_cumac[emission_saved_cumac < 0] = 0
                     value = value * emission_saved_cumac
                     value = value.fillna(0).loc[:, emission_saved_cumac.columns]
@@ -2378,18 +2383,10 @@ class AgentBuildings(ThermalBuildings):
 
         bill_std_saved = - bill_std.sub(bill_std_before, axis=0)
 
-        """emission_before = AgentBuildings.energy_bill(carbon_content, consumption_before)
-
-        bill_saved = - bill.sub(bill_before, axis=0)"""
-
         certificate = reindex_mi(certificate.unstack('Heating system final'), index)
         certificate_before = self.consumption_heating_store(index)[2]
         certificate_before = reindex_mi(certificate_before, index)
 
-        """emission = AgentBuildings.energy_bill(carbon_content, consumption.stack(), level_heater='Heating system final')
-        emission = emission.unstack('Heating system final')
-        emission_saved = (emission_before - emission.T).T
-        """
         consumption_std_saved = (consumption_std_before - consumption_std.T).T
 
         consumption_std_before = self.add_attribute(consumption_std_before, 'Income tenant')
@@ -2451,37 +2448,6 @@ class AgentBuildings(ThermalBuildings):
         for policy in p:
             subsidies_details.update({policy.name: subsidies[policy.name]})
             subsidies_loan += subsidies[policy.name]
-
-        """
-        heating_intensity_before = self.to_heating_intensity(consumption_before.index, prices_before,
-                                                             consumption=consumption_before,
-                                                             level_heater='Heating system',
-                                                             bill_rebate=bill_rebate)
-        consumption_before *= heating_intensity_before
-        bill_before = self.energy_bill(prices, consumption_before, level_heater='Heating system')
-        emission_before = self.energy_bill(carbon_content, consumption_before, level_heater='Heating system')
-
-        consumption = self.add_attribute(consumption, 'Income tenant')
-        consumption = consumption.reorder_levels(self.stock.index.names).loc[index_consumption, :]
-
-        consumption = consumption.stack('Heating system final')
-        heating_intensity_after = self.to_heating_intensity(consumption.index, prices_before,
-                                                            consumption=consumption,
-                                                            level_heater='Heating system final',
-                                                            bill_rebate=bill_rebate)
-        consumption_actual = (consumption * heating_intensity_after)
-        bill_after = self.energy_bill(prices, consumption_actual, level_heater='Heating system final')
-        emission_after = self.energy_bill(carbon_content, consumption_actual, level_heater='Heating system final')
-
-        consumption_saved = (consumption_before - consumption_actual.unstack('Heating system final').T).T
-        bill_saved = (bill_before - bill_after.unstack('Heating system final').T).T
-        emission_saved = (emission_before - emission_after.unstack('Heating system final').T).T
-
-        # group because decision is only for homeowners : better would be to make weighted average
-        consumption_saved = consumption_saved.groupby(index.names).mean()
-        bill_saved = bill_saved.groupby(index.names).mean()
-        emission_saved = emission_saved.groupby(index.names).mean()
-        """
 
         if store_information:
             if prices_before is None:
@@ -2545,7 +2511,6 @@ class AgentBuildings(ThermalBuildings):
 
         else:
             market_share = self.exogenous_market_share_heater(index, cost_heater.columns)
-
 
         assert (market_share.sum(axis=1).round(0) == 1).all(), 'Market-share issue'
 
@@ -3035,7 +3000,8 @@ class AgentBuildings(ThermalBuildings):
                     value = value.fillna(0)
 
             elif policy.policy == 'subsidy_proportional':
-                consumption_saved_cumac = self.to_cumac(consumption_saved)
+                consumption_saved_cumac = self.to_cumac(consumption_saved, discount=self.social_discount_rate,
+                                                        duration=self.lifetime_insulation)
                 # reindex_mi(cost_insulation, index) / consumption_saved_cumac
                 if policy.proportional == 'tCO2_cumac':
                     emission_saved_cumac = self.energy_bill(carbon_content, consumption_saved_cumac) / 10**3
@@ -4227,6 +4193,7 @@ class AgentBuildings(ThermalBuildings):
 
             consumption_saved = (consumption_before - consumption_after.T).T
             consumption_saved = (reindex_mi(consumption_saved, index).T * reindex_mi(self._surface, index)).T
+            # TODO: use real consumption_saved calculation here !!
 
             cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
             cost_insulation = cost_insulation.T.multiply(self._surface, level='Housing type').T

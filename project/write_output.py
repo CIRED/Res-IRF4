@@ -1772,6 +1772,8 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                 scatterplot_bis=scatterplot_bis)
 
         npv.loc['NPV', :] = npv.sum()
+        if years:
+            npv.loc['NPV annual', :] = npv.sum() / years
         npv.columns = scenarios
         return npv
 
