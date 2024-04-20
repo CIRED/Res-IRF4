@@ -346,7 +346,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                residual_rate=config['technical'].get('residual_rate'),
                                constraint_heat_pumps=config['technical'].get('constraint_heat_pumps', True),
                                variable_size_heater=config['technical'].get('variable_size_heater', True),
-                               temp_sink=parsed_inputs['temp_sink'])
+                               temp_sink=parsed_inputs['temp_sink'],
+                               vat_heater=parsed_inputs['vat_heater'])
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -453,7 +454,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
                                             carbon_value_kwh=post_inputs['carbon_value_kwh'].loc[year, :],
                                             carbon_value=post_inputs['carbon_value'].loc[year],
                                             carbon_content=carbon_content,
-                                            bill_rebate=bill_rebate)
+                                            bill_rebate=bill_rebate,
+                                            health_cost=post_inputs['health_cost_dpe'])
 
     """if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),

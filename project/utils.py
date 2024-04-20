@@ -474,7 +474,11 @@ def make_policies_tables(policies, path, plot=True):
                    'subsidies_cap': 'Subsidy, cap',
                    'regulation': 'Regulation instrument',
                    'credit_constraint': 'Regulation instrument',
-                   'zero_interest_loan': 'Regulated loan'
+                   'zero_interest_loan': 'Regulated loan',
+                   'subsidy_present_bias': 'Behavioral instrument',
+                   'subsidy_multi_family': 'Regulation instrument',
+                   'subsidy_landlord': 'Regulation instrument',
+                   'tax_status_quo': 'Tax'
                    }
 
     heater_replace = {'Electricity-Heat pump air': 'HP-air',
@@ -780,7 +784,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
                integer=False, loc='upper', left=1.04, ymax=None, ymin=0, format_x=None, hlines=None,
                scatter_dict=None, labels=None, order_legend='reverse', x_tick_interval=None, ncol=3, xmin=None,
-               xmax=None):
+               xmax=None, export_csv=False):
     """Make plot.
 
     Parameters
@@ -807,6 +811,10 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
             df.plot(ax=ax, style=STYLES)
         else:
             df.plot(ax=ax, color=colors, style=STYLES)
+
+        if export_csv is True:
+            save_csv = save.replace('.png', f'_{key}.csv')
+            df.to_csv(save_csv)
 
         if scatter_dict is not None:
             if key in scatter_dict.keys():

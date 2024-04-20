@@ -41,28 +41,7 @@
       "no_natural_replacement": false
     },
     "policies": {
-      "file": "project/input/policies/policies_calibration.json",
-      "obligation": {
-        "start": 2019,
-        "end": 2051,
-        "value": "project/input/policies/current/agenda_obligation_test.csv",
-        "frequency": {
-          "value": [
-            0,
-            0.1,
-            0
-          ],
-          "index": [
-            "Owner-occupied",
-            "Privately rented",
-            "Social-housing"
-          ],
-          "name": "Occupancy status"
-        },
-        "intensive": "market_share",
-        "minimum_performance": "D",
-        "policy": "obligation"
-      }
+      "file": "project/input/policies/policies_calibration.json"
     }
   }
 }

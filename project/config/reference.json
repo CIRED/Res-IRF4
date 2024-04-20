@@ -105,6 +105,7 @@
       "rotation_rate": "project/input/macro/rotation_rate.csv",
       "consumption_ini": "project/input/macro/consumption_ini.csv",
       "present_discount_rate": "project/input/investment/present_discount_rate.csv",
+      "vat_heating_system": "project/input/macro/vat_heating_system.csv",
       "population": null,
       "surface_built": null,
       "stock_ini": null,

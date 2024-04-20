@@ -13,7 +13,7 @@
   },
   "policies_scenarios": {
     "activated": true,
-    "file": "project/input/policies/efficiency_gap/policies_scenarios.json"
+    "file": "project/input/policies/interaction_mf/policies_scenarios.json"
   },
   "Reference": {
     "file": "project/config/reference.json",
