@@ -37,13 +37,11 @@
     "end": 2022,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "subsidy_landlord": {
+      "landlord_dilemma": {
       "start": 2019,
       "end": 2051,
-      "policy": "subsidy_landlord",
-      "gest": [
-        "insulation"
-      ]
+      "policy": "regulation",
+      "gest": "insulation"
     }
     }
   }

@@ -1073,6 +1073,7 @@ class AgentBuildings(ThermalBuildings):
         self.hidden_cost, self.hidden_cost_insulation, self.hidden_cost_renovation = None, None, None
         self.landlord_dilemma, self.multifamily_friction = None, None
         self.hidden_cost_heater = None
+        self.utility_hidden_cost = None
 
         self.number_firms_insulation, self.number_firms_heater = None, None
 
@@ -3057,7 +3058,6 @@ class AgentBuildings(ThermalBuildings):
                 value = reindex_mi(value, index).fillna(0)
                 value = concat([value] * cost_insulation.shape[1], keys=cost_insulation.columns, axis=1)
 
-
             # cap for all policies
             value.fillna(0, inplace=True)
             cost = reindex_mi(cost_insulation, index)
@@ -3398,11 +3398,19 @@ class AgentBuildings(ThermalBuildings):
             if _min_performance is None:
                 total_utility = add_no_renovation(total_utility)
 
-            utility_observed = _utility_intensive - self.constant_insulation_intensive
+            """utility_observed = _utility_intensive - self.constant_insulation_intensive
             if _min_performance is None:
-                utility_observed = add_no_renovation(utility_observed)
+                utility_observed = add_no_renovation(utility_observed)"""
 
-            _unobserved_value = (log(exp(total_utility).sum(axis=1)) - utility_observed.T).T
+            constant_unobserved = self.constant_insulation.copy()
+            if _min_performance is None:
+                constant_unobserved = add_no_renovation(constant_unobserved)
+            constant_unobserved = reindex_mi(constant_unobserved, total_utility.index)
+            # constant_unobserved = constant_unobserved.reindex(total_utility.columns, axis=1)
+
+            # _unobserved_value
+            error = (log(exp(total_utility).sum(axis=1)) - total_utility.T).T
+            _unobserved_value = error + constant_unobserved
 
             expected_utility = log(exp(_utility_intensive).sum(axis=1))
 
@@ -4020,7 +4028,6 @@ class AgentBuildings(ThermalBuildings):
         bill_saved = (bill_saved.T * weights).T
         bill_saved = (bill_saved.groupby(index.names).sum().T / weights.groupby(index.names).sum()).T
         """
-
 
         if self.constant_insulation_intensive is None and self.rational_behavior_insulation is None:
 
@@ -6302,6 +6309,7 @@ class AgentBuildings(ThermalBuildings):
             self.multifamily_friction = multi_family_friction
 
             self.constant_insulation = - self.hidden_cost_renovation / 1000 * abs(self.preferences_insulation['cost'])
+            self.utility_hidden_cost =  - self.hidden_cost / 1000 * abs(self.preferences_insulation['cost'])
 
         if gest == 'insulation':
             self.scale_insulation *= scale
