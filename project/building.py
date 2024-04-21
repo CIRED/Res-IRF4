@@ -3204,6 +3204,12 @@ class AgentBuildings(ThermalBuildings):
             apply_regulation('Privately rented', 'Owner-occupied', 'Occupancy status')
         if 'multi_family' in [p.name for p in regulation]:
             apply_regulation('Multi-family', 'Single-family', 'Housing type')
+        if 'present_bias' in [p.name for p in regulation]:
+            v = [p for p in regulation if p.name == 'present_bias'][0].value
+            discount_factor = (1 - (1 + v) ** -self.preferences_insulation['lifetime']) / v
+            idx = self.preferences_insulation['bill_saved'].index
+            self.preferences_insulation['bill_saved'] = Series(discount_factor * abs(self.preferences_insulation['cost']),
+                                                           index=idx)
 
         return cost_insulation, vat_insulation, vat, subsidies_details, subsidies_total, condition, eligible
 

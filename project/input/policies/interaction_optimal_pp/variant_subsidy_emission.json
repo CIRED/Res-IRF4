@@ -1,0 +1,14 @@
+{
+    "subsidy_emission": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_proportional",
+      "gest": [
+        "heater",
+        "insulation"
+      ],
+      "value": "project/input/policies/current/carbon_tax_value.csv",
+      "proportional": "tCO2_cumac",
+      "growth": null
+    }
+}
