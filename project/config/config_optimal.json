@@ -19,7 +19,14 @@
     "file": "project/config/reference.json",
     "end": 2031,
     "policies": {
-      "file": "project/input/policies/policies_calibration.json"
+      "file": "project/input/policies/policies_calibration.json",
+      "credit_constraint": {
+        "start": 2018,
+        "end": 2051,
+        "policy": "credit_constraint",
+        "gest": ["heater","insulation"]
+      }
+
     }
   }
 }
