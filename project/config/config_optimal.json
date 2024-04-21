@@ -26,7 +26,6 @@
         "policy": "credit_constraint",
         "gest": ["heater","insulation"]
       }
-
     }
   }
 }

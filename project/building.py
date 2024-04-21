@@ -4027,7 +4027,7 @@ class AgentBuildings(ThermalBuildings):
             calibration_renovation(stock, cost_insulation.copy(), bill_saved.copy(), subsidies_total.copy(),
                                    calib_renovation,
                                    _cost_financing=cost_financing.copy(),
-                                   _credit_constraint=credit_constraint.copy(),
+                                   _credit_constraint=credit_constraint,
                                    _frequency_insulation=frequency_insulation)
 
             if self.path_ini is not None:
