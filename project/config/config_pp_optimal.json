@@ -13,7 +13,7 @@
   },
   "policies_scenarios": {
     "activated": true,
-    "file": "project/input/policies/pp_optimal.json"
+    "file": "project/input/policies/policies_optimal.json"
   },
   "Reference": {
     "file": "project/config/reference.json",

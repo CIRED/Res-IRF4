@@ -1,65 +1,5 @@
 {
-  "FirstBest": {
-    "file": "project/input/policies/policies_calibration.json",
-    "carbon_tax": {
-      "start": 2017,
-      "end": 2051,
-      "tax": "project/input/policies/current/carbon_tax_value.csv",
-      "emission": "project/input/policies/current/carbon_tax_emission.csv",
-      "recycling": true,
-      "recycling_ini": null
-    },
-    "status_quo_bias": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "regulation",
-      "gest": "heater",
-      "value": 0.2
-    },
-    "present_bias": {
-      "start": 2019,
-      "end": 2051,
-      "value": 0.032,
-      "policy": "regulation",
-      "gest": [
-        "heater",
-        "insulation"
-      ]
-    },
-    "multi_family": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "regulation",
-      "gest": "insulation"
-    },
-    "landlord_dilemma": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "regulation",
-      "gest": "insulation"
-    },
-    "credit_constraint": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "credit_constraint",
-      "gest": [
-        "heater",
-        "insulation"
-      ]
-    },
-    "health_cost": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "subsidy_proportional",
-      "gest": [
-        "insulation"
-      ],
-      "proportional": "health_cost"
-    }
-
-  },
-  "SecondBest": {
-    "file": "project/input/policies/policies_calibration.json",
+  "subsidy_emission": {
     "subsidy_emission": {
       "start": 2019,
       "end": 2051,
@@ -72,18 +12,58 @@
       "proportional": "tCO2_cumac",
       "growth": null
     },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
+  },
+  "subsidy_multi_family": {
     "subsidy_multi_family": {
       "start": 2019,
       "end": 2051,
       "policy": "subsidy_multi_family",
-      "gest": ["insulation"]
+      "gest": [
+        "insulation"
+      ]
     },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
+  },
+  "subsidy_landlord": {
     "subsidy_landlord": {
       "start": 2019,
       "end": 2051,
       "policy": "subsidy_landlord",
-      "gest": ["insulation"]
+      "gest": [
+        "insulation"
+      ]
     },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
+  },
+  "subsidy_health_cost": {
     "subsidy_health_cost": {
       "start": 2019,
       "end": 2051,
@@ -93,13 +73,75 @@
       ],
       "proportional": "health_cost"
     },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
+  },
+  "subsidy_present_bias": {
     "subsidy_present_bias": {
-        "start": 2019,
-        "end": 2051,
-        "gest": [
-          "insulation"
-        ],
-        "policy": "subsidy_present_bias"
-      }
+      "start": 2019,
+      "end": 2051,
+      "gest": [
+        "insulation"
+      ],
+      "policy": "subsidy_present_bias"
+    },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
+  },
+  "carbon_tax": {
+    "carbon_tax": {
+      "start": 2017,
+      "end": 2051,
+      "tax": "project/input/policies/current/carbon_tax_value.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": true,
+      "recycling_ini": null
+    },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
+  },
+  "tax_status_quo": {
+    "tax_status_quo": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "tax_status_quo",
+      "gest": [
+        "heater"
+      ]
+    },
+    "file": "project/input/policies/policies_calibration.json",
+    "credit_constraint": {
+      "start": 2018,
+      "end": 2051,
+      "policy": "credit_constraint",
+      "gest": [
+        "heater",
+        "insulation"
+      ]
+    }
   }
 }
