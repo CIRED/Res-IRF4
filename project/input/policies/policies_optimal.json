@@ -53,7 +53,8 @@
       "start": 2019,
       "end": 2051,
       "gest": [
-        "insulation"
+        "insulation",
+        "heater"
       ],
       "policy": "subsidy_present_bias"
     },
@@ -71,6 +72,62 @@
     "file": "project/input/policies/policies_calibration.json"
   },
   "tax_status_quo": {
+    "tax_status_quo": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "tax_status_quo",
+      "gest": [
+        "heater"
+      ]
+    },
+    "file": "project/input/policies/policies_calibration.json"
+  },
+  "all": {
+    "subsidy_emission": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_proportional",
+      "gest": [
+        "heater",
+        "insulation"
+      ],
+      "value": "project/input/policies/current/carbon_tax_value.csv",
+      "proportional": "tCO2_cumac",
+      "growth": null
+    },
+    "subsidy_multi_family": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_multi_family",
+      "gest": [
+        "insulation"
+      ]
+    },
+    "subsidy_landlord": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_landlord",
+      "gest": [
+        "insulation"
+      ]
+    },
+    "subsidy_health_cost": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_proportional",
+      "gest": [
+        "insulation"
+      ],
+      "proportional": "health_cost"
+    },
+    "subsidy_present_bias": {
+      "start": 2019,
+      "end": 2051,
+      "gest": [
+        "insulation"
+      ],
+      "policy": "subsidy_present_bias"
+    },
     "tax_status_quo": {
       "start": 2019,
       "end": 2051,

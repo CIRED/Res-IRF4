@@ -668,7 +668,7 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
         df.columns.names = ['Scenario']
 
         i = result[reference]
-        df_income =  (i.loc[income, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
+        df_income = (i.loc[income, year].set_axis(idx, axis=0)).sum(axis=1) / i.loc[stock, year].sum(axis=1).set_axis(idx, axis=0)
 
         if not isinstance(scenario_assessment, list):
             scenario_assessment = [scenario_assessment]
@@ -1671,6 +1671,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             df = data.loc[:, s]
             temp = dict()
             temp.update({'Investment': df['Investment total WT (Billion euro)']})
+            # temp.update({'Financing': df['Financing total (Billion euro)']})
             if embodied_emission:
                 temp.update({'Embodied emission': df['Carbon footprint (Billion euro)']})
             if cofp:
@@ -1861,6 +1862,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     'VAT (Billion euro)',
                     'Health expenditure (Billion euro)',
                     'Carbon value indirect (Billion euro)',
+                    'Financing total (Billion euro)'
                     ]
         if policy_name is not None:
             if not isinstance(policy_name, list):
@@ -2194,7 +2196,7 @@ def make_summary(path, option=None):
 
     # 3. result - compare
     path_policies = os.path.join(path, 'policies')
-    temp = ['cost_benefit_analysis_counterfactual.png']
+    temp = ['social_welfare_annual.png']
     images += [os.path.join(path_policies, i) for i in temp]
 
     images = [i for i in images if os.path.isfile(i)]

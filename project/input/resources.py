@@ -174,6 +174,7 @@ colors = {
     "Renovation": "brown",
     "Construction": "dimgrey",
     'Investment': 'firebrick',
+    "Financing": "darksalmon",
     'Cost': 'firebrick',
     'Annuities heater': 'lightcoral',
     'Annuities insulation': 'firebrick',

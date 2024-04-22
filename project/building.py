@@ -1652,7 +1652,8 @@ class AgentBuildings(ThermalBuildings):
 
         return condition
 
-    def apply_subsidies_heater(self, index, policies_heater, cost_heater, consumption_saved, emission_saved):
+    def apply_subsidies_heater(self, index, policies_heater, cost_heater, consumption_saved, emission_saved,
+                               bill_saved):
         """Calculate subsidies for each dwelling and each heating system.
 
         Parameters
@@ -1668,7 +1669,6 @@ class AgentBuildings(ThermalBuildings):
         """
 
         subsidies_details = {}
-
 
         vat_base = self.vat_heater
         if isinstance(vat_base, Series):
@@ -1695,12 +1695,14 @@ class AgentBuildings(ThermalBuildings):
         vat_heater = cost_heater * vat
         cost_heater += vat_heater
 
-        policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap']
+        policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap',
+                              'subsidy_present_bias']
         self.policies += [i.name for i in policies_heater if i.policy in policies_incentive and i.name not in self.policies]
 
         cost_heater.sort_index(inplace=True)
 
-        for policy in [p for p in policies_heater if p.policy in ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional']]:
+        for policy in [p for p in policies_heater if p.policy in ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional',
+                                                                  'subsidy_present_bias']]:
 
             if isinstance(policy.value, dict):
                 value = policy.value[self.year]
@@ -1711,6 +1713,12 @@ class AgentBuildings(ThermalBuildings):
                 value = value.stack()
                 value = value[value.index.get_level_values('Heating system final').isin(cost_heater.columns)]
                 value = reindex_mi(value, cost_heater.stack().index).unstack('Heating system final').fillna(0)
+
+            elif policy.policy == 'subsidy_present_bias':
+                value = bill_saved.copy()
+                value[value < 0] = 0
+                value = (reindex_mi((self.preferences_heater['discount_factor_perfect'] -
+                                     self.preferences_heater['discount_factor']), value.index) * value.T).T
 
             elif policy.policy == 'subsidy_ad_valorem':
                 if isinstance(policy.value, dict):
@@ -2460,7 +2468,8 @@ class AgentBuildings(ThermalBuildings):
                                                                                                   policies_heater,
                                                                                                   cost_heater.copy(),
                                                                                                   consumption_std_saved,
-                                                                                                  emission_saved)
+                                                                                                  emission_saved,
+                                                                                                bill_saved)
 
         # cost financing
         p = [p for p in policies_heater if p.policy == 'zero_interest_loan']
@@ -2990,8 +2999,8 @@ class AgentBuildings(ThermalBuildings):
             # TODO: do not work because _condition_store do not have _list_condition_subsidies
             condition = self._condition_store
 
-        policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap', 'subsidy_present_bias',
-                              'subsidy_landlord', 'subsidy_multi_family']
+        policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap',
+                              'subsidy_present_bias', 'subsidy_landlord', 'subsidy_multi_family']
         self.policies += [i.name for i in policies_insulation if i.policy in policies_incentive and i.name not in self.policies]
 
         sub_non_cumulative = {}
@@ -4146,7 +4155,7 @@ class AgentBuildings(ThermalBuildings):
     def store_information_insulation(self, condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
                                      vat_insulation, subsidies_details, subsidies_total, consumption_saved,
                                      consumption_saved_actual, consumption_saved_no_rebound, amount_debt, amount_saving,
-                                     discount, subsidies_loan, eligible, hidden_cost):
+                                     discount, subsidies_loan, eligible):
         """Store insulation information.
 
 
@@ -4535,8 +4544,7 @@ class AgentBuildings(ThermalBuildings):
                 self.store_information_insulation(condition, cost_insulation_raw, tax, cost_insulation, cost_financing,
                                                   vat_insulation, subsidies_details, subsidies_total, _consumption_std_saved,
                                                   consumption_saved_actual, consumption_saved_no_rebound,
-                                                  amount_debt, amount_saving, discount, subsidies_loan, eligible,
-                                                  hidden_cost)
+                                                  amount_debt, amount_saving, discount, subsidies_loan, eligible)
 
             return renovation_rate, market_share
         else:
@@ -6448,8 +6456,6 @@ class AgentBuildings(ThermalBuildings):
             stock_health = stock.loc[stock['Heating intensity'] <= self.hi_threshold, 'Stock']
 
             return (health_cost_income * stock_health).sum() / 10 ** 9
-
-
 
     def calculate_renovation(self, prices, cost_insulation, cost_heater, carbon_content, health_cost=None,
                              carbon_value=50):

@@ -36,27 +36,16 @@
     "file": "project/config/reference.json",
     "end": 2022,
     "policies": {
-      "file": "project/input/policies/policies_calibration.json"
-    }
-  },
-  "Landlord": {
-    "file": "project/config/reference.json",
-    "end": 2022,
-    "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "landlord_dilemma": {
-      "start": 2019,
-      "end": 2051,
-      "policy": "regulation",
-      "gest": "insulation"
-    }
-    }
-  },
-  "SubsidyLandlord": {
-    "file": "project/config/reference.json",
-    "end": 2022,
-    "policies": {
-      "file": "project/input/policies/policies_calibration.json",
+      "credit_constraint": {
+        "start": 2018,
+        "end": 2051,
+        "policy": "credit_constraint",
+        "gest": [
+          "insulation",
+          "heater"
+        ]
+      },
       "subsidy_landlord": {
       "start": 2019,
       "end": 2051,
@@ -67,4 +56,5 @@
     }
     }
   }
+
 }

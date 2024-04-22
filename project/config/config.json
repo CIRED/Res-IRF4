@@ -37,27 +37,21 @@
     "end": 2027,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "obligation": {
-      "start": 2022,
-      "end": 2051,
-      "value": "project/input/policies/current/agenda_obligation_pb.csv",
-      "frequency": {
-        "value": [
-          0,
-          0.1,
-          0
-        ],
-        "index": [
-          "Owner-occupied",
-          "Privately rented",
-          "Social-housing"
-        ],
-        "name": "Occupancy status"
+      "credit_constraint": {
+        "start": 2018,
+        "end": 2051,
+        "policy": "credit_constraint",
+        "gest": [
+          "insulation",
+          "heater"
+        ]
       },
-      "intensive": "market_share",
-      "minimum_performance": "D",
-      "policy": "obligation"
-    }
+      "landlord_dilemma": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      }
     }
   }
 }
