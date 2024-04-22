@@ -34,20 +34,30 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2022,
+    "end": 2027,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "present_bias": {
-      "start": 2018,
+      "obligation": {
+      "start": 2022,
       "end": 2051,
-      "value": 0.032,
-      "policy": "regulation",
-      "gest": [
-        "heater",
-        "insulation"
-      ]
+      "value": "project/input/policies/current/agenda_obligation_pb.csv",
+      "frequency": {
+        "value": [
+          0,
+          0.1,
+          0
+        ],
+        "index": [
+          "Owner-occupied",
+          "Privately rented",
+          "Social-housing"
+        ],
+        "name": "Occupancy status"
+      },
+      "intensive": "market_share",
+      "minimum_performance": "D",
+      "policy": "obligation"
     }
     }
-
   }
 }

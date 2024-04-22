@@ -4798,7 +4798,7 @@ class AgentBuildings(ThermalBuildings):
         return flow_retrofit
 
     def flow_obligation(self, policies_insulation, prices, cost_insulation, financing_cost=None,
-                        frequency_insulation=1):
+                        frequency_insulation=1, health_cost=None):
         """Account for flow obligation if defined in policies_insulation.
 
         Parameters
@@ -4807,7 +4807,9 @@ class AgentBuildings(ThermalBuildings):
             Check if obligation.
         prices: Series
         cost_insulation: Series
-        financing_cost: dict
+        financing_cost: dict, optional
+        frequency_insulation: float or int, default 1
+        health_cost: Series, optional
 
         Returns
         -------
@@ -4869,7 +4871,8 @@ class AgentBuildings(ThermalBuildings):
                                                           financing_cost=financing_cost,
                                                           min_performance=obligation.min_performance,
                                                           credit_constraint=False,
-                                                          mandatory=True)
+                                                          mandatory=True,
+                                                          health_cost=health_cost)
 
             if obligation.intensive == 'market_share':
                 # market_share endogenously calculated by insulation_replacement
