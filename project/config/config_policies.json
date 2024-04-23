@@ -63,7 +63,7 @@
         "end": 2051,
         "tax": "project/input/policies/current/carbon_tax_value.csv",
         "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": false,
+        "recycling": null,
         "recycling_ini": null
       }
     }
@@ -82,6 +82,12 @@
           "heater"
         ]
       },
+      "health_cost": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "regulation",
+          "gest": ["insulation"]
+        },
       "carbon_tax_vsc": {
         "start": 2019,
         "end": 2051,
