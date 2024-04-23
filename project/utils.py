@@ -410,6 +410,16 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * factor
 
 
+def factor_annuities(lifetime=50, discount_rate=0.032):
+    if isinstance(discount_rate, (float, int, np.float64, np.int64)):
+        if discount_rate == 0:
+            return 1 / lifetime
+    factor = discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+    if isinstance(factor, (pd.Series, pd.DataFrame)):
+        factor.fillna(1 / lifetime, inplace=True)
+    return factor
+
+
 def calculate_loan_annuity(capex, lifetime=50, discount_rate=0.032):
     if isinstance(discount_rate, (float, int, np.float64, np.int64)):
         if discount_rate == 0:

@@ -31,6 +31,7 @@ from itertools import product
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
     get_size, compare_bar_plot, make_sensitivity_tables, cumulated_plot, find_discount_rate, conditional_expectation, get_json
 from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots, calculate_average, make_scatter_plot, add_no_renovation
+from project.utils import factor_annuities
 
 import project.thermal as thermal
 
@@ -1641,11 +1642,18 @@ class AgentBuildings(ThermalBuildings):
 
         condition = DataFrame(True, index=amount_debt.index, columns=amount_debt.columns)
 
+        sub = None
         if financing_cost['debt_income_ratio']:
             debt_reimbursement = calculate_annuities(amount_debt, lifetime=financing_cost['duration'],
                                                      discount_rate=financing_cost['interest_rate'].loc[self.year])
             debt_income_ratio = (debt_reimbursement.T / reindex_mi(self._income_owner, amount_debt.index)).T
             condition = condition & (debt_income_ratio <= financing_cost['debt_income_ratio'])
+
+            factor = factor_annuities(lifetime=financing_cost['duration'],
+                                      discount_rate=financing_cost['interest_rate'].loc[self.year])
+
+            sub = (amount_debt.T - reindex_mi(self._income_owner * financing_cost['debt_income_ratio'] / factor, amount_debt.index)).T
+            sub = sub.where(sub > 0, 0)
 
             if bill_saved is not None:
                 condition = condition & (debt_reimbursement <= bill_saved)
@@ -3224,7 +3232,7 @@ class AgentBuildings(ThermalBuildings):
 
     def endogenous_renovation(self, stock, bill_saved, subsidies_total, cost_insulation, frequency_insulation,
                               calib_renovation=None, min_performance=None, subsidies_details=None,
-                              cost_financing=None, supply=None, credit_constraint=None):
+                              cost_financing=None, supply=None, credit_constraint=None, health_cost_saved=None):
         """Calculate endogenous retrofit based on discrete choice model.
 
 
@@ -3263,7 +3271,7 @@ class AgentBuildings(ThermalBuildings):
             return (exp(u).T / exp(u).sum(axis=1)).T
 
         def to_market_share(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _credit_constraint=None,
-                            full_output=False, _min_performance=None):
+                            full_output=False, _min_performance=None, _health_cost_saved=None):
             """Calculate market-share between insulation options.
 
 
@@ -3308,6 +3316,12 @@ class AgentBuildings(ThermalBuildings):
                 _credit_constraint = _credit_constraint.replace(0, float('nan'))
                 utility_intensive *= _credit_constraint
                 utility_intensive.dropna(how='all', inplace=True)
+
+            if _health_cost_saved is not None:
+                _health_cost_saved = reindex_mi(_health_cost_saved, utility_intensive.index).fillna(0)
+                utility_health = (_health_cost_saved.T * reindex_mi(self.preferences_insulation['bill_saved'],
+                                                                  _health_cost_saved.index)).T / 1000
+                utility_intensive += utility_health
 
             if _min_performance is not None:
                 certificate = reindex_mi(self._consumption_store['certificate_renovation'], utility_intensive.index)
@@ -3398,7 +3412,7 @@ class AgentBuildings(ThermalBuildings):
 
         def apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total, _cost_financing=None, _stock=None,
                                         _supply=None, _cost_curve=True, _credit_constraint=None, _frequency_insulation=1,
-                                        _min_performance=None):
+                                        _min_performance=None, _health_cost_saved=None):
             if self.number_firms_insulation is None and _supply is not None:
                 self._markup_insulation_store = _supply['markup_insulation']
 
@@ -3406,7 +3420,8 @@ class AgentBuildings(ThermalBuildings):
                                                                 _cost_total * self._markup_insulation_store,
                                                                 _cost_financing=_cost_financing,
                                                                 _credit_constraint=_credit_constraint,
-                                                                _min_performance=_min_performance)
+                                                                _min_performance=_min_performance,
+                                                                _health_cost_saved=health_cost_saved)
             # calculate conditional expectation of error term (unobserved cost or benefits)
             # formula is log(exp(total_utility).sum()) - utility_observed
             total_utility = (_utility_intensive.T + reindex_mi(self.constant_insulation_extensive, _utility_intensive.index)).T
@@ -4070,7 +4085,8 @@ class AgentBuildings(ThermalBuildings):
                                                                                            _supply=supply,
                                                                                            _credit_constraint=credit_constraint,
                                                                                            _frequency_insulation=frequency_insulation,
-                                                                                           _min_performance=min_performance)
+                                                                                           _min_performance=min_performance,
+                                                                                          _health_cost_saved=health_cost_saved)
             # positive means benefits so negative means hidden cost
             hidden_cost = - (unobserved_value / abs(self.preferences_insulation['cost'])) * 1000
 
@@ -4411,8 +4427,14 @@ class AgentBuildings(ThermalBuildings):
                 credit_constraint = None
 
             cost_insulation_reindex = reindex_mi(cost_insulation, index)
-
             assert allclose(amount_debt + amount_saving + subsidies_total, cost_insulation_reindex), 'Sum problem'
+
+            p = [p for p in policies_insulation if (p.policy == 'regulation') and (p.name == 'health_cost')]
+            if p:
+                pass
+            else:
+                health_cost_saved = None
+
 
             hidden_cost = 0
             if self._endogenous:
@@ -4427,7 +4449,8 @@ class AgentBuildings(ThermalBuildings):
                     subsidies_details=subsidies_details,
                     cost_financing=cost_financing,
                     supply=supply,
-                    credit_constraint=credit_constraint)
+                    credit_constraint=credit_constraint,
+                    health_cost_saved=health_cost_saved)
 
                 self._renovation_store.update({'hidden_cost': hidden_cost})
 

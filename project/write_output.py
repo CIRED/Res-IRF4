@@ -1772,9 +1772,10 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                                 rotation=rotation, left=1.2, fontxtick=12,
                                                 scatterplot_bis=scatterplot_bis)
 
+        npv_annual = npv / years
         npv.loc['NPV', :] = npv.sum()
         if years:
-            npv.loc['NPV annual', :] = npv.sum() / years
+            npv.loc['NPV annual', :] = npv_annual.sum()
         npv.columns = scenarios
         return npv
 
@@ -2136,6 +2137,9 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
 
                 indicator.loc[name, s] = temp
                 indicator.loc['{} (%)'.format(name.split(' (')[0]), s] = temp_percent
+
+            indicator.loc['Cumulated emission (MtCO2)', s] = result[s].loc['Emission (MtCO2)', :].sum()
+            indicator.loc['Cumulated energy (TWh)', s] = result[s].loc['Consumption (TWh)', :].sum()
 
     if indicator is not None:
         indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))
