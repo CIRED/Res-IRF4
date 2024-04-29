@@ -450,6 +450,7 @@ def add_no_renovation(df):
     temp.columns.names = df.columns.names
     return temp
 
+
 def conditional_expectation(x):
     """
     Calculate the conditional expectation of epsilon given epsilon > x,
@@ -1526,9 +1527,6 @@ def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y,
             text.set_color('black')
 
     save_fig(fig, save=save)
-
-
-
 
 def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):
     """Make waterfall chart. Used for Social Economic Assessment.

@@ -267,6 +267,9 @@ class ThermalBuildings:
         -------
 
         """
+        columns = None
+        if isinstance(df, DataFrame):
+            columns = df.columns
         certificate = self.certificate.rename('Performance')
         lvl = [i for i in certificate.index.names if i in df.index.names]
         certificate = certificate.groupby(lvl).first()
@@ -274,14 +277,24 @@ class ThermalBuildings:
         certificate = reindex_mi(certificate, df.index)
         df = concat((df, certificate), axis=1).set_index('Performance', append=True).squeeze()
 
+        if isinstance(df, DataFrame):
+            df.columns = columns
+
         return df
 
     def add_energy(self, df):
+        columns = None
+        if isinstance(df, DataFrame):
+            columns = df.columns
         energy = self.energy.rename('Energy')
         lvl = [i for i in energy.index.names if i in df.index.names]
         energy = energy.groupby(lvl).first()
         energy = reindex_mi(energy, df.index)
         df = concat((df, energy), axis=1).set_index('Energy', append=True).squeeze()
+
+        if isinstance(df, DataFrame):
+            df.columns = columns
+
         return df
 
     def need_heating(self, climate=2006, smooth=False, freq='year', hourly_profile=None, unit='kWh/y'):
@@ -1010,6 +1023,7 @@ class AgentBuildings(ThermalBuildings):
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
                          residual_rate=residual_rate, temp_sink=temp_sink)
 
+        self._distortion_store = {}
         if logger is None:
             logger = logging.getLogger()
         self.logger = logger
@@ -1312,6 +1326,37 @@ class AgentBuildings(ThermalBuildings):
         assert replaced_by.sum().round(0) == replaced_by_sum.round(0), 'Sum problem'
 
         return replaced_by
+
+
+    def weighted_average(self, df, weights, levels=None, technology='insulation'):
+
+        if levels is None:
+            levels = ['Occupancy status', 'Housing type', 'Performance', 'Energy', 'Income owner']
+
+        if 'Energy' in levels:
+            df = self.add_energy(df)
+            weights = self.add_energy(weights)
+        if 'Performance' in levels:
+            df = self.add_certificate(df)
+            weights = self.add_certificate(weights)
+
+        weights = weights.reorder_levels(df.index.names)
+
+        if isinstance(df, DataFrame):
+            df_grouped = (df.T * weights).T
+            df_grouped = (df_grouped.groupby(levels).sum().T / weights.groupby(levels).sum()).T
+            df_grouped.dropna(how='all', inplace=True)
+            if technology ==  'insulation':
+                names = df_grouped.columns.names
+                df_grouped.columns = df_grouped.columns.map(lambda row: ", ".join([name for name, value in zip(names, row) if value]))
+            df_grouped = df_grouped.rename_axis('Technology', axis=1)
+            df_grouped = df_grouped.stack('Technology').squeeze()
+
+            return df_grouped
+        else:
+            raise NotImplementedError
+
+
 
     @staticmethod
     def find_best_option(criteria, dict_df=None, func='max'):
@@ -3049,7 +3094,9 @@ class AgentBuildings(ThermalBuildings):
                 consumption_saved_cumac[consumption_saved_cumac < 0] = 0
                 # reindex_mi(cost_insulation, index) / consumption_saved_cumac
                 if policy.proportional == 'tCO2_cumac':
-                    emission_saved_cumac = self.energy_bill(carbon_content, consumption_saved_cumac) / 10**3
+                    temp = self.add_energy(consumption_saved_cumac)
+                    emission_saved_cumac = (temp.T * reindex_mi(carbon_content.rename_axis(['Energy']),
+                                                                temp.index)).T / 10 ** 3
                     value = value * emission_saved_cumac
                 elif policy.proportional == 'MWh_cumac':
                     value = value * consumption_saved_cumac
@@ -3229,6 +3276,60 @@ class AgentBuildings(ThermalBuildings):
                                                            index=idx)
 
         return cost_insulation, vat_insulation, vat, subsidies_details, subsidies_total, condition, eligible
+
+    def calculate_distortion(self, index, stock, cost_insulation,
+                             consumption_saved, health_cost_saved,
+                             bill_saved, carbon_value):
+        """Calculate distortion amount for each possible insulation choice.
+        """
+
+
+        distortion_details = {}
+
+        # 1. distortion landlord
+        value = self.landlord_dilemma.copy()
+        value = reindex_mi(value, index).fillna(0)
+        value = concat([value] * cost_insulation.shape[1], keys=cost_insulation.columns, axis=1)
+        value.fillna(0, inplace=True)
+        distortion_details.update({'landlord_dilemma': value.copy()})
+
+        # 2. distortion multi-family
+        value = self.multifamily_friction.copy()
+        value = reindex_mi(value, index).fillna(0)
+        value = concat([value] * cost_insulation.shape[1], keys=cost_insulation.columns, axis=1)
+        value.fillna(0, inplace=True)
+        distortion_details.update({'multi_family': value.copy()})
+
+        # 3. distortion present-bias
+        value = bill_saved.copy()
+        value[value < 0] = 0
+        value = (reindex_mi((self.preferences_insulation['discount_factor_perfect'] -
+                             self.preferences_insulation['discount_factor']), value.index) * value.T).T
+        value.fillna(0, inplace=True)
+        distortion_details.update({'bill_saved': value.copy()})
+
+        # 4. distortion emission
+        consumption_saved_cumac = self.to_cumac(consumption_saved, discount=self.social_discount_rate,
+                                                duration=self.lifetime_insulation) * 1e3
+        consumption_saved_cumac[consumption_saved_cumac < 0] = 0
+        temp = self.add_energy(consumption_saved_cumac)
+        value = (temp.T * reindex_mi(carbon_value.rename_axis(['Energy']), temp.index)).T
+        value.fillna(0, inplace=True)
+        value = value.droplevel('Energy')
+        distortion_details.update({'emission_saved': value.copy()})
+
+        # 5. distortion health cost
+        value = self.to_cumac(health_cost_saved, discount=self.social_discount_rate,
+                              duration=self.lifetime_insulation) * 1e3
+        value = reindex_mi(value, index).fillna(0)
+        distortion_details.update({'health_cost': value.copy()})
+
+        distortion_total = sum([i for k, i in distortion_details.items()])
+
+        levels = ['Occupancy status', 'Housing type', 'Performance', 'Energy', 'Income owner']
+        distortion_grouped = self.weighted_average(distortion_total, stock.copy(), levels=levels, technology='insulation')
+
+        return distortion_grouped
 
     def endogenous_renovation(self, stock, bill_saved, subsidies_total, cost_insulation, frequency_insulation,
                               calib_renovation=None, min_performance=None, subsidies_details=None,
@@ -4431,10 +4532,9 @@ class AgentBuildings(ThermalBuildings):
 
             p = [p for p in policies_insulation if (p.policy == 'regulation') and (p.name == 'health_cost')]
             if p:
-                pass
+                health_cost_saved_subsidies = health_cost_saved.copy()
             else:
-                health_cost_saved = None
-
+                health_cost_saved_subsidies = None
 
             hidden_cost = 0
             if self._endogenous:
@@ -4450,7 +4550,7 @@ class AgentBuildings(ThermalBuildings):
                     cost_financing=cost_financing,
                     supply=supply,
                     credit_constraint=credit_constraint,
-                    health_cost_saved=health_cost_saved)
+                    health_cost_saved=health_cost_saved_subsidies)
 
                 self._renovation_store.update({'hidden_cost': hidden_cost})
 
@@ -4465,6 +4565,17 @@ class AgentBuildings(ThermalBuildings):
 
             else:
                 renovation_rate, market_share = self.exogenous_renovation(stock, condition)
+
+
+            """distortion_grouped = self.calculate_distortion(index, stock, cost_insulation,
+                                                           consumption_saved, health_cost_saved,
+                                                           bill_saved, carbon_value)
+            self._distortion_store.update({'insulation': distortion_grouped})
+
+            levels = [k for k in distortion_grouped.index.names if k != 'Technology']
+            subsidies_grouped = self.weighted_average(subsidies_total, stock.copy(), levels=levels,
+                                                       technology='insulation')
+            print('break')"""
 
             if self.year == self.first_year + 1 and self.rational_behavior_insulation is None and \
                     self.path_calibration is not None and self.path_ini is not False:
@@ -4763,8 +4874,10 @@ class AgentBuildings(ThermalBuildings):
         # hidden cost must be calculated now to separate the mandatory renovation flows.
         if 'hidden_cost' in self._renovation_store.keys():
             temp = add_no_renovation(replaced_by)
-            temp.iloc[:, 0] = (stock * frequency_insulation - flow_insulation)[temp.index]
+            no_renovation = (stock * frequency_insulation - flow_insulation)[temp.index]
+            temp.iloc[:, 0] = no_renovation.copy()
             self._renovation_store['hidden_cost_agg'] = self._renovation_store['hidden_cost'] * temp
+            self._renovation_store['no_renovation'] = no_renovation.sum()
 
         assert round(replaced_by.sum().sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
@@ -5608,6 +5721,10 @@ class AgentBuildings(ThermalBuildings):
             output.update(temp.T / 10 ** 9 / step)
             investment_heater = self._heater_store['cost'].sum(axis=1)
 
+            temp = self._heater_store['hidden_cost_agg'].sum() / self._heater_store['replacement'].sum()
+            temp.index = temp.index.map(lambda x: 'Hidden cost average {} (euro)'.format(x))
+            temp.update(temp.T)
+
             output['Hidden cost heater (Billion euro)'] = self._heater_store['hidden_cost_agg'].sum().sum() / 10 ** 9 / step
 
             temp = self._heater_store['hidden_cost_agg'].groupby('Housing type').sum() / 10 ** 9 / step
@@ -5650,6 +5767,14 @@ class AgentBuildings(ThermalBuildings):
                 'Financing heater (Billion euro)']
 
             # hidden cost
+            names = self._renovation_store['hidden_cost_agg'].columns.names
+            temp = self._replaced_by.sum()
+            temp = temp.reindex(self._renovation_store['hidden_cost_agg'].columns)
+            temp.iloc[0] = self._renovation_store['no_renovation']
+            temp = self._renovation_store['hidden_cost_agg'].sum() / temp
+            temp.index = temp.index.map(lambda row: ", ".join([name for name, value in zip(names, row) if value]))
+            temp.index = temp.index.map(lambda x: 'Hidden cost average {} (euro)'.format(x))
+
             hidden_cost = (self._renovation_store['hidden_cost_agg']).groupby(levels).sum()
             output['Hidden cost insulation (Billion euro)'] = hidden_cost.sum().sum() / 10 ** 9 / step
 
