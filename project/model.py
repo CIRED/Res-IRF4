@@ -63,10 +63,12 @@ from project.utils import memory_object, get_size, size_dict
 from project.input.resources import resources_data
 
 
-def get_config() -> dict:
+def get_config(scenario=None) -> dict:
+    if scenario is None:
+        scenario = 'Reference'
     with resources.path('project.config', 'config.json') as f:
         with open(f) as file:
-            return json.load(file)['Reference']
+            return json.load(file)[scenario]
 
 
 def prepare_config(config):
@@ -91,7 +93,7 @@ def prepare_config(config):
     return config
 
 
-def config2inputs(config=None):
+def config2inputs(config=None, scenario=None):
     """Create main Python object from configuration file.
 
     Parameters
@@ -104,7 +106,7 @@ def config2inputs(config=None):
     """
 
     if config is None:
-        config = get_config()
+        config = get_config(scenario=scenario)
 
     config = prepare_config(config)
 
@@ -253,7 +255,7 @@ def select_post_inputs(parsed_inputs):
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
 
-def get_inputs(path=None, config=None, variables=None):
+def get_inputs(path=None, config=None, variables=None, scenario=None):
     """Initialize thermal buildings object based on input dictionary.
 
     Parameters
@@ -274,7 +276,7 @@ def get_inputs(path=None, config=None, variables=None):
                      'health_cost', 'income', 'cost_heater', 'health_cost_dpe', 'present_discount_rate',
                      'efficiency', 'ratio_surface']
 
-    config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+    config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config, scenario=scenario)
     inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config)
     output = {'buildings': inputs_dynamics['buildings'],
               'income': inputs['income'],
