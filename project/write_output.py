@@ -2096,21 +2096,21 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 ref = reference
 
             variables_end = {
-                'Consumption (TWh)': 'Consumption saving (TWh)',
-                'Consumption standard (TWh)': 'Consumption standard saving (TWh)',
-                'Consumption standard (kWh/m2)': 'Consumption standard saving (kWh/m2)',
-                'Emission (MtCO2)': 'Emission saving (MtCO2)',
-                'Heating intensity (%)': 'Heating intensity diff (%)',
-                'Energy poverty (Million)': 'Energy poverty diff (Million)'
+                'Consumption (TWh)': 'Consumption end (TWh)',
+                'Consumption standard (TWh)': 'Consumption standard end (TWh)',
+                'Consumption standard (kWh/m2)': 'Consumption standard end (kWh/m2)',
+                'Emission (MtCO2)': 'Emission end (MtCO2)',
+                'Heating intensity (%)': 'Heating intensity end (%)',
+                'Energy poverty (Million)': 'Energy poverty end (Million)'
             }
 
             variables_cumulated = {
-                'Investment total (Billion euro)': 'Investment total diff (Billion euro)',
-                'Subsidies total (Billion euro)': 'Subsidies total diff (Billion euro)',
-                'Investment heater (Billion euro)': 'Investment heater diff (Billion euro)',
-                'Subsidies heater (Billion euro)': 'Subsidies heater diff (Billion euro)',
-                'Investment insulation (Billion euro)': 'Investment insulation diff (Billion euro)',
-                'Subsidies insulation (Billion euro)': 'Subsidies insulation diff (Billion euro)',
+                'Investment total (Billion euro)': 'Investment total cumulated (Billion euro)',
+                'Subsidies total (Billion euro)': 'Subsidies total cumulated (Billion euro)',
+                'Investment heater (Billion euro)': 'Investment heater cumulated (Billion euro)',
+                'Subsidies heater (Billion euro)': 'Subsidies heater cumulated (Billion euro)',
+                'Investment insulation (Billion euro)': 'Investment insulation cumulated (Billion euro)',
+                'Subsidies insulation (Billion euro)': 'Subsidies insulation cumulated (Billion euro)',
                 'Emission (MtCO2)': 'Cumulated emission saving (MtCO2)',
                 'Consumption (TWh)': 'Cumulated energy saving (TWh)'
             }
