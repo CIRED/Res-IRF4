@@ -25,7 +25,7 @@
     "policies": {
       "file": "project/input/policies/policies_2024.json",
       "restriction_gas": {
-            "start": 2025,
+            "start": 2030,
             "end": 2051,
             "value": "Natural gas",
             "policy": "restriction_energy",
@@ -39,7 +39,7 @@
     "policies": {
       "file": "project/input/policies/policies_2024.json",
       "restriction_gas": {
-            "start": 2025,
+            "start": 2030,
             "end": 2051,
             "value": "Natural gas",
             "policy": "restriction_energy",
@@ -122,6 +122,31 @@
         "policy": "regulation",
         "gest": "heater",
         "value": 0.2
+      }
+    }
+  },
+  "NoPolicyHeaterTest": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/coupling/policies_ambitious.json"
+    }
+  },
+  "PolicyHeaterFirstBest": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/coupling/policies_ambitious.json",
+      "subsidy_emission": {
+        "start": 2030,
+        "end": 2051,
+        "policy": "subsidy_proportional",
+        "gest": [
+          "heater"
+        ],
+        "value": "project/input/policies/current/carbon_tax_value.csv",
+        "proportional": "tCO2_cumac",
+        "growth": null
       }
     }
   }

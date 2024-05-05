@@ -1632,7 +1632,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                               index=result.index)
         return (result * discount).sum()
 
-    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=True,
+    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=False,
                               cofp=True, order_scenarios=None, years=None):
         """Calculate socioeconomic NPV.
 
@@ -1763,14 +1763,14 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                                      annotate='{:.1f}')
 
                 make_horizontal_stackedbar_plot(npv_annual.T, 'Social welfare (Billion euro per year)', ncol=3, ymin=None,
-                                                format_x=lambda y, _: '{:.0f} B€'.format(y),
+                                                format_x=lambda y, _: '{:.1f} B€'.format(y),
                                                 hline=0, colors=resources_data['colors'],
                                                 scatterplot=npv_annual.sum(),
                                                 save=os.path.join(save,
                                                                   'social_welfare_annual_horizontal.png'.lower().replace(
                                                                       ' ', '_')),
                                                 rotation=rotation, left=1.2, fontxtick=12,
-                                                scatterplot_bis=scatterplot_bis)
+                                                scatterplot_bis=scatterplot_bis, annotate='{:.1f}')
 
         npv_annual = npv / years
         npv.loc['NPV', :] = npv.sum()
