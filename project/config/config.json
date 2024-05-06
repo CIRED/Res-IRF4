@@ -34,34 +34,16 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     }
   },
-  "NoPoliciesHeater": {
+  "ReferenceWood": {
     "file": "project/config/reference.json",
-    "end": 2031,
+    "end": 2051,
     "policies": {
-      "file": "project/input/policies/coupling/policies_ambitious.json"
-    }
-  },
-  "PoliciesFirstBest": {
-    "file": "project/config/reference.json",
-    "end": 2031,
-    "policies": {
-      "file": "project/input/policies/coupling/policies_ambitious.json",
-      "subsidy_emission": {
-        "start": 2025,
-        "end": 2051,
-        "policy": "subsidy_proportional",
-        "gest": [
-          "heater"
-        ],
-        "value": "project/input/policies/current/carbon_tax_value.csv",
-        "proportional": "tCO2_cumac",
-        "growth": null
-      }
+      "file": "project/input/policies/policies_2024_wood.json"
     }
   }
 }
