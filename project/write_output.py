@@ -886,22 +886,24 @@ def plot_compare_scenarios(result, folder, quintiles=None, order_scenarios=None,
                        'Mpr serenite': 'Subsidy', 'Mpr efficacite': 'Subsidy', 'Mpr performance': 'Subsidy',
                        'Cite': 'Subsidy'}
                 # replace index with aggregated
+                try:
+                    temp = temp.rename(index=agg).groupby(temp.index.names).sum()
+                    rename = {'Subsidy': 'Direct subsidies',
+                              'Cee': 'White certificate',
+                              'Reduced vat': 'Reduced VAT',
+                              'Zero interest': 'Zero interest loan'}
+                    temp = temp.rename(index=rename)
 
-                temp = temp.rename(index=agg).groupby(temp.index.names).sum()
-                rename = {'Subsidy': 'Direct subsidies',
-                          'Cee': 'White certificate',
-                          'Reduced vat': 'Reduced VAT',
-                          'Zero interest': 'Zero interest loan'}
-                temp = temp.rename(index=rename)
-
-                # ['Cee', 'Subsidy', 'Reduced vat', 'Zero interest loan']
-                make_clusterstackedbar_plot(temp, 'Policy',
-                                            format_y=lambda y, _: '{:.0f} B€'.format(y),
-                                            save=os.path.join(folder_img, 'policy_scenario_aggregated.png'),
-                                            rotation=90, year_ini=start + 1,
-                                            order_scenarios=order,
-                                            colors=resources_data['colors'],
-                                            fonttick=20)
+                    # ['Cee', 'Subsidy', 'Reduced vat', 'Zero interest loan']
+                    make_clusterstackedbar_plot(temp, 'Policy',
+                                                format_y=lambda y, _: '{:.0f} B€'.format(y),
+                                                save=os.path.join(folder_img, 'policy_scenario_aggregated.png'),
+                                                rotation=90, year_ini=start + 1,
+                                                order_scenarios=order,
+                                                colors=resources_data['colors'],
+                                                fonttick=20)
+                except KeyError:
+                    pass
     # ----------------
 
     # graph emission saving

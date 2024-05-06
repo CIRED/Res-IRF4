@@ -73,7 +73,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     with open(os.path.join(buildings.path_calibration, 'calibration_{}.pkl'.format(t)), 'wb') as file:
         dump({
             'coefficient_global': buildings.coefficient_global,
-            'coefficient_heater': buildings.coefficient_heater,
+            'coefficient_backup': buildings.coefficient_backup,
             'constant_insulation_extensive': buildings.constant_insulation_extensive,
             'constant_insulation_intensive': buildings.constant_insulation_intensive,
             'constant_heater': buildings.constant_heater,

@@ -54,7 +54,7 @@
     "file": "project/config/reference.json",
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/policies_calibration.json",
+      "file": "project/input/policies/coupling/policies_ambitious.json",
       "carbon_tax": {
         "start": 2017,
         "end": 2051,

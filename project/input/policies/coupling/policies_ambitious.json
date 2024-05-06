@@ -19,7 +19,7 @@
     "cee": {
       "start": 2017,
       "end": 2051,
-      "cumac_heater": "project/input/policies/current/cumac_heater_per_year.csv",
+      "cumac_heater": "project/input/policies/coupling/cumac_heater_per_year.csv",
       "cumac_insulation": "project/input/policies/current/cumac_insulation_per_year.csv",
       "bonus_insulation": {
         "value": "project/input/policies/current/cee_bonus_insulation.csv",
