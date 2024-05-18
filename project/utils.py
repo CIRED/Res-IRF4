@@ -905,7 +905,8 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
 
 
 def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
-                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
+                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True,
+                      xmax=None, ymax=None, diagonal_line=False, s=30):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     colors = None
@@ -923,7 +924,7 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
             scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
 
     else:
-        ax.scatter(x=df[x], y=df[y], s=30, c=colors)
+        ax.scatter(x=df[x], y=df[y], s=s, c=colors)
 
     if annotate:
         for k, v in df.iterrows():
@@ -934,7 +935,14 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
     if hlines is not None:
         ax.axhline(y=hlines, linewidth=1, color='grey')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin)
+    if diagonal_line:
+        xlims = ax.get_xlim()
+        ax.plot([xlims[0], xlims[1]],
+                [xlims[0], xlims[1]],
+                linestyle='-', color='black', linewidth=1)
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin,
+                   ymax=ymax, xmax=xmax)
     ax.set(xlabel=x_label, ylabel=None)
 
     if col_size is not None:

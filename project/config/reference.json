@@ -34,7 +34,8 @@
         "target": "worst"
       },
       "frequency_insulation": 0.1,
-      "preferences_insulation": "project/input/investment/stated_preferences_insulation_cst.csv"
+      "preferences_insulation": "project/input/investment/stated_preferences_insulation_cst.csv",
+      "belief_engineering_calculation": false
     },
     "switch_heater": {
       "district_heating": "project/input/energy/district_heating_s2.csv",
@@ -77,7 +78,8 @@
       "residual_rate": 0,
       "hourly_profile": "project/input/technical/hourly_profile_rte.csv",
       "constraint_heat_pumps": ["E", "F", "G"],
-      "variable_size_heater": false
+      "variable_size_heater": false,
+      "default_quality": null
     },
     "energy": {
       "energy_prices": {

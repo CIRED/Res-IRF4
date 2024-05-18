@@ -1588,10 +1588,10 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None, reference='Ref
                       )
 
 
-def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30, policy_name=None,
-                       reference='Reference', order_scenarios=None, figure=True):
+def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, duration_investment=30, policy_name=None,
+                       reference='Reference', factor_cofp=0.2, order_scenarios=None, figure=True):
 
-    def double_difference(ref, scenario, values=None, discount_rate=discount_rate, years=years):
+    def double_difference(ref, scenario, values=None, discount_rate=social_discount_rate, years=duration_investment):
         """Calculate double difference.
 
         Double difference is a proxy of marginal flow produced in year.
@@ -1634,7 +1634,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                               index=result.index)
         return (result * discount).sum()
 
-    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=0.2, embodied_emission=False,
+    def cost_benefit_analysis(data, scenarios, policy_name=None, save=None, factor_cofp=factor_cofp, embodied_emission=False,
                               cofp=True, order_scenarios=None, years=None):
         """Calculate socioeconomic NPV.
 
@@ -1786,10 +1786,13 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         os.mkdir(folder_policies)
 
     if 'Discount rate' in cba_inputs.keys():
-        discount_rate = float(cba_inputs['Discount rate'])
+        social_discount_rate = float(cba_inputs['Discount rate'])
 
     if 'Lifetime' in cba_inputs.keys():
-        years = int(cba_inputs['Lifetime'])
+        duration_investment = int(cba_inputs['Lifetime'])
+
+    if 'Factor COFP' in cba_inputs.keys():
+        factor_cofp = float(cba_inputs['Factor COFP'])
 
     # Getting inputs needed
     energy_prices = get_pandas(cba_inputs['energy_prices'], lambda x: pd.read_csv(x, index_col=[0])) * 10 ** 9  # euro/kWh to euro/TWh
@@ -1827,7 +1830,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                     'Health cost (Billion euro)',
                     ]:
             temp_comparison[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None,
-                                                     discount_rate=discount_rate, years=years)
+                                                     discount_rate=social_discount_rate, years=duration_investment)
 
         # We cannot calculate directly double difference of carbon value because carbon price will increase.
         for energy in resources_data['index']['Energy']:
@@ -1835,25 +1838,35 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
             temp_comparison[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None)
 
             temp_comparison['Carbon value {} (Billion euro)'.format(energy)] = double_difference(ref.loc[var, :],
-                                                                                      data.loc[var, :],
-                                                                                      values=carbon_emission_value[energy]) / (10 ** 9)
+                                                                                                 data.loc[var, :],
+                                                                                                 values=
+                                                                                                 carbon_emission_value[
+                                                                                                     energy],
+                                                                                                 discount_rate=social_discount_rate,
+                                                                                                 years=duration_investment) / (
+                                                                                           10 ** 9)
 
             temp_comparison['Energy expenditures {} (Billion euro)'.format(energy)] = double_difference(
                 ref.loc[var, :],
                 data.loc[var, :],
-                values=energy_prices[energy]) / (10 ** 9)
+                values=energy_prices[energy],
+                discount_rate=social_discount_rate,
+                years=duration_investment) / (10 ** 9)
             # On a des euros
 
             temp_comparison['Emission {} (tCO2)'.format(energy)] = double_difference(ref.loc[var, :],
-                                                                          data.loc[var, :],
-                                                                          values=carbon_emission[energy])
+                                                                                     data.loc[var, :],
+                                                                                     values=carbon_emission[energy],
+                                                                                     discount_rate=social_discount_rate,
+                                                                                     years=duration_investment
+                                                                                     )
 
         for var in ['Thermal comfort EE (Billion euro)', 'Thermal loss prices (Billion euro)']:
             simple_diff = data.loc[var, :] - ref.loc[var, :]
             simple_diff.rename(None, inplace=True)
-            _discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(years)])
+            _discount = pd.Series([1 / (1 + social_discount_rate) ** i for i in range(duration_investment)])
             _result = simple_diff * _discount.sum()
-            _discount = pd.Series([1 / (1 + discount_rate) ** i for i in range(_result.shape[0])],
+            _discount = pd.Series([1 / (1 + social_discount_rate) ** i for i in range(_result.shape[0])],
                                   index=_result.index)
             temp_comparison[var] = (_result * _discount).sum()
 
@@ -1900,7 +1913,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
                 temp_comparison[name] = 0
             else:
                 discount = pd.Series(
-                    [1 / (1 + discount_rate) ** i for i in range(diff.shape[0])],
+                    [1 / (1 + social_discount_rate) ** i for i in range(diff.shape[0])],
                     index=diff.index)
                 temp_comparison[name] = (diff * discount.T).sum()
 
@@ -2080,7 +2093,7 @@ def indicator_policies(result, folder, cba_inputs, discount_rate=0.032, years=30
         else:
             save = None
         cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=save,
-                                    order_scenarios=order_scenarios, years=years)
+                                    order_scenarios=order_scenarios, years=years, factor_cofp=factor_cofp)
         if indicator is not None:
             if set(list(cba.index)).issubset(list(indicator.index)):
                 indicator.loc[list(cba.index), s] = cba[s]

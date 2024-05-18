@@ -1,0 +1,35 @@
+{
+  "scenarios": {
+    "activated": false,
+    "current_policies": null,
+    "no_policy": null,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "policies_scenarios": {
+    "activated": true,
+    "file": "project/input/policies/interaction_current_pp/policies_standalone_pp_test.json"
+  },
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2021,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    },
+    "financing_cost": {
+      "activated": true,
+      "interest_rate": "project/input/macro/interest_rate.csv",
+      "saving_rate": "project/input/macro/saving_rate.csv",
+      "duration": 15,
+      "upfront_max": "project/input/macro/upfront_max.csv",
+      "debt_income_ratio": 0.1
+    }
+  }
+}
+
+
