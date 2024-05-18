@@ -13,7 +13,7 @@
   },
   "policies_scenarios": {
     "activated": true,
-    "file": "project/input/policies/interaction_current_pp/policies_standalone_pp_friction.json"
+    "file": "project/input/policies/interaction_current_pp/policies_standalone.json"
   },
   "Reference": {
     "file": "project/config/reference.json",
