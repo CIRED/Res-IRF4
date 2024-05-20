@@ -31,7 +31,7 @@
         "target": 0.4
       }
     ],
-      "QualityDefault": {
+    "QualityDefault": {
     "file": "project/config/reference.json",
     "end": 2020,
     "policies": {

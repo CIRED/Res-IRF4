@@ -2107,6 +2107,27 @@ class AgentBuildings(ThermalBuildings):
             if self.path_calibration is not None:
                 details.to_csv(os.path.join(self.path_calibration, 'calibration_constant_heater.csv'))
 
+                # export utility coefficient
+                cost = Series(self.preferences_heater['cost'])
+                cost = cost.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                preference_benefits = self.preferences_heater['bill_saved']
+                preference_benefits = preference_benefits.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                status_quo = Series(self.preferences_heater['status_quo_bias'])
+                status_quo = status_quo.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                constant_heater = self.constant_heater.stack().copy()
+                constant_heater.index = constant_heater.index.map(lambda x: '{} | {}'.format(x[0], x[1]))
+                constant_heater = constant_heater.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                temp = {'Cost': cost,
+                        'Benefits': preference_benefits,
+                        'Status quo': status_quo,
+                        'Constant measure': constant_heater}
+                temp = concat(temp, axis=0).droplevel(-1)
+                temp.to_csv(os.path.join(self.path_calibration, 'coefficient_utility_heater.csv'))
+
             return constant
 
         _bill_saved, _subsidies_total, _cost_heater = _bill_saved.loc[index, :], _subsidies_total.loc[index, :], _cost_heater.loc[index, :]
@@ -3891,23 +3912,38 @@ class AgentBuildings(ThermalBuildings):
 
             if self.path_calibration is not None and self.no_friction is False:
                 # export utility coefficient
-                scale_insulation = Series(self.scale_insulation, self.preferences_insulation['bill_saved'].index)
-                preference_cost = Series(self.preferences_insulation['cost'], self.preferences_insulation['bill_saved'].index)
-                preference_sub = Series(self.preferences_insulation['subsidy'], self.preferences_insulation['bill_saved'].index)
-                temp = concat((scale_insulation, self.preferences_insulation['bill_saved'],
-                               preference_cost, preference_sub),
-                              axis=1, keys=['Scale', 'Bill saved', 'Coeff cost', 'Coeff sub'])
+                cost = Series(self.preferences_insulation['cost'])
+                cost = cost.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                preference_benefits = self.preferences_insulation['bill_saved']
+                preference_benefits = preference_benefits.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                constant_insulation_extensive = self.constant_insulation_extensive.copy()
+                constant_insulation_extensive.index = constant_insulation_extensive.index.map(lambda x: '{} | {}'.format(x[0], x[1]))
+                constant_insulation_extensive = constant_insulation_extensive.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                constant_insulation_intensive = self.constant_insulation_intensive.copy()
+                names = constant_insulation_intensive.index.names
+                constant_insulation_intensive.index = constant_insulation_intensive.index.map(lambda row: ", ".join([name for name, value in zip(names, row) if value]))
+                constant_insulation_intensive = constant_insulation_intensive.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+
+                temp = {'Cost': cost,
+                        'Benefits': preference_benefits,
+                        'Constant insulation': constant_insulation_extensive,
+                        'Constant measure': constant_insulation_intensive}
+                temp = concat(temp, axis=0).droplevel(-1)
                 temp.to_csv(os.path.join(self.path_calibration, 'coefficient_utility_insulation.csv'))
 
                 # export hidden cost that result from calibration
                 temp = concat((self.hidden_cost, self.landlord_dilemma, self.multifamily_friction), axis=1,
                               keys=['Hidden cost', 'Landlord-tenant dilemma', 'Multi-family friction']).round(0)
-                temp.to_csv(os.path.join(self.path_calibration, 'parameters_insulation.csv'))
+                temp.to_csv(os.path.join(self.path_calibration, 'parameters_friction_insulation.csv'))
 
                 # export hidden cost for each renovation work type that result from calibration
                 temp = self.hidden_cost_insulation.copy()
                 temp = temp + self.hidden_cost.loc[('Single-family', 'Owner-occupied')]
-                temp = concat((temp, pd.Series(self.preferences_insulation['cost'], index=temp.index)), axis=1, keys=['Hidden cost', 'Coeff cost'])
+                names = temp.index.names
+                temp.index = temp.index.map(lambda row: ", ".join([name for name, value in zip(names, row) if value]))
                 temp.to_csv(os.path.join(self.path_calibration, 'hidden_cost_insulation.csv'))
 
                 # TODO: Clean this part
@@ -5683,7 +5719,7 @@ class AgentBuildings(ThermalBuildings):
 
             temp = self._heater_store['hidden_cost_agg'].sum() / self._heater_store['replacement'].sum()
             temp.index = temp.index.map(lambda x: 'Hidden cost average {} (euro)'.format(x))
-            temp.update(temp.T)
+            output.update(temp.T)
 
             output['Hidden cost heater (Billion euro)'] = self._heater_store['hidden_cost_agg'].sum().sum() / 10 ** 9 / step
 
@@ -5734,6 +5770,10 @@ class AgentBuildings(ThermalBuildings):
             temp = self._renovation_store['hidden_cost_agg'].sum() / temp
             temp.index = temp.index.map(lambda row: ", ".join([name for name, value in zip(names, row) if value]))
             temp.index = temp.index.map(lambda x: 'Hidden cost average {} (euro)'.format(x))
+            output.update(temp.T)
+
+            """temp = self._renovation_store['hidden_cost_agg'] / self._replaced_by
+            temp = temp / reindex_mi(self._renovation_store['cost_households'], self._replaced_by.index)"""
 
             hidden_cost = (self._renovation_store['hidden_cost_agg']).groupby(levels).sum()
             output['Hidden cost insulation (Billion euro)'] = hidden_cost.sum().sum() / 10 ** 9 / step
@@ -6399,22 +6439,18 @@ class AgentBuildings(ThermalBuildings):
             hidden_cost_renovation = - self.constant_insulation_extensive / abs(
                 self.preferences_insulation['cost']) * 1000
 
+            # estimate of friction. First landlord-tenant dilemma, then multi-family friction.
             if self.no_friction is False:
-                temp = hidden_cost_renovation.xs('Owner-occupied', level='Occupancy status', drop_level=False).copy()
-                temp.rename(index={'Owner-occupied': 'Privately rented'}, inplace=True)
-                landlord_dilemma = hidden_cost_renovation.xs('Privately rented', level='Occupancy status', drop_level=False) - temp
 
-                temp = hidden_cost_renovation.xs('Single-family', level='Housing type', drop_level=False).copy()
-                temp.rename(index={'Single-family': 'Multi-family'}, inplace=True)
-                multi_family_friction = hidden_cost_renovation.xs('Multi-family', level='Housing type',
-                                                                  drop_level=False) - temp
-                multi_family_friction = select(multi_family_friction,
-                                               {'Occupancy status': ['Owner-occupied', 'Social-housing']})
+                hidden_cost = hidden_cost_renovation.loc[('Single-family', 'Owner-occupied')]
 
-                multi_family_friction = concat((multi_family_friction,
-                                                multi_family_friction.xs('Owner-occupied', level='Occupancy status',
-                                                                         drop_level=False).rename(
-                                                    index={'Owner-occupied': 'Privately rented'})))
+                temp = hidden_cost_renovation.xs('Owner-occupied', level='Occupancy status', drop_level=True).copy()
+
+                landlord_dilemma = hidden_cost_renovation - temp
+
+                multi_family_friction = hidden_cost_renovation - (hidden_cost + landlord_dilemma)
+
+                # test = hidden_cost + landlord_dilemma + multi_family_friction
 
                 market_failures = Series(0, index=hidden_cost_renovation.index)
                 market_failures += landlord_dilemma.reindex(market_failures.index).fillna(0)
