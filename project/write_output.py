@@ -1775,11 +1775,9 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         npv_annual = npv / years
         npv.loc['NPV', :] = npv.sum()
         npv.index = npv.index.map(lambda x: '{} (Billion euro)'.format(x))
-        npv.columns = scenarios
 
         npv_annual.loc['NPV annual', :] = npv_annual.sum()
         npv_annual.index = npv_annual.index.map(lambda x: '{} (Billion euro/year)'.format(x))
-        npv_annual.columns = scenarios
 
         npv = pd.concat((npv, npv_annual), axis=0)
         return npv
@@ -2169,7 +2167,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                        'Opportunity cost (Billion euro/year)',
                        'Emission saving (Billion euro/year)', 'Health cost (Billion euro/year)',
                        'NPV annual (Billion euro/year)',
-                       'Investment / energy savings (euro/kWh)', 'Investment / emission (euro/tCO2)', ]
+                       'Investment / energy savings (euro/kWh)', 'Investment / emission (euro/tCO2)']
         temp = indicator.loc[list_output, :]
         temp.to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
 

@@ -3716,39 +3716,6 @@ class AgentBuildings(ThermalBuildings):
 
             return _market_share, _renovation_rate, _unobserved_value
 
-        def apply_rational_choice(_consumption_saved, _subsidies_total, _cost_total, _bill_saved, _carbon_saved,
-                                  _stock, _discount=None, social=False, discount_social=0.032, calibration=False):
-
-            if social:
-                _discount = discount_social
-
-            # subsidies do not change market-share
-            _bill_saved[_bill_saved == 0] = float('nan')
-
-            ratio = (_cost_total - _subsidies_total) / _bill_saved
-            if social:
-                ratio = (_cost_total - _subsidies_total) / (_bill_saved + _carbon_saved)
-
-            best_option = AgentBuildings.find_best_option(ratio, {'consumption_saved': _consumption_saved}, func='min')
-            _market_share = DataFrame(0, index=ratio.index, columns=ratio.columns)
-            for i in _market_share.index:
-                _market_share.loc[i, best_option.loc[i, 'columns']] = 1
-
-            ratio = best_option['criteria']
-            ratio = ratio[ratio >= 0]
-
-            if calibration:
-                if self.rational_hidden_cost is None:
-                    self.rational_hidden_cost = ratio.min()
-
-            _renovation_rate = ratio.copy()
-            _renovation_rate[ratio < self.rational_hidden_cost] = 1
-            _renovation_rate[ratio >= self.rational_hidden_cost] = 0
-
-            _market_share = _market_share.loc[_renovation_rate.index, :]
-
-            return _market_share, _renovation_rate
-
         def calibration_renovation(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
                                    _cost_financing=None, _credit_constraint=None, _frequency_insulation=1):
 
@@ -4202,6 +4169,7 @@ class AgentBuildings(ThermalBuildings):
 
             flow = self.add_certificate(flow)
             temp = flow.groupby('Performance').sum() / flow.sum()
+
         def apply_regulation(idx_target, idx_replace, level):
             """Apply regulation by replacing utility specific constant.
 
@@ -4223,6 +4191,7 @@ class AgentBuildings(ThermalBuildings):
             t.rename(index={idx_replace: idx_target}, inplace=True)
             _temp = concat((_temp, t)).loc[self.constant_insulation_extensive.index]
             self.constant_insulation_extensive = _temp.copy()
+
 
         index = stock.index
         cost_insulation = reindex_mi(cost_insulation, index)
@@ -4419,7 +4388,7 @@ class AgentBuildings(ThermalBuildings):
                                calib_renovation=None, min_performance=None,
                                exogenous_social=None, prices_before=None, supply=None, carbon_value=None,
                                carbon_content=None, calculate_condition=True, bill_rebate=0,
-                               credit_constraint=True, mandatory=False, health_cost=None, default_quality=None):
+                               credit_constraint=True, health_cost=None, default_quality=None):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -4451,7 +4420,6 @@ class AgentBuildings(ThermalBuildings):
         calculate_condition: bool, optional
         bill_rebate: float, optional
         credit_constraint: bool, optional
-        mandatory: bool, optional
 
         Returns
         -------
@@ -4696,7 +4664,7 @@ class AgentBuildings(ThermalBuildings):
                       financing_cost=None, calib_renovation=None,
                       step=1, exogenous_social=None, premature_replacement=None, prices_before=None, supply=None,
                       carbon_value_kwh=None, carbon_value=None, bill_rebate=0, carbon_content=None,
-                      health_cost=None, default_quality=None):
+                      health_cost=None, default_quality=None, credit_constraint=True):
         """Compute heater replacement and insulation retrofit.
 
 
@@ -4741,7 +4709,8 @@ class AgentBuildings(ThermalBuildings):
                                         calib_heater=calib_heater, step=1, financing_cost=financing_cost,
                                         district_heating=district_heating, premature_replacement=premature_replacement,
                                         prices_before=prices_before, bill_rebate=bill_rebate,
-                                        carbon_content=carbon_content, carbon_value=carbon_value)
+                                        carbon_content=carbon_content, carbon_value=carbon_value,
+                                        credit_constraint=credit_constraint)
 
         if supply is not None:
             if supply['heater']:
@@ -4811,7 +4780,8 @@ class AgentBuildings(ThermalBuildings):
                                                                     carbon_content=carbon_content,
                                                                     bill_rebate=bill_rebate,
                                                                     health_cost=health_cost,
-                                                                    default_quality=default_quality)
+                                                                    default_quality=default_quality,
+                                                                    credit_constraint=credit_constraint)
 
         cost_curve_insulation = False
         if cost_curve_insulation:
@@ -5013,7 +4983,6 @@ class AgentBuildings(ThermalBuildings):
                                                           financing_cost=financing_cost,
                                                           min_performance=obligation.min_performance,
                                                           credit_constraint=False,
-                                                          mandatory=True,
                                                           health_cost=health_cost)
 
             if obligation.intensive == 'market_share':

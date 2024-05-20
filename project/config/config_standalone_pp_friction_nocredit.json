@@ -12,7 +12,7 @@
     "no_natural_replacement": null
   },
   "policies_scenarios": {
-    "activated": false,
+    "activated": true,
     "file": "project/input/policies/interaction_current_pp/policies_standalone_pp.json"
   },
   "Reference": {
@@ -22,10 +22,10 @@
       "file": "project/input/policies/policies_calibration.json"
     },
     "simple": {
-      "no_friction": true
+      "no_friction": false
     },
-    "renovation": {
-      "belief_engineering_calculation": true
+    "financing_cost": {
+      "credit_constraint": false
     }
   }
 }

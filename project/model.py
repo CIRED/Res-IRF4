@@ -403,7 +403,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
                    post_inputs,  calib_heater=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
                    exogenous_social=None, output_options='full', premature_replacement=None, supply=None,
-                   carbon_content=None, carbon_content_before=None, default_quality=None):
+                   carbon_content=None, carbon_content_before=None, default_quality=None, credit_constraint=True):
     """Update stock vintage due to renovation, demolition and construction.
 
 
@@ -473,7 +473,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
                                             carbon_content=carbon_content,
                                             bill_rebate=bill_rebate,
                                             health_cost=post_inputs['health_cost_dpe'],
-                                            default_quality=default_quality)
+                                            default_quality=default_quality,
+                                            credit_constraint=credit_constraint)
 
     """if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
@@ -695,7 +696,8 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              carbon_content=carbon_content,
                                              carbon_content_before=carbon_content_before,
                                              step=step,
-                                             default_quality=config['technical'].get('default_quality'))
+                                             default_quality=config['technical'].get('default_quality'),
+                                             credit_constraint=config['financing_cost'].get('credit_constraint', True))
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

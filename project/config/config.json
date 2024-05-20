@@ -49,5 +49,16 @@
     "policies": {
       "file": "project/input/policies/policies_2024.json"
     }
+  },
+  "NoConstraint": {
+    "file": "project/config/reference.json",
+    "end": 2020,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "financing_cost": {
+      "credit_constraint": false
+    }
   }
+
 }
