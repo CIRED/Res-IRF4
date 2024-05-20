@@ -1774,9 +1774,14 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
 
         npv_annual = npv / years
         npv.loc['NPV', :] = npv.sum()
-        if years:
-            npv.loc['NPV annual', :] = npv_annual.sum()
+        npv.index = npv.index.map(lambda x: '{} (Billion euro)'.format(x))
         npv.columns = scenarios
+
+        npv_annual.loc['NPV annual', :] = npv_annual.sum()
+        npv_annual.index = npv_annual.index.map(lambda x: '{} (Billion euro/year)'.format(x))
+        npv_annual.columns = scenarios
+
+        npv = pd.concat((npv, npv_annual), axis=0)
         return npv
 
     folder_policies = os.path.join(folder, 'policies')
@@ -1930,6 +1935,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
     # comp_efficiency = comparison.loc[:, efficiency_scenarios]
 
     indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
+    indicator.update({'Subsidies total (Billion euro)': comparison.loc['Subsidies total (Billion euro)']})
     indicator.update({'Consumption (TWh)': comparison.loc['Consumption (TWh)']})
     indicator.update({'Consumption standard (TWh)': comparison.loc['Consumption standard (TWh)']})
     indicator.update({'Emission (MtCO2)': comparison.loc['Emission (MtCO2)']})
@@ -2156,6 +2162,16 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
 
     if indicator is not None:
         indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))
+
+        list_output = ['Consumption (TWh)', 'Emission (MtCO2)', 'Investment total WT (Billion euro)',
+                       'Energy saving (Billion euro/year)', 'Thermal comfort (Billion euro/year)',
+                       'Unobserved value (Billion euro/year)',
+                       'Opportunity cost (Billion euro/year)',
+                       'Emission saving (Billion euro/year)', 'Health cost (Billion euro/year)',
+                       'NPV annual (Billion euro/year)',
+                       'Investment / energy savings (euro/kWh)', 'Investment / emission (euro/tCO2)', ]
+        temp = indicator.loc[list_output, :]
+        temp.to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
 
     return comparison, indicator
 
