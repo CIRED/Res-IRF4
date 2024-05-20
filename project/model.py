@@ -57,7 +57,7 @@ import logging
 
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy, PublicPolicy
-from project.write_output import plot_scenario, compare_results
+from project.write_output import plot_scenario, compare_results, select_output
 from project.utils import reindex_mi, deciles2quintiles, get_json, create_logger, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies
 from project.utils import memory_object, get_size, size_dict
 from project.input.resources import resources_data
@@ -364,7 +364,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                temp_sink=parsed_inputs['temp_sink'],
                                vat_heater=parsed_inputs['vat_heater'],
                                no_friction=config['simple'].get('no_friction'),
-                               belief_engineering_calculation=config['technical'].get('belief_engineering_calculation', False))
+                               belief_engineering_calculation=config['renovation'].get('belief_engineering_calculation', False))
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -701,6 +701,26 @@ def res_irf(config, path, level_logger='DEBUG'):
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
+            if year == buildings.first_year + 1 and config['output'] == 'full':
+                if buildings.path_ini is not None:
+                    select_output(o, buildings.path)
+                    compare_results(o, buildings.path)
+                    buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
+                                                   prices, inputs_dynamics['post_inputs']['health_cost_dpe'],
+                                                   inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :],
+                                                   carbon_value=50)
+
+                    with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
+                        dump({
+                            'coefficient_global': buildings.coefficient_global,
+                            'coefficient_backup': buildings.coefficient_backup,
+                            'constant_insulation_extensive': buildings.constant_insulation_extensive,
+                            'constant_insulation_intensive': buildings.constant_insulation_intensive,
+                            'constant_heater': buildings.constant_heater,
+                            'scale_insulation': buildings.scale_insulation,
+                            'scale_heater': buildings.scale_heater
+                        }, file)
+
             if year == buildings.first_year + 2 and config['output'] == 'full' and buildings.no_friction is False:
                 temp = pd.concat((buildings._distortion_store['insulation'], buildings._distortion_store['heater']),
                                  axis=0)
@@ -730,24 +750,6 @@ def res_irf(config, path, level_logger='DEBUG'):
                 horizontal_stack_bar_plot(sobol_df, columns=['First order', 'Total order'],
                                           title='Attributes to close subsidies gap', order='Total order',
                                           save_path=os.path.join(buildings.path_calibration, 'sobol_analysis.png'))"""
-                # ----------------------------
-                if buildings.path_ini is not None:
-                    compare_results(o, buildings.path)
-                    buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
-                                                   prices, inputs_dynamics['post_inputs']['health_cost_dpe'],
-                                                   inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :],
-                                                   carbon_value=50)
-
-                    with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
-                        dump({
-                            'coefficient_global': buildings.coefficient_global,
-                            'coefficient_backup': buildings.coefficient_backup,
-                            'constant_insulation_extensive': buildings.constant_insulation_extensive,
-                            'constant_insulation_intensive': buildings.constant_insulation_intensive,
-                            'constant_heater': buildings.constant_heater,
-                            'scale_insulation': buildings.scale_insulation,
-                            'scale_heater': buildings.scale_heater
-                        }, file)
 
         if path is not None:
             buildings.logger.info('Writing output in {}'.format(path))

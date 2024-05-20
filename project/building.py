@@ -5452,8 +5452,10 @@ class AgentBuildings(ThermalBuildings):
             output.update({'Consumption saving no rebound insulation (TWh/year)': _consumption_saved_no_rebound_insulation.sum() / 10 ** 9})
             output.update({'Rebound insulation (TWh/year)': rebound_insulation.sum() / 10 ** 9})
 
-            output['Performance gap (% standard)'] = output['Consumption saving insulation (TWh/year)'] / output[
+            output['Realization rate (% standard)'] = output['Consumption saving insulation (TWh/year)'] / output[
                 'Consumption standard saving insulation (TWh/year)']
+            output['Rebound insulation (% performance gap)'] =  output['Rebound insulation (TWh/year)'] /  (output[
+                'Consumption standard saving insulation (TWh/year)'] - output['Consumption saving insulation (TWh/year)'])
 
             temp = consumption_saved_insulation.sum(axis=1)
             output.update(

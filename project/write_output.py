@@ -1725,12 +1725,10 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
             npv.drop('Embodied emission', axis=0, inplace=True, errors='ignore')
             if order_scenarios is not None:
                 npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
-            npv_private = npv.loc[['Investment', 'Energy saving', 'Thermal comfort', 'Unobserved value'], :].sum()
-            npv_financial = npv.loc[['Investment', 'Energy saving'], :].sum()
+            npv_private = npv.loc[['Investment', 'Energy saving'], :].sum()
             scatterplot_bis = {
-                'Social observed benefits': npv.loc[[i for i in npv.index if i != 'Unobserved value'], :].sum(),
-                'Private benefits': npv_private,
-                #'Financial benefits': npv_financial
+                'Social benefits wo health': npv.loc[[i for i in npv.index if i != 'Health cost'], :].sum(),
+                'Private financial benefits': npv_private,
             }
             rotation = 0
             if len(npv.columns) > 5:
@@ -2174,6 +2172,45 @@ def compare_results(output, path):
     data_validation = resources_data['data_validation']
     df = pd.concat((data_validation, output.reindex(data_validation.index).rename('Calculated')), axis=1)
     df.round(1).to_csv(os.path.join(path, 'validation.csv'))
+
+
+def select_output(output, path):
+    list_output = ['Stock (Million)', 'Surface (Million m2)', 'Consumption (TWh)', 'Consumption (kWh/m2)',
+                   'Consumption Electricity (TWh)', 'Consumption Heating (TWh)',
+                   'Consumption Natural gas (TWh)', 'Consumption Oil fuel (TWh)', 'Consumption Wood fuel (TWh)',
+                   'Emission (MtCO2)']
+    list_renovation = [
+        'Rate Multi-family - Owner-occupied (%)'
+        'Rate Multi-family - Privately rented (%)',
+        'Rate Multi-family - Social-housing (%)',
+        'Rate Single-family - Owner-occupied (%)',
+        'Rate Single-family - Privately rented (%)',
+        'Rate Single-family - Social-housing (%)',
+        'Consumption standard saving insulation (TWh/year)',
+        'Consumption saving insulation (TWh/year)',
+        'Realization rate (% standard)',
+        'Rebound insulation (% performance gap)',
+        'Investment insulation (Billion euro)',
+        'Efficiency insulation (euro/kWh)',
+        'Subsidies insulation (Billion euro)']
+
+    list_heater = [
+        'Switch Electricity-Direct electric (Thousand households)',
+        'Switch Electricity-Heat pump water (Thousand households)',
+        'Switch Heating-District heating (Thousand households)',
+        'Switch Natural gas-Performance boiler (Thousand households)',
+        'Switch Wood fuel-Performance boiler (Thousand households)',
+        'Investment heater (Billion euro)',
+        'Subsidies heater (Billion euro)',
+    ]
+
+    list_final = ['Consumption saving (TWh/year)', 'Emission saving (MtCO2/year)']
+
+    o = output.loc[[i for i in list_output + list_renovation + list_heater + list_final if i in output.index]]
+    o.to_csv(os.path.join(path, 'output_base_year.csv'))
+
+
+
 
 
 def make_summary(path, option=None):
