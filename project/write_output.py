@@ -1677,9 +1677,11 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
             if embodied_emission:
                 temp.update({'Embodied emission': - df['Carbon footprint (Billion euro)']})
             if cofp:
-                temp.update({'Opportunity cost': - (df['Subsidies total (Billion euro)'] - df['VAT (Billion euro)'] +
-                                      df['Simple difference Health expenditure (Billion euro)']
-                                      ) * factor_cofp})
+                temp.update({'Opportunity cost': - (
+                            df['Subsidies total (Billion euro)'] + df['Subsidies loan total (Billion euro)']
+                            - df['VAT (Billion euro)'] +
+                            df['Simple difference Health expenditure (Billion euro)']
+                            ) * factor_cofp})
 
             temp.update({'Energy saving': - sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
@@ -1875,6 +1877,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                     'Hidden cost heater (Billion euro)',
                     'Hidden cost insulation (Billion euro)',
                     'Subsidies total (Billion euro)',
+                    'Subsidies loan total (Billion euro)',
                     'VAT (Billion euro)',
                     'Health expenditure (Billion euro)',
                     'Carbon value indirect (Billion euro)',
@@ -1933,7 +1936,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
 
     indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
     indicator.update({'Subsidies total (Billion euro)': comparison.loc['Subsidies total (Billion euro)']})
-    indicator.update({'Space heating utility (Billion euro)': comparison.loc['Subsidies total (Billion euro)']})
+    indicator.update({'Subsidies loan total (Billion euro)': comparison.loc['Subsidies loan total (Billion euro)']})
+    indicator.update({'Space heating utility (Billion euro)': comparison.loc['Space heating utility (Billion euro)']})
     indicator.update({'Consumption (TWh)': comparison.loc['Consumption (TWh)']})
     indicator.update({'Consumption standard (TWh)': comparison.loc['Consumption standard (TWh)']})
     indicator.update({'Emission (MtCO2)': comparison.loc['Emission (MtCO2)']})
@@ -2161,7 +2165,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
     if indicator is not None:
         indicator.round(3).to_csv(os.path.join(folder_policies, 'indicator.csv'))
 
-        list_output = ['Consumption (TWh)', 'Emission (MtCO2)', 'Investment total WT (Billion euro)',
+        list_output = ['Consumption (TWh)', 'Emission (MtCO2)', 'Investment (Billion euro/year)',
                        'Energy saving (Billion euro/year)', 'Thermal comfort (Billion euro/year)',
                        'Unobserved value (Billion euro/year)',
                        'Opportunity cost (Billion euro/year)',

@@ -12,7 +12,7 @@
     "no_natural_replacement": null
   },
   "policies_scenarios": {
-    "activated": false,
+    "activated": true,
     "file": "project/input/policies/interaction_current_pp/policies_standalone_pp.json"
   },
   "Reference": {
