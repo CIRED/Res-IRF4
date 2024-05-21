@@ -3609,6 +3609,8 @@ class AgentBuildings(ThermalBuildings):
             # constant_unobserved = constant_unobserved.reindex(total_utility.columns, axis=1)
 
             error = (log(exp(total_utility).sum(axis=1)) - total_utility.T).T
+            # test
+            error = 0 - total_utility
             _unobserved_value = error + constant_unobserved
 
             expected_utility = log(exp(_utility_intensive).sum(axis=1))
