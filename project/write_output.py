@@ -1672,27 +1672,25 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         for s in scenarios:
             df = data.loc[:, s]
             temp = dict()
-            temp.update({'Investment': df['Investment total WT (Billion euro)']})
+            temp.update({'Investment': - df['Investment total WT (Billion euro)']})
             # temp.update({'Financing': df['Financing total (Billion euro)']})
             if embodied_emission:
-                temp.update({'Embodied emission': df['Carbon footprint (Billion euro)']})
+                temp.update({'Embodied emission': - df['Carbon footprint (Billion euro)']})
             if cofp:
-                temp.update({'Opportunity cost': (df['Subsidies total (Billion euro)'] - df['VAT (Billion euro)'] +
+                temp.update({'Opportunity cost': - (df['Subsidies total (Billion euro)'] - df['VAT (Billion euro)'] +
                                       df['Simple difference Health expenditure (Billion euro)']
                                       ) * factor_cofp})
 
-            temp.update({'Energy saving': sum(df['Energy expenditures {} (Billion euro)'.format(i)]
+            temp.update({'Energy saving': - sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
 
-            # temp.update({'Comfort EE': - df['Thermal comfort EE (Billion euro)']})
-            # temp.update({'Comfort prices': + df['Thermal loss prices (Billion euro)']})
-            temp.update({'Thermal comfort': - df['Thermal comfort EE (Billion euro)'] + df['Thermal loss prices (Billion euro)']})
+            # temp.update({'Thermal comfort': - df['Thermal comfort EE (Billion euro)'] + df['Thermal loss prices (Billion euro)']})
+            temp.update({'Thermal comfort': df['Space heating utility (Billion euro)']})
 
-            temp.update({'Emission saving': sum(df['Carbon value {} (Billion euro)'.format(i)]
+            temp.update({'Emission saving': - sum(df['Carbon value {} (Billion euro)'.format(i)]
                                                 for i in resources_data['index']['Energy'])})
-
-            temp.update({'Health cost': df['Health cost (Billion euro)']})
-            temp.update({'Unobserved value': df['Hidden cost (Billion euro)']})
+            temp.update({'Health cost': - df['Health cost (Billion euro)']})
+            temp.update({'Unobserved value': - df['Hidden cost (Billion euro)']})
 
             if isinstance(policy_name, list):
                 policy_name = '-'.join(policy_name)
@@ -1720,7 +1718,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
 
             npv[title] = temp
 
-        npv = - pd.DataFrame(npv)
+        npv = pd.DataFrame(npv)
         if save:
             npv.drop('Embodied emission', axis=0, inplace=True, errors='ignore')
             if order_scenarios is not None:
@@ -1829,6 +1827,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                     'Consumption (TWh)',
                     'Emission (MtCO2)',
                     'Health cost (Billion euro)',
+                    'Space heating utility (Billion euro)'
                     ]:
             temp_comparison[var] = double_difference(ref.loc[var, :], data.loc[var, :], values=None,
                                                      discount_rate=social_discount_rate, years=duration_investment)
@@ -1934,6 +1933,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
 
     indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
     indicator.update({'Subsidies total (Billion euro)': comparison.loc['Subsidies total (Billion euro)']})
+    indicator.update({'Space heating utility (Billion euro)': comparison.loc['Subsidies total (Billion euro)']})
     indicator.update({'Consumption (TWh)': comparison.loc['Consumption (TWh)']})
     indicator.update({'Consumption standard (TWh)': comparison.loc['Consumption standard (TWh)']})
     indicator.update({'Emission (MtCO2)': comparison.loc['Emission (MtCO2)']})

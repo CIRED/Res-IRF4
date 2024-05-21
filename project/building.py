@@ -528,7 +528,7 @@ class ThermalBuildings:
             budget_share = (energy_bill.T / reindex_mi(self._income_tenant, energy_bill.index)).T
 
         energy_bill[energy_bill < 0] = 0.1
-        heating_intensity = energy_bill**(-1/rho)
+        heating_intensity = energy_bill ** (-1/rho)
         heating_intensity[heating_intensity > self.heating_intensity_max] = self.heating_intensity_max
 
         if self.coefficient_global is not None:
@@ -538,6 +538,10 @@ class ThermalBuildings:
             return heating_intensity
         else:
             return heating_intensity, budget_share
+
+    def to_thermal_comfort(self, heating_intensity, rho=5):
+        A = self.coefficient_global**rho * abs(self.preferences_insulation['cost']) / 1e3
+        return A * heating_intensity**(1 - rho) / (1 - rho)
 
     def consumption_actual(self, prices, consumption=None, full_output=False, bill_rebate=0):
         """Space heating consumption based on standard space heating consumption and heating intensity (kWh/building.a).
@@ -3220,7 +3224,6 @@ class AgentBuildings(ThermalBuildings):
                 value = value.where(value < cap, cap)
 
             if not policy.social_housing:
-                print('ok')
                 value.loc[value.index.get_level_values('Occupancy status') == 'Social-housing', :] = 0
 
             if policy.non_cumulative is None:
@@ -3344,7 +3347,6 @@ class AgentBuildings(ThermalBuildings):
             # it is possible to extend policies_target to other policies
             assert allclose(remaining, 0, rtol=10 ** -1), 'Over cap'
             subsidies_total -= subsidies_details['over_cap']
-
 
         return cost_insulation, vat_insulation, vat, subsidies_details, subsidies_total, condition, eligible
 
@@ -3610,7 +3612,7 @@ class AgentBuildings(ThermalBuildings):
 
             error = (log(exp(total_utility).sum(axis=1)) - total_utility.T).T
             # test
-            error = 0 - total_utility
+            # error = 0 - total_utility
             _unobserved_value = error + constant_unobserved
 
             expected_utility = log(exp(_utility_intensive).sum(axis=1))
@@ -4990,6 +4992,7 @@ class AgentBuildings(ThermalBuildings):
             if obligation.intensive == 'market_share':
                 # market_share endogenously calculated by insulation_replacement
                 pass
+
             elif obligation.intensive == 'global':
                 market_share = DataFrame(0, index=replaced_by.index, columns=self._choice_insulation)
                 market_share.loc[:, (True, True, True, True)] = 1
@@ -5122,6 +5125,26 @@ class AgentBuildings(ThermalBuildings):
 
         output['Heating intensity (%)'] = (self.stock * heating_intensity).sum() / self.stock.sum()
         output['Energy poverty (Million)'] = energy_poverty / 10 ** 6
+
+        if self.year == self.first_year:
+            # marginal utility of money is not considered
+            output['Space heating utility (Billion euro)'] = 0
+        else:
+            value = self.to_thermal_comfort(heating_intensity) / abs(self.preferences_insulation['cost']) * 1000
+            output['Space heating utility (Billion euro)'] = (reindex_mi(value, self.stock.index) * self.stock).sum() / 1e9
+
+            """
+            x = self.to_thermal_comfort(heating_intensity) / abs(self.preferences_insulation['cost']) * 1000
+
+            y = concat((heating_intensity, x), axis=1, keys=['Heating intensity', 'Thermal comfort'])
+            # scatter plot heating intensity
+            make_scatter_plot(y, 'Heating intensity', 'Thermal comfort', 'Heating intensity (%)',
+                              'Thermal comfort (euro)',
+                              annotate=False,
+                              save=os.path.join(self.path_calibration, 'thermal_comfort.png'),
+                              format_y=lambda y, _: '{:.0f}'.format(y),
+                              format_x=lambda x, _: '{:.0%}'.format(x),
+                              s=10)"""
 
         temp = consumption_energy.copy()
         temp.index = temp.index.map(lambda x: 'Consumption {} (TWh)'.format(x))

@@ -22,10 +22,10 @@
       "file": "project/input/policies/policies_calibration.json"
     },
     "renovation": {
-      "belief_engineering_calculation": true
+      "belief_engineering_calculation": false
     },
     "simple": {
-      "no_friction": true
+      "no_friction": false
     }
   }
 }
