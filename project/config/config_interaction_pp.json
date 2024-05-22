@@ -13,7 +13,7 @@
   },
   "policies_scenarios": {
     "activated": true,
-    "file": "project/input/policies/interaction_current_pp/policies_scenarios.json"
+    "file": "project/input/policies/interaction_current_pp/policies_scenarios_reduced.json"
   },
   "Reference": {
     "file": "project/config/reference.json",

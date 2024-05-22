@@ -1677,11 +1677,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
             if embodied_emission:
                 temp.update({'Embodied emission': - df['Carbon footprint (Billion euro)']})
             if cofp:
-                temp.update({'Opportunity cost': - (
-                            df['Subsidies total (Billion euro)'] + df['Subsidies loan total (Billion euro)']
-                            - df['VAT (Billion euro)'] +
-                            df['Simple difference Health expenditure (Billion euro)']
-                            ) * factor_cofp})
+                temp.update({'Opportunity cost': (df['Balance state (Billion euro)'] - df['Subsidies loan total (Billion euro)']) * factor_cofp})
 
             temp.update({'Energy saving': - sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
@@ -1881,7 +1877,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                     'VAT (Billion euro)',
                     'Health expenditure (Billion euro)',
                     'Carbon value indirect (Billion euro)',
-                    'Financing total (Billion euro)'
+                    'Financing total (Billion euro)',
+                    'Balance state (Billion euro)'
                     ]
         if policy_name is not None:
             if not isinstance(policy_name, list):

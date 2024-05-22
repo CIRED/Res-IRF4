@@ -6126,8 +6126,7 @@ class AgentBuildings(ThermalBuildings):
             temp *= self.stock
             output['Bill rebate (Billion euro)'] = temp.sum() / 1e9
             output['Income state (Billion euro)'] = output['VAT (Billion euro)'] + output['Taxes expenditure (Billion euro)']
-            output['Expenditure state (Billion euro)'] = output['Subsidies heater (Billion euro)'] + output[
-                'Subsidies insulation (Billion euro)'] + output['Health expenditure (Billion euro)'] + output['Bill rebate (Billion euro)']
+            output['Expenditure state (Billion euro)'] = output['Subsidies total (Billion euro)'] + output['Subsidies loan total (Billion euro)'] + output['Health expenditure (Billion euro)'] + output['Bill rebate (Billion euro)']
             output['Balance state (Billion euro)'] = output['Income state (Billion euro)'] - output['Expenditure state (Billion euro)']
             if self._balance_state_ini is None:
                 self._balance_state_ini = output['Balance state (Billion euro)']
