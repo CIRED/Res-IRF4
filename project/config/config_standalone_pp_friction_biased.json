@@ -1,0 +1,33 @@
+{
+  "scenarios": {
+    "activated": false,
+    "current_policies": null,
+    "no_policy": null,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "policies_scenarios": {
+    "activated": true,
+    "file": "project/input/policies/interaction_current_pp/policies_standalone_pp.json"
+  },
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    },
+    "simple": {
+      "no_friction": false
+    },
+    "renovation": {
+      "belief_engineering_calculation": true
+    }
+  }
+}
+
+
