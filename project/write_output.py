@@ -1703,7 +1703,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                 temp = pd.Series(temp)
                 title = '{}'.format(s)
 
-            if save:
+            if save and False:
                 if cofp:
                     waterfall_chart(- temp, title=title,
                                     save=os.path.join(save, 'npv_{}_cofp.png'.format(s.lower().replace(' ', '_'))),
@@ -1721,7 +1721,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
             npv.drop('Embodied emission', axis=0, inplace=True, errors='ignore')
             if order_scenarios is not None:
                 npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
-            npv_private = npv.loc[['Investment', 'Energy saving'], :].sum()
+            npv_private = npv.loc[['Investment', 'Energy saving', 'Thermal comfort'], :].sum()
             scatterplot_bis = {
                 'Social benefits wo health': npv.loc[[i for i in npv.index if i != 'Health cost'], :].sum(),
                 'Private financial benefits': npv_private,

@@ -37,6 +37,8 @@
     "file": "project/config/reference.json",
     "end": 2020,
     "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "S2": {
     "carbon_tax": {
       "start": 2017,
       "end": 2019,
@@ -142,12 +144,16 @@
       "policy": "restriction_energy"
     },
     "subsidy_emission": {
-      "start": 2017,
+      "start": 2019,
       "end": 2051,
-      "tax": "project/input/policies/carbon_value.csv",
-      "emission": "project/input/policies/current/carbon_tax_emission.csv",
-      "recycling": null,
-      "policy": "carbon_tax"
+      "policy": "subsidy_proportional",
+      "gest": [
+        "heater",
+        "insulation"
+      ],
+      "value": "project/input/policies/current/carbon_tax_value.csv",
+      "proportional": "tCO2_cumac",
+      "growth": null
     },
     "subsidy_health_cost": {
       "start": 2019,
@@ -166,6 +172,14 @@
         "insulation"
       ]
     },
+    "subsidy_multi_family": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_multi_family",
+      "gest": [
+        "insulation"
+      ]
+    },
     "tax_status_quo": {
       "start": 2019,
       "end": 2051,
@@ -175,6 +189,7 @@
       ]
     }
   }
+    }
 
   }
 

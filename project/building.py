@@ -3611,8 +3611,7 @@ class AgentBuildings(ThermalBuildings):
             # constant_unobserved = constant_unobserved.reindex(total_utility.columns, axis=1)
 
             error = (log(exp(total_utility).sum(axis=1)) - total_utility.T).T
-            # test
-            # error = 0 - total_utility
+
             _unobserved_value = error + constant_unobserved
 
             expected_utility = log(exp(_utility_intensive).sum(axis=1))
@@ -4207,7 +4206,7 @@ class AgentBuildings(ThermalBuildings):
                                    _credit_constraint=credit_constraint,
                                    _frequency_insulation=frequency_insulation)
 
-            if self.path_ini is not None:
+            if self.path_ini is not None and False:
                 indicator_renovation_rate(stock, cost_insulation, bill_saved, subsidies_total, cost_financing,
                                           _credit_constraint=credit_constraint)
                 test_sensitivity_ad_valorem(stock, cost_insulation, bill_saved, subsidies_total, cost_financing,
