@@ -4379,6 +4379,7 @@ class AgentBuildings(ThermalBuildings):
                 'Performance', append=True).squeeze()
             health_cost_after.update({i: reindex_mi(health_cost, df.index).droplevel('Performance')})
         health_cost_after = DataFrame(health_cost_after).fillna(0)
+        health_cost_after.columns.names = certificate_after_3uses.columns.names
 
         health_cost_after = (health_cost_after.T * s).T.groupby(
             [i for i in s.index.names if i != 'Income tenant']).sum()

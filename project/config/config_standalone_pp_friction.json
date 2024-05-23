@@ -20,9 +20,6 @@
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_calibration.json"
-    },
-    "simple": {
-      "no_friction": false
     }
   }
 }

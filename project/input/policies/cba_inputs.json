@@ -1,6 +1,6 @@
 {
   "Discount rate": 0.032,
-  "Lifetime": 30,
+  "Lifetime": 20,
   "Factor COFP": 0.2,
   "energy_prices": "project/input/energy/energy_prices_wt_ame2021.csv",
   "carbon_value": "project/input/policies/carbon_value.csv",

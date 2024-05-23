@@ -1677,7 +1677,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
             if embodied_emission:
                 temp.update({'Embodied emission': - df['Carbon footprint (Billion euro)']})
             if cofp:
-                temp.update({'Opportunity cost': (df['Balance state (Billion euro)'] - df['Subsidies loan total (Billion euro)']) * factor_cofp})
+                temp.update({'Opportunity cost': (df['Balance state (Billion euro)']) * factor_cofp})
 
             temp.update({'Energy saving': - sum(df['Energy expenditures {} (Billion euro)'.format(i)]
                                               for i in resources_data['index']['Energy'])})
