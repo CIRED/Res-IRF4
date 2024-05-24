@@ -3184,6 +3184,7 @@ class AgentBuildings(ThermalBuildings):
                     emission_saved_cumac = (temp.T * reindex_mi(carbon_content.rename_axis(['Energy']),
                                                                 temp.index)).T / 10 ** 3
                     value = value * emission_saved_cumac
+                    value = value.droplevel('Energy', axis=0)
                 elif policy.proportional == 'MWh_cumac':
                     value = value * consumption_saved_cumac
                 elif policy.proportional == 'health_cost':
@@ -3211,6 +3212,7 @@ class AgentBuildings(ThermalBuildings):
             # cap for all policies
             value.fillna(0, inplace=True)
             cost = reindex_mi(cost_insulation, index)
+            # cost = cost.reindex(value.columns, axis=1)
             value = value.where(value <= cost, cost)
 
             if policy.cap is not None:

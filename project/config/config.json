@@ -37,8 +37,6 @@
     "file": "project/config/reference.json",
     "end": 2020,
     "policies": {
-      "file": "project/input/policies/policies_calibration.json",
-      "S2": {
     "carbon_tax": {
       "start": 2017,
       "end": 2019,
@@ -180,17 +178,15 @@
         "insulation"
       ]
     },
-    "tax_status_quo": {
+    "subsidy_present_bias": {
       "start": 2019,
       "end": 2051,
-      "policy": "tax_status_quo",
       "gest": [
-        "heater"
-      ]
+        "insulation"
+      ],
+      "policy": "subsidy_present_bias"
     }
   }
-    }
-
   }
 
 }
