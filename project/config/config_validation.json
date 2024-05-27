@@ -1,0 +1,65 @@
+{
+  "scenarios": {
+    "activated": false,
+    "current_policies": null,
+    "no_policy": true,
+    "no_policy_insulation": null,
+    "no_policy_heater": null,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "sensitivity": {
+    "activated": false
+  },
+  "uncertainty": {
+    "activated": false,
+    "energy_prices_factor": [
+      2,
+      5
+    ],
+    "carbon_emission": [
+      "project/input/energy/carbon_emission_tend.csv"
+    ],
+    "scale_renovation": [
+      {
+        "option": "share_fg",
+        "target": 0.4
+      }
+    ]
+
+  },
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2023,
+    "energy": {
+      "energy_prices": {
+        "ini": "project/input/energy/energy_prices_wt_ame2021.csv",
+        "rate": {
+          "Electricity": 0.0487,
+          "Natural gas": 0.0659,
+          "Wood fuel": 0.01463,
+          "Oil fuel": 0.1290,
+          "Heating": 0.0659
+        }
+      }
+    },
+    "renovation": {
+      "preferences_insulation": "project/input/investment/stated_preferences_insulation_cst.csv"
+    },
+    "financing_cost": {
+      "activated": true,
+      "interest_rate": "project/input/macro/interest_rate.csv",
+      "saving_rate": "project/input/macro/saving_rate.csv",
+      "duration": 15,
+      "upfront_max": "project/input/macro/upfront_max.csv",
+      "debt_income_ratio": 0.1,
+      "credit_constraint": true
+    }
+  }
+
+}

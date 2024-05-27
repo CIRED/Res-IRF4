@@ -37,7 +37,7 @@ import project.thermal as thermal
 
 ACCURACY = 10 ** -5
 EPC2INT = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6}
-VAT = 0.1
+VAT = 0.2 # VAT
 NB_MEASURES = {1: [(False, False, False, True), (False, False, True, False), (False, True, False, False),
                    (True, False, False, False)],
                2: [(False, False, True, True), (False, True, False, True), (True, False, False, True),
@@ -3443,6 +3443,8 @@ class AgentBuildings(ThermalBuildings):
             Market-share insulation
         DataFrame
             Utility insulation
+        Series
+            Consumer surplus
         """
 
         def market_share_func(u):
@@ -3719,7 +3721,7 @@ class AgentBuildings(ThermalBuildings):
                 """flow_renovation_after = (_renovation_rate * _stock).sum() / 10**3
                 cost_renovation_after = (_renovation_rate * _investment_insulation).sum() / _renovation_rate.sum()"""
 
-            return _market_share, _renovation_rate, _unobserved_value
+            return _market_share, _renovation_rate, _unobserved_value, expected_utility
 
         def calibration_renovation(_stock, _cost_total, _bill_saved, _subsidies_total, _calib_renovation,
                                    _cost_financing=None, _credit_constraint=None, _frequency_insulation=1):
@@ -3840,7 +3842,7 @@ class AgentBuildings(ThermalBuildings):
             self.apply_scale(scale, gest='insulation')
 
             # results
-            _market_share, _renovation_rate, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
+            _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
                                                                              _stock=_stock,
                                                                              _cost_financing=_cost_financing,
                                                                              _frequency_insulation=_frequency_insulation,
@@ -3939,7 +3941,7 @@ class AgentBuildings(ThermalBuildings):
             rslt = dict()
             for sub in range(0, 110, 10):
                 sub /= 100
-                _market_share, _renovation_rate, _ = apply_endogenous_renovation(_bill_saved,
+                _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved,
                                                                               (_cost_total + _cost_financing) * sub,
                                                                               _cost_total,
                                                                               _cost_financing=_cost_financing,
@@ -3961,7 +3963,7 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate, _ = apply_endogenous_renovation(_bill_saved * v, _subsidies_total,
+                _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved * v, _subsidies_total,
                                                                                  _cost_total, _supply=None,
                                                                                  _cost_financing=_cost_financing,
                                                                                  _credit_constraint=credit_constraint)
@@ -3982,7 +3984,7 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total * v,
+                _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total * v,
                                                                                  _cost_total, _supply=None,
                                                                                  _cost_financing=_cost_financing,
                                                                                  _credit_constraint=credit_constraint)
@@ -4002,7 +4004,7 @@ class AgentBuildings(ThermalBuildings):
             values = [-0.5, -0.2, -0.1, 0, 0.1, 0.2, 0.5]
             for v in values:
                 v += 1
-                _market_share, _renovation_rate, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total,
+                _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total,
                                                                                  _cost_total * v, _supply=None,
                                                                                  _cost_financing=_cost_financing,
                                                                                  _credit_constraint=credit_constraint)
@@ -4047,7 +4049,7 @@ class AgentBuildings(ThermalBuildings):
 
             """
 
-            _market_share, _renovation_rate, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
+            _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
                                                                           _supply=None, _cost_financing=_cost_financing,
                                                                           _credit_constraint=credit_constraint)
 
@@ -4082,7 +4084,7 @@ class AgentBuildings(ThermalBuildings):
                 assert (c_total >= _cost_total).all().all(), 'Cost issue'
                 sub_total = _subsidies_total - _sub
                 assert (sub_total <= _subsidies_total).all().all(), 'Subsidies issue'
-                ms_nosub, renovation_nosub , _ = apply_endogenous_renovation(_bill_saved, sub_total, c_total, _supply=None,
+                ms_nosub, renovation_nosub , _, _ = apply_endogenous_renovation(_bill_saved, sub_total, c_total, _supply=None,
                                                                          _cost_financing=_cost_financing,
                                                                          _credit_constraint=credit_constraint)
                 f_renovation_nosub = renovation_nosub * stock
@@ -4119,12 +4121,12 @@ class AgentBuildings(ThermalBuildings):
 
         def indicator_renovation_rate(_stock, _cost_insulation, _bill_saved, _subsidies_total, _cost_financing,
                                       _credit_constraint=credit_constraint):
-            _market_share, _renovation_rate, _unobserved_value = apply_endogenous_renovation(_bill_saved, _subsidies_total,
+
+            _market_share, _renovation_rate, _unobserved_value, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total,
                                                                           _cost_insulation,
                                                                           _stock=_stock,
                                                                           _cost_financing=_cost_financing,
                                                                           _credit_constraint=credit_constraint)
-
             discount_factor = 10
 
             npv = - _cost_insulation - _cost_financing + _subsidies_total + (
@@ -4231,19 +4233,20 @@ class AgentBuildings(ThermalBuildings):
                 discount_factor * abs(self.preferences_insulation['cost']),
                 index=idx)
 
-        market_share, renovation_rate, unobserved_value = apply_endogenous_renovation(bill_saved, subsidies_total,
-                                                                                       cost_insulation,
-                                                                                       _stock=stock,
-                                                                                       _cost_financing=cost_financing,
-                                                                                       _supply=supply,
-                                                                                       _credit_constraint=credit_constraint,
-                                                                                       _frequency_insulation=frequency_insulation,
-                                                                                       _min_performance=min_performance,
-                                                                                      _health_cost_saved=health_cost_saved)
+        market_share, renovation_rate, unobserved_value, consumer_surplus = apply_endogenous_renovation(bill_saved,
+                                                                                                        subsidies_total,
+                                                                                                        cost_insulation,
+                                                                                                        _stock=stock,
+                                                                                                        _cost_financing=cost_financing,
+                                                                                                        _supply=supply,
+                                                                                                        _credit_constraint=credit_constraint,
+                                                                                                        _frequency_insulation=frequency_insulation,
+                                                                                                        _min_performance=min_performance,
+                                                                                                        _health_cost_saved=health_cost_saved)
         # positive means benefits so negative means hidden cost
         hidden_cost = - (unobserved_value / abs(self.preferences_insulation['cost'])) * 1000
 
-        return renovation_rate, market_share, hidden_cost
+        return renovation_rate, market_share, hidden_cost, consumer_surplus
 
     def exogenous_renovation(self, stock, condition):
         """Format retrofit rate and market share for each segment.
@@ -4565,7 +4568,7 @@ class AgentBuildings(ThermalBuildings):
                 if self._belief_engineering_calculation is True:
                     bill_saved_expectation = bill_saved_std.copy()
 
-                renovation_rate, market_share, hidden_cost = self.endogenous_renovation(
+                renovation_rate, market_share, hidden_cost, consumer_surplus = self.endogenous_renovation(
                     stock, bill_saved_expectation,
                     subsidies_total,
                     cost_insulation_reindex,
@@ -4580,6 +4583,7 @@ class AgentBuildings(ThermalBuildings):
                     health_cost_saved=health_cost_saved_subsidies)
 
                 self._renovation_store.update({'hidden_cost': hidden_cost})
+                self._renovation_store.update({'consumer_surplus': consumer_surplus})
 
                 if exogenous_social is not None:
                     index = renovation_rate[

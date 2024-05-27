@@ -378,11 +378,11 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             yrs = [str(i) for i in subset.index if i in resources_data['policies_hist'].index and i != buildings.first_year]
             df = df[df['Years'].isin(yrs)]
 
-            palette = {s: resources_data['colors'][s] for s in df['Policies'].unique()}
+            """palette = {s: resources_data['colors'][s] for s in df['Policies'].unique()}
             stack_catplot(x='Years', y='Data', cat='Source', stack='Policies', data=df, palette=palette,
                           y_label='Policies amount (Billion euro)',
                           save=os.path.join(path, 'policies_validation_hash.png'),
-                          format_y=lambda y, _: '{:.0f}'.format(y))
+                          format_y=lambda y, _: '{:.0f}'.format(y))"""
 
             temp = df.copy()
             temp.set_index(['Years', 'Source', 'Policies'], inplace=True)
