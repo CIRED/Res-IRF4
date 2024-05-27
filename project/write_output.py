@@ -1723,8 +1723,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                 npv = npv.loc[:, [i for i in order_scenarios if i in npv.columns]]
             npv_private = npv.loc[['Investment', 'Energy saving', 'Thermal comfort'], :].sum()
             scatterplot_bis = {
-                'Social benefits wo health': npv.loc[[i for i in npv.index if i != 'Health cost'], :].sum(),
-                'Private financial benefits': npv_private,
+                'Social benefits wo unobserved': npv.loc[[i for i in npv.index if i != 'Unobserved value'], :].sum(),
+                'Private benefits': npv_private,
             }
             rotation = 0
             if len(npv.columns) > 5:
@@ -1734,7 +1734,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
                                  save=os.path.join(save, 'social_welfare_total.png'.lower().replace(' ', '_')),
-                                 rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis)
+                                 rotation=rotation, left=1.25, fontxtick=12, scatterplot_bis=scatterplot_bis)
             from project.utils import make_horizontal_stackedbar_plot
             make_horizontal_stackedbar_plot(npv.T, 'Social welfare (Billion euro)', ncol=3, ymin=None,
                                  format_x=lambda y, _: '{:.0f} B€'.format(y),
@@ -1755,7 +1755,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                                      scatterplot=npv_annual.sum(),
                                      save=os.path.join(save,
                                                        'social_welfare_annual.png'.lower().replace(' ','_')),
-                                     rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis,
+                                     rotation=rotation, left=1.25, fontxtick=12, scatterplot_bis=scatterplot_bis,
                                      annotate='{:.1f}')
 
                 make_horizontal_stackedbar_plot(npv_annual.T, 'Social welfare (Billion euro per year)', ncol=3, ymin=None,
