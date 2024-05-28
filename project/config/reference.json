@@ -37,7 +37,7 @@
       },
       "frequency_insulation": 0.1,
       "preferences_insulation": "project/input/investment/stated_preferences_insulation_cst.csv",
-      "belief_engineering_calculation": true
+      "belief_engineering_calculation": false
     },
     "switch_heater": {
       "district_heating": "project/input/energy/district_heating_s2.csv",
