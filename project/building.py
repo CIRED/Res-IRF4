@@ -2222,10 +2222,11 @@ class AgentBuildings(ThermalBuildings):
 
         utility += utility_constant
         # x = (log(exp(utility).sum(axis=1)) - utility.T).T
-        error_conditional = (log(exp(utility).sum(axis=1)) + (- utility + utility_constant).T).T
+        error = (log(exp(utility).sum(axis=1)) + - utility.T).T
+        _unobserved_value = error + utility_constant
 
         market_share = (exp(utility).T / exp(utility).sum(axis=1)).T
-        return market_share, error_conditional
+        return market_share, _unobserved_value
 
     def exogenous_market_share_heater(self, index, choice_heater_idx):
         """Define exogenous market-share.
@@ -2658,7 +2659,7 @@ class AgentBuildings(ThermalBuildings):
             if self._belief_engineering_calculation is None:
                 bill_saved_expectation = bill_saved_std.copy()
 
-            market_share, error_conditional = self.endogenous_market_share_heater(index_endogenous, bill_saved_expectation,
+            market_share, _unobserved_value = self.endogenous_market_share_heater(index_endogenous, bill_saved_expectation,
                                                                                   subsidies_total, cost_heater,
                                                                                   calib_heater=calib_heater,
                                                                                   _cost_financing=cost_financing,
@@ -2668,7 +2669,7 @@ class AgentBuildings(ThermalBuildings):
                                                                                       'Heating-District heating'],
                                                                                   _credit_constraint=credit_constraint)
 
-            hidden_benefits_heater = (error_conditional / abs(self.preferences_heater['cost'])) * 1000
+            hidden_benefits_heater = (_unobserved_value / abs(self.preferences_heater['cost'])) * 1000
             # to reduce number of combination if market_shares for one technology is too small it is removed
             market_share[market_share < 10 ** -2] = 0
             market_share = (market_share.T / market_share.sum(axis=1)).T
@@ -3472,6 +3473,7 @@ class AgentBuildings(ThermalBuildings):
                 But not between status quo and renovation.
             """
 
+
             pref_sub = reindex_mi(self.preferences_insulation['subsidy'], _subsidies_total.index).rename(None)
             utility_subsidies = (_subsidies_total.T * pref_sub).T / 1000
 
@@ -3482,6 +3484,12 @@ class AgentBuildings(ThermalBuildings):
                                                               _bill_saved.index)).T / 1000
 
             utility_intensive = utility_bill_saving + utility_investment + utility_subsidies
+
+            if False:
+                temp = (_bill_saved > 0).astype(float)
+                temp = temp.replace(0, float('nan'))
+                utility_intensive *= temp
+                utility_intensive.dropna(how='all', inplace=True)
 
             if _cost_financing is not None:
                 pref_financing = reindex_mi(self.preferences_insulation['cost'], _cost_financing.index).rename(None)
@@ -3799,7 +3807,9 @@ class AgentBuildings(ThermalBuildings):
 
             _, utility_intensive, utility_bill_saving = to_market_share(_bill_saved, _subsidies_total, _cost_total,
                                                                         _cost_financing=_cost_financing,
-                                                                        full_output=True)
+                                                                        _credit_constraint=_credit_constraint,
+                                                                        full_output=True,
+                                                                        )
 
             if _credit_constraint is not None:
                 _credit_constraint = _credit_constraint.astype(float)

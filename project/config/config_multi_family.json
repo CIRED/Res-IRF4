@@ -1,0 +1,29 @@
+{
+  "scenarios": {
+    "activated": false,
+    "current_policies": null,
+    "no_policy": true,
+    "no_policy_insulation": true,
+    "no_policy_heater": true,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2022,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+       "multi_family": {
+    "start": 2019,
+    "end": 2051,
+    "policy": "regulation",
+    "gest": "insulation"
+  }
+    }
+  }
+}
