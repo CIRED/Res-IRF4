@@ -1672,7 +1672,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         for s in scenarios:
             df = data.loc[:, s]
             temp = dict()
-            temp.update({'Investment': - df['Investment total WT (Billion euro)']})
+            temp.update({'Investment': - df['Investment total WT (Billion euro)'] - df['Financement all (Billion euro)']})
             # temp.update({'Financing': df['Financing total (Billion euro)']})
             if embodied_emission:
                 temp.update({'Embodied emission': - df['Carbon footprint (Billion euro)']})
@@ -1878,7 +1878,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                     'Health expenditure (Billion euro)',
                     'Carbon value indirect (Billion euro)',
                     'Financing total (Billion euro)',
-                    'Balance state (Billion euro)'
+                    'Balance state (Billion euro)',
+                    'Financement all (Billion euro)'
                     ]
         if policy_name is not None:
             if not isinstance(policy_name, list):
@@ -1932,6 +1933,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
     # comp_efficiency = comparison.loc[:, efficiency_scenarios]
 
     indicator.update({'Investment total WT (Billion euro)': comparison.loc['Investment total WT (Billion euro)']})
+    indicator.update({'Financement all (Billion euro)': comparison.loc['Financement all (Billion euro)']})
     indicator.update({'Subsidies total (Billion euro)': comparison.loc['Subsidies total (Billion euro)']})
     indicator.update({'Subsidies loan total (Billion euro)': comparison.loc['Subsidies loan total (Billion euro)']})
     indicator.update({'Space heating utility (Billion euro)': comparison.loc['Space heating utility (Billion euro)']})

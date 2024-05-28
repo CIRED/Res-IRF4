@@ -1677,7 +1677,6 @@ class AgentBuildings(ThermalBuildings):
                 rslt.update({key: amount.copy()})
                 remaining -= amount
 
-
             assert remaining.sum().sum().round(0) == 0, 'Not all cost have been financed'
             assert allclose(sum(rslt.values()), to_pay), 'Not all cost have been financed'
 
@@ -6113,6 +6112,10 @@ class AgentBuildings(ThermalBuildings):
                 'VAT (Billion euro)']
             output['Investment total WT / households (Thousand euro)'] = output['Investment total WT (Billion euro)'] * 10 ** 6 / (
                                                                                      output['Retrofit (Thousand households)'] * 10 ** 3)
+
+            amount = output['Subsidies total (Billion euro)'] + output['Subsidies loan total (Billion euro)']
+            temp = calculate_annuities(amount, lifetime=duration_financing, discount_rate=0.01) * duration_financing  - amount
+            output['Financing all (Billion euro)'] = temp + output['Financing total (Billion euro)']
 
             # co-benefit
             if 'Embodied energy Wall (TWh PE)' in output.keys():

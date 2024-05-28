@@ -8,6 +8,7 @@
       "activated": true,
       "interest_rate": "project/input/macro/interest_rate.csv",
       "saving_rate": "project/input/macro/saving_rate.csv",
+      "government_rate": 0.01,
       "duration": 15,
       "upfront_max": "project/input/macro/upfront_max.csv",
       "debt_income_ratio": 0.1,

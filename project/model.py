@@ -263,7 +263,7 @@ def select_post_inputs(parsed_inputs):
             'population', 'surface', 'embodied_energy_renovation', 'carbon_footprint_renovation',
             'Carbon footprint construction (MtCO2)', 'Embodied energy construction (TWh PE)',
             'health_cost_dpe', 'health_cost_income', 'carbon_value_kwh', 'carbon_value',
-            'use_subsidies', 'energy_prices_wt']
+            'use_subsidies', 'energy_prices_wt', 'financing_cost']
 
     return {key: item for key, item in parsed_inputs.items() if key in vars}
 
