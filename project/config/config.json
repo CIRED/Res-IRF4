@@ -38,10 +38,10 @@
     "end": 2020,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "tax_status_quo": {
+      "subsidy_status_quo": {
       "start": 2019,
       "end": 2051,
-      "policy": "tax_status_quo",
+      "policy": "subsidy_status_quo",
       "gest": [
         "heater"
       ]

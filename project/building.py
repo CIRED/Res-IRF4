@@ -1771,7 +1771,7 @@ class AgentBuildings(ThermalBuildings):
         cost_heater.sort_index(inplace=True)
 
         for policy in [p for p in policies_heater if p.policy in ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional',
-                                                                  'subsidy_present_bias']]:
+                                                                  'subsidy_present_bias', 'subsidy_status_quo']]:
 
             if isinstance(policy.value, dict):
                 value = policy.value[self.year]
@@ -1788,6 +1788,11 @@ class AgentBuildings(ThermalBuildings):
                 value[value < 0] = 0
                 value = (reindex_mi((self.preferences_heater['discount_factor_perfect'] -
                                      self.preferences_heater['discount_factor']), value.index) * value.T).T
+
+            elif policy.policy == 'subsidy_status_quo':
+                v = self.preferences_heater['status_quo_bias'] / abs(self.preferences_heater['cost']) * 1000
+                value = pd.DataFrame(0, index=cost_heater.index, columns=cost_heater.columns)
+                value.loc[value.index.get_level_values('Heating system').isin(['Natural gas-Performance boiler', 'Oil fuel-Performance boiler']), 'Electricity-Heat pump water'] = v
 
             elif policy.policy == 'subsidy_ad_valorem':
                 if isinstance(policy.value, dict):
@@ -3199,6 +3204,7 @@ class AgentBuildings(ThermalBuildings):
                 value[value < 0] = 0
                 value = (reindex_mi((self.preferences_insulation['discount_factor_perfect'] -
                                      self.preferences_insulation['discount_factor']), value.index) * value.T).T
+
             elif policy.policy == 'subsidy_landlord':
                 value = self.landlord_dilemma.copy()
                 value = reindex_mi(value, index).fillna(0)

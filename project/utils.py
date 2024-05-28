@@ -489,7 +489,8 @@ def make_policies_tables(policies, path, plot=True):
                    'subsidy_present_bias': 'Behavioral instrument',
                    'subsidy_multi_family': 'Regulation instrument',
                    'subsidy_landlord': 'Regulation instrument',
-                   'tax_status_quo': 'Tax'
+                   'tax_status_quo': 'Tax',
+                   'subsidy_status_quo': 'Subsidy, bonus'
                    }
 
     heater_replace = {'Electricity-Heat pump air': 'HP-air',

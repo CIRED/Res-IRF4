@@ -688,7 +688,7 @@
       "policy": "subsidy_present_bias"
     }
   },
-  "tax_status_quo": {
+  "subsidy_status_quo": {
     "carbon_tax": {
       "start": 2017,
       "end": 2019,
@@ -793,10 +793,10 @@
       "value": "Oil fuel",
       "policy": "restriction_energy"
     },
-    "tax_status_quo": {
+    "subsidy_status_quo": {
       "start": 2019,
       "end": 2051,
-      "policy": "tax_status_quo",
+      "policy": "subsidy_status_quo",
       "gest": [
         "heater"
       ]
