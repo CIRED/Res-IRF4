@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": null,
@@ -25,37 +25,10 @@
         "option": "share_fg",
         "target": 0.4
       }
-    ]
-  },
-  "Reference": {
+    ],
+      "CarbonTax": {
     "file": "project/config/reference.json",
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2021.json"
-    }
-  },
-  "Package2024": {
-    "file": "project/config/reference.json",
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
-    }},
-  "Package2024Ban": {
-    "file": "project/config/reference.json",
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json",
-      "restriction_gas": {
-        "start": 2030,
-        "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
-      }
-    }
-  },
-  "CarbonTax": {
-    "file": "project/config/reference.json",
-    "end": 2051,
+    "end": 2031,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
       "carbon_tax": {
@@ -68,9 +41,36 @@
       }
     }
   },
+  "Package2024Ban": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "restriction_gas": {
+        "start": 2030,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+    }
+  }
+  },
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    }
+  },
+  "Package2024": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    }},
   "NoMF": {
     "file": "project/config/reference.json",
-    "end": 2051,
+    "end": 2031,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
       "credit_constraint": {

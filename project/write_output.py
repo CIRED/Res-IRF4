@@ -1768,6 +1768,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                                                 scatterplot_bis=scatterplot_bis, annotate='{:.1f}')
 
         npv_annual = npv / years
+        npv_observed = npv.loc[[i for i in npv.index if i != 'Unobserved value'], :].sum().rename('NPV observed (Billion euro)')
+        npv_annual_observed = npv_annual.loc[[i for i in npv_annual.index if i != 'Unobserved value'], :].sum().rename('NPV annual observed (Billion euro/year)')
         npv.loc['NPV', :] = npv.sum()
         npv.index = npv.index.map(lambda x: '{} (Billion euro)'.format(x))
 
@@ -1775,6 +1777,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         npv_annual.index = npv_annual.index.map(lambda x: '{} (Billion euro/year)'.format(x))
 
         npv = pd.concat((npv, npv_annual), axis=0)
+        npv = pd.concat((npv, npv_observed.to_frame().T, npv_annual_observed.to_frame().T), axis=0)
+
         return npv
 
     folder_policies = os.path.join(folder, 'policies')
@@ -2167,7 +2171,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                        'Unobserved value (Billion euro/year)',
                        'Opportunity cost (Billion euro/year)',
                        'Emission saving (Billion euro/year)', 'Health cost (Billion euro/year)',
-                       'NPV annual (Billion euro/year)',
+                       'NPV annual (Billion euro/year)', 'NPV annual observed (Billion euro/year)',
                        'Investment / energy savings (euro/kWh)', 'Investment / emission (euro/tCO2)']
         temp = indicator.loc[list_output, :]
         temp.to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
