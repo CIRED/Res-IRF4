@@ -3797,7 +3797,7 @@ class AgentBuildings(ThermalBuildings):
             renovation_rate_ini = _calib_renovation['renovation_rate_ini']
 
             if self.no_friction is True:
-                renovation_rate_agg  = (_stock * reindex_mi(renovation_rate_ini, _stock.index)).sum() / _stock.sum()
+                renovation_rate_agg = (_stock * reindex_mi(renovation_rate_ini, _stock.index)).sum() / _stock.sum()
                 renovation_rate_ini = pd.Series(renovation_rate_agg, index=pd.Index([True], name='Existing'))
 
             ms_insulation_ini = _calib_renovation['ms_insulation_ini']
@@ -3851,11 +3851,12 @@ class AgentBuildings(ThermalBuildings):
             self.apply_scale(scale, gest='insulation')
 
             # results
-            _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total, _cost_total,
-                                                                             _stock=_stock,
-                                                                             _cost_financing=_cost_financing,
-                                                                             _frequency_insulation=_frequency_insulation,
-                                                                             _credit_constraint=_credit_constraint)
+            _market_share, _renovation_rate, _, _ = apply_endogenous_renovation(_bill_saved, _subsidies_total,
+                                                                                _cost_total,
+                                                                                _stock=_stock,
+                                                                                _cost_financing=_cost_financing,
+                                                                                _frequency_insulation=_frequency_insulation,
+                                                                                _credit_constraint=_credit_constraint)
 
             flow = _renovation_rate * _stock
 
