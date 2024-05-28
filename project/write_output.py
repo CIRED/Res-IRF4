@@ -1672,7 +1672,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         for s in scenarios:
             df = data.loc[:, s]
             temp = dict()
-            temp.update({'Investment': - df['Investment total WT (Billion euro)'] - df['Financing all (Billion euro)']})
+            temp.update({'Investment': - df['Investment total WT (Billion euro)']}) # - df['Financing all (Billion euro)']
             if embodied_emission:
                 temp.update({'Embodied emission': - df['Carbon footprint (Billion euro)']})
             if cofp:
