@@ -4097,7 +4097,7 @@ class AgentBuildings(ThermalBuildings):
 
         if not stock.empty:
             # select index that can undertake insulation replacement
-            _, _, certificate_before_heater = self.consumption_heating_store(index, level_heater='Heating system')
+            _, consumption_3uses_before_heater, certificate_before_heater = self.consumption_heating_store(index, level_heater='Heating system')
 
             # before include the change of heating system
             consumption_before, consumption_3uses_before, certificate_before = self.consumption_heating_store(index, level_heater='Heating system final')
@@ -4107,7 +4107,7 @@ class AgentBuildings(ThermalBuildings):
             consumption_after, consumption_3uses, certificate_after = self.prepare_consumption(self._choice_insulation,
                                                                                                index=index,
                                                                                                level_heater='Heating system final')
-            energy_saved_3uses = ((consumption_3uses_before - consumption_3uses.T) / consumption_3uses_before).T
+            energy_saved_3uses = ((consumption_3uses_before_heater - consumption_3uses.T) / consumption_3uses_before_heater).T
             energy_saved_3uses.dropna(inplace=True)
 
             consumption_saved = (consumption_before - consumption_after.T).T
