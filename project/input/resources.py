@@ -84,7 +84,9 @@ resources_data['index'] = {'Income tenant': ['D1', 'D2', 'D3', 'D4', 'D5', 'D6',
                                           'Wood fuel-Performance boiler', 'Heating-District heating'],
                            'Count': [1, 2, 3, 4, 5],
                            'Heat pumps': ['Electricity-Heat pump water', 'Electricity-Heat pump air'],
-                           'Dwelling': ['Existing', 'Housing type', 'Occupancy status', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']
+                           'AC': ['Electricity-Heat pump air', 'Electricity-Portable unit'],
+                           'Cooling system': ['Electricity-Heat pump air', 'Electricity-Portable unit', 'No AC'],
+                           'Dwelling': ['Existing', 'Housing type', 'Occupancy status', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system','Cooling system']
                            }
 
 resources_data['heating2heater'] = {
