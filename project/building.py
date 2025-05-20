@@ -48,6 +48,7 @@ NB_MEASURES = {1: [(False, False, False, True), (False, False, True, False), (Fa
                4: [(True, True, True, True)]}
 INSULATION = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
               'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
+# CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system','Cooling system']
 CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']
 
 
@@ -415,6 +416,7 @@ class ThermalBuildings:
         Returns
         -------
         """
+        # levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', level_heater, 'Cooling system','Housing type']
         levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', level_heater, 'Housing type']
         _index = index.to_frame().loc[:, levels_consumption].set_index(levels_consumption).index
         _index = _index[~_index.duplicated()]
@@ -1504,6 +1506,7 @@ class AgentBuildings(ThermalBuildings):
 
         # only selecting useful levels as theoretical energy consumption only depends on building characteristics
         _index = index.copy()
+        # _index = _index.droplevel([i for i in _index.names if i not in ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows','Cooling system'] + [level_heater]])
         _index = _index.droplevel(
             [i for i in _index.names if i not in ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows'] + [level_heater]])
         _index = _index[~_index.duplicated()]
@@ -1535,6 +1538,9 @@ class AgentBuildings(ThermalBuildings):
             temp = temp.astype(
                 {'Housing type': 'string', 'Wall': 'float', 'Floor': 'float', 'Roof': 'float', 'Windows': 'float',
                  'Heating system': 'string'})
+            # temp = temp.astype(
+            #     {'Housing type': 'string', 'Wall': 'float', 'Floor': 'float', 'Roof': 'float', 'Windows': 'float',
+            #      'Heating system': 'string','Cooling system': 'string'})
             index = MultiIndex.from_frame(temp)
             # consumption based on insulated components
             if climate is not None or method_epc == '3uses':
@@ -2339,6 +2345,29 @@ class AgentBuildings(ThermalBuildings):
         None
         """
 
+        # removing of income tenant informations (rest of code not made for)
+        cost_heater = cost_heater.groupby([i for i in cost_heater.index.names if i != 'Income tenant']).mean()
+        subsidies_total = subsidies_total.groupby([i for i in subsidies_total.index.names if i != 'Income tenant']).mean()
+        bill_saved = bill_saved.groupby([i for i in bill_saved.index.names if i != 'Income tenant']).mean()
+        replacement = replacement.groupby([i for i in replacement.index.names if i != 'Income tenant']).sum() # caution, maybe mean
+        cost_financing = cost_financing.groupby([i for i in cost_financing.index.names if i != 'Income tenant']).mean()
+        vat_heater = vat_heater.groupby([i for i in vat_heater.index.names if i != 'Income tenant']).mean()
+        subsidies_loan = subsidies_loan.groupby([i for i in subsidies_loan.index.names if i != 'Income tenant']).mean()
+        amount_debt = amount_debt.groupby([i for i in amount_debt.index.names if i != 'Income tenant']).mean()
+        amount_saving = amount_saving.groupby([i for i in amount_saving.index.names if i != 'Income tenant']).mean()
+        discount = discount.groupby([i for i in discount.index.names if i != 'Income tenant']).mean()
+        epc_upgrade = epc_upgrade.groupby([i for i in epc_upgrade.index.names if i != 'Income tenant']).mean().astype(int)
+        for k,v in eligible.items():
+            eligible[k] = v.groupby([i for i in v.index.names if i != 'Income tenant']).mean()
+        hidden_benefits_heater = hidden_benefits_heater.groupby([i for i in hidden_benefits_heater.index.names if i != 'Income tenant']).mean()
+        for k,v in subsidies_details.items():
+            subsidies_details[k] = v.groupby([i for i in v.index.names if i != 'Income tenant']).mean()
+        consumption_saved = consumption_saved.groupby([i for i in consumption_saved.index.names if i != 'Income tenant']).mean()
+        consumption_before = consumption_before.groupby([i for i in consumption_before.index.names if i != 'Income tenant']).mean()
+        consumption_no_rebound = consumption_no_rebound.groupby([i for i in consumption_no_rebound.index.names if i != 'Income tenant']).mean()
+        consumption_actual = consumption_actual.groupby([i for i in consumption_actual.index.names if i != 'Income tenant']).mean()
+
+        
         # information stored during
         self._heater_store.update(
             {
@@ -2363,7 +2392,8 @@ class AgentBuildings(ThermalBuildings):
 
         self._heater_store['consumption_saved'] = (consumption_saved * replacement).sum().sum()
 
-        temp = self.add_level(replacement.fillna(0), self._stock_ref, 'Income tenant')
+        # temp = self.add_level(replacement.fillna(0), self._stock_ref, 'Income tenant')
+        temp = replacement.fillna(0)
         temp = temp.reorder_levels(consumption_before.index.names)
 
         consumption_before = self.apply_calibration((consumption_before * temp.T).T.sum(axis=1))
@@ -2572,7 +2602,7 @@ class AgentBuildings(ThermalBuildings):
 
         consumption_std_saved = (consumption_std_before - consumption_std.T).T
 
-        consumption_std_before = self.add_attribute(consumption_std_before, 'Income tenant')
+        # consumption_std_before = self.add_attribute(consumption_std_before, 'Income tenant')
         consumption_std_before = consumption_std_before.reorder_levels(self.stock.index.names)
         index_consumption = consumption_std_before.index.intersection(self.stock.index)
         consumption_std_before = consumption_std_before.loc[index_consumption]
@@ -2580,7 +2610,7 @@ class AgentBuildings(ThermalBuildings):
                                                              consumption=consumption_std_before,
                                                              level_heater='Heating system',
                                                              bill_rebate=bill_rebate)
-        bill_std_saved = self.add_attribute(bill_std_saved, 'Income tenant')
+        # bill_std_saved = self.add_attribute(bill_std_saved, 'Income tenant')
         bill_std_saved = bill_std_saved.reorder_levels(self.stock.index.names)
         bill_std_saved = bill_std_saved.loc[index_consumption]
         # x = pd.concat((consumption_std_before, reindex_mi(certificate_before, index=)))
@@ -2593,7 +2623,7 @@ class AgentBuildings(ThermalBuildings):
         consumption_before = consumption_std_before * heating_intensity_before
         emission_before = self.energy_bill(carbon_content, consumption_before, level_heater='Heating system')
 
-        consumption_std = self.add_attribute(consumption_std, 'Income tenant')
+        # consumption_std = self.add_attribute(consumption_std, 'Income tenant')
         consumption_std = consumption_std.reorder_levels(self.stock.index.names)
         consumption_std = consumption_std.loc[index_consumption]
         consumption_std = consumption_std.stack('Heating system final')
@@ -2848,6 +2878,130 @@ class AgentBuildings(ThermalBuildings):
                                           consumption_before, consumption_no_rebound, consumption_actual, epc_upgrade,
                                           flow_premature_replacement, subsidies_loan, eligible, hidden_benefits_heater)
         return stock
+
+    def store_information_cooler(self, adoption, end_of_life):
+        # TODO: au moins l'adoption, a la manière de replacement dans un attribut '_cooler_store' de buildings
+        self._cooler_store.update(
+            {
+                'adoption': adoption,
+                'end_of_life': end_of_life,
+            }
+        )
+
+        return 
+    
+
+    def cooler_adoption(self, stock, policies_cooler=[], step=1, store_information=True,):
+        """
+        Function returns building stock updated after cooling systems adoption.
+        """
+        index = stock.index
+
+        probability = self.cooler_vintage.loc[:, 1] / self.cooler_vintage.sum(axis=1)
+        probability.loc['No AC'] = 1. # code convention
+        probability.dropna(inplace=True)
+        probability *= step
+
+        # premature replacement
+        premature_cooler = [p for p in policies_cooler if p.policy == 'premature_cooler']
+        for premature in premature_cooler:
+            print('Premature replacement not Implemented')
+
+        flow_end_of_life = stock * reindex_mi(probability, stock.index)
+        # air heat pumps cooling systems associated with heaters are not considered here (already in heater replacement)
+        idx_heat_pump_air_final = flow_end_of_life.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
+        flow_end_of_life.loc[idx_heat_pump_air_final] = 0.
+
+        # size cooling system
+        # if self._variable_size_cooler:
+        #     print('Cooler size not Implemented')
+        # else:
+        #     size_cooler = Series(8, index=index)
+
+        # technical 'restriction' - air heat pump implies cooling system air heat pump
+        # condition = Series(True, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
+        # condition = condition.astype(bool)
+        # idx = condition.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
+        # condition.loc[idx, [i for i in condition.columns if i not in ['Electricity-Heat pump air']]] = False
+
+        # update for end of life cooling systems (eol: end of life)
+        share_eol = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
+
+        for ac_syst in self._resources_data['index']['AC']:
+            idx = share_eol.index.get_level_values('Cooling system')==ac_syst
+            share_eol.loc[idx, 'No AC'] = 1.
+
+        eol = (share_eol.T * flow_end_of_life).T
+        eol = eol.groupby(eol.columns, axis=1).sum()
+        eol.columns.names = ['Cooling system eol']
+
+        save_eol = eol.groupby(by='Cooling system').sum()['No AC']
+
+        stock_eol = eol.stack('Cooling system eol')
+        eol_sumed = eol.sum(axis=1)
+
+        stock = stock - eol_sumed
+        stock[stock < 0] = 0 # correct rounding error
+        stock_eol = stock_eol[stock_eol > 0]
+        stock = concat((stock, Series(stock.index.get_level_values('Cooling system'), index=stock.index,
+                                      name='Cooling system eol')), axis=1).set_index('Cooling system eol', append=True).squeeze()
+        stock = concat((stock.reorder_levels(stock_eol.index.names), stock_eol),
+                       axis=0, keys=[False, True], names=['Cooler eol'])
+        stock.sort_index(inplace=True)
+
+        assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
+                     0) == 0, 'Sum problem'
+        
+        # TODO: à vérifier s'il faut vraiment écraser les anciennes colonnes
+        stock.index = stock.index.swaplevel('Cooling system', 'Cooling system eol')
+        stock = stock.droplevel('Cooler eol')
+        stock = stock.droplevel('Cooling system eol')
+        stock.index = stock.index.reorder_levels(order=index.names)
+
+        # computation of market share adoption matrix
+        # TODO: dans une fonction à part 'endogenous_market_share_cooler
+        # temporaire
+        index = stock.index
+        market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
+
+        for ac_syst in self._resources_data['index']['Cooling system']:
+            idx = market_share.index.get_level_values('Cooling system')==ac_syst
+            market_share.loc[idx, ac_syst] = 1.
+
+        adoption = (market_share.T * stock).T
+        adoption = adoption.groupby(adoption.columns, axis=1).sum()
+        adoption.columns.names = ['Cooling system adoption']
+
+        save_adoption = adoption[adoption.index.get_level_values('Cooling system')=='No AC'].sum()
+
+        stock_adoption = adoption.stack('Cooling system adoption')
+        adoption_sumed = adoption.sum(axis=1)
+
+        stock = stock - adoption_sumed
+        stock[stock < 0] = 0 # correct rounding error
+        stock_adoption = stock_adoption[stock_adoption > 0]
+        stock = concat((stock, Series(stock.index.get_level_values('Cooling system'), index=stock.index,
+                                      name='Cooling system adoption')), axis=1).set_index('Cooling system adoption', append=True).squeeze()
+        stock = concat((stock.reorder_levels(stock_adoption.index.names), stock_adoption),
+                       axis=0, keys=[False, True], names=['Cooler adoption'])
+        stock.sort_index(inplace=True)
+
+        assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
+                     0) == 0, 'Sum problem'
+        
+        # TODO: à vérifier s'il faut vraiment écraser les anciennes colonnes
+        stock.index = stock.index.swaplevel('Cooling system', 'Cooling system adoption')
+        stock = stock.droplevel('Cooler adoption')
+        stock = stock.droplevel('Cooling system adoption')
+        stock.index = stock.index.reorder_levels(order=index.names)
+
+        # TODO : update cooler vintage l 549 model.py
+
+        # TODO : store cooler adoption values
+        if store_information:
+            self.store_information_cooler(save_adoption, save_eol)
+        return stock
+    
 
     def prepare_cost_insulation(self, cost_insulation):
         """Constitute insulation choice set cost. Cost is equal to the sum of each individual cost component.
@@ -4710,7 +4864,8 @@ class AgentBuildings(ThermalBuildings):
         1. Heater replacement based on current stock segment.
         2. Knowing heater replacement (and new heating system) calculating retrofit rate by segment and market
         share by segment.
-        3. Then, managing inflow and outflow.
+        3. Knowing processes before, calculating AC adoption by segment and climate
+        4. Then, managing inflow and outflow.
 
         Parameters
         ----------
@@ -4732,8 +4887,10 @@ class AgentBuildings(ThermalBuildings):
 
         self.logger.info('Number of agents: {:,.0f}'.format(self.stock.shape[0]))
 
-        stock_mobile = self.stock_mobile.groupby(
-            [i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
+        stock_mobile = self.stock_mobile
+        # J'ai besoin de la colonne income tenant pour le calcul de l'adoption de la climatisation, mais faudra l'enlever pour la partie isolation
+        # stock_mobile = self.stock_mobile.groupby(
+        #     [i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
         stock_mobile = stock_mobile.xs(True, level='Existing', drop_level=False)
 
         # calculate average heating intensity
@@ -4798,6 +4955,11 @@ class AgentBuildings(ThermalBuildings):
                                                 district_heating=district_heating, premature_replacement=premature_replacement,
                                                 prices_before=prices_before)
                 assert ~stock.index.duplicated().any(), 'Duplicated index after heater replacement'
+
+        stock = self.cooler_adoption(stock)
+
+        # Removal of tenant income
+        stock = stock.groupby([i for i in stock.index.names if i != 'Income tenant']).sum()
 
         self.logger.info('Number of agents that can insulate: {:,.0f}'.format(stock.shape[0]))
         self.logger.info('Calculation insulation replacement')
