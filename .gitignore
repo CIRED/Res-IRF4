@@ -7,6 +7,7 @@
 .env*
 .vscode/
 .~*
+/project/.spyproject/
 /ResIRF.egg-info/
 /project/test.py
 /project/input/prices/
