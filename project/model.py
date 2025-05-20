@@ -362,6 +362,7 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                residual_rate=config['technical'].get('residual_rate'),
                                constraint_heat_pumps=config['technical'].get('constraint_heat_pumps', True),
                                variable_size_heater=config['technical'].get('variable_size_heater', True),
+                               variable_size_cooler=config['technical'].get('variable_size_cooler', True),
                                temp_sink=parsed_inputs['temp_sink'],
                                vat_heater=parsed_inputs['vat_heater'],
                                no_friction=config['simple'].get('no_friction'),
@@ -545,11 +546,23 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
         for i in switch_heating.index:
             buildings.heater_vintage.loc[i, buildings.lifetime_heater.loc[i]] = switch_heating.loc[i]
 
-        # TODO: ajouter le vieillissement des systèmes de climatisation
+        # add of vintage for cooler 
+        #TODO: replace these by Weibull distribution (heater+cooler)
+        
+        less_cooler = buildings._cooler_store['end_of_life']
+        more_cooler = buildings._cooler_store['adoption']
+        
+        # decrease of year 1, repartition of remaining among the other years
+        min_lifetime_coolers = buildings.lifetime_cooler.min()
+        for ac_syst in buildings._resources_data['index']['AC']:
+            buildings.cooler_vintage.loc[ac_syst,1] = buildings.cooler_vintage.loc[ac_syst,1] - less_cooler.loc[ac_syst]
+            buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] = buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] + buildings.cooler_vintage.loc[ac_syst,1]/(min_lifetime_coolers-1)
 
-        # test
-        # heating = buildings.stock.groupby('Heating system').sum()
-        # temp = pd.concat((heating, buildings.heater_vintage.sum(axis=1)), axis=1)
+        buildings.cooler_vintage.columns = buildings.cooler_vintage.columns - 1
+        buildings.cooler_vintage.drop(0, axis=1, inplace=True)
+
+        for ac_syst in buildings._resources_data['index']['Cooling system']:
+            buildings.cooler_vintage.loc[ac_syst,buildings.lifetime_cooler.loc[ac_syst]] = more_cooler.loc[ac_syst]
 
     return buildings, stock, output
 
