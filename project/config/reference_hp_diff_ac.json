@@ -1,9 +1,9 @@
 {
-    "end": 2051,
+    "end": 2025,
     "step": 1,
     "output": "full",
     "start": 2017,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac.csv",
     "financing_cost": {
       "activated": true,
       "interest_rate": "project/input/macro/interest_rate.csv",
@@ -83,6 +83,7 @@
       "hourly_profile": "project/input/technical/hourly_profile_rte.csv",
       "constraint_heat_pumps": ["E", "F", "G"],
       "variable_size_heater": false,
+      "variable_size_cooler": false,
       "default_quality": null
     },
     "energy": {

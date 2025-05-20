@@ -34,8 +34,8 @@
 
   },
   "Reference": {
-    "file": "project/config/reference_hp_diff.json",
-    "end": 2051,
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2025,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
       "subsidy_status_quo": {
