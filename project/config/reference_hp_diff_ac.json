@@ -52,7 +52,7 @@
         "target": -1
       }
     },
-    "climate": {
+    "climate_model": {
       "climate_model":"EC-EARTH_HadREM3-GA7"
     },
     "technical": {

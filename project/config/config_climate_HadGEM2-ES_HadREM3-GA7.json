@@ -35,9 +35,9 @@
   },
   "Reference": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
-      "climate_model":"CNRM-CM5_ALADIN63"
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
     },
     "policies": {
       "file": "project/input/policies/policies_calibration.json",

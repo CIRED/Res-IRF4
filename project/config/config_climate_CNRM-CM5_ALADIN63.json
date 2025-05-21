@@ -35,7 +35,7 @@
   },
   "Reference": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
       "climate_model":"CNRM-CM5_ALADIN63"
     },
