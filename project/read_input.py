@@ -914,7 +914,7 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'ms_cooler_built': ms_cooler_built.fillna(0)})
 
     # input sur le nom du modèle climatique (combinaison de gcm et rcm) # TODO: à documenter
-    climate_model = config['climate']['climate_model']
+    climate_model = config['climate_model']['climate_model']
     inputs.update({'climate_model':climate_model})
 
     inputs.update({'health_cost_dpe': get_series(config['health_cost_dpe'])})
