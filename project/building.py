@@ -21,7 +21,7 @@ import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique
-from numpy import exp, log, append, array, allclose
+from numpy import exp, log, append, array, allclose, asarray, dot
 from numpy.testing import assert_almost_equal
 from scipy.optimize import fsolve
 import logging
@@ -30,7 +30,7 @@ from itertools import product
 
 from project.utils import make_plot, reindex_mi, make_plots, calculate_annuities, deciles2quintiles_dict, size_dict, \
     get_size, compare_bar_plot, make_sensitivity_tables, cumulated_plot, find_discount_rate, conditional_expectation, get_json
-from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots, calculate_average, make_scatter_plot, add_no_renovation
+from project.utils import make_hist, reverse_dict, select, make_grouped_scatterplots, calculate_average, make_scatter_plot, add_no_renovation, get_pandas
 from project.utils import factor_annuities
 
 import project.thermal as thermal
@@ -2898,6 +2898,99 @@ class AgentBuildings(ThermalBuildings):
         return 
     
 
+    def endogenous_market_share_cooler(self, stock):
+        year = self.year
+        climate_model = self.climate_model
+        
+        cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}.csv'.format(climate_model))
+        cdd26_deciles = get_pandas(cdd26_deciles_path)[str(year)]
+
+        ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}.csv'.format(climate_model))
+        ltcdd26_deciles = get_pandas(ltcdd26_deciles_path)[str(year)]
+
+        index = stock.index
+        market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
+        ms_index = market_share.index
+        ms_cols = market_share.columns
+        ms_len = len(market_share)
+
+        # market share reformat for computation
+        market_share = market_share.reset_index()
+        market_share['const'] = [1]*len(market_share)
+        market_share['owner'] = (market_share['Occupancy status']=='Owner-occupied').astype(float)
+        market_share['multifamily'] = (market_share['Housing type']=='Multi-family').astype(float)
+        market_share['retrofit'] = (market_share['Heating system']!=market_share['Heating system final']).astype(float)
+        market_share['income'] = market_share['Income tenant'].map(self.income.to_dict().get)
+        market_share['cdd26'] = [0]*len(market_share)
+        market_share['lt20_cdd26'] = [0]*len(market_share)
+
+        
+        # computation of first stage : No AC -> AC
+        #TODO: coefficients hardcodés pour l'instant, à paramétriser
+        logit_ac_dict = {'const': -4.288097,
+                         'cdd26': 0.0184,
+                         'lt20_cdd26': 0.091632,
+                         'owner': 0.0603,
+                         'multifamily': -0.1541,
+                         'retrofit': 1.2008}
+        coeffs_vars = list(logit_ac_dict.keys())
+        coeffs_vals = asarray(list(logit_ac_dict.values()))
+        p_ac_list = asarray([0]*ms_len)
+        data_array = concat([market_share[coeffs_vars]]*10, ignore_index=True)
+        for idx in range(10):
+            data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'cdd26'] = asarray([cdd26_deciles.iloc[idx]]*ms_len)
+            # hypothesis : cdd long term and cdd are distributed the same way over the territory
+            data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
+        p_ac_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
+        for idx in range(10):
+            p_ac_list = p_ac_list + p_ac_array[idx*ms_len:(idx+1)*ms_len]
+        p_ac_list = p_ac_list/10
+
+        market_share['Electricity-AC'] = p_ac_list
+        
+        # computation of second stage : AC -> split
+        #TODO: coefficients hardcodés pour l'instant, à paramétriser
+        logit_split_dict = {'const': -0.66435,
+                            'lt20_cdd26': 0.16605,
+                            'owner': 0.8054,
+                            'multifamily': -0.8323499999999999,
+                            'income': 1.186545e-05,
+                            }
+        coeffs_vars = list(logit_split_dict.keys())
+        coeffs_vals = asarray(list(logit_split_dict.values()))
+        p_ac_split_list = asarray([0]*ms_len)
+        data_array = concat([market_share[coeffs_vars]]*10, ignore_index=True)
+        for idx in range(10):
+            data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
+        p_ac_split_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
+        for idx in range(10):
+            p_ac_split_list = p_ac_split_list + p_ac_split_array[idx*ms_len:(idx+1)*ms_len]
+        p_ac_split_list = p_ac_split_list/10
+
+        market_share['Electricity-AC split'] = p_ac_split_list
+        
+        # complete market share based on computed probabilities
+        for ac_syst in self._resources_data['index']['Cooling system']:
+            idx = market_share['Cooling system eol'] == ac_syst
+            if ac_syst != 'No AC':
+                market_share.loc[idx, ac_syst] = 1.
+            else:
+                market_share.loc[idx, 'Electricity-Heat pump air'] = market_share.loc[idx, 'Electricity-AC'] * market_share.loc[idx, 'Electricity-AC split']
+                market_share.loc[idx, 'Electricity-Portable unit'] = market_share.loc[idx, 'Electricity-AC'] * (1-market_share.loc[idx, 'Electricity-AC split'])
+                market_share.loc[idx, 'No AC'] = (1-market_share.loc[idx, 'Electricity-AC'])
+
+        market_share = market_share.set_index(ms_index)
+        market_share = market_share[ms_cols]
+
+        # heat pump air as heater final implies AC heat pump air 
+        idx_hpa = market_share.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
+        market_share.loc[idx_hpa, 'Electricity-Heat pump air'] = 1.
+        market_share.loc[idx_hpa, 'Electricity-Portable unit'] = 0.
+        market_share.loc[idx_hpa, 'No AC'] = 0.
+
+        return market_share
+
+
     def cooler_adoption(self, stock, policies_cooler=[], step=1, store_information=True,):
         """
         Function returns building stock updated after cooling systems adoption.
@@ -2961,27 +3054,26 @@ class AgentBuildings(ThermalBuildings):
         assert round(stock_ac.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
         
-        # TODO: à vérifier s'il faut vraiment écraser les anciennes colonnes
-        # stock_ac.index = stock_ac.index.swaplevel('Cooling system', 'Cooling system eol')
-        # stock_ac = stock_ac.droplevel('Cooler eol')
-        # stock_ac = stock_ac.droplevel('Cooling system eol')
-        # stock_ac.index = stock_ac.index.reorder_levels(order=index.names)
-
         # computation of market share adoption matrix
         # TODO: dans une fonction à part 'endogenous_market_share_cooler
-        # temporaire
-        stock_ac_adoption = stock_ac.copy()
-        index = stock_ac_adoption.index
-        market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
+        temporary = False
+        if temporary:
+            stock_ac_adoption = stock_ac.copy()
+            index = stock_ac_adoption.index
+            market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
 
-        for ac_syst in self._resources_data['index']['Cooling system']:
-            idx = market_share.index.get_level_values('Cooling system eol')==ac_syst
-            if ac_syst == 'No AC':
-                market_share.loc[idx, ac_syst] = 0.93
-                market_share.loc[idx, 'Electricity-Portable unit'] = 0.02
-                market_share.loc[idx, 'Electricity-Heat pump air'] = 0.05
-            else:
-                market_share.loc[idx, ac_syst] = 1.
+            for ac_syst in self._resources_data['index']['Cooling system']:
+                idx = market_share.index.get_level_values('Cooling system eol')==ac_syst
+                if ac_syst == 'No AC':
+                    market_share.loc[idx, ac_syst] = 0.93
+                    market_share.loc[idx, 'Electricity-Portable unit'] = 0.02
+                    market_share.loc[idx, 'Electricity-Heat pump air'] = 0.05
+                else:
+                    market_share.loc[idx, ac_syst] = 1.
+        else:
+            stock_ac_adoption = stock_ac.copy()
+            index = stock_ac_adoption.index
+            market_share = self.endogenous_market_share_cooler(stock=stock_ac_adoption)
 
         adoption = (market_share.T * stock_ac_adoption).T
         adoption = adoption.groupby(adoption.columns, axis=1).sum()
@@ -3011,17 +3103,11 @@ class AgentBuildings(ThermalBuildings):
         assert round(stock_ac_adoption.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
         
-        # TODO: à vérifier s'il faut vraiment écraser les anciennes colonnes
-        # stock_ac_adoption.index = stock_ac_adoption.index.swaplevel('Cooling system', 'Cooling system adoption')
-        # stock_ac_adoption = stock_ac_adoption.droplevel('Cooler adoption')
-        # stock_ac_adoption = stock_ac_adoption.droplevel('Cooling system adoption')
         stock_ac_adoption = stock_ac_adoption.droplevel('Cooler eol')
         stock_ac_adoption = stock_ac_adoption.droplevel('Cooling system eol')
         stock_ac_adoption.index = stock_ac_adoption.index.reorder_levels(order=[e.replace('eol','adoption') for e in index.names])
 
-        # TODO : update cooler vintage l 549 model.py
-
-        # TODO : store cooler adoption values
+        # TODO: ajouter des informations par la suite
         if store_information:
             self.store_information_cooler(save_adoption, save_eol)
         return stock_ac_adoption
@@ -4982,6 +5068,7 @@ class AgentBuildings(ThermalBuildings):
                                                 prices_before=prices_before)
                 assert ~stock.index.duplicated().any(), 'Duplicated index after heater replacement'
 
+        self.logger.info('Calculation cooler adoption')
         stock_ac = self.cooler_adoption(stock)
 
         stock = stock_ac.copy()
