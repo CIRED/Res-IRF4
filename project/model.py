@@ -366,7 +366,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                temp_sink=parsed_inputs['temp_sink'],
                                vat_heater=parsed_inputs['vat_heater'],
                                no_friction=config['simple'].get('no_friction'),
-                               belief_engineering_calculation=config['renovation'].get('belief_engineering_calculation', False))
+                               belief_engineering_calculation=config['renovation'].get('belief_engineering_calculation', False),
+                               climate_model=parsed_inputs['climate_model'])
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
