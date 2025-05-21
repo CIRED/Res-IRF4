@@ -77,7 +77,8 @@ class ThermalBuildings:
     """
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
-                 resources_data=None, detailed_output=None, figures=None, residual_rate=0, temp_sink=None):
+                 resources_data=None, detailed_output=None, figures=None, residual_rate=0, temp_sink=None,
+                 climate_model=None):
 
         # default values
         self.heating_intensity_max = None
@@ -137,6 +138,8 @@ class ThermalBuildings:
 
         self.consumption_before_retrofit = None
         self.intensity_before_retrofit = None
+
+        self.climate_model = climate_model
 
         # store values to not recalculate standard energy consumption
         self._consumption_store = {
@@ -1023,11 +1026,12 @@ class AgentBuildings(ThermalBuildings):
                  resources_data=None, detailed_output=True, figures=None,
                  method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
                  variable_size_heater=True, variable_size_cooler=True, temp_sink=None, social_discount_rate=0.032,
-                 lifetime_insulation=30, vat_heater=VAT, no_friction=None, belief_engineering_calculation=None
+                 lifetime_insulation=30, vat_heater=VAT, no_friction=None, belief_engineering_calculation=None,
+                 climate_model=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
-                         residual_rate=residual_rate, temp_sink=temp_sink)
+                         residual_rate=residual_rate, temp_sink=temp_sink, climate_model=climate_model)
 
         self._distortion_store = {}
         if logger is None:
@@ -1326,6 +1330,9 @@ class AgentBuildings(ThermalBuildings):
 
         replaced_by = replaced_by.droplevel('Heating system').rename_axis(
             index={'Heating system final': 'Heating system'})
+        
+        replaced_by = replaced_by.droplevel('Cooling system').rename_axis(
+            index={'Cooling system adoption': 'Cooling system'})
 
         replaced_by.index.set_names(
             {'Wall': 'Wall before', 'Roof': 'Roof before', 'Floor': 'Floor before', 'Windows': 'Windows before'},
@@ -2895,7 +2902,9 @@ class AgentBuildings(ThermalBuildings):
         """
         Function returns building stock updated after cooling systems adoption.
         """
-        index = stock.index
+        stock_ac = stock.copy()
+        index = stock_ac.index
+        
 
         probability = self.cooler_vintage.loc[:, 1] / self.cooler_vintage.sum(axis=1)
         probability.loc['No AC'] = 1. # code convention
@@ -2907,7 +2916,7 @@ class AgentBuildings(ThermalBuildings):
         for premature in premature_cooler:
             print('Premature replacement not Implemented')
 
-        flow_end_of_life = stock * reindex_mi(probability, stock.index)
+        flow_end_of_life = stock_ac * reindex_mi(probability, stock_ac.index)
         # air heat pumps cooling systems associated with heaters are not considered here (already in heater replacement)
         idx_heat_pump_air_final = flow_end_of_life.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
         flow_end_of_life.loc[idx_heat_pump_air_final] = 0.
@@ -2940,67 +2949,82 @@ class AgentBuildings(ThermalBuildings):
         stock_eol = eol.stack('Cooling system eol')
         eol_sumed = eol.sum(axis=1)
 
-        stock = stock - eol_sumed
-        stock[stock < 0] = 0 # correct rounding error
+        stock_ac = stock_ac - eol_sumed
+        stock_ac[stock_ac < 0] = 0 # correct rounding error
         stock_eol = stock_eol[stock_eol > 0]
-        stock = concat((stock, Series(stock.index.get_level_values('Cooling system'), index=stock.index,
+        stock_ac = concat((stock_ac, Series(stock_ac.index.get_level_values('Cooling system'), index=stock_ac.index,
                                       name='Cooling system eol')), axis=1).set_index('Cooling system eol', append=True).squeeze()
-        stock = concat((stock.reorder_levels(stock_eol.index.names), stock_eol),
+        stock_ac = concat((stock_ac.reorder_levels(stock_eol.index.names), stock_eol),
                        axis=0, keys=[False, True], names=['Cooler eol'])
-        stock.sort_index(inplace=True)
+        stock_ac.sort_index(inplace=True)
 
-        assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
+        assert round(stock_ac.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
         
         # TODO: à vérifier s'il faut vraiment écraser les anciennes colonnes
-        stock.index = stock.index.swaplevel('Cooling system', 'Cooling system eol')
-        stock = stock.droplevel('Cooler eol')
-        stock = stock.droplevel('Cooling system eol')
-        stock.index = stock.index.reorder_levels(order=index.names)
+        # stock_ac.index = stock_ac.index.swaplevel('Cooling system', 'Cooling system eol')
+        # stock_ac = stock_ac.droplevel('Cooler eol')
+        # stock_ac = stock_ac.droplevel('Cooling system eol')
+        # stock_ac.index = stock_ac.index.reorder_levels(order=index.names)
 
         # computation of market share adoption matrix
         # TODO: dans une fonction à part 'endogenous_market_share_cooler
         # temporaire
-        index = stock.index
+        stock_ac_adoption = stock_ac.copy()
+        index = stock_ac_adoption.index
         market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
 
         for ac_syst in self._resources_data['index']['Cooling system']:
-            idx = market_share.index.get_level_values('Cooling system')==ac_syst
-            market_share.loc[idx, ac_syst] = 1.
+            idx = market_share.index.get_level_values('Cooling system eol')==ac_syst
+            if ac_syst == 'No AC':
+                market_share.loc[idx, ac_syst] = 0.93
+                market_share.loc[idx, 'Electricity-Portable unit'] = 0.02
+                market_share.loc[idx, 'Electricity-Heat pump air'] = 0.05
+            else:
+                market_share.loc[idx, ac_syst] = 1.
 
-        adoption = (market_share.T * stock).T
+        adoption = (market_share.T * stock_ac_adoption).T
         adoption = adoption.groupby(adoption.columns, axis=1).sum()
         adoption.columns.names = ['Cooling system adoption']
 
-        save_adoption = adoption[adoption.index.get_level_values('Cooling system')=='No AC'].sum()
+        save_adoption = adoption[adoption.index.get_level_values('Cooling system eol')=='No AC'].sum()
 
         stock_adoption = adoption.stack('Cooling system adoption')
         adoption_sumed = adoption.sum(axis=1)
 
-        stock = stock - adoption_sumed
-        stock[stock < 0] = 0 # correct rounding error
+        stock_ac_adoption = stock_ac_adoption - adoption_sumed
+        stock_ac_adoption[stock_ac_adoption < 0] = 0 # correct rounding error
         stock_adoption = stock_adoption[stock_adoption > 0]
-        stock = concat((stock, Series(stock.index.get_level_values('Cooling system'), index=stock.index,
-                                      name='Cooling system adoption')), axis=1).set_index('Cooling system adoption', append=True).squeeze()
-        stock = concat((stock.reorder_levels(stock_adoption.index.names), stock_adoption),
-                       axis=0, keys=[False, True], names=['Cooler adoption'])
-        stock.sort_index(inplace=True)
 
-        assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
+        stock_ac_adoption = concat((stock_ac_adoption, Series(stock_ac_adoption.index.get_level_values('Cooling system'), index=stock_ac_adoption.index,
+                                      name='Cooling system adoption')), axis=1).set_index('Cooling system adoption', append=True).squeeze()
+        stock_ac_adoption = concat((stock_ac_adoption.reorder_levels(stock_adoption.index.names), stock_adoption),
+                       axis=0, keys=[False, True], names=['Cooler adoption'])
+        stock_ac_adoption.sort_index(inplace=True)
+
+        stock_ac_adoption = stock_ac_adoption.xs(True, level='Cooler adoption', drop_level=False)
+        idx = stock_ac_adoption.index.names
+        stock_ac_adoption = stock_ac_adoption.reset_index()
+        stock_ac_adoption['Cooler adoption'] = stock_ac_adoption['Cooling system'] != stock_ac_adoption['Cooling system adoption']
+        stock_ac_adoption = stock_ac_adoption.set_index(idx)[0]
+
+        assert round(stock_ac_adoption.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
         
         # TODO: à vérifier s'il faut vraiment écraser les anciennes colonnes
-        stock.index = stock.index.swaplevel('Cooling system', 'Cooling system adoption')
-        stock = stock.droplevel('Cooler adoption')
-        stock = stock.droplevel('Cooling system adoption')
-        stock.index = stock.index.reorder_levels(order=index.names)
+        # stock_ac_adoption.index = stock_ac_adoption.index.swaplevel('Cooling system', 'Cooling system adoption')
+        # stock_ac_adoption = stock_ac_adoption.droplevel('Cooler adoption')
+        # stock_ac_adoption = stock_ac_adoption.droplevel('Cooling system adoption')
+        stock_ac_adoption = stock_ac_adoption.droplevel('Cooler eol')
+        stock_ac_adoption = stock_ac_adoption.droplevel('Cooling system eol')
+        stock_ac_adoption.index = stock_ac_adoption.index.reorder_levels(order=[e.replace('eol','adoption') for e in index.names])
 
         # TODO : update cooler vintage l 549 model.py
 
         # TODO : store cooler adoption values
         if store_information:
             self.store_information_cooler(save_adoption, save_eol)
-        return stock
+        return stock_ac_adoption
     
 
     def prepare_cost_insulation(self, cost_insulation):
@@ -4662,11 +4686,11 @@ class AgentBuildings(ThermalBuildings):
             energy_bill_before = self.energy_bill(prices, consumption_std_before, level_heater='Heating system final',
                                                   bill_rebate=bill_rebate)
             consumption_std_before = self.add_attribute(consumption_std_before, 'Income tenant')
-            consumption_std_before = consumption_std_before.unstack(['Heater replacement', 'Heating system final'])
+            consumption_std_before = consumption_std_before.unstack(['Heater replacement', 'Heating system final','Cooler adoption','Cooling system adoption'])
             consumption_std_before = consumption_std_before.reorder_levels(self.stock.index.names)
             index_consumption = consumption_std_before.index.intersection(self.stock.index)
             consumption_std_before = consumption_std_before.loc[index_consumption]
-            consumption_std_before = consumption_std_before.stack(['Heater replacement', 'Heating system final'])
+            consumption_std_before = consumption_std_before.stack(['Heater replacement', 'Heating system final','Cooler adoption','Cooling system adoption'])
             consumption_std_before = consumption_std_before.unstack('Income tenant')
             consumption_std_before = consumption_std_before.reorder_levels(index.names)
             consumption_std_before = consumption_std_before.stack('Income tenant')
@@ -4893,6 +4917,8 @@ class AgentBuildings(ThermalBuildings):
         #     [i for i in self.stock_mobile.index.names if i != 'Income tenant']).sum()
         stock_mobile = stock_mobile.xs(True, level='Existing', drop_level=False)
 
+        # print(stock_mobile.index, len(stock_mobile))
+
         # calculate average heating intensity
         temp = concat((self.stock_mobile,
                        self.to_heating_intensity(self.stock_mobile.index, prices, level_heater='Heating system')),
@@ -4956,8 +4982,13 @@ class AgentBuildings(ThermalBuildings):
                                                 prices_before=prices_before)
                 assert ~stock.index.duplicated().any(), 'Duplicated index after heater replacement'
 
-        stock = self.cooler_adoption(stock)
+        stock_ac = self.cooler_adoption(stock)
 
+        stock = stock_ac.copy()
+
+
+        # TODO: modifier la suite pour intégrer le changement de climatisation à flow_retrofit ?
+        
         # Removal of tenant income
         stock = stock.groupby([i for i in stock.index.names if i != 'Income tenant']).sum()
 
@@ -5039,7 +5070,18 @@ class AgentBuildings(ThermalBuildings):
 
         flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack(
             'Heating system final')
+        flow_only_heater = flow_only_heater.xs(False, level='Cooler adoption', drop_level=False) # remove double count with cooler
+        flow_only_heater = flow_only_heater.droplevel('Cooling system adoption')
         flow_only_heater_sum = flow_only_heater.sum().sum()
+
+        flow_only_cooler = stock - flow_insulation
+        assert (flow_only_cooler >= 0).all().all(), 'Remaining stock is not positive'
+
+        flow_only_cooler = flow_only_cooler.xs(True, level='Cooler adoption', drop_level=False).unstack(
+            'Cooling system adoption')
+        flow_only_cooler = flow_only_cooler.xs(False, level='Heater replacement', drop_level=False) # remove double count with heater
+        flow_only_cooler = flow_only_cooler.droplevel('Heating system final')
+        flow_only_cooler_sum = flow_only_cooler.sum().sum()
 
         # insulation upgrade
         flow_insulation = flow_insulation[flow_insulation > 0]
@@ -5064,11 +5106,13 @@ class AgentBuildings(ThermalBuildings):
         self._replaced_by = replaced_by.copy()
         self._only_heater = only_heater.copy()
 
-        # removing heater replacement level
+        # removing heater replacement level and cooler adoption
         replaced_by = replaced_by.groupby(
-            [c for c in replaced_by.index.names if c != 'Heater replacement']).sum()
+            [c for c in replaced_by.index.names if c not in ['Heater replacement','Cooler adoption']]).sum()
         flow_only_heater = flow_only_heater.groupby(
-            [c for c in flow_only_heater.index.names if c != 'Heater replacement']).sum()
+            [c for c in flow_only_heater.index.names if c not in ['Heater replacement','Cooler adoption']]).sum()
+        flow_only_cooler = flow_only_cooler.groupby(
+            [c for c in flow_only_cooler.index.names if c not in ['Heater replacement','Cooler adoption']]).sum()
 
         # adding income tenant information
         self.logger.debug('Adding income tenant')
@@ -5078,21 +5122,34 @@ class AgentBuildings(ThermalBuildings):
         flow_only_heater = self.add_level(flow_only_heater, self.stock_mobile, 'Income tenant')
         assert round(flow_only_heater.sum().sum(), 0) == round(flow_only_heater_sum, 0), 'Sum problem'
 
+        flow_only_cooler = self.add_level(flow_only_cooler, self.stock_mobile, 'Income tenant')
+        assert round(flow_only_cooler.sum().sum(), 0) == round(flow_only_cooler_sum, 0), 'Sum problem'
+
         self.logger.debug('Formatting switch heater flow')
         flow_only_heater = flow_only_heater.stack('Heating system final')
+        flow_only_cooler = flow_only_cooler.stack('Cooling system adoption')
 
         to_replace_heater = - flow_only_heater.droplevel('Heating system final')
+        to_replace_cooler = - flow_only_cooler.droplevel('Cooling system adoption')
 
         replaced_by_heater = flow_only_heater.droplevel('Heating system')
         replaced_by_heater.index = replaced_by_heater.index.rename('Heating system', level='Heating system final')
         replaced_by_heater = replaced_by_heater.reorder_levels(to_replace_heater.index.names)
 
+        replaced_by_cooler = flow_only_cooler.droplevel('Cooling system')
+        replaced_by_cooler.index = replaced_by_cooler.index.rename('Cooling system', level='Cooling system adoption')
+        replaced_by_cooler = replaced_by_cooler.reorder_levels(to_replace_cooler.index.names)
+
         flow_only_heater = concat((to_replace_heater, replaced_by_heater), axis=0)
         flow_only_heater = flow_only_heater.groupby(flow_only_heater.index.names).sum()
         assert round(flow_only_heater.sum(), 0) == 0, 'Sum problem'
 
+        flow_only_cooler = concat((to_replace_cooler, replaced_by_cooler), axis=0)
+        flow_only_cooler = flow_only_cooler.groupby(flow_only_cooler.index.names).sum()
+        assert round(flow_only_cooler.sum(), 0) == 0, 'Sum problem'
+
         self.logger.debug('Formatting renovation flow')
-        to_replace = replaced_by.droplevel('Heating system final').sum(axis=1).copy()
+        to_replace = replaced_by.droplevel(['Heating system final','Cooling system adoption']).sum(axis=1).copy()
         to_replace = to_replace.groupby(to_replace.index.names).sum()
         assert round(to_replace.sum(), 0) == round(replacement_sum, 0), 'Sum problem'
 
@@ -5104,7 +5161,8 @@ class AgentBuildings(ThermalBuildings):
         self.logger.debug('Concatenate all flows')
         to_replace = to_replace.reorder_levels(replaced_by.index.names)
         flow_only_heater = flow_only_heater.reorder_levels(replaced_by.index.names)
-        flow_retrofit = concat((-to_replace, replaced_by, flow_only_heater), axis=0)
+        flow_only_cooler = flow_only_cooler.reorder_levels(replaced_by.index.names)
+        flow_retrofit = concat((-to_replace, replaced_by, flow_only_heater, flow_only_cooler), axis=0)
         flow_retrofit = flow_retrofit.groupby(flow_retrofit.index.names).sum()
         assert round(flow_retrofit.sum(), 0) == 0, 'Sum problem'
 
@@ -5474,7 +5532,7 @@ class AgentBuildings(ThermalBuildings):
 
         # add cooling systems in output
         temp = self.stock.groupby('Cooling system').sum()
-        cooler = ['Electricity-Heat pump air', 'Electricity-Portable', 'None']
+        cooler = self._resources_data['index']['Cooling system']
         for c in cooler:
             if c in temp.index:
                 output['Stock AC {} (Million)'.format(c)] = temp.loc[c] / 10 ** 6
@@ -5520,10 +5578,10 @@ class AgentBuildings(ThermalBuildings):
 
         if self.year > self.first_year:
             levels = [i for i in self._replaced_by.index.names if
-                      i not in ['Heater replacement', 'Heating system final']]
+                      i not in ['Heater replacement', 'Heating system final','Cooler adoption','Cooling system adoption']]
 
-            names = ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall',
-                     'Floor', 'Roof', 'Windows', 'Heating system', 'Cooling system', 'Heating system final']
+            names = ['Heater replacement', 'Cooler adoption', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall',
+                     'Floor', 'Roof', 'Windows', 'Heating system', 'Heating system final', 'Cooling system', 'Cooling system adoption']
             self._replaced_by.index = self._replaced_by.index.reorder_levels(names)
             self._renovation_store['discount'] = self._renovation_store['discount'].groupby(levels).mean()
 
