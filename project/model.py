@@ -367,7 +367,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                vat_heater=parsed_inputs['vat_heater'],
                                no_friction=config['simple'].get('no_friction'),
                                belief_engineering_calculation=config['renovation'].get('belief_engineering_calculation', False),
-                               climate_model=parsed_inputs['climate_model'])
+                               climate_model=parsed_inputs['climate_model'],
+                               cooling_system=parsed_inputs['cooler_activation'])
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -500,7 +501,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
     if flow_built is not None:
         buildings.add_flows([flow_built])
         new_heating = flow_built.groupby('Heating system').sum()
-        new_cooling = flow_built.groupby('Cooling system').sum()
+        # new_cooling = flow_built.groupby('Cooling system').sum()
 
     buildings.logger.info('Writing output')
     if output_options == 'full':
@@ -550,20 +551,26 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
         # add of vintage for cooler 
         #TODO: replace these by Weibull distribution (heater+cooler)
         
-        less_cooler = buildings._cooler_store['end_of_life']
-        more_cooler = buildings._cooler_store['adoption']
+        if buildings.cooling_system_activation:
+            less_cooler = buildings._cooler_store['end_of_life']
+            more_cooler = buildings._cooler_store['adoption']
+        else:
+            less_cooler = 0
+            more_cooler = 0
+        # more_cooler += new_cooling #TODO : quelle méthode pour le chauffage ? Comment faire pour la clim ?
         
         # decrease of year 1, repartition of remaining among the other years
-        min_lifetime_coolers = buildings.lifetime_cooler.min()
-        for ac_syst in buildings._resources_data['index']['AC']:
-            buildings.cooler_vintage.loc[ac_syst,1] = buildings.cooler_vintage.loc[ac_syst,1] - less_cooler.loc[ac_syst]
-            buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] = buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] + buildings.cooler_vintage.loc[ac_syst,1]/(min_lifetime_coolers-1)
+        if buildings.cooling_system_activation:
+            min_lifetime_coolers = buildings.lifetime_cooler.min()
+            for ac_syst in buildings._resources_data['index']['AC']:
+                buildings.cooler_vintage.loc[ac_syst,1] = buildings.cooler_vintage.loc[ac_syst,1] - less_cooler.loc[ac_syst]
+                buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] = buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] + buildings.cooler_vintage.loc[ac_syst,1]/(min_lifetime_coolers-1)
 
-        buildings.cooler_vintage.columns = buildings.cooler_vintage.columns - 1
-        buildings.cooler_vintage.drop(0, axis=1, inplace=True)
+            buildings.cooler_vintage.columns = buildings.cooler_vintage.columns - 1
+            buildings.cooler_vintage.drop(0, axis=1, inplace=True)
 
-        for ac_syst in buildings._resources_data['index']['Cooling system']:
-            buildings.cooler_vintage.loc[ac_syst,buildings.lifetime_cooler.loc[ac_syst]] = more_cooler.loc[ac_syst]
+            for ac_syst in buildings._resources_data['index']['Cooling system']:
+                buildings.cooler_vintage.loc[ac_syst,buildings.lifetime_cooler.loc[ac_syst]] = more_cooler.loc[ac_syst]
 
     return buildings, stock, output
 
@@ -596,6 +603,10 @@ def res_irf(config, path, level_logger='DEBUG'):
     try:
         logger.info('Reading input')
         config, inputs, stock, year, policies_heater, policies_insulation, taxes = config2inputs(config)
+
+        # delete cooling system columns if deactivated
+        if not inputs['cooler_activation']:
+            stock = stock.groupby([i for i in stock.index.names if i not in ['Cooling system']]).sum()
 
         if policies_heater + policies_insulation and config['simple']['detailed_output'] and \
                 config.get('figures') is not False:

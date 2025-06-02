@@ -902,8 +902,12 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'ms_heater_built': ms_heater_built.fillna(0)})
 
+    # variables related to AC integration
+    ac_activation = config['adoption_cooler']['activated']
+    inputs.update({'cooler_activation':ac_activation})
+
     # ajout de la climatisation de la même manière
-    temp = get_series(config['switch_heater']['ms_cooler_built'], header=[0])
+    temp = get_series(config['adoption_cooler']['ms_cooler_built'], header=[0])
     if 'Year' in temp.index.names:
         # Interpolation over year using last known value
         start = temp.index.get_level_values('Year').min()
@@ -1137,6 +1141,9 @@ def parse_inputs(inputs, taxes, config, stock):
 
     parsed_inputs['flow_built'] = pd.concat((construction, performance_insulation), axis=1).set_index(
         list(performance_insulation.keys()), append=True)
+
+    if not parsed_inputs['cooler_activation']:
+        parsed_inputs['flow_built'] = parsed_inputs['flow_built'].groupby([i for i in parsed_inputs['flow_built'].index.names if i not in ['Cooling system']]).sum()
 
     parsed_inputs['flow_built'] = pd.concat([parsed_inputs['flow_built']], keys=[False],
                                             names=['Existing']).reorder_levels(stock.index.names)
