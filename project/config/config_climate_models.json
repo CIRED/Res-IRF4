@@ -1,0 +1,62 @@
+{
+  "Reference": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2024,
+    "adoption_cooler": {
+      "activated":false
+    },
+    "simple":{
+      "quintiles": true
+    }
+  },
+  "CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2024,
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "simple":{
+      "quintiles": true
+    }
+  },
+  "CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2024,
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "simple":{
+      "quintiles": true
+    }
+  },
+  "EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2024,
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "simple":{
+      "quintiles": true
+    }
+  },
+  "EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2024,
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "simple":{
+      "quintiles": true
+    }
+  },
+  "HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2024,
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "simple":{
+      "quintiles": true
+    }
+  }
+}
