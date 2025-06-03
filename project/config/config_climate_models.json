@@ -1,7 +1,7 @@
 {
   "Reference": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "adoption_cooler": {
       "activated":false
     },
@@ -11,9 +11,13 @@
   },
   "CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
       "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "adoption_cooler": {
+      "activated":true,
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
     "simple":{
       "quintiles": true
@@ -21,9 +25,13 @@
   },
   "CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
       "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "adoption_cooler": {
+      "activated":true,
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
     "simple":{
       "quintiles": true
@@ -31,9 +39,13 @@
   },
   "EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
       "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "adoption_cooler": {
+      "activated":true,
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
     "simple":{
       "quintiles": true
@@ -41,9 +53,13 @@
   },
   "EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
       "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "adoption_cooler": {
+      "activated":true,
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
     "simple":{
       "quintiles": true
@@ -51,9 +67,13 @@
   },
   "HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2024,
+    "end": 2051,
     "climate_model": {
       "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "adoption_cooler": {
+      "activated":true,
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
     "simple":{
       "quintiles": true

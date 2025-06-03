@@ -342,6 +342,9 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         with open(os.path.join(path, 'config.json'), 'w') as fp:
             json.dump(config, fp)
 
+    # add ac logit coefficients in resources_data dict
+    resources_data.update({'cooling_adoption':parsed_inputs['cooler_adoption']})
+
     buildings = AgentBuildings(stock, parsed_inputs['surface'], parsed_inputs['ratio_surface'], parsed_inputs['efficiency'],
                                parsed_inputs['income'], parsed_inputs['preferences'],
                                parsed_inputs['performance_insulation_renovation'],

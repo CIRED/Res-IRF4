@@ -54,7 +54,8 @@
     "adoption_cooler": {
       "activated": true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_tend.csv",
-      "market_share_logit_source":"project/input/investment/ademe_market_share_coefficients.csv"
+      "adoption_coefficients":"project/input/investment/ademe_adoption_coefficients.csv",
+      "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv"
     },
     "climate_model": {
       "climate_model":"EC-EARTH_HadREM3-GA7"

@@ -905,6 +905,8 @@ def read_inputs(config, other_inputs=generic_input):
     # variables related to AC integration
     ac_activation = config['adoption_cooler']['activated']
     inputs.update({'cooler_activation':ac_activation})
+    inputs.update({'cooler_adoption':{'adoption_coefficients':get_series(config['adoption_cooler']['adoption_coefficients'], header=[0]),
+                                      'ms_coefficients':get_series(config['adoption_cooler']['market_share_coefficients'], header=[0])}})
 
     # ajout de la climatisation de la même manière
     temp = get_series(config['adoption_cooler']['ms_cooler_built'], header=[0])

@@ -2948,15 +2948,14 @@ class AgentBuildings(ThermalBuildings):
 
         
         # computation of first stage : No AC -> AC
-        #TODO: coefficients hardcodés pour l'instant, à paramétriser
-        logit_ac_dict = {'const': -4.288097,
-                         'cdd26': 0.0184,
-                         'lt20_cdd26': 0.091632,
-                         'owner': 0.0603,
-                         'multifamily': -0.1541,
-                         'retrofit': 1.2008}
+        logit_ac_dict = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict()
+
+        # manual calibration of const parameter : TODO: to be removed
+        logit_ac_dict['const'] = logit_ac_dict['const']*0.79
+
         coeffs_vars = list(logit_ac_dict.keys())
         coeffs_vals = asarray(list(logit_ac_dict.values()))
+
         p_ac_list = asarray([0]*ms_len)
         data_array = concat([market_share[coeffs_vars]]*10, ignore_index=True)
         for idx in range(10):
@@ -2964,6 +2963,7 @@ class AgentBuildings(ThermalBuildings):
             # hypothesis : cdd long term and cdd are distributed the same way over the territory
             data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
         p_ac_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
+
         for idx in range(10):
             p_ac_list = p_ac_list + p_ac_array[idx*ms_len:(idx+1)*ms_len]
         p_ac_list = p_ac_list/10
@@ -2971,20 +2971,16 @@ class AgentBuildings(ThermalBuildings):
         market_share['Electricity-AC'] = p_ac_list
         
         # computation of second stage : AC -> split
-        #TODO: coefficients hardcodés pour l'instant, à paramétriser
-        logit_split_dict = {'const': -0.66435,
-                            'lt20_cdd26': 0.16605,
-                            'owner': 0.8054,
-                            'multifamily': -0.8323499999999999,
-                            'income': 1.186545e-05,
-                            }
+        logit_split_dict = self._resources_data['cooling_adoption']['ms_coefficients'].to_dict()
         coeffs_vars = list(logit_split_dict.keys())
         coeffs_vals = asarray(list(logit_split_dict.values()))
+
         p_ac_split_list = asarray([0]*ms_len)
         data_array = concat([market_share[coeffs_vars]]*10, ignore_index=True)
         for idx in range(10):
             data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
         p_ac_split_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
+
         for idx in range(10):
             p_ac_split_list = p_ac_split_list + p_ac_split_array[idx*ms_len:(idx+1)*ms_len]
         p_ac_split_list = p_ac_split_list/10

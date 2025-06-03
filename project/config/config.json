@@ -3,7 +3,8 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2024,
     "adoption_cooler": {
-      "activated":true
+      "activated":true,
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
     "simple":{
       "quintiles": true    }
