@@ -473,7 +473,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
     buildings.logger.info('Writing output')
     if output_options == 'full':
         buildings.logger.debug('Full output')
-        stock, output, df_renovations, merged_df_heater = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
+        stock, output, df_renovations, merged_df_heater, df_final_grouped = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
                                                    bill_rebate=bill_rebate)
     elif output_options == 'cost_benefit':
         buildings.logger.debug('Cost-benefit output')
@@ -519,7 +519,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
         heating = buildings.stock.groupby('Heating system').sum()
         temp = pd.concat((heating, buildings.heater_vintage.sum(axis=1)), axis=1)
 
-    return buildings, stock, output, df_renovations, merged_df_heater
+    return buildings, stock, output, df_renovations, merged_df_heater, df_final_grouped
 
 
 def res_irf(config, path, level_logger='DEBUG'):
@@ -582,7 +582,7 @@ def res_irf(config, path, level_logger='DEBUG'):
                                               inputs_dynamics['health_cost_income'],
                                               inputs_dynamics['health_cost_dpe'])
 
-        s, o, df_renovations, merged_df_heater = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
+        s, o, df_renovations, merged_df_heater, df_final_grouped = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
                                           taxes=taxes)
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
@@ -607,8 +607,9 @@ def res_irf(config, path, level_logger='DEBUG'):
                 if p.variable:
                     p.end = config['start'] + 2
 
-        df_renovations_final = pd.DataFrame(columns=["Occupancy status", "Housing type","Heater replacement","Category before heater","Category before insulation", "Category after insulation","steps_heater","steps_insulation","steps_insulation_with_heater", "Operation type","Year","Value","Obligation"])
+        df_renovations_final = pd.DataFrame(columns=["Occupancy status", "Housing type","Heater replacement","Category before heater","Category before insulation", "Category after insulation", "Income", "steps_heater","steps_insulation","steps_insulation_with_heater", "Operation type","Year","Value","Obligation"])
         merged_df_heater_final = pd.DataFrame(columns=["Occupancy status","Housing type","Heating system final","Heating system","Flow","certificate_before_heater","certificate_after_heater","steps_heater","Year"])
+        df_final_grouped_final = pd.DataFrame(columns=["epc", "Heating system", "Energy", "year", "Stock buildings", "Consumption standard (TWh)", "Consumption  real (TWh)"])
         for k, year in enumerate(years):
             start = time()
 
@@ -649,7 +650,7 @@ def res_irf(config, path, level_logger='DEBUG'):
                     heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in inputs_dynamics['cost_heater'].index]
                     inputs_dynamics['cost_heater'].loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
-            buildings, s, o, df_renovations, merged_df_heater = stock_turnover(buildings, prices, taxes,
+            buildings, s, o, df_renovations, merged_df_heater, df_final_grouped = stock_turnover(buildings, prices, taxes,
                                              inputs_dynamics['cost_heater'],
                                              inputs_dynamics['cost_insulation'],
                                              inputs_dynamics['lifetime_insulation'],
@@ -672,6 +673,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             
             df_renovations_final = pd.concat([df_renovations_final, df_renovations], ignore_index=True)
             merged_df_heater_final = pd.concat([merged_df_heater_final, merged_df_heater], ignore_index=True)
+            df_final_grouped_final = pd.concat([df_final_grouped_final, df_final_grouped], ignore_index=True)
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
             output = pd.concat((output, o), axis=1)
@@ -704,6 +706,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             df_renovations_final.round(3).to_csv(os.path.join(path, 'df_renovations_final.csv'))
             merged_df_heater_final.round(3).to_csv(os.path.join(path, 'df_heaters_final.csv'))
+            df_final_grouped_final.round(3).to_csv(os.path.join(path, 'conso_dpe_reel.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
             if config['output'] == 'full':
@@ -763,7 +766,7 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
             flow_district_heating = inputs_dynamics['flow_district_heating'].loc[year]
         carbon_content = inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :]
 
-        buildings, s, o, df_renovations, merged_df_heater = stock_turnover(buildings, prices, taxes,
+        buildings, s, o, df_renovations, merged_df_heater, df_final_grouped = stock_turnover(buildings, prices, taxes,
                                          inputs_dynamics['cost_heater'],
                                          inputs_dynamics['cost_insulation'], inputs_dynamics['lifetime_insulation'],
                                          p_heater, p_insulation, f_built, year, inputs_dynamics['post_inputs'],
