@@ -4140,20 +4140,14 @@ class AgentBuildings(ThermalBuildings):
             flow_choice_col = f'Flow_Choice_{i}'
             flow_choice_diff = f'Flow_Choice_diff{i}'
 
-            merged_df_2 = merged_df.reset_index(level=['Heater replacement'])
-            merged_df_3 = merged_df_2.reset_index(level=['Housing type'])
-            merged_df_4 = merged_df_3.reset_index(level=['Occupancy status'])
-            merged_df_5 = merged_df_4.reset_index(level=['Income owner'])
-            # merged_df_4 = merged_df_3.reset_index(level=['Heating system'])
-            # merged_df_5 = merged_df_4.reset_index(level=['Heating system final'])
-            # merged_df_6 = merged_df_5.reset_index(level=['Occupancy status'])
+            merged_df_reset = merged_df.reset_index(level=['Heater replacement', 'Housing type', 'Occupancy status', 'Income owner'])
                 
-            merged_df_5.rename(columns={'Income owner': 'Income_owner_D'}, inplace=True)
-            merged_df_5['Income owner'] = merged_df_5['Income_owner_D'].map(mapping_deciles)
-            merged_df_5.drop('Income_owner_D', axis=1, inplace=True)
+            merged_df_reset = merged_df_reset.rename(columns={'Income owner': 'Income_owner_D'})
+            merged_df_reset['Income owner'] = merged_df_reset['Income_owner_D'].map(mapping_deciles)
+            merged_df_reset = merged_df_reset.drop('Income_owner_D', axis=1)
 
-            merged_df_5[flow_choice_diff] = merged_df_5['Occupancy status'] + "_" + merged_df_5['Housing type'] + "_" + merged_df_5['Heater replacement'].astype(str) + "_" + merged_df_5['Certificate_before_heater'] + "_" + merged_df_5['Certificate_before'] + "_" + merged_df_5[category_after_col] + "_" + merged_df_5['Income owner']
-            certificate_diffs.append(merged_df_5.groupby(flow_choice_diff)[flow_choice_col].sum())
+            merged_df_reset[flow_choice_diff] = merged_df_reset['Occupancy status'] + "_" + merged_df_reset['Housing type'] + "_" + merged_df_reset['Heater replacement'].astype(str) + "_" + merged_df_reset['Certificate_before_heater'] + "_" + merged_df_reset['Certificate_before'] + "_" + merged_df_reset[category_after_col] + "_" + merged_df_reset['Income owner']
+            certificate_diffs.append(merged_df_reset.groupby(flow_choice_diff)[flow_choice_col].sum())
 
             for category_before, category_after, flow_choice in zip(merged_df['Certificate_before_heater'], merged_df[category_after_col], merged_df[flow_choice_col]):
                 category_change = (category_before, category_after)
