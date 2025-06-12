@@ -4120,6 +4120,21 @@ class AgentBuildings(ThermalBuildings):
         certificate_diffs=[]
         certificate_diffs_results = pd.DataFrame()
 
+        ########## Adding df renovations ###################################################################
+
+
+        mapping_deciles = {"D1" : "Q1",
+                "D2" : "Q1",
+                "D3" : "Q2",
+                "D4" : "Q2",
+                "D5": "Q3",
+                "D6": "Q3",
+                "D7": "Q4",
+                "D8": "Q4",
+                "D9": "Q5",
+                "D10": "Q5"}
+
+
         for i in range(len(market_flow.columns)):
             category_after_col = f'Certif_after_Choice_{i}'
             flow_choice_col = f'Flow_Choice_{i}'
@@ -4132,17 +4147,20 @@ class AgentBuildings(ThermalBuildings):
             # merged_df_4 = merged_df_3.reset_index(level=['Heating system'])
             # merged_df_5 = merged_df_4.reset_index(level=['Heating system final'])
             # merged_df_6 = merged_df_5.reset_index(level=['Occupancy status'])
-            
-            
+                
+            merged_df_5.rename(columns={'Income owner': 'Income_owner_D'}, inplace=True)
+            merged_df_5['Income owner'] = merged_df_5['Income_owner_D'].map(mapping_deciles)
+            merged_df_5.drop('Income_owner_D', axis=1, inplace=True)
+
             merged_df_5[flow_choice_diff] = merged_df_5['Occupancy status'] + "_" + merged_df_5['Housing type'] + "_" + merged_df_5['Heater replacement'].astype(str) + "_" + merged_df_5['Certificate_before_heater'] + "_" + merged_df_5['Certificate_before'] + "_" + merged_df_5[category_after_col] + "_" + merged_df_5['Income owner']
             certificate_diffs.append(merged_df_5.groupby(flow_choice_diff)[flow_choice_col].sum())
 
             for category_before, category_after, flow_choice in zip(merged_df['Certificate_before_heater'], merged_df[category_after_col], merged_df[flow_choice_col]):
                 category_change = (category_before, category_after)
                 flow_by_certificate_couples[category_change] = flow_by_certificate_couples.get(category_change, 0) + flow_choice
-        
+            
         certificate_diffs_results = pd.concat(certificate_diffs, axis=1)
-
+        
         certificate_diffs_results = certificate_diffs_results.reset_index()
         l = pd.wide_to_long(certificate_diffs_results, stubnames='Flow_Choice_', i= 'index', j='operation')
         l2 = l.reset_index(level=['operation'])
@@ -4151,6 +4169,10 @@ class AgentBuildings(ThermalBuildings):
         l3['operation_details'] = l3['index'] + "_" + l3['operation_map']
         l4 = l3.drop(['operation', 'index','operation_map'], axis=1)
         l5 = l4.set_index(['operation_details'])
+
+        ########## End adding df renovations ###################################################################
+
+
         # Check that the sum of the flows for each possible pair of certificates equals the sum of renovation_flow.
         sum_check = 0
         for key in flow_by_certificate_couples:
@@ -5091,13 +5113,14 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
 
-
+        ###############################################################################################################
+        ####################### Adding consumption standard real ######################################################
+        ###############################################################################################################
 
         consumption_std = self.consumption_heating(freq="year", climate=None)
         consumption_std_2 = reindex_mi(consumption_std, self.stock.index) * self.surface * self.stock
         consumption_std_3 = consumption_std_2.reset_index()
         consumption_std_3.rename(columns={0: "consumption_standard"})
-
 
         consumption_real = self.consumption_heating(freq="year", climate=climate, temp_sink=self._temp_sink)
         consumption_real_2 = reindex_mi(consumption_real, self.stock.index) * self.surface
@@ -5148,11 +5171,6 @@ class AgentBuildings(ThermalBuildings):
 
         df_final = df_final[["epc", "Heating system", "Stock buildings", "consumption_standard", "consumption_real", "coefficient_heater"]]
 
-        output['Stock efficient (Million)'] = output.get('Stock A (Million)', 0) + output.get('Stock B (Million)', 0)
-        output['Stock low-efficient (Million)'] = output.get('Stock G (Million)', 0) + output.get('Stock F (Million)', 0)
-        output['Stock to renovate (Million)'] = output['Stock low-efficient (Million)'] + output.get('Stock E (Million)', 0) + \
-                                                output.get('Stock D (Million)', 0)
-        
         mapping_system_energy = {"Electricity-Heat pump water" : "Electricity",
                 "Heating-District heating" : "District heating",
                 "Natural gas-Performance boiler" : "Gas" ,
@@ -5184,6 +5202,17 @@ class AgentBuildings(ThermalBuildings):
         df_final_grouped.rename(columns={"consumption_standard": "Consumption standard (TWh)","consumption_real": "Consumption  real (TWh)" }, inplace = True)
         
         df_final_grouped = df_final_grouped.reset_index()
+
+        ###############################################################################################################
+        ####################### End adding consumption standard_real ###################################################
+        ###############################################################################################################
+
+
+        output['Stock efficient (Million)'] = output.get('Stock A (Million)', 0) + output.get('Stock B (Million)', 0)
+        output['Stock low-efficient (Million)'] = output.get('Stock G (Million)', 0) + output.get('Stock F (Million)', 0)
+        output['Stock to renovate (Million)'] = output['Stock low-efficient (Million)'] + output.get('Stock E (Million)', 0) + \
+                                                output.get('Stock D (Million)', 0)
+        
 
         temp = self.stock.groupby('Heating system').sum()
 
@@ -6288,6 +6317,11 @@ class AgentBuildings(ThermalBuildings):
                 output['Total Renovation ampleur (Thousand households)'] = temp
             
             flow_by_operation = self.flow_by_operation_insulation / 10**3
+
+            ###############################################################################################################
+            ####################### Adding df_renovations #################################################################
+            ###############################################################################################################
+
             l5 = self.l5.fillna(0)
             if self.flow_by_certificate_couples_obligation is not None:
                 l5_obligation = self.l5_obligation.fillna(0)
@@ -6321,27 +6355,26 @@ class AgentBuildings(ThermalBuildings):
                 merged_df_heater["Year"] = self.year
                 merged_df_heater.drop(["epc before heater", "epc after heater"], axis=1, inplace=True)
 
-
             else :
                 merged_df_heater = pd.DataFrame(columns=["Occupancy status","Housing type","Heating system final","Heating system","Flow","certificate_before_heater","certificate_after_heater","steps_heater","Year"])
 
             df_renovations_3 = pd.DataFrame(columns=["Occupancy status","Housing type","Heater replacement","Category before heater","Category before insulation", "Category after insulation", "Income", "Operation type","Year","Value"])
             
-            mapping_final = {"Wi" : "Wi",
-                "R" : "other",
-                "RWi" : "other" ,
-                "F" : "other",
-                "FWi": "other",
-                "FR": "other",
-                "FRWi": "other",
-                "Wa": "other",
-                "WaWi": "other",
-                "WR": "other",
-                "WaRWi": "other",
-                "WaF": "other",
-                "WaFWi": "other",
-                "WaFR": "other",
-                "WaFRWi": "other"}
+            mapping_final = {"Wi" : "Windows",
+                "R" : "othersingleinsulation",
+                "RWi" : "2insulations",
+                "F" : "othersingleinsulation",
+                "FWi": "2insulations",
+                "FR": "2insulations",
+                "FRWi": "3insulations",
+                "Wa": "othersingleinsulation",
+                "WaWi": "2insulations",
+                "WR": "2insulations",
+                "WaRWi":"3insulations",
+                "WaF": "2insulations",
+                "WaFWi": "3insulations",
+                "WaFR": "3insulations",
+                "WaFRWi": "4insulations"}
             
             l5_bis = l5.reset_index()
             l5_bis["operation_details_2"] = l5_bis["operation_details"]
@@ -6391,7 +6424,9 @@ class AgentBuildings(ThermalBuildings):
 
         df_renovations_total = pd.concat([df_renovations, df_renovations_obligation], ignore_index=True)
 
-
+        ###############################################################################################################
+        ####################### End adding_df_renovations #################################################################
+        ###############################################################################################################
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)
