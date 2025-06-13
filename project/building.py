@@ -1071,8 +1071,8 @@ class AgentBuildings(ThermalBuildings):
         self.flow_by_certificate_couples_ampleur_insulation = None
         self.flow_by_certificate_couples_ampleur_obligation = None
         self.flow_by_operation_insulation = None
-        self.l5 = None
-        self.l5_obligation = None
+        self.renovation_details_long = None
+        self.renovation_details_long_obligation = None
         self.merged_df_heater = None
         self.flow_by_certificate_couples_heater = None
         self.sum_performance_changes_heater = None
@@ -4196,7 +4196,7 @@ class AgentBuildings(ThermalBuildings):
 
         # Reshape certificate_diffs_results to long format and add operation details
         try:
-            l5 = transform_certificate_diffs(certificate_diffs_results, mapping_operations_2)
+            renovation_details_long = transform_certificate_diffs(certificate_diffs_results, mapping_operations_2)
         except Exception as e:
             raise Exception(f"Failed to transform certificate differences: {e}")
 
@@ -4267,11 +4267,11 @@ class AgentBuildings(ThermalBuildings):
             self.flow_by_certificate_couples_ampleur_insulation = flow_by_certificate_couples_ampleur
             self.sum_performance_insulation_ampleur = sum_performance_insulation_ampleur
             self.flow_by_operation_insulation = flow_by_operation
-            self.l5 = l5 
+            self.renovation_details_long = renovation_details_long 
         else:
             self.flow_by_certificate_couples_ampleur_obligation = flow_by_certificate_couples_ampleur
             self.sum_performance_insulation_ampleur_obligation = sum_performance_insulation_ampleur
-            self.l5_obligation = l5 
+            self.renovation_details_long_obligation = renovation_details_long 
 
         return None
     
@@ -6352,15 +6352,15 @@ class AgentBuildings(ThermalBuildings):
             ####################### Adding df_renovations #################################################################
             ###############################################################################################################
 
-            l5 = self.l5.fillna(0)
+            renovation_details_long = self.renovation_details_long.fillna(0)
             if self.flow_by_certificate_couples_obligation is not None:
-                l5_obligation = self.l5_obligation.fillna(0)
+                renovation_details_long_obligation = self.renovation_details_long_obligation.fillna(0)
                 df_renovations_obligation_3 = pd.DataFrame(columns=["Occupancy status","Housing type","Heater replacement","Category before heater","Category before insulation", "Category after insulation", "Income", "Operation type","Year","Value"])
-                for i in l5_obligation.squeeze().index :
+                for i in renovation_details_long_obligation.squeeze().index :
 
                     i_columns = i.split('_')
                     i_columns.append(self.year)
-                    value = l5_obligation.squeeze().loc[(i)]
+                    value = renovation_details_long_obligation.squeeze().loc[(i)]
                     i_columns.append(value)
 
                     df_renovations_obligation_2 = pd.DataFrame([i_columns], columns=["Occupancy status","Housing type","Heater replacement","Category before heater","Category before insulation", "Category after insulation","Income", "Operation type","Year","Value"])
@@ -6371,7 +6371,7 @@ class AgentBuildings(ThermalBuildings):
 
 #            output.update({'Renovation {} (Thousand households)'.format(i): flow_by_operation.loc[(i)] for (i) in flow_by_operation.index})
 
-#            output.update({'Renovation {} (Thousand households)'.format(i): l5.squeeze().loc[(i)] for (i) in l5.squeeze().index})
+#            output.update({'Renovation {} (Thousand households)'.format(i): renovation_details_long.squeeze().loc[(i)] for (i) in renovation_details_long.squeeze().index})
             
             if self.merged_df_heater is not None:
                 merged_df_heater = self.merged_df_heater
@@ -6406,13 +6406,12 @@ class AgentBuildings(ThermalBuildings):
                 "WaFR": "3insulations",
                 "WaFRWi": "4insulations"}
             
-            l5_bis = l5.reset_index()
-            l5_bis["operation_details_2"] = l5_bis["operation_details"]
-            l5_bis[['1','2','3','4','5','6','7','8']] = l5_bis['operation_details_2'].str.split('_',expand=True)
+            renovation_details_long_bis = renovation_details_long.reset_index()
+            renovation_details_long_bis["operation_details_2"] = renovation_details_long_bis["operation_details"]
+            renovation_details_long_bis[['1','2','3','4','5','6','7','8']] = renovation_details_long_bis['operation_details_2'].str.split('_',expand=True)
+            renovation_details_long_bis['category'] = renovation_details_long_bis['8'].map(mapping_final)
 
-            l5_bis['category'] = l5_bis['8'].map(mapping_final)
-
-            l6_bis = l5_bis.drop(['operation_details','operation_details_2', '8'], axis=1)
+            l6_bis = renovation_details_long_bis.drop(['operation_details','operation_details_2', '8'], axis=1)
             l7_bis = l6_bis.groupby(['1','2','3','4','5','6','7','category']).agg(
                 Flow_Choice_=('Flow_Choice_', 'sum'))
             l7_bis = l7_bis.reset_index()
