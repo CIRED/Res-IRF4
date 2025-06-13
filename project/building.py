@@ -6408,22 +6408,23 @@ class AgentBuildings(ThermalBuildings):
             
             renovation_details_long_bis = renovation_details_long.reset_index()
             renovation_details_long_bis["operation_details_2"] = renovation_details_long_bis["operation_details"]
-            renovation_details_long_bis[['1','2','3','4','5','6','7','8']] = renovation_details_long_bis['operation_details_2'].str.split('_',expand=True)
-            renovation_details_long_bis['category'] = renovation_details_long_bis['8'].map(mapping_final)
+            renovation_details_long_bis[['1','2','3','4','5','6','7','8']] = renovation_details_long_bis['operation_details_2'].str.split('_', n=7, expand=True)
+            renovation_details_long_bis['category'] = renovation_details_long_bis['8'].apply(lambda x: mapping_final.get(x, 'Unknown'))
 
-            l6_bis = renovation_details_long_bis.drop(['operation_details','operation_details_2', '8'], axis=1)
-            l7_bis = l6_bis.groupby(['1','2','3','4','5','6','7','category']).agg(
+            renovation_details_cleaned = renovation_details_long_bis.drop(['operation_details','operation_details_2', '8'], axis=1)
+            grouped_renovation_details = renovation_details_cleaned.groupby(['1','2','3','4','5','6','7','category']).agg(
                 Flow_Choice_=('Flow_Choice_', 'sum'))
-            l7_bis = l7_bis.reset_index()
-            l7_bis["operation_details"] = l7_bis['1'] + "_" + l7_bis['2'] + "_" + l7_bis['3'] + "_" + l7_bis['4'] + "_" + l7_bis['5'] + "_" + l7_bis['6'] + "_" + l7_bis['7'] + "_" + l7_bis['category']
-            l8_bis = l7_bis.set_index('operation_details')
-            l8_bis = l8_bis.drop(['1','2','3','4','5','6','7','category'], axis=1)
+            grouped_renovation_details = grouped_renovation_details.reset_index()
+            grouped_renovation_details["operation_details"] = grouped_renovation_details.apply(lambda row: "_".join([str(row[str(i)]) for i in range(1, 8)] + [str(row['category'])]), axis=1)
+            grouped_renovation_details = grouped_renovation_details.set_index('operation_details')
+            cols_to_keep = [col for col in grouped_renovation_details.columns if col not in ['1','2','3','4','5','6','7','category']]
+            grouped_renovation_details = grouped_renovation_details[cols_to_keep]
 
-            for i,val in enumerate(l8_bis.squeeze().index) :
+            for i,val in enumerate(grouped_renovation_details.squeeze().index) :
 
                 i_columns = val.split('_')
                 i_columns.append(self.year)
-                value = l8_bis.squeeze().loc[(val)]
+                value = grouped_renovation_details.squeeze().loc[(val)]
                 i_columns.append(value)
 
                 df_renovations_2 = pd.DataFrame([i_columns], columns=["Occupancy status","Housing type","Heater replacement","Category before heater","Category before insulation", "Category after insulation", "Income", "Operation type","Year","Value"])
