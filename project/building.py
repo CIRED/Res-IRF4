@@ -4122,7 +4122,7 @@ class AgentBuildings(ThermalBuildings):
 
         ########## Adding df renovations ###################################################################
 
-
+        # dictionary, `mapping_deciles`, which groups income deciles (D1–D10) into broader quintile categories (Q1–Q5). 
         mapping_deciles = {"D1" : "Q1",
                 "D2" : "Q1",
                 "D3" : "Q2",
@@ -4134,35 +4134,71 @@ class AgentBuildings(ThermalBuildings):
                 "D9": "Q5",
                 "D10": "Q5"}
 
-
-        for i in range(len(market_flow.columns)):
-            category_after_col = f'Certif_after_Choice_{i}'
-            flow_choice_col = f'Flow_Choice_{i}'
-            flow_choice_diff = f'Flow_Choice_diff{i}'
+        # Iteration over the columns numbers of a DataFrame called `market_flow`(each insulation combination)
+        for index, value in enumerate(market_flow.columns):
+            category_after_col = f'Certif_after_Choice_{index}'
+            flow_choice_col = f'Flow_Choice_{index}'
+            flow_choice_diff = f'Flow_Choice_diff{index}'
 
             merged_df_reset = merged_df.reset_index(level=['Heater replacement', 'Housing type', 'Occupancy status', 'Income owner'])
-                
+
+            # mapping deciles with quintiles, removing deciles columns    
             merged_df_reset = merged_df_reset.rename(columns={'Income owner': 'Income_owner_D'})
             merged_df_reset['Income owner'] = merged_df_reset['Income_owner_D'].map(mapping_deciles)
             merged_df_reset = merged_df_reset.drop('Income_owner_D', axis=1)
 
+            # creating a description of all renovations with characteristics
             merged_df_reset[flow_choice_diff] = merged_df_reset['Occupancy status'] + "_" + merged_df_reset['Housing type'] + "_" + merged_df_reset['Heater replacement'].astype(str) + "_" + merged_df_reset['Certificate_before_heater'] + "_" + merged_df_reset['Certificate_before'] + "_" + merged_df_reset[category_after_col] + "_" + merged_df_reset['Income owner']
+            
+            
             certificate_diffs.append(merged_df_reset.groupby(flow_choice_diff)[flow_choice_col].sum())
 
             for category_before, category_after, flow_choice in zip(merged_df['Certificate_before_heater'], merged_df[category_after_col], merged_df[flow_choice_col]):
                 category_change = (category_before, category_after)
                 flow_by_certificate_couples[category_change] = flow_by_certificate_couples.get(category_change, 0) + flow_choice
             
+        # renovations by option (0 to 14) and characteristics (socio-economic, certificate before heating, after heating, after insulation)
         certificate_diffs_results = pd.concat(certificate_diffs, axis=1)
-        
         certificate_diffs_results = certificate_diffs_results.reset_index()
-        l = pd.wide_to_long(certificate_diffs_results, stubnames='Flow_Choice_', i= 'index', j='operation')
-        l2 = l.reset_index(level=['operation'])
-        l2['operation_map'] = l2['operation'].map(mapping_operations_2)
-        l3 = l2.reset_index()
-        l3['operation_details'] = l3['index'] + "_" + l3['operation_map']
-        l4 = l3.drop(['operation', 'index','operation_map'], axis=1)
-        l5 = l4.set_index(['operation_details'])
+
+        def transform_certificate_diffs(certificate_diffs_results, mapping_operations_2):
+            """
+            Transform certificate differences results into long format with operation details.
+            
+            Args:
+                certificate_diffs_results (pd.DataFrame): Input DataFrame with certificate differences
+                mapping_operations_2 (dict): Mapping dictionary for operations
+            
+            Returns:
+                pd.DataFrame: Transformed DataFrame with operation details
+            """
+            try:
+                transformed_df = (
+                    pd.wide_to_long(
+                        certificate_diffs_results,
+                        stubnames='Flow_Choice_',
+                        i='index',
+                        j='operation'
+                    )
+                    .reset_index(level=['operation']))
+                transformed_df['operation_map'] = transformed_df['operation'].map(mapping_operations_2)
+                transformed_df = transformed_df.reset_index()
+                transformed_df['operation_details'] = transformed_df['index'] + "_" + transformed_df['operation_map']
+                transformed_df = transformed_df.drop(['operation', 'index','operation_map'], axis=1)
+                transformed_df = transformed_df.set_index(['operation_details'])
+                
+                return transformed_df
+                
+            except KeyError as e:
+                raise KeyError(f"Missing mapping for operation: {e}")
+            except Exception as e:
+                raise RuntimeError(f"Error transforming certificate diffs: {e}")
+
+        # Reshape certificate_diffs_results to long format and add operation details
+        try:
+            l5 = transform_certificate_diffs(certificate_diffs_results, mapping_operations_2)
+        except Exception as e:
+            raise Exception(f"Failed to transform certificate differences: {e}")
 
         ########## End adding df renovations ###################################################################
 
