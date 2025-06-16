@@ -4017,21 +4017,21 @@ class AgentBuildings(ThermalBuildings):
         #     "True True True False": "other",
         #     "True True True True": "other"}
 
-        mapping_operations = {"False False False True" : "Wi",
-            "False False True False" : "R",
-            "False False True True": "RWi",
-            "False True False False": "F",
-            "False True False True": "FWi",
-            "False True True False": "FR",
-            "False True True True": "FRWi",
-            "True False False False": "Wa",
-            "True False False True": "WaWi",
-            "True False True False": "WR",
-            "True False True True": "WaRWi",
-            "True True False False": "WaF",
-            "True True False True": "WaFWi",
-            "True True True False": "WaFR",
-            "True True True True": "WaFRWi"}
+        mapping_operations = {"Wi" : "Windows",
+                "R" : "othersingleinsulation",
+                "RWi" : "2insulations",
+                "F" : "othersingleinsulation",
+                "FWi": "2insulations",
+                "FR": "2insulations",
+                "FRWi": "3insulations",
+                "Wa": "othersingleinsulation",
+                "WaWi": "2insulations",
+                "WR": "2insulations",
+                "WaRWi":"3insulations",
+                "WaF": "2insulations",
+                "WaFWi": "3insulations",
+                "WaFR": "3insulations",
+                "WaFRWi": "4insulations"}
         
         # mapping_operations_2 = {0 : "Wi",
         #     1 : "R",
@@ -6451,6 +6451,7 @@ class AgentBuildings(ThermalBuildings):
             df_renovations_obligation["steps_insulation_with_heater"] = - (df_renovations_obligation["epc after insulation"] - df_renovations_obligation["epc before heater"])
             df_renovations_obligation.drop(['epc before heater', 'epc before insulation', 'epc after insulation'], axis=1, inplace=True)
             df_renovations_obligation["Obligation"] = "Yes"
+            df_renovations_obligation['Operation type'] = df_renovations_obligation['Operation type'].apply(lambda x: mapping_final.get(x, 'Unknown'))
 
         df_renovations_total = pd.concat([df_renovations, df_renovations_obligation], ignore_index=True)
 
