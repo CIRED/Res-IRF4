@@ -3032,18 +3032,6 @@ class AgentBuildings(ThermalBuildings):
         idx_heat_pump_air_final = flow_end_of_life.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
         flow_end_of_life.loc[idx_heat_pump_air_final] = 0.
 
-        # size cooling system
-        # if self._variable_size_cooler:
-        #     print('Cooler size not Implemented')
-        # else:
-        #     size_cooler = Series(8, index=index)
-
-        # technical 'restriction' - air heat pump implies cooling system air heat pump
-        # condition = Series(True, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
-        # condition = condition.astype(bool)
-        # idx = condition.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
-        # condition.loc[idx, [i for i in condition.columns if i not in ['Electricity-Heat pump air']]] = False
-
         # update for end of life cooling systems (eol: end of life)
         share_eol = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
 
@@ -3073,7 +3061,6 @@ class AgentBuildings(ThermalBuildings):
                      0) == 0, 'Sum problem'
         
         # computation of market share adoption matrix
-        # TODO: dans une fonction à part 'endogenous_market_share_cooler
         temporary = False
         if temporary:
             stock_ac_adoption = stock_ac.copy()
@@ -5368,9 +5355,22 @@ class AgentBuildings(ThermalBuildings):
                 temp['Heating system final'] = temp['Heating system']
                 replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
 
-            replaced_by.index = replaced_by.index.reorder_levels(
-                ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
-                 'Roof', 'Windows', 'Heating system', 'Heating system final'])
+            if self.cooling_system_activation:
+                if 'Cooler adoption' not in replaced_by:
+                    replaced_by = concat([replaced_by], keys=[False], names=['Cooler adoption'])
+                if 'Cooling system adoption' not in replaced_by.index.names:
+                    temp = replaced_by.reset_index('Cooling system')
+                    temp['Cooling system adoption'] = temp['Cooling system']
+                    replaced_by = temp.set_index(['Cooling system', 'Cooling system adoption'], append=True).squeeze()
+
+            if self.cooling_system_activation:
+                replaced_by.index = replaced_by.index.reorder_levels(
+                    ['Heater replacement', 'Cooler adoption', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
+                    'Roof', 'Windows', 'Heating system', 'Heating system final', 'Cooling system', 'Cooling system adoption'])
+            else:
+                replaced_by.index = replaced_by.index.reorder_levels(
+                    ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
+                    'Roof', 'Windows', 'Heating system', 'Heating system final'])
 
             # economic of switch to heat-pumps
             _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
