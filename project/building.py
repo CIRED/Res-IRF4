@@ -4144,8 +4144,12 @@ class AgentBuildings(ThermalBuildings):
 
             # mapping deciles with quintiles, removing deciles columns    
             merged_df_reset = merged_df_reset.rename(columns={'Income owner': 'Income_owner_D'})
-            merged_df_reset['Income owner'] = merged_df_reset['Income_owner_D'].map(mapping_deciles)
-            merged_df_reset = merged_df_reset.drop('Income_owner_D', axis=1)
+            # merged_df_reset['Income owner'] = merged_df_reset['Income_owner_D'].map(mapping_deciles)
+            # merged_df_reset = merged_df_reset.drop('Income_owner_D', axis=1)
+
+            mask_decile = merged_df_reset['Income_owner_D'].str.startswith("D")
+            merged_df_reset['Income owner'] = merged_df_reset['Income_owner_D']  # copie par défaut
+            merged_df_reset.loc[mask_decile, 'Income owner'] = merged_df_reset.loc[mask_decile, 'Income_owner_D'].map(mapping_deciles)
 
             # creating a description of all renovations with characteristics
             merged_df_reset[flow_choice_diff] = merged_df_reset['Occupancy status'] + "_" + merged_df_reset['Housing type'] + "_" + merged_df_reset['Heater replacement'].astype(str) + "_" + merged_df_reset['Certificate_before_heater'] + "_" + merged_df_reset['Certificate_before'] + "_" + merged_df_reset[category_after_col] + "_" + merged_df_reset['Income owner']
