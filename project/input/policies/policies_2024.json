@@ -32,7 +32,7 @@
         "end": 2051
       },
       "coefficient_obligation": "project/input/policies/current/cee_coefficient_obligation.csv",
-      "value": "project/input/policies/current/cee_value.csv",
+      "value": "project/input/policies/current/cee_value_updated.csv",
       "growth": null,
       "policy": "subsidy_targeted"
     },
