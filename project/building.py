@@ -1124,6 +1124,7 @@ class AgentBuildings(ThermalBuildings):
         self._renovation_store = {}
         self._condition_store = None
         self._heating_intensity_avg = None
+        self._cooler_adoption_calibration = None
 
         if belief_engineering_calculation is None:
             self._belief_engineering_calculation = False
@@ -2947,7 +2948,7 @@ class AgentBuildings(ThermalBuildings):
         return 
     
 
-    def endogenous_market_share_cooler(self, stock):
+    def endogenous_market_share_cooler(self, stock, calibration=False):
         year = self.year
         climate_model = self.climate_model
         
@@ -2972,13 +2973,13 @@ class AgentBuildings(ThermalBuildings):
         market_share['income'] = market_share['Income tenant'].map(self.income.to_dict().get)
         market_share['cdd26'] = [0]*len(market_share)
         market_share['lt20_cdd26'] = [0]*len(market_share)
-
         
         # computation of first stage : No AC -> AC
         logit_ac_dict = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict()
 
-        # # manual calibration of const parameter : TODO: to be removed
-        # logit_ac_dict['const'] = logit_ac_dict['const']*0.79
+        # calibration of const parameter :
+        if not calibration:
+            logit_ac_dict['const'] = logit_ac_dict['const']*self._cooler_adoption_calibration
 
         coeffs_vars = list(logit_ac_dict.keys())
         coeffs_vals = asarray(list(logit_ac_dict.values()))
@@ -2990,6 +2991,7 @@ class AgentBuildings(ThermalBuildings):
             # hypothesis : cdd long term and cdd are distributed the same way over the territory
             data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
         p_ac_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
+        p_ac_calibration = exp(dot(data_array,coeffs_vals))
 
         for idx in range(10):
             p_ac_list = p_ac_list + p_ac_array[idx*ms_len:(idx+1)*ms_len]
@@ -3033,7 +3035,28 @@ class AgentBuildings(ThermalBuildings):
         market_share.loc[idx_hpa, 'Electricity-Portable unit'] = 0.
         market_share.loc[idx_hpa, 'No AC'] = 0.
 
+        if calibration:
+            return market_share, p_ac_calibration
         return market_share
+    
+
+    def cooler_sales_calibration(self,stock):
+        market_share,exp_logit = self.endogenous_market_share_cooler(stock=stock,calibration=True)
+
+        adoption = (market_share.T * stock).T
+        adoption = adoption.groupby(adoption.columns, axis=1).sum()
+        adoption.columns.names = ['Cooling system adoption']
+
+        save_adoption = adoption[adoption.index.get_level_values('Cooling system eol')=='No AC'].sum()
+        modelled_sales = save_adoption.loc[self._resources_data['index']['AC']].sum()
+        reference_sales = self._resources_data['cooling_adoption']['reference_sales'].loc[2017].sum()
+
+        const = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict().get('const')
+        new_const = const - log((modelled_sales/reference_sales-(exp_logit)/(1+exp_logit))*(1+exp_logit)).mean()
+
+        self._cooler_adoption_calibration = new_const/const
+        return 
+    
 
     def cooler_adoption(self, stock, policies_cooler=[], step=1, store_information=True,):
         """
@@ -3122,6 +3145,11 @@ class AgentBuildings(ThermalBuildings):
                 else:
                     market_share.loc[idx, ac_syst] = 1.
         else:
+
+            if self._cooler_adoption_calibration is None:
+                self.logger.info('Calibration initial cooling system sales')
+                self.cooler_sales_calibration(stock=stock_ac.copy())
+
             stock_ac_adoption = stock_ac.copy()
             index = stock_ac_adoption.index
             market_share = self.endogenous_market_share_cooler(stock=stock_ac_adoption)

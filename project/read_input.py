@@ -752,6 +752,7 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'temp_sink': get_series(config['technical']['temp_sink'], header=None)})
 
     inputs.update({'lifetime_heater': get_series(config['technical']['lifetime_heater'], header=[0])})
+
     inputs.update({'lifetime_cooler': get_series(config['technical']['lifetime_cooler'], header=[0])})
 
     inputs.update({'cost_insulation': get_series(config['technical']['cost_insulation'], header=[0])})
@@ -906,7 +907,8 @@ def read_inputs(config, other_inputs=generic_input):
     ac_activation = config['adoption_cooler']['activated']
     inputs.update({'cooler_activation':ac_activation})
     inputs.update({'cooler_adoption':{'adoption_coefficients':get_series(config['adoption_cooler']['adoption_coefficients'], header=[0]),
-                                      'ms_coefficients':get_series(config['adoption_cooler']['market_share_coefficients'], header=[0])}})
+                                      'ms_coefficients':get_series(config['adoption_cooler']['market_share_coefficients'], header=[0]),
+                                      'reference_sales':get_pandas(config['adoption_cooler']['reference_sales']).set_index('year')}})
 
     # ajout de la climatisation de la même manière
     temp = get_series(config['adoption_cooler']['ms_cooler_built'], header=[0])
