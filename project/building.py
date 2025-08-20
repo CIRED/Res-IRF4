@@ -78,7 +78,7 @@ class ThermalBuildings:
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
                  resources_data=None, detailed_output=None, figures=None, residual_rate=0, temp_sink=None,
-                 climate_model=None,cooling_system=True):
+                 climate_model=None,cooling_system=True,cooling_failure_weibull=True):
 
         # default values
         self.heating_intensity_max = None
@@ -141,6 +141,7 @@ class ThermalBuildings:
 
         self.climate_model = climate_model
         self.cooling_system_activation = cooling_system
+        self.cooling_failure_weibull = cooling_failure_weibull
 
         # store values to not recalculate standard energy consumption
         self._consumption_store = {
@@ -1038,12 +1039,12 @@ class AgentBuildings(ThermalBuildings):
                  method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
                  variable_size_heater=True, variable_size_cooler=True, temp_sink=None, social_discount_rate=0.032,
                  lifetime_insulation=30, vat_heater=VAT, no_friction=None, belief_engineering_calculation=None,
-                 climate_model=None,cooling_system=True
+                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
                          residual_rate=residual_rate, temp_sink=temp_sink, climate_model=climate_model,
-                         cooling_system=cooling_system)
+                         cooling_system=cooling_system,cooling_failure_weibull=cooling_failure_weibull)
 
         self._distortion_store = {}
         if logger is None:
@@ -1174,15 +1175,40 @@ class AgentBuildings(ThermalBuildings):
 
         # Initialization of cooling systems lifetime if AC is activated
         if self.cooling_system_activation:
-            temp = self.stock.groupby('Cooling system').sum()
-            cooler_vintage = dict()
-            for i in lifetime_cooler.index:
-                if i not in temp.index:
-                    temp.loc[i] = 0
-                cooler_vintage.update({i: Series([temp.loc[i] / lifetime_cooler.loc[i]] * lifetime_cooler.loc[i],
-                                    index=range(1, lifetime_cooler.loc[i] + 1))})
-            self.cooler_vintage = DataFrame(cooler_vintage).T.rename_axis(index='Cooling system', columns='Year').fillna(0)
-            self.lifetime_cooler = lifetime_cooler
+            
+            if self.cooling_failure_weibull:
+                def init_weibull_distribution(x,lamb,k=7):
+                    # survival fonction of ac system, calibrated on sales data and equipment rate
+                    return exp(-(x/lamb)**k)
+                
+                temp = self.stock.groupby('Cooling system').sum()
+                cooler_vintage = dict()
+                for i in lifetime_cooler.index:
+                    if i not in temp.index:
+                        temp.loc[i] = 0
+                    
+                    distribution = Series([init_weibull_distribution(y,lifetime_cooler.loc[i]) for y in range(1, lifetime_cooler.loc[i]*2)], 
+                                        index=range(1, lifetime_cooler.loc[i]*2))
+                    distribution[distribution<1e-10] = 0
+                    distribution = distribution/distribution.sum()*temp.loc[i]
+                    cooler_vintage.update({i: distribution})
+
+                self.cooler_vintage = DataFrame(cooler_vintage).T.rename_axis(index='Cooling system', columns='Year').fillna(0)
+                # delete all zeros columns
+                self.cooler_vintage = self.cooler_vintage.loc[:, (self.cooler_vintage != 0).any(axis=0)]
+
+                self.lifetime_cooler = lifetime_cooler
+
+            else:
+                temp = self.stock.groupby('Cooling system').sum()
+                cooler_vintage = dict()
+                for i in lifetime_cooler.index:
+                    if i not in temp.index:
+                        temp.loc[i] = 0
+                    cooler_vintage.update({i: Series([temp.loc[i] / lifetime_cooler.loc[i]] * lifetime_cooler.loc[i],
+                                        index=range(1, lifetime_cooler.loc[i] + 1))})
+                self.cooler_vintage = DataFrame(cooler_vintage).T.rename_axis(index='Cooling system', columns='Year').fillna(0)
+                self.lifetime_cooler = lifetime_cooler
 
         # 'epc', 'heating_intensity'
         if method_health_cost is None:
@@ -2908,12 +2934,13 @@ class AgentBuildings(ThermalBuildings):
                                           flow_premature_replacement, subsidies_loan, eligible, hidden_benefits_heater)
         return stock
 
-    def store_information_cooler(self, adoption, end_of_life):
+    def store_information_cooler(self, adoption, end_of_life, eol_yearly_detailed):
         # TODO: au moins l'adoption, a la manière de replacement dans un attribut '_cooler_store' de buildings
         self._cooler_store.update(
             {
                 'adoption': adoption,
                 'end_of_life': end_of_life,
+                'end_of_life_by_year': eol_yearly_detailed,
             }
         )
 
@@ -2950,8 +2977,8 @@ class AgentBuildings(ThermalBuildings):
         # computation of first stage : No AC -> AC
         logit_ac_dict = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict()
 
-        # manual calibration of const parameter : TODO: to be removed
-        logit_ac_dict['const'] = logit_ac_dict['const']*0.79
+        # # manual calibration of const parameter : TODO: to be removed
+        # logit_ac_dict['const'] = logit_ac_dict['const']*0.79
 
         coeffs_vars = list(logit_ac_dict.keys())
         coeffs_vals = asarray(list(logit_ac_dict.values()))
@@ -3008,7 +3035,6 @@ class AgentBuildings(ThermalBuildings):
 
         return market_share
 
-
     def cooler_adoption(self, stock, policies_cooler=[], step=1, store_information=True,):
         """
         Function returns building stock updated after cooling systems adoption.
@@ -3016,11 +3042,31 @@ class AgentBuildings(ThermalBuildings):
         stock_ac = stock.copy()
         index = stock_ac.index
         
+        # TODO: to be removed, just for test
+        # self.cooler_vintage.to_csv(os.path.join(self.path, 'cooler_vintage_{}.csv'.format(self.year)))
 
-        probability = self.cooler_vintage.loc[:, 1] / self.cooler_vintage.sum(axis=1)
-        probability.loc['No AC'] = 1. # code convention
-        probability.dropna(inplace=True)
-        probability *= step
+        if self.cooling_failure_weibull:
+            def cooler_failure_probability(x,lamb,k=7):
+                # failure fonction of ac system, calibrated on sales data and equipment rate
+                return 1-exp(-(x/lamb)**k)
+        
+            probability_per_year = self.cooler_vintage.copy()
+            for ac_syst in probability_per_year.index:
+                probability_per_year.loc[ac_syst] = cooler_failure_probability(probability_per_year.columns.to_numpy(),self.lifetime_cooler.loc[ac_syst])
+
+            eol_per_year = probability_per_year*self.cooler_vintage
+
+            probability = eol_per_year.sum(axis=1)/self.cooler_vintage.sum(axis=1)
+            probability.loc['No AC'] = 1. # code convention
+            probability.dropna(inplace=True)
+            probability *= step
+
+        else:
+            probability = self.cooler_vintage.loc[:, 1] / self.cooler_vintage.sum(axis=1)
+            probability.loc['No AC'] = 1. # code convention
+            probability.dropna(inplace=True)
+            probability *= step
+            eol_per_year = None
 
         # premature replacement
         premature_cooler = [p for p in policies_cooler if p.policy == 'premature_cooler']
@@ -3060,9 +3106,9 @@ class AgentBuildings(ThermalBuildings):
         assert round(stock_ac.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
         
-        # computation of market share adoption matrix
-        temporary = False
-        if temporary:
+        # computation of market share adoption matrix #TODO add exogenous in config files
+        exogenous = False
+        if exogenous:
             stock_ac_adoption = stock_ac.copy()
             index = stock_ac_adoption.index
             market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
@@ -3114,7 +3160,7 @@ class AgentBuildings(ThermalBuildings):
 
         # TODO: ajouter des informations par la suite
         if store_information:
-            self.store_information_cooler(save_adoption, save_eol)
+            self.store_information_cooler(save_adoption, save_eol, eol_per_year)
         return stock_ac_adoption
     
 
@@ -4983,9 +5029,9 @@ class AgentBuildings(ThermalBuildings):
 
 
         1. Heater replacement based on current stock segment.
-        2. Knowing heater replacement (and new heating system) calculating retrofit rate by segment and market
+        2. Knowing heater replacement, calculating AC adoption by segment and climate
+        3. Knowing heater replacement (and new heating system) calculating retrofit rate by segment and market
         share by segment.
-        3. Knowing processes before, calculating AC adoption by segment and climate
         4. Then, managing inflow and outflow.
 
         Parameters
@@ -6068,6 +6114,16 @@ class AgentBuildings(ThermalBuildings):
             temp = temp[temp > 0]
             temp.index = temp.index.map(lambda x: 'Switch from {} to {} (Thousand households)'.format(x[0], x[1]))
             output.update((temp / 10 ** 3 / step).T)
+
+            # adoption ac 
+            if self.cooling_system_activation:
+                output['Adoption cooler portable unit (Thousand households)'] = self._cooler_store.get('adoption').loc['Electricity-Portable unit'] / 10 ** 3 / step
+                output['Adoption cooler split system (Thousand households)'] = self._cooler_store.get('adoption').loc['Electricity-Heat pump air'] / 10 ** 3 / step
+                output['Adoption cooler (Thousand households)'] = self._cooler_store['adoption'].loc[['Electricity-Portable unit','Electricity-Heat pump air']].sum() / 10 ** 3 / step
+
+                output['EOL cooler portable unit (Thousand households)'] = self._cooler_store.get('end_of_life').loc['Electricity-Portable unit'] / 10 ** 3 / step
+                output['EOL cooler split system (Thousand households)'] = self._cooler_store.get('end_of_life').loc['Electricity-Heat pump air'] / 10 ** 3 / step
+                output['EOL cooler (Thousand households)'] = self._cooler_store['end_of_life'].loc[['Electricity-Portable unit','Electricity-Heat pump air']].sum() / 10 ** 3 / step
 
             # insulation - who is renovating ?
             temp = replaced_by_grouped.sum(axis=1)

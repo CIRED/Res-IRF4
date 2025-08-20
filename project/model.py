@@ -371,7 +371,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                no_friction=config['simple'].get('no_friction'),
                                belief_engineering_calculation=config['renovation'].get('belief_engineering_calculation', False),
                                climate_model=parsed_inputs['climate_model'],
-                               cooling_system=parsed_inputs['cooler_activation'])
+                               cooling_system=parsed_inputs['cooler_activation'],
+                               cooling_failure_weibull=True)
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -553,27 +554,43 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
 
         # add of vintage for cooler 
         #TODO: replace these by Weibull distribution (heater+cooler)
-        
+        #TODO: heater not done yet
+
         if buildings.cooling_system_activation:
             less_cooler = buildings._cooler_store['end_of_life']
+            if buildings.cooling_failure_weibull:
+                less_cooler_per_year = buildings._cooler_store['end_of_life_by_year']
+                for ac_syst in less_cooler.index:
+                    less_cooler_per_year.loc[ac_syst] = less_cooler_per_year.loc[ac_syst]*less_cooler.loc[ac_syst]/less_cooler_per_year.sum(axis=1).loc[ac_syst]
             more_cooler = buildings._cooler_store['adoption']
         else:
             less_cooler = 0
             more_cooler = 0
-        # more_cooler += new_cooling #TODO : quelle méthode pour le chauffage ? Comment faire pour la clim ?
         
-        # decrease of year 1, repartition of remaining among the other years
+        # decrease of number of systems with less_cooler
+        # increase of system in year 0, then shift of 1 for all columns
         if buildings.cooling_system_activation:
-            min_lifetime_coolers = buildings.lifetime_cooler.min()
-            for ac_syst in buildings._resources_data['index']['AC']:
-                buildings.cooler_vintage.loc[ac_syst,1] = buildings.cooler_vintage.loc[ac_syst,1] - less_cooler.loc[ac_syst]
-                buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] = buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] + buildings.cooler_vintage.loc[ac_syst,1]/(min_lifetime_coolers-1)
+            if buildings.cooling_failure_weibull:
+                for ac_syst in buildings._resources_data['index']['Cooling system']:
+                    buildings.cooler_vintage.loc[ac_syst] = buildings.cooler_vintage.loc[ac_syst] - less_cooler_per_year.loc[ac_syst]
+                    buildings.cooler_vintage.loc[ac_syst,0] = more_cooler.loc[ac_syst]
 
-            buildings.cooler_vintage.columns = buildings.cooler_vintage.columns - 1
-            buildings.cooler_vintage.drop(0, axis=1, inplace=True)
+                buildings.cooler_vintage = buildings.cooler_vintage[sorted(buildings.cooler_vintage.columns.to_list())]
+                buildings.cooler_vintage = buildings.cooler_vintage.rename(columns={e:e+1 for e in buildings.cooler_vintage.columns})
+                # delete all zeros columns
+                buildings.cooler_vintage = buildings.cooler_vintage.loc[:, (buildings.cooler_vintage != 0).any(axis=0)]
 
-            for ac_syst in buildings._resources_data['index']['Cooling system']:
-                buildings.cooler_vintage.loc[ac_syst,buildings.lifetime_cooler.loc[ac_syst]] = more_cooler.loc[ac_syst]
+            else:
+                min_lifetime_coolers = buildings.lifetime_cooler.min()
+                for ac_syst in buildings._resources_data['index']['AC']:
+                    buildings.cooler_vintage.loc[ac_syst,1] = buildings.cooler_vintage.loc[ac_syst,1] - less_cooler.loc[ac_syst]
+                    buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] = buildings.cooler_vintage.loc[ac_syst,2:min_lifetime_coolers+1] + buildings.cooler_vintage.loc[ac_syst,1]/(min_lifetime_coolers-1)
+
+                buildings.cooler_vintage.columns = buildings.cooler_vintage.columns - 1
+                buildings.cooler_vintage.drop(0, axis=1, inplace=True)
+
+                for ac_syst in buildings._resources_data['index']['Cooling system']:
+                    buildings.cooler_vintage.loc[ac_syst,buildings.lifetime_cooler.loc[ac_syst]] = more_cooler.loc[ac_syst]
 
     return buildings, stock, output
 
@@ -731,6 +748,11 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              step=step,
                                              default_quality=config['technical'].get('default_quality'),
                                              credit_constraint=config['financing_cost'].get('credit_constraint', True))
+
+            if config['output'] == 'full':
+                if 'full_buildings_stock' not in os.listdir(path):
+                    os.mkdir(os.path.join(path,'full_buildings_stock'))
+                buildings.stock.to_csv(os.path.join(path, 'full_buildings_stock', 'full_buildings_stock_{}.csv'.format(buildings.year)))
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names
