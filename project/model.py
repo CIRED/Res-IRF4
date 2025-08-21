@@ -458,9 +458,16 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
         bill_rebate_before = buildings.bill_rebate[year - 1]
 
     heater_demolition = None
+    cooler_demolition = None
     if demolition_rate is not None:
         temp = buildings.flow_demolition(demolition_rate, step=step)
         heater_demolition = temp.groupby('Heating system').sum()
+        cooler_demolition = temp.groupby('Cooling system').sum()
+
+        # some cooling systems are not destroyed with the building
+        cooler_demolition.loc['No AC'] = 0.
+        cooler_demolition.loc['Electricity-Portable unit'] = 0.
+
         buildings.add_flows([- temp])
     buildings.logger.info('Calculation retrofit')
 
@@ -502,10 +509,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
         buildings.add_flows(flows_obligation)
 
     new_heating = None
+    new_cooling = None
     if flow_built is not None:
         buildings.add_flows([flow_built])
         new_heating = flow_built.groupby('Heating system').sum()
-        # new_cooling = flow_built.groupby('Cooling system').sum()
+        new_cooling = flow_built.groupby('Cooling system').sum()
 
     buildings.logger.info('Writing output')
     if output_options == 'full':
@@ -558,11 +566,12 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
 
         if buildings.cooling_system_activation:
             less_cooler = buildings._cooler_store['end_of_life']
+            less_cooler = less_cooler + cooler_demolition
             if buildings.cooling_failure_weibull:
                 less_cooler_per_year = buildings._cooler_store['end_of_life_by_year']
                 for ac_syst in less_cooler.index:
                     less_cooler_per_year.loc[ac_syst] = less_cooler_per_year.loc[ac_syst]*less_cooler.loc[ac_syst]/less_cooler_per_year.sum(axis=1).loc[ac_syst]
-            more_cooler = buildings._cooler_store['adoption']
+            more_cooler = buildings._cooler_store['adoption'] + new_cooling
         else:
             less_cooler = 0
             more_cooler = 0
