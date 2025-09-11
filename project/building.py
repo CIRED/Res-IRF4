@@ -338,16 +338,25 @@ class ThermalBuildings:
         return size_heating_system / 1e3
 
     def reset_consumption_store(self):
-            """Réinitialise le cache des consommations / certificats."""
-            import pandas as pd
-            self._consumption_store = {
-                'consumption': pd.Series(dtype='float'),
-                'consumption_3uses': pd.Series(dtype='float'),
-                'certificate': pd.Series(dtype='float'),
-                'consumption_renovation': pd.Series(dtype='float'),
-                'consumption_3uses_renovation': pd.Series(dtype='float'),
-                'certificate_renovation': pd.Series(dtype='float'),
-            }
+        """
+        Reset the internal cache for consumption and certificates.
+
+        This method initializes empty pandas Series for all stored
+        consumption and certificate variables, including those related
+        to renovations.
+
+        Returns
+        -------
+        None
+        """
+        self._consumption_store = {
+            'consumption': pd.Series(dtype='float'),
+            'consumption_3uses': pd.Series(dtype='float'),
+            'certificate': pd.Series(dtype='float'),
+            'consumption_renovation': pd.Series(dtype='float'),
+            'consumption_3uses_renovation': pd.Series(dtype='float'),
+            'certificate_renovation': pd.Series(dtype='float'),
+        }
 
     def consumption_heating(self, index=None, freq='year', climate=None, smooth=False,
                             full_output=False, efficiency_hour=False, level_heater='Heating system',
