@@ -1275,6 +1275,10 @@ class AgentBuildings(ThermalBuildings):
         union = flow_total.index.union(self.stock.index)
         stock = flow_total.reindex(union, fill_value=0) + self.stock.reindex(union, fill_value=0)
 
+        if not (stock >= -ACCURACY).all():
+            self.logger.debug('Numerical stock correction of {:.0f} households'.format(-stock[stock < 0].sum()))
+            stock[stock < 0] = 0
+
         assert (stock >= -ACCURACY).all(), 'Stock Error: Building stock cannot be negative'
         # stock[stock < 0] = 0
 
@@ -1305,7 +1309,7 @@ class AgentBuildings(ThermalBuildings):
         elif isinstance(df, DataFrame):
             df_sum = df.sum().sum()
 
-        share = (ref.unstack(level).T / ref.unstack(level).sum(axis=1)).T
+        share = (ref.unstack(level).T / ref.unstack(level).sum(axis=1)).T.fillna(0)
         temp = concat([df] * share.shape[1], keys=share.columns, names=share.columns.names, axis=1)
         share = reindex_mi(share, temp.columns, axis=1)
         share = reindex_mi(share, temp.index)
@@ -1317,7 +1321,12 @@ class AgentBuildings(ThermalBuildings):
             elif isinstance(df, DataFrame):
                 assert_almost_equal(df.sum().sum(), df_sum, decimal=0)
         except AssertionError:
-            pass
+            # when the result is not perfectly equal : output correction by homothecy
+            if isinstance(df, Series):
+                ratio = df_sum/df.sum()
+            elif isinstance(df, DataFrame):
+                ratio = df_sum/df.sum().sum()
+            df = df*ratio
 
         return df
 
@@ -5244,7 +5253,9 @@ class AgentBuildings(ThermalBuildings):
         flow_only_heater = flow_only_heater.xs(True, level='Heater replacement', drop_level=False).unstack(
             'Heating system final')
         if self.cooling_system_activation:
-            flow_only_heater = flow_only_heater.droplevel('Cooling system adoption')
+            # flow_only_heater = flow_only_heater.droplevel('Cooling system adoption')
+            flow_only_heater = flow_only_heater.droplevel('Cooling system')
+            flow_only_heater.index = flow_only_heater.index.rename('Cooling system', level='Cooling system adoption')
         flow_only_heater_sum = flow_only_heater.sum().sum()
 
         if self.cooling_system_activation:
@@ -5289,14 +5300,12 @@ class AgentBuildings(ThermalBuildings):
                 [c for c in flow_only_heater.index.names if c not in ['Heater replacement','Cooler adoption']]).sum()
             flow_only_cooler = flow_only_cooler.groupby(
                 [c for c in flow_only_cooler.index.names if c not in ['Heater replacement','Cooler adoption']]).sum()
-            
         else:
             replaced_by = replaced_by.groupby(
                 [c for c in replaced_by.index.names if c not in ['Heater replacement']]).sum()
             flow_only_heater = flow_only_heater.groupby(
                 [c for c in flow_only_heater.index.names if c not in ['Heater replacement']]).sum()
             
-
         # adding income tenant information
         self.logger.debug('Adding income tenant')
         replaced_by = self.add_level(replaced_by, self.stock_mobile, 'Income tenant')

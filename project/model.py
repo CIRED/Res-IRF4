@@ -462,11 +462,12 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
     if demolition_rate is not None:
         temp = buildings.flow_demolition(demolition_rate, step=step)
         heater_demolition = temp.groupby('Heating system').sum()
-        cooler_demolition = temp.groupby('Cooling system').sum()
+        if buildings.cooling_system_activation:
+            cooler_demolition = temp.groupby('Cooling system').sum()
 
-        # some cooling systems are not destroyed with the building
-        cooler_demolition.loc['No AC'] = 0.
-        cooler_demolition.loc['Electricity-Portable unit'] = 0.
+            # some cooling systems are not destroyed with the building
+            cooler_demolition.loc['No AC'] = 0.
+            cooler_demolition.loc['Electricity-Portable unit'] = 0.
 
         buildings.add_flows([- temp])
     buildings.logger.info('Calculation retrofit')
@@ -511,9 +512,11 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
     new_heating = None
     new_cooling = None
     if flow_built is not None:
+        # flow_built
         buildings.add_flows([flow_built])
         new_heating = flow_built.groupby('Heating system').sum()
-        new_cooling = flow_built.groupby('Cooling system').sum()
+        if buildings.cooling_system_activation: 
+            new_cooling = flow_built.groupby('Cooling system').sum()
 
     buildings.logger.info('Writing output')
     if output_options == 'full':
@@ -720,6 +723,16 @@ def res_irf(config, path, level_logger='DEBUG'):
             p_heater = [p for p in policies_heater if (year >= p.start) and (year < p.end)]
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
             f_built = inputs_dynamics['flow_built'].loc[:, yrs]
+
+            # change cooling systems of air/air HP in Heating system if cooling system activated
+            if 'Cooling system' in f_built.index.names:
+                for idx in f_built[f_built.index.get_level_values(10)=='Electricity-Heat pump air'].index:
+                    if idx[5]=='Electricity-Heat pump air':
+                        idx_no_ac = tuple([e if i != 5 else 'No AC' for i,e in enumerate(idx)])
+                        f_built.loc[idx] = f_built.loc[idx] + f_built.loc[idx] + f_built.loc[idx_no_ac]
+                    else:
+                        f_built.loc[idx] = 0.
+
             if isinstance(f_built, pd.DataFrame):
                 f_built = f_built.sum(axis=1).rename(year)
             f_built = f_built.dropna()
