@@ -25,7 +25,7 @@ from datetime import timedelta
 """LOGISTIC_COEFFICIENT = pd.read_csv('project/input/logistic_regression_coefficient_epc.csv', index_col=[0])
 LOGISTIC_COEFFICIENT.columns = ['Intercept', 'Proxy_conso_square']
 LOGISTIC_COEFFICIENT.index.names = ['Performance']"""
-CONVERSION = 2.3
+
 HDD = 55706
 CERTIFICATE_3USES_BOUNDARIES = {
     'A': [0, 50],
@@ -503,7 +503,8 @@ def conventional_dhw_final(index):
 
 def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency, index,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, method='3uses'
+                              air_rate=None, unobserved=None, method='3uses',
+                              pef_elec=None
                               ):
     """Space heating conventional, and energy performance certificate.
 
@@ -531,6 +532,9 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
     """
 
+    if pef_elec is None:
+        raise ValueError("The pef_elec factor is required but has not been provided.")
+
     heating_final = conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                                th_bridging=th_bridging, vent_types=vent_types,
                                                infiltration=infiltration, air_rate=air_rate, unobserved=unobserved
@@ -543,10 +547,10 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     else:
         energy_carrier = index.get_level_values('Energy')
 
-    energy_primary = final2primary(energy_final, energy_carrier)
+    energy_primary = final2primary(energy_final, energy_carrier, pef_elec=pef_elec)
     other_consumptions = None
     if method == '5uses':
-        other_consumptions = (CONSUMPTION_LIGHT + AUXILIARY_CONSUMPTION) * CONVERSION
+        other_consumptions = (CONSUMPTION_LIGHT + AUXILIARY_CONSUMPTION) * pef_elec
 
     performance = find_certificate(energy_primary, method=method, other_consumptions=other_consumptions)
 
@@ -616,15 +620,19 @@ def find_certificate(primary_consumption, other_consumptions=None, method='3uses
             raise NotImplementedError
 
 
-def final2primary(heat_consumption, energy, conversion=CONVERSION):
+def final2primary(heat_consumption, energy, pef_elec=None):
+
+    if pef_elec is None:
+        raise ValueError("The pef_elec factor is required but has not been provided.")
+
     if isinstance(heat_consumption, pd.Series):
         primary_heat_consumption = heat_consumption.copy()
-        primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * conversion
+        primary_heat_consumption[energy == 'Electricity'] = primary_heat_consumption * pef_elec
         return primary_heat_consumption
 
     elif isinstance(heat_consumption, float):
         if energy == 'Electricity':
-            return heat_consumption * conversion
+            return heat_consumption * pef_elec
         else:
             return heat_consumption
 
@@ -632,12 +640,12 @@ def final2primary(heat_consumption, energy, conversion=CONVERSION):
         # index
         if energy.index.equals(heat_consumption.index):
             primary_heat_consumption = heat_consumption.copy()
-            primary_heat_consumption.loc[energy == 'Electricity', :] = primary_heat_consumption * conversion
+            primary_heat_consumption.loc[energy == 'Electricity', :] = primary_heat_consumption * pef_elec
             return primary_heat_consumption
         # columns
         elif energy.index.equals(heat_consumption.columns):
             primary_heat_consumption = heat_consumption.copy()
-            primary_heat_consumption.loc[:, energy == 'Electricity'] = primary_heat_consumption * conversion
+            primary_heat_consumption.loc[:, energy == 'Electricity'] = primary_heat_consumption * pef_elec
             return primary_heat_consumption
         else:
             raise 'Energy DataFrame do not match indexes and columns'
@@ -646,7 +654,7 @@ def final2primary(heat_consumption, energy, conversion=CONVERSION):
 
 
 def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, energy, ratio_surface, hdd,
-                                conversion=CONVERSION):
+                                pef_elec=None):
     """Convert final to primary heating consumption.
 
     Parameters
@@ -659,14 +667,18 @@ def primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, 
     efficiency
     energy
     ratio_surface
-    conversion
+    pef_elec
 
     Returns
     -------
     """
+
+    if pef_elec is None:
+        raise ValueError("The pef_elec factor is required but has not been provided.")
+
     # data = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
     heat_consumption = stat_heating_consumption(u_wall, u_floor, u_roof, u_windows, efficiency, ratio_surface, hdd)
-    return final2primary(heat_consumption, energy, conversion=conversion)
+    return final2primary(heat_consumption, energy, pef_elec)
 
 
 def heat_intensity(budget, method='v4'):
@@ -767,7 +779,7 @@ def stat_certificate(df):
             if (primary_consumption > item[0]) & (primary_consumption <= item[1]):
                 return key
 
-def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, energy, ratio_surface):
+def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, energy, ratio_surface, pef_elec=None):
     """Returns energy performance certificate.
 
     Parameters
@@ -789,8 +801,12 @@ def certificate_buildings(u_wall, u_floor, u_roof, u_windows, hdd, efficiency, e
         Certificates for all buildings in the stock.
 
     """
+
+    if pef_elec is None:
+        raise ValueError("The pef_elec factor is required but has not been provided.")
+
     primary_heat_consumption = primary_heating_consumption(u_wall, u_floor, u_roof, u_windows, hdd, efficiency,
-                                                           energy, ratio_surface, conversion=CONVERSION)
+                                                           energy, ratio_surface, pef_elec=pef_elec)
     return primary_heat_consumption, stat_certificate(primary_heat_consumption)
 
 
