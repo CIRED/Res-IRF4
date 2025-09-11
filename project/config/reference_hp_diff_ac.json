@@ -114,7 +114,7 @@
     "macro": {
       "construction": true,
       "flow_construction": "project/input/macro/flow_construction_tend.csv",
-      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_tend.csv",
+      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_sdes_tendency.csv",
       "demolition_rate": "project/input/macro/demolition_rate_tend.csv",
       "income": "project/input/macro/income.csv",
       "income_rate": 0.008,
