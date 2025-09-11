@@ -6,8 +6,8 @@
       "activated":false
     },
     "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
     },
     "simple":{
       "quintiles": true
@@ -21,11 +21,11 @@
     },
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv"
     },
     "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
     },
     "simple":{
       "quintiles": true
@@ -39,11 +39,11 @@
     },
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv"
     },
     "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
     },
     "simple":{
       "quintiles": true
@@ -57,11 +57,11 @@
     },
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv"
     },
     "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
     },
     "simple":{
       "quintiles": true
@@ -75,11 +75,11 @@
     },
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv"
     },
     "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
     },
     "simple":{
       "quintiles": true
@@ -93,11 +93,11 @@
     },
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv"
     },
     "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
     },
     "simple":{
       "quintiles": true
