@@ -657,6 +657,11 @@ def res_irf(config, path, level_logger='DEBUG'):
                     heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in inputs_dynamics['cost_heater'].index]
                     inputs_dynamics['cost_heater'].loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
+            # Reset consumption store if pef_elec changed
+            if year != buildings.first_year :
+                if inputs_dynamics['pef_elec'].loc[year] != inputs_dynamics['pef_elec'].loc[year - 1]:
+                    buildings.reset_consumption_store()
+
             buildings, s, o, df_renovations, merged_df_heater, df_final_grouped = stock_turnover(buildings, prices, taxes,
                                              inputs_dynamics['cost_heater'],
                                              inputs_dynamics['cost_insulation'],
