@@ -84,7 +84,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
 
     output = pd.DataFrame()
     # run first year - consumption
-    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'])
+    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'], pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year])
     output = pd.concat((output, o), axis=1)
 
     if config['simple'].get('no_policy_insulation'):

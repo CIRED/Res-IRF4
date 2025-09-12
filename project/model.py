@@ -343,7 +343,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                residual_rate=config['technical'].get('residual_rate'),
                                constraint_heat_pumps=config['technical'].get('constraint_heat_pumps', True),
                                variable_size_heater=config['technical'].get('variable_size_heater', True),
-                               temp_sink=parsed_inputs['temp_sink'])
+                               temp_sink=parsed_inputs['temp_sink'],
+                               pef_elec=parsed_inputs['pef_elec'])
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():
@@ -372,7 +373,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
         'health_cost_dpe': parsed_inputs['health_cost_dpe'],
         'health_cost_income': parsed_inputs['health_cost_income'],
         'output': config['output'],
-        'hourly_profile': parsed_inputs.get('hourly_profile')
+        'hourly_profile': parsed_inputs.get('hourly_profile'),
+        'pef_elec': parsed_inputs.get('pef_elec')
     }
     return inputs_dynamic
 
@@ -382,7 +384,7 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
                    post_inputs,  calib_heater=None, calib_renovation=None, financing_cost=None,
                    prices_before=None, climate=None, district_heating=None, step=1, demolition_rate=None, memory=False,
                    exogenous_social=None, output_options='full', premature_replacement=None, supply=None,
-                   carbon_content=None, carbon_content_before=None):
+                   carbon_content=None, carbon_content_before=None, pef_elec=None):
     """Update stock vintage due to renovation, demolition and construction.
 
 
@@ -437,7 +439,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
     if output_options == 'full':
         buildings.consumption_before_retrofit = buildings.store_consumption(prices_before,
                                                                             carbon_content_before,
-                                                                            bill_rebate=bill_rebate_before)
+                                                                            bill_rebate=bill_rebate_before,
+                                                                            pef_elec=pef_elec)
 
     flow_retrofit = buildings.flow_retrofit(prices, cost_heater, cost_insulation, lifetime_insulation,
                                             financing_cost=financing_cost,
@@ -450,7 +453,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
                                             carbon_value_kwh=post_inputs['carbon_value_kwh'].loc[year, :],
                                             carbon_value=post_inputs['carbon_value'].loc[year],
                                             carbon_content=carbon_content,
-                                            bill_rebate=bill_rebate)
+                                            bill_rebate=bill_rebate,
+                                            pef_elec=pef_elec)
 
     """if memory:
         memory_dict = {'Memory': '{:.1f} MiB'.format(psutil.Process().memory_info().rss / (1024 * 1024)),
@@ -461,7 +465,8 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
     buildings.add_flows([flow_retrofit])
 
     flows_obligation = buildings.flow_obligation(p_insulation, prices, cost_insulation,
-                                                 financing_cost=financing_cost)
+                                                 financing_cost=financing_cost,
+                                                 pef_elec=pef_elec)
     if flows_obligation is not None:
         buildings.add_flows(flows_obligation)
 
@@ -474,15 +479,15 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, lifet
     if output_options == 'full':
         buildings.logger.debug('Full output')
         stock, output, df_renovations, merged_df_heater, df_final_grouped = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
-                                                   bill_rebate=bill_rebate)
+                                                   bill_rebate=bill_rebate, pef_elec=pef_elec)
     elif output_options == 'cost_benefit':
         buildings.logger.debug('Cost-benefit output')
         stock = buildings.simplified_stock().rename(year)
-        output = buildings.parse_output_run_cba(prices, post_inputs, step=step, taxes=taxes, bill_rebate=bill_rebate)
+        output = buildings.parse_output_run_cba(prices, post_inputs, step=step, taxes=taxes, bill_rebate=bill_rebate, pef_elec=pef_elec)
     elif output_options == 'consumption':
         buildings.logger.debug('Consumption output')
         stock = buildings.simplified_stock().rename(year)
-        output = buildings.parse_output_consumption(prices, bill_rebate=bill_rebate)
+        output = buildings.parse_output_consumption(prices, bill_rebate=bill_rebate, pef_elec=pef_elec)
 
     else:
         raise NotImplemented('output_options should be full, cost_benefit or consumption')
@@ -580,10 +585,12 @@ def res_irf(config, path, level_logger='DEBUG'):
             buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :],
                                               inputs_dynamics['consumption_ini'],
                                               inputs_dynamics['health_cost_income'],
-                                              inputs_dynamics['health_cost_dpe'])
+                                              inputs_dynamics['health_cost_dpe'],
+                                              pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year]
+                                              )
 
         s, o, df_renovations, merged_df_heater, df_final_grouped = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
-                                          taxes=taxes)
+                                          taxes=taxes, pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year])
         stock = pd.concat((stock, s), axis=1)
         output = pd.concat((output, o), axis=1)
 
@@ -650,6 +657,39 @@ def res_irf(config, path, level_logger='DEBUG'):
                     heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in inputs_dynamics['cost_heater'].index]
                     inputs_dynamics['cost_heater'].loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
+            # Import renovation calibration if path provided in config
+            if year == buildings.first_year + 1 and config.get('load_calibration_renovation') is not None:
+                try:
+                    with open(config['load_calibration_renovation'], 'rb') as f:
+                        c = load(f)
+                except FileNotFoundError:
+                    buildings.logger.error(f"[Calibration] Fichier introuvable : {config['load_calibration_renovation']}")
+                    raise
+                except Exception as e:
+                    buildings.logger.exception(f"[Calibration] Erreur d'ouverture/lecture : {config['load_calibration_renovation']}")
+                    raise
+
+                buildings.coefficient_global = c['coefficient_global']
+                buildings.coefficient_backup = c['coefficient_backup']
+                buildings.constant_insulation_extensive = c['constant_insulation_extensive']
+                buildings.constant_insulation_intensive = c['constant_insulation_intensive']
+                buildings.constant_heater = c['constant_heater']
+                buildings.scale_insulation = c['scale_insulation']
+                buildings.apply_scale(buildings.scale_insulation, gest='insulation')
+                buildings.scale_heater = c['scale_heater']
+
+                try:
+                    buildings.apply_scale(buildings.scale_heater, gest='heater')
+                except Exception:
+                    buildings.logger.debug("[Calibration] apply_scale('heater') non utilisé/pas nécessaire")
+
+                buildings.logger.info(f"[Calibration] Rénovation importée depuis {config['load_calibration_renovation']}")
+
+            # Reset consumption store if pef_elec changed
+            if year != buildings.first_year :
+                if inputs_dynamics['pef_elec'].loc[year] != inputs_dynamics['pef_elec'].loc[year - 1]:
+                    buildings.reset_consumption_store()
+
             buildings, s, o, df_renovations, merged_df_heater, df_final_grouped = stock_turnover(buildings, prices, taxes,
                                              inputs_dynamics['cost_heater'],
                                              inputs_dynamics['cost_insulation'],
@@ -669,8 +709,9 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              prices_before=prices_before,
                                              carbon_content=carbon_content,
                                              carbon_content_before=carbon_content_before,
-                                             step=step)
-            
+                                             step=step,
+                                             pef_elec=inputs_dynamics['pef_elec'].loc[year])
+
             df_renovations_final = pd.concat([df_renovations_final, df_renovations], ignore_index=True)
             merged_df_heater_final = pd.concat([merged_df_heater_final, merged_df_heater], ignore_index=True)
             df_final_grouped_final = pd.concat([df_final_grouped_final, df_final_grouped], ignore_index=True)
@@ -684,7 +725,8 @@ def res_irf(config, path, level_logger='DEBUG'):
                 buildings.make_static_analysis(inputs_dynamics['cost_insulation'], inputs_dynamics['cost_heater'],
                                                prices, 0.05, 0.05, inputs_dynamics['post_inputs']['health_cost_dpe'],
                                                inputs_dynamics['post_inputs']['carbon_emission'].loc[year, :],
-                                               carbon_value=50)
+                                               carbon_value=50,
+                                               pef_elec=inputs_dynamics['pef_elec'].loc[year])
 
                 with open(os.path.join(buildings.path_calibration, 'calibration.pkl'), 'wb') as file:
                     dump({
@@ -696,6 +738,34 @@ def res_irf(config, path, level_logger='DEBUG'):
                         'scale_insulation': buildings.scale_insulation,
                         'scale_heater': buildings.scale_heater
                     }, file)
+
+            # Export renovation calibration if requested (calculated during the stock_turnover process)
+            if year == buildings.first_year + 1 and config.get('export_calibration_renovation') is not None:
+                os.makedirs(os.path.dirname(config['export_calibration_renovation']), exist_ok=True)
+
+                payload = {
+                    'schema_version': 1,
+                    # Rénovation
+                    'constant_insulation_extensive': getattr(buildings, 'constant_insulation_extensive', None),
+                    'constant_insulation_intensive': getattr(buildings, 'constant_insulation_intensive', None),
+                    'scale_insulation': getattr(buildings, 'scale_insulation', None),
+                    # Chauffage (si dispo)
+                    'constant_heater': getattr(buildings, 'constant_heater', None),
+                    'scale_heater': getattr(buildings, 'scale_heater', None),
+                    # Coeffs globaux/backup (selon ton usage)
+                    'coefficient_global': getattr(buildings, 'coefficient_global', None),
+                    'coefficient_backup': getattr(buildings, 'coefficient_backup', None),
+                }
+
+                with open(config['export_calibration_renovation'], 'wb') as f:
+                    dump(payload, f)
+
+                buildings.logger.info(f"[Calibration] Rénovation exportée vers {config['export_calibration_renovation']}")
+
+                if config.get('stop_after_calibration_export') is True:
+                    buildings.logger.info('[Calibration] Arrêt demandé après export de calibration.')
+                    import sys
+                    sys.exit(0)
 
         if path is not None:
             buildings.logger.info('Writing output in {}'.format(path))
@@ -749,11 +819,12 @@ def calibration_res_irf(path, config=None, level_logger='DEBUG'):
         buildings.calibration_consumption(energy_prices.loc[buildings.first_year, :],
                                           inputs_dynamics['consumption_ini'],
                                           inputs_dynamics['health_cost_income'],
-                                          inputs_dynamics['health_cost_dpe']
+                                          inputs_dynamics['health_cost_dpe'],
+                                          pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year]
                                           )
 
         output = pd.DataFrame()
-        _, o, df_renovations, merged_df_heater = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'])
+        _, o, df_renovations, merged_df_heater = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'], pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year])
         output = pd.concat((output, o), axis=1)
 
         year = buildings.first_year + 1
