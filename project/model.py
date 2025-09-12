@@ -657,6 +657,34 @@ def res_irf(config, path, level_logger='DEBUG'):
                     heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in inputs_dynamics['cost_heater'].index]
                     inputs_dynamics['cost_heater'].loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])**step
 
+            # Import renovation calibration if path provided in config
+            if year == buildings.first_year + 1 and config.get('load_calibration_renovation') is not None:
+                try:
+                    with open(config['load_calibration_renovation'], 'rb') as f:
+                        c = load(f)
+                except FileNotFoundError:
+                    buildings.logger.error(f"[Calibration] Fichier introuvable : {config['load_calibration_renovation']}")
+                    raise
+                except Exception as e:
+                    buildings.logger.exception(f"[Calibration] Erreur d'ouverture/lecture : {config['load_calibration_renovation']}")
+                    raise
+
+                buildings.coefficient_global = c['coefficient_global']
+                buildings.coefficient_backup = c['coefficient_backup']
+                buildings.constant_insulation_extensive = c['constant_insulation_extensive']
+                buildings.constant_insulation_intensive = c['constant_insulation_intensive']
+                buildings.constant_heater = c['constant_heater']
+                buildings.scale_insulation = c['scale_insulation']
+                buildings.apply_scale(buildings.scale_insulation, gest='insulation')
+                buildings.scale_heater = c['scale_heater']
+
+                try:
+                    buildings.apply_scale(buildings.scale_heater, gest='heater')
+                except Exception:
+                    buildings.logger.debug("[Calibration] apply_scale('heater') non utilisé/pas nécessaire")
+
+                buildings.logger.info(f"[Calibration] Rénovation importée depuis {config['load_calibration_renovation']}")
+
             # Reset consumption store if pef_elec changed
             if year != buildings.first_year :
                 if inputs_dynamics['pef_elec'].loc[year] != inputs_dynamics['pef_elec'].loc[year - 1]:
@@ -710,6 +738,34 @@ def res_irf(config, path, level_logger='DEBUG'):
                         'scale_insulation': buildings.scale_insulation,
                         'scale_heater': buildings.scale_heater
                     }, file)
+
+            # Export renovation calibration if requested (calculated during the stock_turnover process)
+            if year == buildings.first_year + 1 and config.get('export_calibration_renovation') is not None:
+                os.makedirs(os.path.dirname(config['export_calibration_renovation']), exist_ok=True)
+
+                payload = {
+                    'schema_version': 1,
+                    # Rénovation
+                    'constant_insulation_extensive': getattr(buildings, 'constant_insulation_extensive', None),
+                    'constant_insulation_intensive': getattr(buildings, 'constant_insulation_intensive', None),
+                    'scale_insulation': getattr(buildings, 'scale_insulation', None),
+                    # Chauffage (si dispo)
+                    'constant_heater': getattr(buildings, 'constant_heater', None),
+                    'scale_heater': getattr(buildings, 'scale_heater', None),
+                    # Coeffs globaux/backup (selon ton usage)
+                    'coefficient_global': getattr(buildings, 'coefficient_global', None),
+                    'coefficient_backup': getattr(buildings, 'coefficient_backup', None),
+                }
+
+                with open(config['export_calibration_renovation'], 'wb') as f:
+                    dump(payload, f)
+
+                buildings.logger.info(f"[Calibration] Rénovation exportée vers {config['export_calibration_renovation']}")
+
+                if config.get('stop_after_calibration_export') is True:
+                    buildings.logger.info('[Calibration] Arrêt demandé après export de calibration.')
+                    import sys
+                    sys.exit(0)
 
         if path is not None:
             buildings.logger.info('Writing output in {}'.format(path))
