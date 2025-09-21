@@ -1,0 +1,11 @@
+Housing type,Energy,H1,H2,H3
+Single-family,Wood fuel,41.4858,20.7429,6.9143
+Single-family,Electricity,13.872768,8.333824,3.201408
+Single-family,Heating,0,0,0
+Single-family,Natural gas,47.407096,14.981175,4.194729
+Single-family,Oil fuel,21.1608,10.5804,3.5268
+Multi-family,Wood fuel,0,0,0
+Multi-family,Electricity,5.984706,3.595208,1.381086
+Multi-family,Heating,6.4938,3.2469,1.0823
+Multi-family,Natural gas,38.307736,12.105675,3.389589
+Multi-family,Oil fuel,2.8638,1.4319,0.4773

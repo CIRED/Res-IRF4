@@ -189,7 +189,12 @@ def read_stock(config):
         MultiIndex Series with building stock attributes as levels.
     """
 
-    stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()).rename('Stock buildings')
+    climate_zone_run = config.get('climate_zone_run').get('activated')
+    if climate_zone_run:
+        zcl = config.get('climate_zone_run').get('zcl')
+        stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze())[zcl].rename('Stock buildings')
+    else:
+        stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()).rename('Stock buildings')
     stock_sum = stock.sum()
 
     stock = stock.reset_index('Heating system')
@@ -334,7 +339,7 @@ def read_policies(config):
                                   years_stop=data.get('years_stop')))
         return l
 
-    def read_cee(data):
+    def read_cee(data,zcl_activated=False,zcl_value=None):
         l = list()
         if isinstance(data['value'], str):
             cee_value = get_series(data['value'])
@@ -344,7 +349,17 @@ def read_policies(config):
             raise NotImplemented
 
         if data['cumac_heater'] is not None:
-            cumac_heater = get_series(data['cumac_heater'])
+            cumac_heater = get_pandas(data['cumac_heater'])
+            if zcl_activated:
+                cumac_heater = cumac_heater.set_index(['Housing type', 'Heating system final', 'Year'])[zcl_value]
+            else:
+                # if zcl disabled : ponderated mean of cee over france
+                dict_zcl_ponderation = {'H1':0.6,'H2':0.3,'H3':0.1}
+                cumac_heater_france = cumac_heater.H1*dict_zcl_ponderation['H1'] + cumac_heater.H2*dict_zcl_ponderation['H2'] + cumac_heater.H1*dict_zcl_ponderation['H3']
+                cumac_heater['france'] = cumac_heater_france
+                cumac_heater = cumac_heater.drop(columns=list(dict_zcl_ponderation.keys()))
+                cumac_heater = cumac_heater.set_index(['Housing type', 'Heating system final', 'Year'])['france']
+
             cee_heater = cumac_heater * cee_value / 1000
             cee_heater = cee_heater.unstack('Heating system final')
             cee_heater = {y: cee_heater.loc[cee_heater.index.get_level_values('Year') == y, :].droplevel('Year') for y in
@@ -365,7 +380,17 @@ def read_policies(config):
                                   years_stop=data.get('years_stop')))
 
         if data['cumac_insulation'] is not None:
-            cumac_insulation = get_series(data['cumac_insulation'])
+            cumac_insulation = get_pandas(data['cumac_insulation'])
+            if zcl_activated:
+                cumac_insulation = cumac_insulation.set_index(['Insulation', 'Year'])[zcl_value]
+            else:
+                # if zcl disabled : ponderated mean of cee over france
+                dict_zcl_ponderation = {'H1':0.6,'H2':0.3,'H3':0.1}
+                cumac_insulation_france = cumac_insulation.H1*dict_zcl_ponderation['H1'] + cumac_insulation.H2*dict_zcl_ponderation['H2'] + cumac_insulation.H1*dict_zcl_ponderation['H3']
+                cumac_insulation['france'] = cumac_insulation_france
+                cumac_insulation = cumac_insulation.drop(columns=list(dict_zcl_ponderation.keys()))
+                cumac_insulation = cumac_insulation.set_index(['Insulation', 'Year'])['france']
+                
             cee_insulation = cumac_insulation * cee_value / 1000
             cee_insulation = cee_insulation.unstack('Insulation').rename_axis(None, axis=1)
             cee_insulation = {y: cee_insulation.loc[cee_insulation.index.get_level_values('Year') == y, :].squeeze() for y
@@ -659,7 +684,12 @@ def read_policies(config):
     for key, item in config['policies'].items():
         item['name'] = key
         if key in read.keys():
-            list_policies += read[key](item)
+            if key in ['cee','cee_variant','cee_2018','cee_2021','cee_2024','cap_variant']:
+                list_policies += read[key](item,
+                                           zcl_activated=config['climate_zone_run']['activated'],
+                                           zcl_value=config['climate_zone_run']['zcl'])
+            else:
+                list_policies += read[key](item)
         else:
             if item.get('policy') == 'subsidy_ad_valorem':
                 list_policies += read_ad_valorem(item)
@@ -716,6 +746,18 @@ def read_inputs(config, other_inputs=generic_input):
     inputs = dict()
     idx = range(config['start'], config['end'])
 
+    # inputs used to run zcl simulations
+    inputs.update({'zcl_activation':config['climate_zone_run']['activated']})
+    inputs.update({'zcl_definition':config['climate_zone_run']['zcl']})
+
+    zcl = 'H1' # default value
+    if inputs.get('zcl_activation'):
+        zcl = inputs.get('zcl_definition')
+    inputs.update({'zcl_thermal_parameters':{'activated':inputs.get('zcl_activation'),
+                                             'temperature_difference':get_series(config['climate_zone_run']['temperature_difference'], header=[0]).to_dict().get(zcl),
+                                             'days_heating_factor':get_series(config['climate_zone_run']['days_heating_factor'], header=[0]).to_dict().get(zcl)
+                                             }})
+    
     inputs.update(other_inputs)
 
     if isinstance(config['energy']['energy_prices'], str):
@@ -777,7 +819,11 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'preferences': {'insulation': preferences_insulation,
                                    'heater': preferences_heater}})
 
-    consumption_ini = get_series(config['macro']['consumption_ini'], header=[0])
+    if inputs.get('zcl_activation'):
+        zcl = inputs.get('zcl_definition')
+        consumption_ini = get_pandas(config['macro']['consumption_ini'])[['Housing type','Energy',zcl]].set_index(['Housing type','Energy'])[zcl]
+    else:
+        consumption_ini = get_series(config['macro']['consumption_ini'], header=[0])
     inputs.update({'consumption_ini': consumption_ini})
 
     ms_heater = get_pandas(config['switch_heater']['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
@@ -887,7 +933,12 @@ def read_inputs(config, other_inputs=generic_input):
         inputs.update({'surface_built': surface_built})
 
     if config['macro'].get('flow_construction') is not None:
-        flow_construction = get_pandas(config['macro']['flow_construction'],
+        if inputs.get('zcl_activation'):
+            zcl = inputs.get('zcl_definition')
+            flow_construction = get_pandas(config['macro']['flow_construction'],
+                                           lambda x: pd.read_csv(x, index_col=[0], header=0).squeeze())[zcl]
+        else:
+            flow_construction = get_pandas(config['macro']['flow_construction'],
                                         lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
         inputs.update({'flow_construction': flow_construction})
 

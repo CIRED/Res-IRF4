@@ -78,7 +78,7 @@ class ThermalBuildings:
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
                  resources_data=None, detailed_output=None, figures=None, residual_rate=0, temp_sink=None,
-                 climate_model=None,cooling_system=True,cooling_failure_weibull=True):
+                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,zcl_thermal_parameters=None):
 
         # default values
         self.heating_intensity_max = None
@@ -142,6 +142,8 @@ class ThermalBuildings:
         self.climate_model = climate_model
         self.cooling_system_activation = cooling_system
         self.cooling_failure_weibull = cooling_failure_weibull
+
+        self.zcl_thermal_parameters = zcl_thermal_parameters
 
         # store values to not recalculate standard energy consumption
         self._consumption_store = {
@@ -329,7 +331,8 @@ class ThermalBuildings:
         heating_need = thermal.conventional_heating_need(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          th_bridging='Medium', vent_types='Ventilation naturelle',
                                                          infiltration='Medium', climate=climate,
-                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile)
+                                                         smooth=smooth, freq=freq, hourly_profile=hourly_profile,
+                                                         zcl_thermal_parameters=self.zcl_thermal_parameters)
 
         if unit == 'kWh/y':
             if isinstance(heating_need, (Series, float, int)):
@@ -398,7 +401,7 @@ class ThermalBuildings:
         consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
                                                          efficiency, climate=climate, freq=freq, smooth=smooth,
                                                          efficiency_hour=efficiency_hour, hourly_profile=hourly_profile,
-                                                         temp_sink=temp_sink)
+                                                         temp_sink=temp_sink,zcl_thermal_parameters=self.zcl_thermal_parameters)
 
         consumption = reindex_mi(consumption, index)
 
@@ -406,7 +409,8 @@ class ThermalBuildings:
             certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
                                                                                self._ratio_surface.copy(),
                                                                                efficiency, _index,
-                                                                               method=method)
+                                                                               method=method,
+                                                                               zcl_thermal_parameters=self.zcl_thermal_parameters)
             certificate = reindex_mi(certificate, index)
             consumption_3uses = reindex_mi(consumption_3uses, index)
 
@@ -1039,12 +1043,13 @@ class AgentBuildings(ThermalBuildings):
                  method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
                  variable_size_heater=True, variable_size_cooler=True, temp_sink=None, social_discount_rate=0.032,
                  lifetime_insulation=30, vat_heater=VAT, no_friction=None, belief_engineering_calculation=None,
-                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,
+                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,zcl_thermal_parameters=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
                          residual_rate=residual_rate, temp_sink=temp_sink, climate_model=climate_model,
-                         cooling_system=cooling_system,cooling_failure_weibull=cooling_failure_weibull)
+                         cooling_system=cooling_system,cooling_failure_weibull=cooling_failure_weibull,
+                         zcl_thermal_parameters=zcl_thermal_parameters)
 
         self._distortion_store = {}
         if logger is None:

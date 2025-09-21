@@ -372,7 +372,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                belief_engineering_calculation=config['renovation'].get('belief_engineering_calculation', False),
                                climate_model=parsed_inputs['climate_model'],
                                cooling_system=parsed_inputs['cooler_activation'],
-                               cooling_failure_weibull=True)
+                               cooling_failure_weibull=True,
+                               zcl_thermal_parameters=parsed_inputs['zcl_thermal_parameters'])
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():

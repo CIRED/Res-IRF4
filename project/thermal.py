@@ -263,6 +263,7 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                               air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
                               hourly_profile=None, temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
+                              zcl_thermal_parameters=None
                               ):
     """Seasonal method for space heating need.
 
@@ -303,8 +304,8 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     Conventional heating need (kWh/m2.a)
     """
 
-    temp_ext = TEMP_EXT_3CL
-    days_heating_season = DAYS_HEATING_SEASON_3CL
+    temp_ext = TEMP_EXT_3CL + zcl_thermal_parameters.get('temperature_difference')
+    days_heating_season = DAYS_HEATING_SEASON_3CL * zcl_thermal_parameters.get('days_heating_factor')
     solar_radiation = SOLAR_RADIATION_3CL
     if temp_indoor is None:
         temp_indoor = TEMP_INDOOR
@@ -374,7 +375,10 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         else:
             gain_utilization_factor = 1
 
-        heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL
+        factor_tabula_3cl = FACTOR_TABULA_3CL
+        if zcl_thermal_parameters.get('activated'):
+            factor_tabula_3cl = 1.
+        heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * factor_tabula_3cl
 
         return heat_need
 
@@ -399,7 +403,10 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         else:
             gain_utilization_factor = 1
 
-        heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * FACTOR_TABULA_3CL).fillna(0)
+        factor_tabula_3cl = FACTOR_TABULA_3CL
+        if zcl_thermal_parameters.get('activated'):
+            factor_tabula_3cl = 1.
+        heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * factor_tabula_3cl).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
 
         if freq == 'hour':
@@ -419,7 +426,8 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                                air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
                                temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
-                               efficiency_hour=False, hourly_profile=None, temp_sink=None):
+                               efficiency_hour=False, hourly_profile=None, temp_sink=None,
+                               zcl_thermal_parameters=None):
     """Monthly stead-state space heating final energy delivered.
 
 
@@ -457,7 +465,7 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
                                           infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                           climate=climate, freq=freq, smooth=smooth,
                                           temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor,
-                                          hourly_profile=hourly_profile)
+                                          hourly_profile=hourly_profile,zcl_thermal_parameters=zcl_thermal_parameters)
 
     if (freq == 'hour') and (efficiency_hour is True):
         path = CLIMATE_DATA[freq]
@@ -506,7 +514,7 @@ def conventional_dhw_final(index):
 
 def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency, index,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, method='3uses'
+                              air_rate=None, unobserved=None, method='3uses',zcl_thermal_parameters=None,
                               ):
     """Space heating conventional, and energy performance certificate.
 
@@ -536,7 +544,8 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
 
     heating_final = conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
                                                th_bridging=th_bridging, vent_types=vent_types,
-                                               infiltration=infiltration, air_rate=air_rate, unobserved=unobserved
+                                               infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
+                                               zcl_thermal_parameters=zcl_thermal_parameters,
                                                )
     dhw_final = conventional_dhw_final(index)
     ac_final = 0
