@@ -3,7 +3,7 @@
     "step": 1,
     "output": "full",
     "start": 2017,
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac.csv",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
     "financing_cost": {
       "activated": true,
       "interest_rate": "project/input/macro/interest_rate.csv",
@@ -56,7 +56,17 @@
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_tend.csv",
       "adoption_coefficients":"project/input/investment/ademe_adoption_coefficients.csv",
       "market_share_coefficients":"project/input/investment/ademe_market_share_coefficients.csv",
-      "reference_sales":"project/input/investment/cooling_system_sales_uniclima.csv"
+      "reference_sales":"project/input/investment/cooling_system_sales_uniclima.csv",
+      "price_elasticity":-0.2,
+      "price":"project/input/technical/cost_ac.csv",
+      "tax_rate":"project/input/policies/ac_tax_rate.csv",
+      "subsidies":"project/input/policies/ac_subsidies.csv"
+    },
+    "climate_zone_run": {
+      "activated":false,
+      "zcl":"H1",
+      "temperature_difference":"project/input/technical/external_temperature_difference.csv",
+      "days_heating_factor":"project/input/technical/days_heating_season_factor.csv"
     },
     "climate_model": {
       "climate_model":"EC-EARTH_HadREM3-GA7"
