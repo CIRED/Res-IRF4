@@ -754,6 +754,7 @@ def read_inputs(config, other_inputs=generic_input):
     if inputs.get('zcl_activation'):
         zcl = inputs.get('zcl_definition')
     inputs.update({'zcl_thermal_parameters':{'activated':inputs.get('zcl_activation'),
+                                             'zcl':inputs.get('zcl_definition'),
                                              'temperature_difference':get_series(config['climate_zone_run']['temperature_difference'], header=[0]).to_dict().get(zcl),
                                              'days_heating_factor':get_series(config['climate_zone_run']['days_heating_factor'], header=[0]).to_dict().get(zcl)
                                              }})
@@ -960,6 +961,12 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'cooler_adoption':{'adoption_coefficients':get_series(config['adoption_cooler']['adoption_coefficients'], header=[0]),
                                       'ms_coefficients':get_series(config['adoption_cooler']['market_share_coefficients'], header=[0]),
                                       'reference_sales':get_pandas(config['adoption_cooler']['reference_sales']).set_index('year')}})
+
+    # add info on ac prices and taxes
+    inputs.update({'cooling_price_informations':{'ac_cost':get_series(config['adoption_cooler']['price'],header=None),
+                                                 'subsidies':get_series(config['adoption_cooler']['subsidies'],header=None),
+                                                 'tax_rate':get_series(config['adoption_cooler']['tax_rate'],header=None),
+                                                 'price_elasticity':config['adoption_cooler']['price_elasticity']}})
 
     # ajout de la climatisation de la même manière
     temp = get_series(config['adoption_cooler']['ms_cooler_built'], header=[0])

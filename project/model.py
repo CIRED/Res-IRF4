@@ -373,7 +373,8 @@ def initialize(inputs, stock, year, taxes, path=None, config=None, logger=None, 
                                climate_model=parsed_inputs['climate_model'],
                                cooling_system=parsed_inputs['cooler_activation'],
                                cooling_failure_weibull=True,
-                               zcl_thermal_parameters=parsed_inputs['zcl_thermal_parameters'])
+                               zcl_thermal_parameters=parsed_inputs['zcl_thermal_parameters'],
+                               cooling_price_informations=parsed_inputs['cooling_price_informations'])
 
     technical_progress = None
     if 'technical_progress' in parsed_inputs.keys():

@@ -18,12 +18,13 @@
       "quintiles": true
     }
   },
-  "Reference_AC_plus": {
+  "Reference_ACP": {
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
     },
     "macro": {
       "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
@@ -37,12 +38,13 @@
       "quintiles": true
     }
   },
-  "Reference_AC_moins": {
+  "Reference_ACM": {
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv",
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "macro": {
       "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",

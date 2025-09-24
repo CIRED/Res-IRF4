@@ -78,7 +78,8 @@ class ThermalBuildings:
 
     def __init__(self, stock, surface, ratio_surface, efficiency, income, path=None, year=2018,
                  resources_data=None, detailed_output=None, figures=None, residual_rate=0, temp_sink=None,
-                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,zcl_thermal_parameters=None):
+                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,zcl_thermal_parameters=None,
+                 cooling_price_informations=None):
 
         # default values
         self.heating_intensity_max = None
@@ -142,6 +143,7 @@ class ThermalBuildings:
         self.climate_model = climate_model
         self.cooling_system_activation = cooling_system
         self.cooling_failure_weibull = cooling_failure_weibull
+        self._cooling_price_informations = cooling_price_informations
 
         self.zcl_thermal_parameters = zcl_thermal_parameters
 
@@ -1043,13 +1045,14 @@ class AgentBuildings(ThermalBuildings):
                  method_health_cost=None, residual_rate=0, constraint_heat_pumps=True,
                  variable_size_heater=True, variable_size_cooler=True, temp_sink=None, social_discount_rate=0.032,
                  lifetime_insulation=30, vat_heater=VAT, no_friction=None, belief_engineering_calculation=None,
-                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,zcl_thermal_parameters=None
+                 climate_model=None,cooling_system=True,cooling_failure_weibull=True,zcl_thermal_parameters=None,
+                 cooling_price_informations=None
                  ):
         super().__init__(stock, surface, ratio_surface, efficiency, income, path=path, year=year,
                          resources_data=resources_data, detailed_output=detailed_output, figures=figures,
                          residual_rate=residual_rate, temp_sink=temp_sink, climate_model=climate_model,
                          cooling_system=cooling_system,cooling_failure_weibull=cooling_failure_weibull,
-                         zcl_thermal_parameters=zcl_thermal_parameters)
+                         zcl_thermal_parameters=zcl_thermal_parameters,cooling_price_informations=cooling_price_informations)
 
         self._distortion_store = {}
         if logger is None:
@@ -2966,7 +2969,11 @@ class AgentBuildings(ThermalBuildings):
         year = self.year
         climate_model = self.climate_model
         
-        cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}.csv'.format(climate_model))
+        if self.zcl_thermal_parameters.get('activated'):
+            zcl = self.zcl_thermal_parameters.get('zcl')
+            cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}_zcl{}.csv'.format(climate_model,zcl))
+        else:
+            cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}.csv'.format(climate_model))
         cdd26_deciles = get_pandas(cdd26_deciles_path)[str(year)]
 
         ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}.csv'.format(climate_model))
@@ -3010,6 +3017,20 @@ class AgentBuildings(ThermalBuildings):
         for idx in range(10):
             p_ac_list = p_ac_list + p_ac_array[idx*ms_len:(idx+1)*ms_len]
         p_ac_list = p_ac_list/10
+
+        # add price elasticity
+        ac_cost = self._cooling_price_informations.get('ac_cost').loc[year]
+        ac_subsidies = self._cooling_price_informations.get('subsidies').loc[year]
+        ac_tax_rate = self._cooling_price_informations.get('tax_rate').loc[year]
+        ac_price = (ac_cost - ac_subsidies)*(1+ac_tax_rate)
+
+        ac_init_cost = self._cooling_price_informations.get('ac_cost').loc[self.first_year]
+        ac_init_subsidies = self._cooling_price_informations.get('subsidies').loc[self.first_year]
+        ac_init_tax_rate = self._cooling_price_informations.get('tax_rate').loc[self.first_year]
+        ac_init_price = (ac_init_cost - ac_init_subsidies)*(1+ac_init_tax_rate)
+
+        ac_elasticity = self._cooling_price_informations.get('price_elasticity')
+        p_ac_list = (1+(ac_elasticity*(ac_price-ac_init_price)/ac_init_price))*p_ac_list
 
         market_share['Electricity-AC'] = p_ac_list
         
@@ -3064,6 +3085,10 @@ class AgentBuildings(ThermalBuildings):
         save_adoption = adoption[adoption.index.get_level_values('Cooling system eol')=='No AC'].sum()
         modelled_sales = save_adoption.loc[self._resources_data['index']['AC']].sum()
         reference_sales = self._resources_data['cooling_adoption']['reference_sales'].loc[2017].sum()
+
+        if self.zcl_thermal_parameters.get('activated'):
+            dict_zcl_ratio_sales = {'H1':0.53,'H2':0.32,'H3':0.15}
+            reference_sales = reference_sales * dict_zcl_ratio_sales.get(self.zcl_thermal_parameters.get('zcl'))
 
         const = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict().get('const')
         new_const = const - log((modelled_sales/reference_sales-(exp_logit)/(1+exp_logit))*(1+exp_logit)).mean()
