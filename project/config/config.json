@@ -1,30 +1,29 @@
 {
   "Reference": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2051,
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2020,
     "adoption_cooler": {
       "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+    },
+    "climate_zone_run": {
+      "activated":false,
+      "zcl":"H3"
     },
     "macro": {
       "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
     },
-    "simple":{
-      "figures": false,
-      "quintiles": true
-    }
-  },
-  "Reference_no_construction": {
-    "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2051,
-    "adoption_cooler": {
-      "activated":true,
-      "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
-    },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_zero.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_zero.csv"
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
     },
     "simple":{
       "figures": false,
