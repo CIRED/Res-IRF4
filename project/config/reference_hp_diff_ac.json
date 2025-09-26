@@ -2,6 +2,7 @@
     "end": 2051,
     "step": 1,
     "output": "full",
+    "stock_output":true,
     "start": 2017,
     "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
     "financing_cost": {

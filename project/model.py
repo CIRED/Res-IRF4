@@ -773,7 +773,7 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              default_quality=config['technical'].get('default_quality'),
                                              credit_constraint=config['financing_cost'].get('credit_constraint', True))
 
-            if config['output'] == 'full':
+            if config['stock_output']:
                 if 'full_buildings_stock' not in os.listdir(path):
                     os.mkdir(os.path.join(path,'full_buildings_stock'))
                 buildings.stock.to_csv(os.path.join(path, 'full_buildings_stock', 'full_buildings_stock_{}.csv'.format(buildings.year)))
