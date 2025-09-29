@@ -1,0 +1,503 @@
+{
+  "Reference": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":false
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "REF_CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "REF_CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "REF_EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "REF_EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "REF_HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACP_CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acp.json"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACP_CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acp.json"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACP_EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acp.json"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACP_EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acp.json"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACP_HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acp.json"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACM_CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acm.json"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACM_CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acm.json"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACM_EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acm.json"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACM_EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acm.json"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "ACM_HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "output":"full",
+    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_acm.json"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "macro": {
+      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
+      "consumption_ini": "project/input/macro/consumption_ini.csv"
+    },
+    "renovation": {
+      "endogenous": true,
+      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  }
+}
