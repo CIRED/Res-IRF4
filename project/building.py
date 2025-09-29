@@ -4893,18 +4893,12 @@ class AgentBuildings(ThermalBuildings):
             energy_bill_before = self.energy_bill(prices, consumption_std_before, level_heater='Heating system final',
                                                   bill_rebate=bill_rebate)
             consumption_std_before = self.add_attribute(consumption_std_before, 'Income tenant')
-            if self.cooling_system_activation and False:
-                consumption_std_before = consumption_std_before.unstack(['Heater replacement', 'Heating system final','Cooler adoption','Cooling system adoption'])
-            else:
-                consumption_std_before = consumption_std_before.unstack(['Heater replacement', 'Heating system final'])
+            consumption_std_before = consumption_std_before.unstack(['Heater replacement', 'Heating system final'])
             stock_cooling_aggregated = (self.stock).groupby([i for i in (self.stock).index.names if i != 'Cooling system']).sum()
             consumption_std_before = consumption_std_before.reorder_levels(stock_cooling_aggregated.index.names)
             index_consumption = consumption_std_before.index.intersection(stock_cooling_aggregated.index)
             consumption_std_before = consumption_std_before.loc[index_consumption]
-            if self.cooling_system_activation and False:
-                consumption_std_before = consumption_std_before.stack(['Heater replacement', 'Heating system final','Cooler adoption','Cooling system adoption'])
-            else:
-                consumption_std_before = consumption_std_before.stack(['Heater replacement', 'Heating system final'])
+            consumption_std_before = consumption_std_before.stack(['Heater replacement', 'Heating system final'])
             consumption_std_before = consumption_std_before.unstack('Income tenant')
             consumption_std_before = consumption_std_before.reorder_levels(index.names)
             consumption_std_before = consumption_std_before.stack('Income tenant')
@@ -5499,22 +5493,25 @@ class AgentBuildings(ThermalBuildings):
                 temp['Heating system final'] = temp['Heating system']
                 replaced_by = temp.set_index(['Heating system', 'Heating system final'], append=True).squeeze()
 
-            if self.cooling_system_activation:
-                if 'Cooler adoption' not in replaced_by:
-                    replaced_by = concat([replaced_by], keys=[False], names=['Cooler adoption'])
-                if 'Cooling system adoption' not in replaced_by.index.names:
-                    temp = replaced_by.reset_index('Cooling system')
-                    temp['Cooling system adoption'] = temp['Cooling system']
-                    replaced_by = temp.set_index(['Cooling system', 'Cooling system adoption'], append=True).squeeze()
+            # aggregation des types de climatisation
+            replaced_by_with_ac = replaced_by.copy()
+            replaced_by = replaced_by.groupby([i for i in replaced_by.index.names if i != 'Cooling system']).sum()
 
-            if self.cooling_system_activation:
-                replaced_by.index = replaced_by.index.reorder_levels(
-                    ['Heater replacement', 'Cooler adoption', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
-                    'Roof', 'Windows', 'Heating system', 'Heating system final', 'Cooling system', 'Cooling system adoption'])
-            else:
-                replaced_by.index = replaced_by.index.reorder_levels(
-                    ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
-                    'Roof', 'Windows', 'Heating system', 'Heating system final'])
+            # if self.cooling_system_activation and False:
+            #     if 'Cooler adoption' not in replaced_by:
+            #         replaced_by = concat([replaced_by], keys=[False], names=['Cooler adoption'])
+            #     if 'Cooling system adoption' not in replaced_by.index.names:
+            #         temp = replaced_by.reset_index('Cooling system')
+            #         temp['Cooling system adoption'] = temp['Cooling system']
+            #         replaced_by = temp.set_index(['Cooling system', 'Cooling system adoption'], append=True).squeeze()
+            # if self.cooling_system_activation and False:
+            #     replaced_by.index = replaced_by.index.reorder_levels(
+            #         ['Heater replacement', 'Cooler adoption', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
+            #         'Roof', 'Windows', 'Heating system', 'Heating system final', 'Cooling system', 'Cooling system adoption'])
+            # else:
+            replaced_by.index = replaced_by.index.reorder_levels(
+                ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
+                'Roof', 'Windows', 'Heating system', 'Heating system final'])
 
             # economic of switch to heat-pumps
             _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
@@ -5548,6 +5545,20 @@ class AgentBuildings(ThermalBuildings):
                 temp = temp.reindex(self._renovation_store['hidden_cost_agg'].index).fillna(0)
                 temp = temp.reindex(self._renovation_store['hidden_cost_agg'].columns, axis=1).fillna(0)
                 self._renovation_store['hidden_cost_agg'] += temp
+
+            if self.cooling_system_activation:
+                # add cooling system back
+                replaced_by = self.add_level(replaced_by, replaced_by_with_ac, 'Cooling system')
+
+                # add columns on cooling system adoption
+                if 'Cooler adoption' not in replaced_by:
+                    replaced_by = concat([replaced_by], keys=[False], names=['Cooler adoption'])
+                if 'Cooling system adoption' not in replaced_by.index.names:
+                    temp = replaced_by.reset_index('Cooling system')
+                    temp['Cooling system adoption'] = temp['Cooling system']
+                    replaced_by = temp.set_index(['Cooling system', 'Cooling system adoption'], append=True).squeeze()
+                    
+            replaced_by.index = replaced_by.index.reorder_levels(self._replaced_by.index.names)
 
             self._replaced_by = self._replaced_by.add(replaced_by.copy(), fill_value=0)
             replaced_by = self.frame_to_flow(replaced_by, default_quality=default_quality)
