@@ -177,6 +177,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
       "subsidies":"project/input/policies/ac_subsidies_acp.csv"
     },
     "policies": {
@@ -210,6 +211,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
       "subsidies":"project/input/policies/ac_subsidies_acp.csv"
     },
     "policies": {
@@ -243,6 +245,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
       "subsidies":"project/input/policies/ac_subsidies_acp.csv"
     },
     "policies": {
@@ -276,6 +279,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
       "subsidies":"project/input/policies/ac_subsidies_acp.csv"
     },
     "policies": {
@@ -309,6 +313,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
       "subsidies":"project/input/policies/ac_subsidies_acp.csv"
     },
     "policies": {
@@ -342,6 +347,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
       "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "policies": {
@@ -375,6 +381,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
       "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "policies": {
@@ -408,6 +415,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
       "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "policies": {
@@ -441,6 +449,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
       "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "policies": {
@@ -474,6 +483,7 @@
     "end": 2051,
     "adoption_cooler": {
       "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
       "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "policies": {

@@ -5,7 +5,8 @@
     "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
     "end": 2030,
     "adoption_cooler": {
-      "activated":false,
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
       "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
     },
     "climate_zone_run": {
