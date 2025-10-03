@@ -3092,7 +3092,8 @@ class AgentBuildings(ThermalBuildings):
         reference_sales = self._resources_data['cooling_adoption']['reference_sales'].loc[2017].sum()
 
         if self.zcl_thermal_parameters.get('activated'):
-            dict_zcl_ratio_sales = {'H1':0.53,'H2':0.32,'H3':0.15}
+            # distribution of sales across zcl8 = init distribution of ac (all types) across zcl in init stock
+            dict_zcl_ratio_sales = {'H1a': 0.22, 'H1b': 0.08, 'H1c': 0.14, 'H2a': 0.04, 'H2b': 0.1, 'H2c': 0.11, 'H2d': 0.05, 'H3': 0.27}
             reference_sales = reference_sales * dict_zcl_ratio_sales.get(self.zcl_thermal_parameters.get('zcl'))
 
         const = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict().get('const')

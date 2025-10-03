@@ -45,7 +45,7 @@ CERTIFICATE_5USES_BOUNDARIES_ENERGY = {
     'D': [180, 250],
     'E': [250, 330],
     'F': [330, 420],
-    'G': [420, 1000],
+    'G': [420, 9999],
 }
 # kgCO2/m2.a
 CERTIFICATE_5USES_BOUNDARIES_EMISSION = {

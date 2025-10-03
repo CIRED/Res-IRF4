@@ -194,7 +194,7 @@ def read_stock(config):
         zcl = config.get('climate_zone_run').get('zcl')
         stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze())[zcl].rename('Stock buildings')
     else:
-        stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()).rename('Stock buildings')
+        stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()).sum(axis=1).rename('Stock buildings')
     stock_sum = stock.sum()
 
     stock = stock.reset_index('Heating system')
@@ -354,8 +354,14 @@ def read_policies(config):
                 cumac_heater = cumac_heater.set_index(['Housing type', 'Heating system final', 'Year'])[zcl_value]
             else:
                 # if zcl disabled : ponderated mean of cee over france
-                dict_zcl_ponderation = {'H1':0.6,'H2':0.3,'H3':0.1}
-                cumac_heater_france = cumac_heater.H1*dict_zcl_ponderation['H1'] + cumac_heater.H2*dict_zcl_ponderation['H2'] + cumac_heater.H1*dict_zcl_ponderation['H3']
+                dict_zcl_ponderation = {'H1a':0.3,'H1b':0.11,'H1c':0.16,'H2a':0.06,'H2b':0.11,'H2c':0.1,'H2d':0.03,'H3':0.13}
+                cumac_heater_france = None
+                for z,f in dict_zcl_ponderation.items():
+                    if cumac_heater_france is None:
+                        cumac_heater_france = cumac_heater[z]*f
+                    else:
+                        cumac_heater_france += cumac_heater[z]*f
+
                 cumac_heater['france'] = cumac_heater_france
                 cumac_heater = cumac_heater.drop(columns=list(dict_zcl_ponderation.keys()))
                 cumac_heater = cumac_heater.set_index(['Housing type', 'Heating system final', 'Year'])['france']
@@ -385,8 +391,14 @@ def read_policies(config):
                 cumac_insulation = cumac_insulation.set_index(['Insulation', 'Year'])[zcl_value]
             else:
                 # if zcl disabled : ponderated mean of cee over france
-                dict_zcl_ponderation = {'H1':0.6,'H2':0.3,'H3':0.1}
-                cumac_insulation_france = cumac_insulation.H1*dict_zcl_ponderation['H1'] + cumac_insulation.H2*dict_zcl_ponderation['H2'] + cumac_insulation.H1*dict_zcl_ponderation['H3']
+                dict_zcl_ponderation = {'H1a':0.3,'H1b':0.11,'H1c':0.16,'H2a':0.06,'H2b':0.11,'H2c':0.1,'H2d':0.03,'H3':0.13}
+                cumac_insulation_france = None
+                for z,f in dict_zcl_ponderation.items():
+                    if cumac_insulation_france is None:
+                        cumac_insulation_france = cumac_insulation[z]*f
+                    else:
+                        cumac_insulation_france += cumac_insulation[z]*f
+                
                 cumac_insulation['france'] = cumac_insulation_france
                 cumac_insulation = cumac_insulation.drop(columns=list(dict_zcl_ponderation.keys()))
                 cumac_insulation = cumac_insulation.set_index(['Insulation', 'Year'])['france']
@@ -750,7 +762,7 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'zcl_activation':config['climate_zone_run']['activated']})
     inputs.update({'zcl_definition':config['climate_zone_run']['zcl']})
 
-    zcl = 'H1' # default value
+    zcl = 'H1a' # default value
     if inputs.get('zcl_activation'):
         zcl = inputs.get('zcl_definition')
     inputs.update({'zcl_thermal_parameters':{'activated':inputs.get('zcl_activation'),
@@ -940,7 +952,7 @@ def read_inputs(config, other_inputs=generic_input):
                                            lambda x: pd.read_csv(x, index_col=[0], header=0).squeeze())[zcl]
         else:
             flow_construction = get_pandas(config['macro']['flow_construction'],
-                                        lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
+                                        lambda x: pd.read_csv(x, index_col=[0], header=0).squeeze()).sum(axis=1)
         inputs.update({'flow_construction': flow_construction})
 
     temp = get_series(config['switch_heater']['ms_heater_built'], header=[0])
