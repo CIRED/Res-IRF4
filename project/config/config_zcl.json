@@ -1,98 +1,173 @@
 {
-  "Reference": {
-    "file": "project/config/reference_hp_diff_ac.json",
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
+  "Reference": {"file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
+    "climate_zone_run": {
+      "activated":false
     },
     "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "price_elasticity",
         "target": -0.8
       }
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
     },
     "simple":{
       "figures": false,
       "quintiles": true
     }
   },
-  "H1": {
+  "H1a": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated_zcl.csv",
     "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
     "climate_zone_run": {
       "activated":true,
-      "zcl":"H1"
-    },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central_zcl.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
-      "consumption_ini": "project/input/macro/consumption_ini_zcl.csv"
+      "zcl":"H1a"
     },
     "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "price_elasticity",
         "target": -0.8
       }
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
     },
     "simple":{
       "figures": false,
       "quintiles": true
     }
   },
-  "H2": {
+  "H1b": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated_zcl.csv",
     "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
     "climate_zone_run": {
       "activated":true,
-      "zcl":"H2"
-    },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central_zcl.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
-      "consumption_ini": "project/input/macro/consumption_ini_zcl.csv"
+      "zcl":"H1b"
     },
     "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "price_elasticity",
         "target": -0.8
       }
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
     },
     "simple":{
       "figures": false,
       "quintiles": true
     }
   },
+  "H1c": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "H2a": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2a"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "H2b": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "H2c": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+  "H2d": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": false,
+      "quintiles": true
+    }
+  },
+
   "H3": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated_zcl.csv",
     "end": 2051,
     "adoption_cooler": {
       "activated":true
@@ -101,21 +176,11 @@
       "activated":true,
       "zcl":"H3"
     },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central_zcl.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
-      "consumption_ini": "project/input/macro/consumption_ini_zcl.csv"
-    },
     "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "price_elasticity",
         "target": -0.8
       }
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
     },
     "simple":{
       "figures": false,

@@ -1,26 +1,15 @@
 {
   "Reference": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "output":"full",
-    "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated.csv",
-    "end": 2030,
+    "end": 2031,
     "adoption_cooler": {
-      "activated":true,
-      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
-      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
+      "activated":true
     },
     "climate_zone_run": {
-      "activated":false,
-      "zcl":"H3"
-    },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv",
-      "consumption_ini": "project/input/macro/consumption_ini.csv"
+      "activated":true,
+      "zcl":"H1a"
     },
     "renovation": {
-      "endogenous": true,
-      "renovation_rate_ini": "project/input/investment/renovation_rate_ini.csv",
       "scale": {
         "option": "price_elasticity",
         "target": -0.8
