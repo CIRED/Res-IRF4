@@ -836,7 +836,7 @@ def read_inputs(config, other_inputs=generic_input):
         zcl = inputs.get('zcl_definition')
         consumption_ini = get_pandas(config['macro']['consumption_ini'])[['Housing type','Energy',zcl]].set_index(['Housing type','Energy'])[zcl]
     else:
-        consumption_ini = get_series(config['macro']['consumption_ini'], header=[0])
+        consumption_ini = get_pandas(config['macro']['consumption_ini']).set_index(['Housing type','Energy']).sum(axis=1)
     inputs.update({'consumption_ini': consumption_ini})
 
     ms_heater = get_pandas(config['switch_heater']['ms_heater'], lambda x: pd.read_csv(x, index_col=[0, 1]))
@@ -848,7 +848,12 @@ def read_inputs(config, other_inputs=generic_input):
     inputs.update({'calibration_heater': calibration_heater})
 
     if config['switch_heater'].get('district_heating') is not None:
-        district_heating = get_series(config['switch_heater']['district_heating'], header=None)
+        district_heating = get_pandas(config['switch_heater']['district_heating']).set_index('year')
+        if inputs.get('zcl_activation'):
+            zcl = inputs.get('zcl_definition')
+            district_heating = district_heating[zcl].map(int)
+        else:
+            district_heating = district_heating.sum(axis=1).map(int)
         inputs.update({'flow_district_heating': district_heating.diff().fillna(0)})
 
     calibration_renovation = None
