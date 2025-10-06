@@ -58,7 +58,7 @@ import logging
 from project.building import AgentBuildings
 from project.read_input import read_stock, read_policies, read_inputs, parse_inputs, dump_inputs, create_simple_policy, PublicPolicy
 from project.write_output import plot_scenario, compare_results, select_output
-from project.utils import reindex_mi, deciles2quintiles, get_json, create_logger, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies
+from project.utils import reindex_mi, deciles2quintiles, get_json, create_logger, make_policies_tables, subplots_attributes, plot_thermal_insulation, parse_policies, get_pandas
 from project.utils import memory_object, get_size, size_dict
 from project.input.resources import resources_data
 
@@ -773,10 +773,17 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              default_quality=config['technical'].get('default_quality'),
                                              credit_constraint=config['financing_cost'].get('credit_constraint', True))
 
-            if config['stock_output']:
-                if 'full_buildings_stock' not in os.listdir(path):
-                    os.mkdir(os.path.join(path,'full_buildings_stock'))
-                buildings.stock.to_csv(os.path.join(path, 'full_buildings_stock', 'full_buildings_stock_{}.csv'.format(buildings.year)))
+            if config['full_stock_output']:
+                # TODO: à modifier pour avoir vraiment le stock complet en fait
+                file = 'full_stock.csv'
+                if file not in os.listdir(path):
+                    full_stock = pd.DataFrame(buildings.stock).rename(columns={0:buildings.year})
+                    full_stock.to_csv(os.path.join(path,file))
+                else:
+                    full_stock = pd.DataFrame(buildings.stock).rename(columns={0:buildings.year})
+                    all_years = get_pandas(os.path.join(path,file)).set_index(buildings.stock.index.names)
+                    all_years = all_years.join(full_stock)
+                    all_years.to_csv(os.path.join(path,file))
 
             stock = pd.concat((stock, s), axis=1)
             stock.index.names = s.index.names

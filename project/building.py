@@ -2945,8 +2945,13 @@ class AgentBuildings(ThermalBuildings):
                        axis=0, keys=[False, True], names=['Heater replacement'])
         stock.sort_index(inplace=True)
 
-        assert round(stock.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
-                     0) == 0, 'Sum problem'
+        ref_total_stock = self.stock_mobile.xs(True, level='Existing', drop_level=False).sum()
+        if round(stock.sum() - ref_total_stock, 0) != 0:
+            self.logger.debug('Numerical stock correction of {:.0f} households'.format(abs(round(stock.sum() - ref_total_stock, 0))))
+            correction = ref_total_stock/stock.sum()
+            stock = stock * correction
+
+        assert round(stock.sum() - ref_total_stock, 0) == 0, 'Sum problem'
 
         if store_information:
             self.store_information_heater(cost_heater.copy(), subsidies_total, bill_saved, subsidies_details,
@@ -3093,7 +3098,8 @@ class AgentBuildings(ThermalBuildings):
 
         if self.zcl_thermal_parameters.get('activated'):
             # distribution of sales across zcl8 = init distribution of ac (all types) across zcl in init stock
-            dict_zcl_ratio_sales = {'H1a': 0.22, 'H1b': 0.08, 'H1c': 0.14, 'H2a': 0.04, 'H2b': 0.1, 'H2c': 0.11, 'H2d': 0.05, 'H3': 0.27}
+            dict_zcl_ratio_sales = {'H1a': 0.29, 'H1b': 0.09, 'H1c': 0.16, 'H2a': 0.04, 'H2b': 0.09, 'H2c': 0.11, 'H2d': 0.04, 'H3': 0.18}
+            # dict_zcl_ratio_sales = {'H1a': 0.22, 'H1b': 0.08, 'H1c': 0.14, 'H2a': 0.04, 'H2b': 0.1, 'H2c': 0.11, 'H2d': 0.05, 'H3': 0.27}
             reference_sales = reference_sales * dict_zcl_ratio_sales.get(self.zcl_thermal_parameters.get('zcl'))
 
         const = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict().get('const')
