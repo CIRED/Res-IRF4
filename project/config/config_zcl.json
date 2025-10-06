@@ -15,7 +15,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -57,7 +57,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -78,7 +78,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -99,7 +99,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -120,7 +120,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -141,7 +141,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -162,7 +162,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -184,7 +184,7 @@
       }
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   }
