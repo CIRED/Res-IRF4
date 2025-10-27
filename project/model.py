@@ -774,7 +774,6 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              credit_constraint=config['financing_cost'].get('credit_constraint', True))
 
             if config['full_stock_output']:
-                # TODO: à modifier pour avoir vraiment le stock complet en fait
                 file = 'full_stock.csv'
                 if file not in os.listdir(path):
                     full_stock = pd.DataFrame(buildings.stock).rename(columns={0:buildings.year})

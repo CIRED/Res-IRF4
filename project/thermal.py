@@ -34,7 +34,7 @@ CERTIFICATE_3USES_BOUNDARIES = {
     'D': [150, 230],
     'E': [230, 330],
     'F': [330, 450],
-    'G': [450, 1000],
+    'G': [450, 9999],
 }
 
 # kWhPE/m2.a
@@ -153,7 +153,7 @@ CARBON_CONTENT = {'Electricity': 0.079,
                   'Heating': 0.227
                   }
 CARBON_CONTENT = {'Electricity-Direct electric': 0.079,
-                    'Electricity-Wood stove': 0.079,
+                  'Electricity-Wood stove': 0.079,
                   'Electricity-Heat pump air': 0.079,
                   'Electricity-Heat pump': 0.079,
                   'Electricity-Heat pump water': 0.079,

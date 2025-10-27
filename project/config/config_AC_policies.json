@@ -6,15 +6,8 @@
       "activated":true,
       "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv"
     },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
-    },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -24,17 +17,11 @@
     "adoption_cooler": {
       "activated":true,
       "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv",
-      "subsidies":"project/input/policies/ac_subsidies_acp.csv"
-    },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024_acp.json"
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -44,17 +31,11 @@
     "adoption_cooler": {
       "activated":true,
       "market_share_coefficients":"project/input/investment/ceren_market_share_coefficients.csv",
-      "tax_rate":"project/input/policies/ac_tax_rate_acm.csv"
-    },
-    "macro": {
-      "flow_construction": "project/input/macro/flow_construction_sdes_central.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_sdes_central.csv"
-    },
-    "policies": {
-      "file": "project/input/policies/policies_2024_acm.json"
+      "tax_rate":"project/input/policies/ac_tax_rate_acm_chap3.csv",
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv"
     },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   }
