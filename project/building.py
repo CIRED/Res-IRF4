@@ -2962,13 +2962,15 @@ class AgentBuildings(ThermalBuildings):
                                           flow_premature_replacement, subsidies_loan, eligible, hidden_benefits_heater)
         return stock
 
-    def store_information_cooler(self, adoption, end_of_life, eol_yearly_detailed):
+    def store_information_cooler(self, adoption, end_of_life, eol_yearly_detailed, ac_subsidies, ac_tax):
         # TODO: au moins l'adoption, a la manière de replacement dans un attribut '_cooler_store' de buildings
         self._cooler_store.update(
             {
                 'adoption': adoption,
                 'end_of_life': end_of_life,
                 'end_of_life_by_year': eol_yearly_detailed,
+                'ac_tax':ac_tax,
+                'ac_subsidies':ac_subsidies
             }
         )
 
@@ -3208,6 +3210,16 @@ class AgentBuildings(ThermalBuildings):
 
         save_adoption = adoption[adoption.index.get_level_values('Cooling system eol')=='No AC'].sum()
 
+        year = self.year
+        ac_cost = save_adoption.copy() 
+        ac_subsidies = save_adoption.copy() 
+
+        ac_cost.loc[:] = [self._cooling_price_informations.get('ac_cost').loc[year], self._cooling_price_informations.get('ac_cost').loc[year]/3, 0]
+        ac_subsidies.loc[:] = [self._cooling_price_informations.get('subsidies').loc[year], self._cooling_price_informations.get('subsidies').loc[year]/3, 0]
+        ac_tax_rate = self._cooling_price_informations.get('tax_rate').loc[year]
+        ac_subsidies_total = save_adoption * ac_subsidies
+        ac_tax_total = save_adoption * ac_tax_rate * (ac_cost - ac_subsidies)
+
         stock_adoption = adoption.stack('Cooling system adoption')
         adoption_sumed = adoption.sum(axis=1)
 
@@ -3236,7 +3248,7 @@ class AgentBuildings(ThermalBuildings):
 
         # TODO: ajouter des informations par la suite
         if store_information:
-            self.store_information_cooler(save_adoption, save_eol, eol_per_year)
+            self.store_information_cooler(save_adoption, save_eol, eol_per_year, ac_subsidies_total, ac_tax_total)
         return stock_ac_adoption
     
 
@@ -6243,6 +6255,14 @@ class AgentBuildings(ThermalBuildings):
                 output['EOL cooler portable unit (Thousand households)'] = self._cooler_store.get('end_of_life').loc['Electricity-Portable unit'] / 10 ** 3 / step
                 output['EOL cooler split system (Thousand households)'] = self._cooler_store.get('end_of_life').loc['Electricity-Heat pump air'] / 10 ** 3 / step
                 output['EOL cooler (Thousand households)'] = self._cooler_store['end_of_life'].loc[['Electricity-Portable unit','Electricity-Heat pump air']].sum() / 10 ** 3 / step
+
+                output['Cooler tax gains portable unit (Billion euro)'] = self._cooler_store.get('ac_tax').loc['Electricity-Portable unit'] / 10 ** 9 / step
+                output['Cooler tax gains split system (Billion euro)'] = self._cooler_store.get('ac_tax').loc['Electricity-Heat pump air'] / 10 ** 9 / step
+                output['Cooler tax gains (Billion euro)'] = self._cooler_store.get('ac_tax').loc[['Electricity-Portable unit','Electricity-Heat pump air']].sum() / 10 ** 9 / step
+
+                output['Cooler subsidies portable unit (Billion euro)'] = self._cooler_store.get('ac_subsidies').loc['Electricity-Portable unit'] / 10 ** 9 / step
+                output['Cooler subsidies split system (Billion euro)'] = self._cooler_store.get('ac_subsidies').loc['Electricity-Heat pump air'] / 10 ** 9 / step
+                output['Cooler subsidies (Billion euro)'] = self._cooler_store.get('ac_subsidies').loc[['Electricity-Portable unit','Electricity-Heat pump air']].sum() / 10 ** 9 / step
 
             # insulation - who is renovating ?
             temp = replaced_by_grouped.sum(axis=1)
