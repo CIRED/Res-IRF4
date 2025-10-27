@@ -5432,6 +5432,8 @@ class AgentBuildings(ThermalBuildings):
 
         self.logger.debug('Start frame to flow')
 
+        # remove almost 0 renovation share on all components combinations
+        replaced_by = replaced_by.loc[~(replaced_by<1e-8).all(axis=1)]
         replaced_by = self.frame_to_flow(replaced_by, default_quality=default_quality)
         self.logger.debug('End frame to flow')
 
