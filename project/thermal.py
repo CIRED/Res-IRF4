@@ -114,7 +114,7 @@ SOLAR_RADIATION_3CL = 306.4 # kWh/m2.an
 DHW_NEED = pd.Series([15.3, 19.8], index=pd.Index(['Single-family',	'Multi-family'], name='Housing type')) # kWh/m2.a
 DHW_EFFICIENCY = {'Electricity-Direct electric': 0.95,
                   'Electricity-Wood stove': 0.95,
-                  'Electricity-Heat pump air': 2.5, # previously at 0.95
+                  'Electricity-Heat pump air': 0.95, # previously at 0.95
                   'Electricity-Heat pump': 2.5,
                   'Electricity-Heat pump water': 2.5,
                   'Natural gas-Performance boiler': 0.6,
