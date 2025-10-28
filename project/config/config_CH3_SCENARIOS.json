@@ -1,7 +1,7 @@
 {
   "Reference": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -21,7 +21,7 @@
   },
   "REF__REF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -45,7 +45,7 @@
   },
   "REF__REF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -69,7 +69,7 @@
   },
   "REF__REF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -93,7 +93,7 @@
   },
   "REF__REF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -117,7 +117,7 @@
   },
   "REF__REF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -141,7 +141,7 @@
   },
   "REF__REF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -165,7 +165,7 @@
   },
   "REF__REF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -189,7 +189,7 @@
   },
   "REF__REF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -213,7 +213,7 @@
   },
   "REF__REF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -237,7 +237,7 @@
   },
   "REF__REF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -261,7 +261,7 @@
   },
   "REF__REF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -285,7 +285,7 @@
   },
   "REF__REF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -309,7 +309,7 @@
   },
   "REF__REF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -333,7 +333,7 @@
   },
   "REF__REF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -357,7 +357,7 @@
   },
   "REF__REF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -381,7 +381,7 @@
   },
   "REF__REF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -405,7 +405,7 @@
   },
   "REF__REF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -429,7 +429,7 @@
   },
   "REF__REF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -453,7 +453,7 @@
   },
   "REF__REF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -477,7 +477,7 @@
   },
   "REF__REF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -501,7 +501,7 @@
   },
   "REF__REF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -525,7 +525,7 @@
   },
   "REF__REF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -549,7 +549,7 @@
   },
   "REF__REF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -573,7 +573,7 @@
   },
   "REF__REF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -597,7 +597,7 @@
   },
   "REF__REF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -621,7 +621,7 @@
   },
   "REF__REF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -645,7 +645,7 @@
   },
   "REF__REF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -669,7 +669,7 @@
   },
   "REF__REF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -693,7 +693,7 @@
   },
   "REF__REF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -717,7 +717,7 @@
   },
   "REF__REF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -741,7 +741,7 @@
   },
   "REF__REF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -765,7 +765,7 @@
   },
   "REF__REF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -789,7 +789,7 @@
   },
   "REF__REF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -813,7 +813,7 @@
   },
   "REF__REF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -837,7 +837,7 @@
   },
   "REF__REF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -861,7 +861,7 @@
   },
   "REF__REF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -885,7 +885,7 @@
   },
   "REF__REF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -909,7 +909,7 @@
   },
   "REF__REF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -933,7 +933,7 @@
   },
   "REF__REF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -957,7 +957,7 @@
   },
   "REF__REF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -981,7 +981,7 @@
   },
   "REF__NOF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1008,7 +1008,7 @@
   },
   "REF__NOF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1035,7 +1035,7 @@
   },
   "REF__NOF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1062,7 +1062,7 @@
   },
   "REF__NOF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1089,7 +1089,7 @@
   },
   "REF__NOF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1116,7 +1116,7 @@
   },
   "REF__NOF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1143,7 +1143,7 @@
   },
   "REF__NOF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1170,7 +1170,7 @@
   },
   "REF__NOF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1197,7 +1197,7 @@
   },
   "REF__NOF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1224,7 +1224,7 @@
   },
   "REF__NOF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1251,7 +1251,7 @@
   },
   "REF__NOF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1278,7 +1278,7 @@
   },
   "REF__NOF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1305,7 +1305,7 @@
   },
   "REF__NOF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1332,7 +1332,7 @@
   },
   "REF__NOF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1359,7 +1359,7 @@
   },
   "REF__NOF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1386,7 +1386,7 @@
   },
   "REF__NOF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1413,7 +1413,7 @@
   },
   "REF__NOF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1440,7 +1440,7 @@
   },
   "REF__NOF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1467,7 +1467,7 @@
   },
   "REF__NOF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1494,7 +1494,7 @@
   },
   "REF__NOF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1521,7 +1521,7 @@
   },
   "REF__NOF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1548,7 +1548,7 @@
   },
   "REF__NOF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1575,7 +1575,7 @@
   },
   "REF__NOF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1602,7 +1602,7 @@
   },
   "REF__NOF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1629,7 +1629,7 @@
   },
   "REF__NOF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1656,7 +1656,7 @@
   },
   "REF__NOF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1683,7 +1683,7 @@
   },
   "REF__NOF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1710,7 +1710,7 @@
   },
   "REF__NOF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1737,7 +1737,7 @@
   },
   "REF__NOF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1764,7 +1764,7 @@
   },
   "REF__NOF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1791,7 +1791,7 @@
   },
   "REF__NOF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1818,7 +1818,7 @@
   },
   "REF__NOF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1845,7 +1845,7 @@
   },
   "REF__NOF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1872,7 +1872,7 @@
   },
   "REF__NOF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1899,7 +1899,7 @@
   },
   "REF__NOF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1926,7 +1926,7 @@
   },
   "REF__NOF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1953,7 +1953,7 @@
   },
   "REF__NOF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -1980,7 +1980,7 @@
   },
   "REF__NOF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2007,7 +2007,7 @@
   },
   "REF__NOF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2034,7 +2034,7 @@
   },
   "REF__NOF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2061,7 +2061,7 @@
   },
   "REF__SOF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2088,7 +2088,7 @@
   },
   "REF__SOF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2115,7 +2115,7 @@
   },
   "REF__SOF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2142,7 +2142,7 @@
   },
   "REF__SOF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2169,7 +2169,7 @@
   },
   "REF__SOF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2196,7 +2196,7 @@
   },
   "REF__SOF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2223,7 +2223,7 @@
   },
   "REF__SOF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2250,7 +2250,7 @@
   },
   "REF__SOF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2277,7 +2277,7 @@
   },
   "REF__SOF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2304,7 +2304,7 @@
   },
   "REF__SOF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2331,7 +2331,7 @@
   },
   "REF__SOF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2358,7 +2358,7 @@
   },
   "REF__SOF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2385,7 +2385,7 @@
   },
   "REF__SOF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2412,7 +2412,7 @@
   },
   "REF__SOF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2439,7 +2439,7 @@
   },
   "REF__SOF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2466,7 +2466,7 @@
   },
   "REF__SOF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2493,7 +2493,7 @@
   },
   "REF__SOF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2520,7 +2520,7 @@
   },
   "REF__SOF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2547,7 +2547,7 @@
   },
   "REF__SOF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2574,7 +2574,7 @@
   },
   "REF__SOF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2601,7 +2601,7 @@
   },
   "REF__SOF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2628,7 +2628,7 @@
   },
   "REF__SOF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2655,7 +2655,7 @@
   },
   "REF__SOF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2682,7 +2682,7 @@
   },
   "REF__SOF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2709,7 +2709,7 @@
   },
   "REF__SOF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2736,7 +2736,7 @@
   },
   "REF__SOF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2763,7 +2763,7 @@
   },
   "REF__SOF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2790,7 +2790,7 @@
   },
   "REF__SOF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2817,7 +2817,7 @@
   },
   "REF__SOF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2844,7 +2844,7 @@
   },
   "REF__SOF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2871,7 +2871,7 @@
   },
   "REF__SOF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2898,7 +2898,7 @@
   },
   "REF__SOF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2925,7 +2925,7 @@
   },
   "REF__SOF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2952,7 +2952,7 @@
   },
   "REF__SOF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -2979,7 +2979,7 @@
   },
   "REF__SOF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -3006,7 +3006,7 @@
   },
   "REF__SOF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -3033,7 +3033,7 @@
   },
   "REF__SOF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -3060,7 +3060,7 @@
   },
   "REF__SOF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -3087,7 +3087,7 @@
   },
   "REF__SOF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -3114,7 +3114,7 @@
   },
   "REF__SOF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true
     },
@@ -3141,7 +3141,7 @@
   },
   "ACP__REF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3167,7 +3167,7 @@
   },
   "ACP__REF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3193,7 +3193,7 @@
   },
   "ACP__REF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3219,7 +3219,7 @@
   },
   "ACP__REF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3245,7 +3245,7 @@
   },
   "ACP__REF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3271,7 +3271,7 @@
   },
   "ACP__REF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3297,7 +3297,7 @@
   },
   "ACP__REF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3323,7 +3323,7 @@
   },
   "ACP__REF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3349,7 +3349,7 @@
   },
   "ACP__REF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3375,7 +3375,7 @@
   },
   "ACP__REF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3401,7 +3401,7 @@
   },
   "ACP__REF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3427,7 +3427,7 @@
   },
   "ACP__REF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3453,7 +3453,7 @@
   },
   "ACP__REF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3479,7 +3479,7 @@
   },
   "ACP__REF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3505,7 +3505,7 @@
   },
   "ACP__REF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3531,7 +3531,7 @@
   },
   "ACP__REF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3557,7 +3557,7 @@
   },
   "ACP__REF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3583,7 +3583,7 @@
   },
   "ACP__REF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3609,7 +3609,7 @@
   },
   "ACP__REF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3635,7 +3635,7 @@
   },
   "ACP__REF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3661,7 +3661,7 @@
   },
   "ACP__REF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3687,7 +3687,7 @@
   },
   "ACP__REF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3713,7 +3713,7 @@
   },
   "ACP__REF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3739,7 +3739,7 @@
   },
   "ACP__REF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3765,7 +3765,7 @@
   },
   "ACP__REF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3791,7 +3791,7 @@
   },
   "ACP__REF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3817,7 +3817,7 @@
   },
   "ACP__REF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3843,7 +3843,7 @@
   },
   "ACP__REF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3869,7 +3869,7 @@
   },
   "ACP__REF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3895,7 +3895,7 @@
   },
   "ACP__REF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3921,7 +3921,7 @@
   },
   "ACP__REF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3947,7 +3947,7 @@
   },
   "ACP__REF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3973,7 +3973,7 @@
   },
   "ACP__REF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -3999,7 +3999,7 @@
   },
   "ACP__REF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4025,7 +4025,7 @@
   },
   "ACP__REF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4051,7 +4051,7 @@
   },
   "ACP__REF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4077,7 +4077,7 @@
   },
   "ACP__REF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4103,7 +4103,7 @@
   },
   "ACP__REF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4129,7 +4129,7 @@
   },
   "ACP__REF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4155,7 +4155,7 @@
   },
   "ACP__REF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4181,7 +4181,7 @@
   },
   "ACP__NOF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4210,7 +4210,7 @@
   },
   "ACP__NOF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4239,7 +4239,7 @@
   },
   "ACP__NOF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4268,7 +4268,7 @@
   },
   "ACP__NOF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4297,7 +4297,7 @@
   },
   "ACP__NOF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4326,7 +4326,7 @@
   },
   "ACP__NOF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4355,7 +4355,7 @@
   },
   "ACP__NOF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4384,7 +4384,7 @@
   },
   "ACP__NOF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4413,7 +4413,7 @@
   },
   "ACP__NOF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4442,7 +4442,7 @@
   },
   "ACP__NOF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4471,7 +4471,7 @@
   },
   "ACP__NOF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4500,7 +4500,7 @@
   },
   "ACP__NOF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4529,7 +4529,7 @@
   },
   "ACP__NOF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4558,7 +4558,7 @@
   },
   "ACP__NOF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4587,7 +4587,7 @@
   },
   "ACP__NOF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4616,7 +4616,7 @@
   },
   "ACP__NOF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4645,7 +4645,7 @@
   },
   "ACP__NOF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4674,7 +4674,7 @@
   },
   "ACP__NOF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4703,7 +4703,7 @@
   },
   "ACP__NOF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4732,7 +4732,7 @@
   },
   "ACP__NOF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4761,7 +4761,7 @@
   },
   "ACP__NOF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4790,7 +4790,7 @@
   },
   "ACP__NOF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4819,7 +4819,7 @@
   },
   "ACP__NOF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4848,7 +4848,7 @@
   },
   "ACP__NOF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4877,7 +4877,7 @@
   },
   "ACP__NOF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4906,7 +4906,7 @@
   },
   "ACP__NOF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4935,7 +4935,7 @@
   },
   "ACP__NOF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4964,7 +4964,7 @@
   },
   "ACP__NOF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -4993,7 +4993,7 @@
   },
   "ACP__NOF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5022,7 +5022,7 @@
   },
   "ACP__NOF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5051,7 +5051,7 @@
   },
   "ACP__NOF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5080,7 +5080,7 @@
   },
   "ACP__NOF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5109,7 +5109,7 @@
   },
   "ACP__NOF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5138,7 +5138,7 @@
   },
   "ACP__NOF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5167,7 +5167,7 @@
   },
   "ACP__NOF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5196,7 +5196,7 @@
   },
   "ACP__NOF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5225,7 +5225,7 @@
   },
   "ACP__NOF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5254,7 +5254,7 @@
   },
   "ACP__NOF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5283,7 +5283,7 @@
   },
   "ACP__NOF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5312,7 +5312,7 @@
   },
   "ACP__NOF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5341,7 +5341,7 @@
   },
   "ACP__SOF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5370,7 +5370,7 @@
   },
   "ACP__SOF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5399,7 +5399,7 @@
   },
   "ACP__SOF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5428,7 +5428,7 @@
   },
   "ACP__SOF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5457,7 +5457,7 @@
   },
   "ACP__SOF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5486,7 +5486,7 @@
   },
   "ACP__SOF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5515,7 +5515,7 @@
   },
   "ACP__SOF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5544,7 +5544,7 @@
   },
   "ACP__SOF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5573,7 +5573,7 @@
   },
   "ACP__SOF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5602,7 +5602,7 @@
   },
   "ACP__SOF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5631,7 +5631,7 @@
   },
   "ACP__SOF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5660,7 +5660,7 @@
   },
   "ACP__SOF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5689,7 +5689,7 @@
   },
   "ACP__SOF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5718,7 +5718,7 @@
   },
   "ACP__SOF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5747,7 +5747,7 @@
   },
   "ACP__SOF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5776,7 +5776,7 @@
   },
   "ACP__SOF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5805,7 +5805,7 @@
   },
   "ACP__SOF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5834,7 +5834,7 @@
   },
   "ACP__SOF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5863,7 +5863,7 @@
   },
   "ACP__SOF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5892,7 +5892,7 @@
   },
   "ACP__SOF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5921,7 +5921,7 @@
   },
   "ACP__SOF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5950,7 +5950,7 @@
   },
   "ACP__SOF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -5979,7 +5979,7 @@
   },
   "ACP__SOF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6008,7 +6008,7 @@
   },
   "ACP__SOF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6037,7 +6037,7 @@
   },
   "ACP__SOF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6066,7 +6066,7 @@
   },
   "ACP__SOF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6095,7 +6095,7 @@
   },
   "ACP__SOF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6124,7 +6124,7 @@
   },
   "ACP__SOF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6153,7 +6153,7 @@
   },
   "ACP__SOF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6182,7 +6182,7 @@
   },
   "ACP__SOF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6211,7 +6211,7 @@
   },
   "ACP__SOF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6240,7 +6240,7 @@
   },
   "ACP__SOF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6269,7 +6269,7 @@
   },
   "ACP__SOF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6298,7 +6298,7 @@
   },
   "ACP__SOF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6327,7 +6327,7 @@
   },
   "ACP__SOF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6356,7 +6356,7 @@
   },
   "ACP__SOF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6385,7 +6385,7 @@
   },
   "ACP__SOF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6414,7 +6414,7 @@
   },
   "ACP__SOF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6443,7 +6443,7 @@
   },
   "ACP__SOF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6472,7 +6472,7 @@
   },
   "ACP__SOF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
@@ -6501,7 +6501,7 @@
   },
   "ACM__REF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6527,7 +6527,7 @@
   },
   "ACM__REF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6553,7 +6553,7 @@
   },
   "ACM__REF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6579,7 +6579,7 @@
   },
   "ACM__REF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6605,7 +6605,7 @@
   },
   "ACM__REF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6631,7 +6631,7 @@
   },
   "ACM__REF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6657,7 +6657,7 @@
   },
   "ACM__REF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6683,7 +6683,7 @@
   },
   "ACM__REF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6709,7 +6709,7 @@
   },
   "ACM__REF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6735,7 +6735,7 @@
   },
   "ACM__REF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6761,7 +6761,7 @@
   },
   "ACM__REF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6787,7 +6787,7 @@
   },
   "ACM__REF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6813,7 +6813,7 @@
   },
   "ACM__REF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6839,7 +6839,7 @@
   },
   "ACM__REF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6865,7 +6865,7 @@
   },
   "ACM__REF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6891,7 +6891,7 @@
   },
   "ACM__REF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6917,7 +6917,7 @@
   },
   "ACM__REF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6943,7 +6943,7 @@
   },
   "ACM__REF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6969,7 +6969,7 @@
   },
   "ACM__REF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -6995,7 +6995,7 @@
   },
   "ACM__REF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7021,7 +7021,7 @@
   },
   "ACM__REF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7047,7 +7047,7 @@
   },
   "ACM__REF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7073,7 +7073,7 @@
   },
   "ACM__REF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7099,7 +7099,7 @@
   },
   "ACM__REF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7125,7 +7125,7 @@
   },
   "ACM__REF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7151,7 +7151,7 @@
   },
   "ACM__REF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7177,7 +7177,7 @@
   },
   "ACM__REF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7203,7 +7203,7 @@
   },
   "ACM__REF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7229,7 +7229,7 @@
   },
   "ACM__REF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7255,7 +7255,7 @@
   },
   "ACM__REF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7281,7 +7281,7 @@
   },
   "ACM__REF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7307,7 +7307,7 @@
   },
   "ACM__REF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7333,7 +7333,7 @@
   },
   "ACM__REF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7359,7 +7359,7 @@
   },
   "ACM__REF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7385,7 +7385,7 @@
   },
   "ACM__REF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7411,7 +7411,7 @@
   },
   "ACM__REF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7437,7 +7437,7 @@
   },
   "ACM__REF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7463,7 +7463,7 @@
   },
   "ACM__REF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7489,7 +7489,7 @@
   },
   "ACM__REF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7515,7 +7515,7 @@
   },
   "ACM__REF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7541,7 +7541,7 @@
   },
   "ACM__NOF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7570,7 +7570,7 @@
   },
   "ACM__NOF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7599,7 +7599,7 @@
   },
   "ACM__NOF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7628,7 +7628,7 @@
   },
   "ACM__NOF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7657,7 +7657,7 @@
   },
   "ACM__NOF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7686,7 +7686,7 @@
   },
   "ACM__NOF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7715,7 +7715,7 @@
   },
   "ACM__NOF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7744,7 +7744,7 @@
   },
   "ACM__NOF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7773,7 +7773,7 @@
   },
   "ACM__NOF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7802,7 +7802,7 @@
   },
   "ACM__NOF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7831,7 +7831,7 @@
   },
   "ACM__NOF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7860,7 +7860,7 @@
   },
   "ACM__NOF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7889,7 +7889,7 @@
   },
   "ACM__NOF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7918,7 +7918,7 @@
   },
   "ACM__NOF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7947,7 +7947,7 @@
   },
   "ACM__NOF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -7976,7 +7976,7 @@
   },
   "ACM__NOF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8005,7 +8005,7 @@
   },
   "ACM__NOF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8034,7 +8034,7 @@
   },
   "ACM__NOF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8063,7 +8063,7 @@
   },
   "ACM__NOF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8092,7 +8092,7 @@
   },
   "ACM__NOF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8121,7 +8121,7 @@
   },
   "ACM__NOF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8150,7 +8150,7 @@
   },
   "ACM__NOF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8179,7 +8179,7 @@
   },
   "ACM__NOF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8208,7 +8208,7 @@
   },
   "ACM__NOF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8237,7 +8237,7 @@
   },
   "ACM__NOF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8266,7 +8266,7 @@
   },
   "ACM__NOF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8295,7 +8295,7 @@
   },
   "ACM__NOF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8324,7 +8324,7 @@
   },
   "ACM__NOF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8353,7 +8353,7 @@
   },
   "ACM__NOF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8382,7 +8382,7 @@
   },
   "ACM__NOF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8411,7 +8411,7 @@
   },
   "ACM__NOF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8440,7 +8440,7 @@
   },
   "ACM__NOF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8469,7 +8469,7 @@
   },
   "ACM__NOF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8498,7 +8498,7 @@
   },
   "ACM__NOF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8527,7 +8527,7 @@
   },
   "ACM__NOF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8556,7 +8556,7 @@
   },
   "ACM__NOF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8585,7 +8585,7 @@
   },
   "ACM__NOF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8614,7 +8614,7 @@
   },
   "ACM__NOF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8643,7 +8643,7 @@
   },
   "ACM__NOF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8672,7 +8672,7 @@
   },
   "ACM__NOF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8701,7 +8701,7 @@
   },
   "ACM__SOF__H1a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8730,7 +8730,7 @@
   },
   "ACM__SOF__H1b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8759,7 +8759,7 @@
   },
   "ACM__SOF__H1c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8788,7 +8788,7 @@
   },
   "ACM__SOF__H2a__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8817,7 +8817,7 @@
   },
   "ACM__SOF__H2b__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8846,7 +8846,7 @@
   },
   "ACM__SOF__H2c__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8875,7 +8875,7 @@
   },
   "ACM__SOF__H2d__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8904,7 +8904,7 @@
   },
   "ACM__SOF__H3__EC-EARTH_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8933,7 +8933,7 @@
   },
   "ACM__SOF__H1a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8962,7 +8962,7 @@
   },
   "ACM__SOF__H1b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -8991,7 +8991,7 @@
   },
   "ACM__SOF__H1c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9020,7 +9020,7 @@
   },
   "ACM__SOF__H2a__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9049,7 +9049,7 @@
   },
   "ACM__SOF__H2b__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9078,7 +9078,7 @@
   },
   "ACM__SOF__H2c__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9107,7 +9107,7 @@
   },
   "ACM__SOF__H2d__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9136,7 +9136,7 @@
   },
   "ACM__SOF__H3__HadGEM2-ES_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9165,7 +9165,7 @@
   },
   "ACM__SOF__H1a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9194,7 +9194,7 @@
   },
   "ACM__SOF__H1b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9223,7 +9223,7 @@
   },
   "ACM__SOF__H1c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9252,7 +9252,7 @@
   },
   "ACM__SOF__H2a__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9281,7 +9281,7 @@
   },
   "ACM__SOF__H2b__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9310,7 +9310,7 @@
   },
   "ACM__SOF__H2c__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9339,7 +9339,7 @@
   },
   "ACM__SOF__H2d__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9368,7 +9368,7 @@
   },
   "ACM__SOF__H3__EC-EARTH_RACMO22E": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9397,7 +9397,7 @@
   },
   "ACM__SOF__H1a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9426,7 +9426,7 @@
   },
   "ACM__SOF__H1b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9455,7 +9455,7 @@
   },
   "ACM__SOF__H1c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9484,7 +9484,7 @@
   },
   "ACM__SOF__H2a__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9513,7 +9513,7 @@
   },
   "ACM__SOF__H2b__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9542,7 +9542,7 @@
   },
   "ACM__SOF__H2c__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9571,7 +9571,7 @@
   },
   "ACM__SOF__H2d__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9600,7 +9600,7 @@
   },
   "ACM__SOF__H3__CNRM-CM5_HadREM3-GA7": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9629,7 +9629,7 @@
   },
   "ACM__SOF__H1a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9658,7 +9658,7 @@
   },
   "ACM__SOF__H1b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9687,7 +9687,7 @@
   },
   "ACM__SOF__H1c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9716,7 +9716,7 @@
   },
   "ACM__SOF__H2a__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9745,7 +9745,7 @@
   },
   "ACM__SOF__H2b__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9774,7 +9774,7 @@
   },
   "ACM__SOF__H2c__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9803,7 +9803,7 @@
   },
   "ACM__SOF__H2d__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
@@ -9832,7 +9832,7 @@
   },
   "ACM__SOF__H3__CNRM-CM5_ALADIN63": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2021,
+    "end": 2051,
     "adoption_cooler": {
       "activated":true,
       "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acm.csv",
