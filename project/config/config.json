@@ -3,7 +3,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":false
