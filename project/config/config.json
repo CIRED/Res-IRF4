@@ -6,8 +6,10 @@
       "activated":true
     },
     "climate_zone_run": {
-      "activated":false,
-      "zcl":"H2a"
+      "activated":false
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_enhanced.json"
     },
     "renovation": {
       "scale": {

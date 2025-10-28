@@ -23,7 +23,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -35,8 +35,11 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_enhanced.json"
+    },
     "simple":{
-      "figures": false,
+      "figures": true,
       "quintiles": true
     }
   },
@@ -44,7 +47,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -56,6 +59,9 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_enhanced.json"
+    },
     "simple":{
       "figures": true,
       "quintiles": true
@@ -65,7 +71,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -77,6 +83,9 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_reduced.json"
+    },
     "simple":{
       "figures": true,
       "quintiles": true
@@ -86,7 +95,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -98,6 +107,9 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_enhanced.json"
+    },
     "simple":{
       "figures": true,
       "quintiles": true
@@ -107,7 +119,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -119,6 +131,9 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_reduced.json"
+    },
     "simple":{
       "figures": true,
       "quintiles": true
@@ -128,7 +143,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -140,6 +155,9 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_reduced.json"
+    },
     "simple":{
       "figures": true,
       "quintiles": true
@@ -149,7 +167,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -161,6 +179,9 @@
         "target": -0.8
       }
     },
+    "policies": {
+      "file": "project/input/policies/policies_2024_reduced.json"
+    },
     "simple":{
       "figures": true,
       "quintiles": true
@@ -171,7 +192,7 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":true
+      "activated":false
     },
     "climate_zone_run": {
       "activated":true,
@@ -182,6 +203,9 @@
         "option": "price_elasticity",
         "target": -0.8
       }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_reduced.json"
     },
     "simple":{
       "figures": true,

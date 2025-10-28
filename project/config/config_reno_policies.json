@@ -1,0 +1,68 @@
+{
+  "Reference": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2021,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":false
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "More_renovation": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2021,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":false
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "Less_renovation": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2021,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":false
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  }
+}
