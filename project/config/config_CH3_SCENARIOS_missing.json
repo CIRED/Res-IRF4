@@ -1,0 +1,2119 @@
+{
+  "Reference": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":false
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1b__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1c__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2a__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2b__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2c__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2d__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H3__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1a__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2a__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2a"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2d__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H3__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1a__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1b__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1c__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2a__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2b__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2c__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2d__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H3__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1a__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1b__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1c__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2a__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2a"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2b__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2c__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2d__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H3__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1a__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1b__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H1c__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2c__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H2d__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__REF__H3__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1a__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1b__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1c__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2c__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2d__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H3__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1a__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2d__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H3__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1a__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1b__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1c__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2c__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2d__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H3__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H1a__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2c__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__NOF__H2d__CNRM-CM5_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__SOF__H2c__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "REF__SOF__H2d__EC-EARTH_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H1b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H1c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H2b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H2c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H2d__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H3__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__REF__H1a__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H1b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H1c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H2b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H2c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H2d__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H3__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__NOF__H1a__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H1b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H1c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H2b__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2b"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H2c__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2c"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H2d__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H2d"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H3__HadGEM2-ES_HadREM3-GA7": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_enhanced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "ACP__SOF__H1a__EC-EARTH_RACMO22E": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H1a"
+    },
+    "climate_model": {
+      "climate_model":"EC-EARTH_RACMO22E"
+    },
+    "policies": {
+      "file":"project/input/policies/policies_2024_reduced.json"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
+    }
+  }
+}

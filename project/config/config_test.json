@@ -1,22 +1,26 @@
 {
-  "Reference": {
-    "file": "project/config/reference.json",
-    "end": 2021
-  },
-  "Test": {
-        "file": "project/config/reference.json",
-        "end": 2021,
-        "policies": {
-        "file": "project/input/policies/policies_2024.json",
-          "credit_constraint": {
-        "start": 2020,
-        "end": 2051,
-        "policy": "regulation",
-        "gest": [
-          "insulation",
-          "heater"
-        ]
+  "REF__REF__H3__CNRM-CM5_ALADIN63": {
+    "file": "project/config/reference_hp_diff_ac.json",
+    "end": 2051,
+    "adoption_cooler": {
+      "activated":true
+    },
+    "climate_zone_run": {
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"CNRM-CM5_ALADIN63"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
       }
-        }
+    },
+    "simple":{
+      "figures": true,
+      "quintiles": true
     }
+  }
 }
