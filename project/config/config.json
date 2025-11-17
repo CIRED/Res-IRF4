@@ -3,13 +3,19 @@
     "file": "project/config/reference_hp_diff_ac.json",
     "end": 2051,
     "adoption_cooler": {
-      "activated":false
+      "activated":true,
+      "ms_cooler_built":"project/input/investment/market_share_cooler_construction_acp.csv",
+      "subsidies":"project/input/policies/ac_subsidies_acp_chap3.csv"
     },
     "climate_zone_run": {
-      "activated":false
+      "activated":true,
+      "zcl":"H3"
+    },
+    "climate_model": {
+      "climate_model":"HadGEM2-ES_HadREM3-GA7"
     },
     "policies": {
-      "file": "project/input/policies/policies_2024_enhanced.json"
+      "file":"project/input/policies/policies_2024_reduced.json"
     },
     "renovation": {
       "scale": {
