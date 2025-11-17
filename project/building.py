@@ -3044,6 +3044,10 @@ class AgentBuildings(ThermalBuildings):
         ac_elasticity = self._cooling_price_informations.get('price_elasticity')
         p_ac_list = (1+(ac_elasticity*(ac_price-ac_init_price)/ac_init_price))*p_ac_list
 
+        # verification of lower and upper limits 
+        p_ac_list[p_ac_list<0] = 0.
+        p_ac_list[p_ac_list>1] = 1.
+
         market_share['Electricity-AC'] = p_ac_list
         
         # computation of second stage : AC -> split
@@ -3204,6 +3208,9 @@ class AgentBuildings(ThermalBuildings):
             index = stock_ac_adoption.index
             market_share = self.endogenous_market_share_cooler(stock=stock_ac_adoption)
 
+        if self.year >= 2042:
+            print(market_share.max())
+
         adoption = (market_share.T * stock_ac_adoption).T
         adoption = adoption.groupby(adoption.columns, axis=1).sum()
         adoption.columns.names = ['Cooling system adoption']
@@ -3238,6 +3245,12 @@ class AgentBuildings(ThermalBuildings):
         stock_ac_adoption = stock_ac_adoption.reset_index()
         stock_ac_adoption['Cooler adoption'] = stock_ac_adoption['Cooling system'] != stock_ac_adoption['Cooling system adoption']
         stock_ac_adoption = stock_ac_adoption.set_index(idx)[0]
+
+        ref_stock = self.stock_mobile.xs(True, level='Existing', drop_level=False).sum()
+        if not round(stock_ac_adoption.sum() - ref_stock, 0) == 0:
+            correct_factor = ref_stock / stock_ac_adoption.sum()
+            self.logger.debug('Numerical stock correction of {:.0f} households'.format(stock_ac_adoption.sum() - ref_stock))
+            stock_ac_adoption = stock_ac_adoption * correct_factor
 
         assert round(stock_ac_adoption.sum() - self.stock_mobile.xs(True, level='Existing', drop_level=False).sum(),
                      0) == 0, 'Sum problem'
