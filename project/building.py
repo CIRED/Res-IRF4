@@ -529,7 +529,7 @@ class ThermalBuildings:
 
         energy_bill[energy_bill < 0] = 0.1
         heating_intensity = energy_bill ** (-1/rho)
-        heating_intensity[heating_intensity > self.heating_intensity_max] = self.heating_intensity_max
+        #heating_intensity[heating_intensity > self.heating_intensity_max] = self.heating_intensity_max
 
         if self.coefficient_global is not None:
             heating_intensity *= self.coefficient_global
@@ -1512,7 +1512,23 @@ class AgentBuildings(ThermalBuildings):
             s.index.rename(
                 {'Wall': 'Wall before', 'Floor': 'Floor before', 'Roof': 'Roof before', 'Windows': 'Windows before'},
                 inplace=True)
-            temp = s.fillna(0).stack(s.columns.names)
+            try:
+                temp = s.fillna(0).stack(list(s.columns.names))
+            except ValueError:
+                self.logger.debug('Problem with pandas version')
+                # 1. Convert to string to avoid pandas bug
+                s.columns = pd.MultiIndex.from_tuples(
+                    [tuple(map(str, tup)) for tup in s.columns],
+                    names=s.columns.names
+                )
+
+                # 2. Stack safely
+                temp = s.fillna(0).stack(level=list(range(s.columns.nlevels))).reset_index()
+
+                # 3. Convert back to boolean for semantic clarity
+                for lvl in s.columns.names:
+                    if temp[lvl].isin(['True', 'False']).all():
+                        temp[lvl] = temp[lvl] == 'True'
             temp = temp.reset_index().drop(0, axis=1)
             for i in ['Wall', 'Floor', 'Roof', 'Windows']:
                 # keep the info to unstack later
@@ -1913,12 +1929,13 @@ class AgentBuildings(ThermalBuildings):
 
         distortion_details = {}
         # 1. distortion present-bias
-        value = bill_saved.copy()
-        value[value < 0] = 0
-        value = (reindex_mi((self.preferences_heater['discount_factor_perfect'] -
-                             self.preferences_heater['discount_factor']), value.index) * value.T).T
-        value.fillna(0, inplace=True)
-        distortion_details.update({'bill_saved': value.copy()})
+        if False:
+            value = bill_saved.copy()
+            value[value < 0] = 0
+            value = (reindex_mi((self.preferences_heater['discount_factor_perfect'] -
+                                 self.preferences_heater['discount_factor']), value.index) * value.T).T
+            value.fillna(0, inplace=True)
+            distortion_details.update({'bill_saved': value.copy()})
 
         # 2. distortion emission
         emission_saved_cumac = self.to_cumac(emission_saved, discount=self.social_discount_rate,
@@ -1929,11 +1946,12 @@ class AgentBuildings(ThermalBuildings):
         distortion_details.update({'emission_saved': value.copy()})
 
         # 3. distortion status quo
-        value = pd.DataFrame(0, index=cost_heater.index, columns=cost_heater.columns)
-        for hs in value.columns:
-            value.loc[
-                value.index.get_level_values('Heating system') == hs, hs] = - self.preferences_heater['status_quo_bias'] / abs(self.preferences_heater['cost']) * 1000
-        distortion_details.update({'status_quo': value.copy()})
+        if False:
+            value = pd.DataFrame(0, index=cost_heater.index, columns=cost_heater.columns)
+            for hs in value.columns:
+                value.loc[
+                    value.index.get_level_values('Heating system') == hs, hs] = - self.preferences_heater['status_quo_bias'] / abs(self.preferences_heater['cost']) * 1000
+            distortion_details.update({'status_quo': value.copy()})
 
         distortion_total = sum([i for k, i in distortion_details.items()])
         hs_to_drop = ['Heating-District heating', 'Oil fuel-Performance boiler']
@@ -1944,7 +1962,6 @@ class AgentBuildings(ThermalBuildings):
             distortion_total = distortion_total.loc[:, [i for i in cost_heater.columns if i in distortion_total.columns]]
             c = cost_heater.loc[:, [i for i in cost_heater.columns if i in distortion_total.columns]]
             distortion_total = distortion_total.where(distortion_total <= c, c)
-
             distortion_total[distortion_total < 0] = 0
 
         levels = ['Occupancy status', 'Housing type', 'Performance', 'Energy', 'Income owner']
@@ -3352,6 +3369,9 @@ class AgentBuildings(ThermalBuildings):
                 if allclose(remaining, 0, rtol=10 ** -1):
                     break
 
+            if self.year == 2024:
+                print('ok')
+                
             # it is possible to extend policies_target to other policies
             assert allclose(remaining, 0, rtol=10 ** -1), 'Over cap'
             subsidies_total -= subsidies_details['over_cap']
@@ -3380,12 +3400,13 @@ class AgentBuildings(ThermalBuildings):
         distortion_details.update({'multi_family': value.copy()})
 
         # 3. distortion present-bias
-        value = bill_saved.copy()
-        value[value < 0] = 0
-        value = (reindex_mi((self.preferences_insulation['discount_factor_perfect'] -
-                             self.preferences_insulation['discount_factor']), value.index) * value.T).T
-        value.fillna(0, inplace=True)
-        distortion_details.update({'bill_saved': value.copy()})
+        if False:
+            value = bill_saved.copy()
+            value[value < 0] = 0
+            value = (reindex_mi((self.preferences_insulation['discount_factor_perfect'] -
+                                 self.preferences_insulation['discount_factor']), value.index) * value.T).T
+            value.fillna(0, inplace=True)
+            distortion_details.update({'bill_saved': value.copy()})
 
         # 4. distortion emission
         consumption_saved_cumac = self.to_cumac(consumption_saved, discount=self.social_discount_rate,
@@ -6268,6 +6289,10 @@ class AgentBuildings(ThermalBuildings):
             temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
             output.update(temp.T / 10 ** 6 / step)
 
+            temp = subsidies_total.groupby(['Housing type', 'Occupancy status', 'Income owner']).sum()
+            temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} - {} (Million euro)'.format(x[0], x[1], x[2]))
+            output.update(temp.T / 10 ** 6 / step)
+
             """
             self.store_over_years[self.year].update(
                 {'Annuities heater (Billion euro/year)': output['Annuities heater (Billion euro/year)'],
@@ -6852,7 +6877,7 @@ class AgentBuildings(ThermalBuildings):
             cost_efficiency = cost_efficiency.stack(cost_efficiency.columns.names).squeeze()
             cost_efficiency_carbon = cost_efficiency_carbon.stack(cost_efficiency_carbon.columns.names).squeeze()
 
-        elif measures in ['deep_renovation', 'deep_insulation']:
+        elif measures in ['deep_renovation', 'deep_insulation', 'heater_replacement']:
 
             # prepare information
             dict_df = {'consumption_saved': consumption_saved,

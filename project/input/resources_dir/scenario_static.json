@@ -74,6 +74,12 @@
     "include_carbon": true,
     "include_health": true
   },
+  "I-E-C-S, chauffage": {
+    "measures": "heater_replacement",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": true
+  },
   "I-E-S": {
     "measures": "deep_renovation",
     "discount_rate": "social_discount_rate",

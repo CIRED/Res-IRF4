@@ -30,8 +30,21 @@
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
-**/__pycache__
+**/__pycache__/
 *.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
 /project/config/hidden_cost/
 /project/input/stock/buildingstock_sdes2018_medium_3_update.csv
 /project/input/stock/buildingstock_sdes2018_update.csv
+
+# Sphinx build output
+docs/_build/

@@ -36,6 +36,9 @@ import sys
 import json
 import re
 from matplotlib.lines import Line2D
+import itertools
+import math
+
 
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
@@ -1322,7 +1325,7 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
     if annotate_bis is not None:
         custom_handles = [
             Line2D([0], [0], marker='d', color='black', lw=0, label='With subsidies'),
-            Line2D([0], [0], marker='x', color='red', lw=0, label='Without subsidy'),
+            Line2D([0], [0], marker='x', color='red', lw=0, label='Without subsidy and tax'),
         ]
 
         # Add the additional legend
@@ -2223,3 +2226,50 @@ def manual_sobol_analysis(scenarios, list_features, y):
         sobol_total_order = 1 - (counts * (conditional_means - expectation) ** 2).sum() / variance
         sobol_df.loc[col, 'Total order'] = sobol_total_order
     return sobol_df
+
+
+def manual_shapley_analysis(scenarios, list_features, y):
+    import itertools, math, pandas as pd
+
+    shapley_df = pd.DataFrame(index=list_features, columns=['Shapley value'], dtype=float)
+
+    # Compute mean outcome for each combination of categorical states
+    grouped = scenarios.groupby(list_features)[y].mean()
+    grouped = grouped.reset_index()
+
+    # Create lookup table: tuple(feature_values) → mean outcome
+    Y_dict = {}
+    for _, row in grouped.iterrows():
+        key = tuple(row[f] for f in list_features)
+        Y_dict[key] = row[y]
+
+    K = len(list_features)
+    factorial = math.factorial
+
+    # Helper: get value for subset of "removed" features
+    def get_subset_value(subset):
+        pattern = []
+        for f in list_features:
+            if f in subset:
+                pattern.append(next(v for v in scenarios[f].unique() if v.startswith('no_')))
+            else:
+                pattern.append(next(v for v in scenarios[f].unique() if not v.startswith('no_')))
+        return Y_dict.get(tuple(pattern), None)
+
+    # Compute Shapley value for each feature
+    for i in list_features:
+        others = [f for f in list_features if f != i]
+        shapley_value = 0.0
+        for L in range(len(others) + 1):
+            for subset in itertools.combinations(others, L):
+                S = set(subset)
+                val_S = get_subset_value(S)
+                val_Si = get_subset_value(S.union({i}))
+                if val_S is None or val_Si is None:
+                    continue
+                weight = factorial(len(S)) * factorial(K - len(S) - 1) / factorial(K)
+                shapley_value += weight * (val_Si - val_S)
+        shapley_df.loc[i, 'Shapley value'] = shapley_value
+
+    shapley_df['Shapley share'] = shapley_df['Shapley value'] / shapley_df['Shapley value'].sum()
+    return shapley_df

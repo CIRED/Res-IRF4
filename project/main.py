@@ -15,6 +15,11 @@
 #
 # Original author Lucas Vivier <vivier@centre-cired.fr>
 
+import warnings
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=DeprecationWarning)
+
 import os
 import copy
 import logging
@@ -471,6 +476,7 @@ def run(path=None, folder=None):
 
 
 if __name__ == '__main__':
+
 
     logging.basicConfig()
     logging.getLogger('matplotlib.font_manager').disabled = True

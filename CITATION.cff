@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Res-IRF4"
+version: "4.0"
+doi: "10.5281/zenodo.10405492"
+license: GPL-3.0
+repository-code: "https://github.com/CIRED/Res-IRF4"
+url: "https://cired.github.io/Res-IRF4/"
+authors:
+  - family-names: Vivier
+    given-names: Lucas
+    email: lucas.vivier@enpc.fr
+    affiliation: "CIRED, Ecole des Ponts ParisTech"
+  - family-names: Giraudet
+    given-names: Louis-Gaetan
+    affiliation: "CIRED, Ecole des Ponts ParisTech"
+preferred-citation:
+  type: article
+  title: "Is France on Track for Decarbonizing Its Residential Sector? Assessing Recent Policy Changes and the Way Forward."
+  authors:
+    - family-names: Vivier
+      given-names: Lucas
+    - family-names: Giraudet
+      given-names: Louis-Gaetan
+  year: 2024
+  url: "https://hal.science/hal-04510798"
