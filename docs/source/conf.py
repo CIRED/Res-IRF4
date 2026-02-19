@@ -62,7 +62,11 @@ html_theme = 'pydata_sphinx_theme'
 
 html_theme_options = {
     "github_url": "https://github.com/CIRED/Res-IRF4",
-    "show_prev_next": True,
+    "show_prev_next": False,
+    "header_links_before_dropdown": 0,
+    "navbar_center": [],
+    "show_toc_level": 2,
+    "secondary_sidebar_items": ["page-toc"],
     "icon_links": [
         {
             "name": "Zenodo",
@@ -73,4 +77,5 @@ html_theme_options = {
 }
 
 html_static_path = ['_static']
+html_css_files = ['custom.css']
 html_permalinks = False

@@ -14,15 +14,6 @@ Res-IRF4 Documentation
    :caption: Model Documentation
 
    technical_documentation
-   input_2012
-   simulation_2012
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Policy Analysis
-
-   policies_parameters
-   policies_assessment
 
 .. toctree::
    :maxdepth: 2
@@ -39,6 +30,12 @@ Res-IRF4 Documentation
    modules
    contributing
    changelog
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Legacy (Res-IRF v3.0)
+
+   legacy
 
 
 Indices and tables

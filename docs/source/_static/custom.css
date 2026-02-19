@@ -1,0 +1,18 @@
+/* Prefer sidebar navigation over horizontal header links */
+.bd-header .navbar-header-items__center .navbar-nav {
+  display: none;
+}
+
+/* Keep pages readable on large screens */
+.bd-page-width {
+  max-width: 1440px;
+}
+
+.bd-main .bd-content .bd-article-container {
+  max-width: 92ch;
+}
+
+/* Add visual separation between nav and content */
+.bd-sidebar-primary {
+  border-right: 1px solid var(--pst-color-border);
+}
