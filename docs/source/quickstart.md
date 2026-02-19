@@ -28,8 +28,8 @@ python -m project.main -c project/config/config.json
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `-c`, `--config` | Path to configuration file | `project/config/test/config.json` |
-| `-d`, `--directory` | Path to policies directory | `project/config/policies` |
+| `-c`, `--config` | Path to configuration file | `project/config/test/test.json` |
+| `-d`, `--directory` | Path to policies directory | `project/config/policies/realistic` |
 | `-a`, `--assessment` | Path to assessment config | `None` |
 | `-y`, `--year` | Override end year | `None` |
 | `-cpu`, `--cpu` | Number of CPUs for parallel runs | `6` |

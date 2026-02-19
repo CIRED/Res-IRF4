@@ -1,12 +1,11 @@
 {
   "version": "0.2.0",
   "configurations": [
-    // Main baseline scenario using reference assumptions (with sensitivity/uncertainty blocks enabled in config). Config: project/config/config.json.
     {
-      "name": "Sim | Main | Default",
+      "name": "Default",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
@@ -18,811 +17,379 @@
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Main baseline scenario using reference assumptions (with sensitivity/uncertainty blocks enabled in config). Config: project/config/config.json.
     {
-      "name": "Sim | Main | Default (2)",
+      "name": "Test",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config.json"
+        "project/config/test/test.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Validation run for ad valorem insulation policy with green-rating focus. Config: project/config/validation/config_ad_valorem_gr_insulation.json.
     {
-      "name": "Sim | Validation | Ad Valorem Gr Insulation",
+      "name": "Realistic | Ban Policy",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/validation/config_ad_valorem_gr_insulation.json"
+        "project/config/policies/realistic/policy_ban.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Validation run for ad valorem insulation policy settings. Config: project/config/validation/config_ad_valorem_insulation.json.
     {
-      "name": "Sim | Validation | Ad Valorem Insulation",
+      "name": "Realistic | Compare Subsidies",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/validation/config_ad_valorem_insulation.json"
+        "project/config/policies/realistic/compare_subsidies.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // ADEME scenario set (S1-S4) compared against the reference trajectory. Config: project/config/config_ademe.json.
     {
-      "name": "Sim | Main | Ademe",
+      "name": "Analysis | Policy Distortion",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_ademe.json"
+        "project/config/analysis/policy_distortion_analysis.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_all_pp.json).
     {
-      "name": "Sim | Main | All Pp",
+      "name": "Market Failures | Interaction Bundle",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_all_pp.json"
+        "project/config/market_failures/interaction_market_failures.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_assess_policies.json).
     {
-      "name": "Sim | Main | Assess Policies",
+      "name": "Optimal | Policy Interactions",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_assess_policies.json"
+        "project/config/policies/optimal/interaction_optimal_policy.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Policy design run centered on carbon-tax settings and trajectories. Config: project/config/policies/config_carbon_tax.json.
     {
-      "name": "Sim | Policies | Carbon Tax",
+      "name": "Realistic | Policy Interactions",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/policies/config_carbon_tax.json"
+        "project/config/policies/realistic/interaction_policy.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Compares multiple subsidy designs (emission-, health-, landlord-, and multi-family-targeted variants). Config: project/config/config_compare_subsidies.json.
     {
-      "name": "Sim | Main | Compare Subsidies",
+      "name": "Realistic | Mandatory Renovation",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_compare_subsidies.json"
+        "project/config/policies/realistic/policy_mandatory_renovation.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Validation run for counterfactual scenario construction. Config: project/config/validation/config_counterfactual_scenarios.json.
     {
-      "name": "Sim | Validation | Counterfactual Scenarios",
+      "name": "Market Failures | Scenario Bundle",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/validation/config_counterfactual_scenarios.json"
+        "project/config/market_failures/market_failures_bundle.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Policy design run for ad valorem insulation subsidy calibration. Config: project/config/policies/config_design_advalorem_insulation.json.
     {
-      "name": "Sim | Policies | Design Advalorem Insulation",
+      "name": "Market Failures | Standalone Multi-family",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/policies/config_design_advalorem_insulation.json"
+        "project/config/market_failures/standalone/policy_multi_family.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Analyzes distortion components and policy effects under a calibrated policy baseline. Config: project/config/config_distortion.json.
     {
-      "name": "Sim | Main | Distortion",
+      "name": "Realistic | Policy Packages",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_distortion.json"
+        "project/config/policies/realistic/policies.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_eegap.json).
     {
-      "name": "Sim | Main | Eegap",
+      "name": "Optimal | Policy Design",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_eegap.json"
+        "project/config/policies/optimal/policy_optimal.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Sensitivity run varying key elasticity assumptions. Config: project/config/sensitivity/config_elasticity.json.
     {
-      "name": "Sim | Sensitivity | Elasticity",
+      "name": "Sensitivity | Prices",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/sensitivity/config_elasticity.json"
+        "project/config/sensitivity/prices.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_insulation_test.json).
     {
-      "name": "Sim | Main | Insulation Test",
+      "name": "Sensitivity",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_insulation_test.json"
+        "project/config/sensitivity/sensitivity.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Runs combinations of policy instruments and market-failure corrections. Config: project/config/config_interaction_mf.json.
     {
-      "name": "Sim | Main | Interaction Mf",
+      "name": "Realistic | Subsidy Landlord",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_interaction_mf.json"
+        "project/config/policies/realistic/subsidy_landlord.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Runs combinations of instruments from the optimized policy package. Config: project/config/config_interaction_optimal_pp.json.
     {
-      "name": "Sim | Main | Interaction Optimal Pp",
+      "name": "Realistic | Tax Policy",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_interaction_optimal_pp.json"
+        "project/config/policies/realistic/tax.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Runs combinations of instruments from the current public-policy package. Config: project/config/config_interaction_pp.json.
     {
-      "name": "Sim | Main | Interaction Pp",
+      "name": "Validation",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_interaction_pp.json"
+        "project/config/validation.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_landlord.json).
     {
-      "name": "Sim | Main | Landlord",
+      "name": "Market Failures | Standalone Bundle",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_landlord.json"
+        "project/config/market_failures/standalone/standalone_market_failures.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Compares mandatory renovation standards (minimum performance D vs E) against reference. Config: project/config/config_mandatory.json.
     {
-      "name": "Sim | Main | Mandatory",
+      "name": "Optimal | Standalone Policy",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_mandatory.json"
+        "project/config/policies/optimal/standalone_optimal_policy.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_many.json).
     {
-      "name": "Sim | Main | Many",
+      "name": "Standalone | Policy Friction",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_many.json"
+        "project/config/market_failures/standalone/policy_friction.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Runs policy interaction scenarios focused on market-failure correction levers. Config: project/config/config_mf.json.
     {
-      "name": "Sim | Main | Mf",
+      "name": "Standalone | Policy Friction Unbiased",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_mf.json"
+        "project/config/market_failures/standalone/policy_friction_unbiased.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Scenario analysis focused on multi-family housing dynamics. Config: project/config/config_multi_family.json.
     {
-      "name": "Sim | Main | Multi Family",
+      "name": "Standalone | Policy No Friction Biased",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_multi_family.json"
+        "project/config/market_failures/standalone/policy_no_friction_biased.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Compares policy packages (baseline package, package+ban, no-friction, SCC benchmark). Config: project/config/config_policies.json.
     {
-      "name": "Sim | Main | Policies",
+      "name": "Standalone | Policy Test",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/config_policies.json"
+        "project/config/market_failures/standalone/policy_test.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Uncertainty run with low-response assumptions across main policy packages. Config: project/config/uncertainty/config_policies_low_response.json.
-    {
-      "name": "Sim | Uncertainty | Policies Low Response",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/uncertainty/config_policies_low_response.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_policies_scenarios.json).
-    {
-      "name": "Sim | Main | Policies Scenarios",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_policies_scenarios.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Runs interaction scenarios for an optimized policy-package design. Config: project/config/config_pp_optimal.json.
-    {
-      "name": "Sim | Main | Pp Optimal",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_pp_optimal.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Energy-price sensitivity analysis relative to the reference case. Config: project/config/config_prices.json.
-    {
-      "name": "Sim | Main | Prices",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_prices.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Policy design run for CO2-proportional subsidy (all eligible technologies). Config: project/config/policies/config_proportional_CO2.json.
-    {
-      "name": "Sim | Policies | Proportional Co2",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/policies/config_proportional_CO2.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Policy design run for CO2-proportional subsidy focused on heaters. Config: project/config/policies/config_proportional_CO2_heater.json.
-    {
-      "name": "Sim | Policies | Proportional Co2 Heater",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/policies/config_proportional_CO2_heater.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Policy design run for energy-saved (MWh)-proportional subsidy. Config: project/config/policies/config_proportional_MWh.json.
-    {
-      "name": "Sim | Policies | Proportional Mwh",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/policies/config_proportional_MWh.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Policy design run for MWh-proportional subsidy focused on heaters. Config: project/config/policies/config_proportional_MWh_heater.json.
-    {
-      "name": "Sim | Policies | Proportional Mwh Heater",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/policies/config_proportional_MWh_heater.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_ref.json).
-    {
-      "name": "Sim | Main | Ref",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_ref.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Global sensitivity/uncertainty exploration around the reference scenario. Config: project/config/config_sensitivity.json.
-    {
-      "name": "Sim | Main | Sensitivity",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_sensitivity.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Runs standalone market-failure correction levers one by one. Config: project/config/config_standalone_mf.json.
-    {
-      "name": "Sim | Main | Standalone Mf",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_mf.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Runs standalone levers from the optimal policy package. Config: project/config/config_standalone_optimal_pp.json.
-    {
-      "name": "Sim | Main | Standalone Optimal Pp",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_optimal_pp.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/config_standalone_pp.json).
-    {
-      "name": "Sim | Main | Standalone Pp",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_pp.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Standalone current-policy levers with frictions enabled (reduced set). Config: project/config/config_standalone_pp_friction.json.
-    {
-      "name": "Sim | Main | Standalone Pp Friction",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_pp_friction.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Standalone current-policy levers with reduced behavioral bias assumptions. Config: project/config/config_standalone_pp_friction_unbiased.json.
-    {
-      "name": "Sim | Main | Standalone Pp Friction Unbiased",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_pp_friction_unbiased.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Standalone current-policy levers without frictions but with biased assumptions retained. Config: project/config/config_standalone_pp_no_friction_biased.json.
-    {
-      "name": "Sim | Main | Standalone Pp No Friction Biased",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_pp_no_friction_biased.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Small standalone current-policy subset for quick comparison/testing. Config: project/config/config_standalone_pp_test.json.
-    {
-      "name": "Sim | Main | Standalone Pp Test",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_standalone_pp_test.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Tests landlord-targeted subsidy settings with credit-constraint assumptions. Config: project/config/config_sub_landlord.json.
-    {
-      "name": "Sim | Main | Sub Landlord",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_sub_landlord.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Validation run focused on heater subsidy behavior. Config: project/config/validation/config_subsidies_heater.json.
-    {
-      "name": "Sim | Validation | Subsidies Heater",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/validation/config_subsidies_heater.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Legacy PyCharm entry: referenced config file is missing (project/config/validation/config_subsidies_insulation.json).
-    {
-      "name": "Sim | Validation | Subsidies Insulation",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/validation/config_subsidies_insulation.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Compares carbon-tax pathways including a no-recycling variant. Config: project/config/config_tax.json.
-    {
-      "name": "Sim | Main | Tax",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_tax.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Minimal smoke-test scenario for quick end-to-end execution. Config: project/config/config_test.json.
-    {
-      "name": "Sim | Main | Test",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_test.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Validation baseline run used to check model behavior against expected outputs. Config: project/config/config_validation.json.
-    {
-      "name": "Sim | Main | Validation",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/config_validation.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Policy design run that evaluates a zero-interest-loan configuration. Config: project/config/policies/config_zil.json.
-    {
-      "name": "Sim | Policies | Zil",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/policies/config_zil.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Runs the coupling workflow script for linked scenario pipelines.
     {
       "name": "Tool | Coupling",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/coupling.py",
+      "module": "project.coupling",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
@@ -830,84 +397,33 @@
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Runs the coupling workflow script for linked scenario pipelines.
-    {
-      "name": "Tool | Coupling (2)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/coupling.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Validation run that removes selected policies to isolate model effects. Config: project/config/validation/config_remove_policies.json.
-    {
-      "name": "Sim | Validation | Remove Policies",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-c",
-        "project/config/validation/config_remove_policies.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Batch assessment run using project/config/config_assessment_2021.json.
-    {
-      "name": "Tool | Runs Assessment 2021",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-a",
-        "project/config/config_assessment_2021.json",
-        "-cpu",
-        "6"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Batch assessment run using project/config/config_assessment_2024.json.
     {
       "name": "Tool | Runs Assessment 2024",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
+      "module": "project.runs",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-a",
-        "project/config/config_assessment_2024.json"
+        "project/config/assessment/assessment_2024.json"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Batch assessment run using project/config/config_assessment_grouped.json.
     {
       "name": "Tool | Runs Assessment Grouped",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
+      "module": "project.runs",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
         "-a",
-        "project/config/config_assessment_grouped.json",
+        "project/config/assessment/assessment_grouped.json",
         "-cpu",
         "6"
       ],
@@ -915,46 +431,11 @@
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Assessment test batch using project/config/config_assessment_test.json.
-    {
-      "name": "Tool | Runs Assessment Test",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-at",
-        "project/config/config_assessment_test.json"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Batch execution of all configs in project/config/policies.
-    {
-      "name": "Tool | Runs Policies",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": false,
-      "args": [
-        "-d",
-        "project/config/policies"
-      ],
-      "env": {
-        "PYTHONUNBUFFERED": "1"
-      }
-    },
-    // Batch execution of all configs in project/config/uncertainty.
     {
       "name": "Tool | Runs Uncertainty",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
+      "module": "project.runs",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
@@ -966,22 +447,53 @@
         "PYTHONUNBUFFERED": "1"
       }
     },
-    // Batch execution of all configs in project/config/validation.
     {
-      "name": "Tool | Runs Validation",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/project/runs.py",
+      "module": "project.main",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "justMyCode": false,
-      "args": [
-        "-d",
-        "project/config/validation"
-      ],
       "env": {
         "PYTHONUNBUFFERED": "1"
-      }
+      },
+      "name": "Uncertainty | Policies Reference Response",
+      "args": [
+        "-c",
+        "project/config/uncertainty/policies_response_reference.json"
+      ]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "module": "project.main",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "name": "Uncertainty | Policies High Response",
+      "args": [
+        "-c",
+        "project/config/uncertainty/policies_response_high.json"
+      ]
+    },
+    {
+      "type": "debugpy",
+      "request": "launch",
+      "module": "project.main",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "name": "Uncertainty | Policies Low Response",
+      "args": [
+        "-c",
+        "project/config/uncertainty/policies_response_low.json"
+      ]
     }
   ]
 }

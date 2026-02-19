@@ -8,18 +8,25 @@
 /project/test.py
 /project/input/prices/
 /project/input/scenarios/
+# Analysis: track ONLY source code (notebooks, .py, .md, small config)
+# Ignore ALL data, outputs, runs, archives, and generated artifacts
+/project/analysis/**/runs/
+/project/analysis/**/output/
+/project/analysis/**/data/
+/project/analysis/**/figures/
+/project/analysis/**/prices_scenario/
+/project/analysis/**/archive/
+/project/analysis/**/legacy_data/
+/project/analysis/**/_old/
+/project/analysis/**/*.pkl
+/project/analysis/**/.ipynb_checkpoints/
 /project/analysis/pre_processing/building_stock/archetypes/ademe_dpe_buildingmodel_medium/old/
-/project/input/stock/old/
+/project/input/stock/_old/
 /project/config/sfec/
 /project/input/policies/sfec/
 /project/config/obligation/
-/project/config/policies/
-/project/config/sensitivity/
-/project/config/test/
-/project/config/validation/
 /project/test
 /project/input/stock/buildingstock_sdes2018_medium_3.csv
-/project/analysis/
 /project/input/macro/_old/
 /project/input/policies/_old/
 /project/input/policies/current/_old/
@@ -42,7 +49,6 @@ venv/
 htmlcov/
 build/
 dist/
-/project/config/hidden_cost/
 /project/input/stock/buildingstock_sdes2018_medium_3_update.csv
 /project/input/stock/buildingstock_sdes2018_update.csv
 

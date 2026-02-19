@@ -79,7 +79,7 @@ Among the possible parameters used to describe a scenario:
 - `file` : use another setting file as a reference. This feature facilitates the modification
 of one parameter compared to the Reference scenario without repeating all parameters.
 - `policies`: policies can be included directly in the configuration file or by making reference to an independent policy file (
-see `input/policies/policies_ref.json`). This feature ensures that different scenarios have the same policies setting.
+see `project/input/policies/policies_2021.json`). This feature ensures that different scenarios have the same policies setting.
 - `simple`: modification of one specific feature of the scenario. For example, it is possible to run a scenario with
 quintiles instead of deciles, or to run a scenario with a limited number of heating systems. It also allows to
 simplify the simulation by running with price or income constant. 
@@ -94,14 +94,14 @@ Headers are an easy way to create additional variants of scenario.
 The advantage is to ensure that all other parameters are the same as in the main settings.
 There are different headers:
 
-- `scenarios` : basic variant of the Reference scenario. An example of such header can be found in `test/config_validation.json`.
+- `scenarios` : basic variant of the Reference scenario. An example of such header can be found in `project/config/validation.json`.
 Among the possible variants that can be created automatically:
   - `current_policies: True`. Keep the same public policies used during calibration throughout the simulation ("Current Policies").
   - `no_policy: True`. Removing all public policies in the year after calibration ("No policy").
   - `prices_constant: True`. Retain the same energy prices as used during calibration ("Constant Prices").
 - `sensitivity` : modify one or multiple parameters of the Reference scenario.
 It has been implemented for a limited number of parameters. 
-Check `config/list_sensitivity.json` for a comprehensive list of available parameters.
+Check `project/config/sensitivity/sensitivity_list.example.json` for a comprehensive list of available parameters.
 - `uncertainty` : run all possible permutation of modified parameters (still in progress). 
 - `policies_scenarios` : simplified output for large number of scenarios,
 - `assessment_test` : run assessment indicators for one policy (still in progress).
