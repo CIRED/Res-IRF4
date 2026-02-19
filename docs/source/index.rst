@@ -29,6 +29,7 @@ Res-IRF4 Documentation
    :caption: Replication
 
    replication
+   replication_paper_map
    data_dictionary
 
 .. toctree::

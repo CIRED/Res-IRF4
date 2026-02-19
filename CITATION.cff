@@ -10,8 +10,6 @@ url: "https://cired.github.io/Res-IRF4/"
 authors:
   - family-names: Vivier
     given-names: Lucas
-    email: lucas.vivier@enpc.fr
-    affiliation: "CIRED, Ecole des Ponts ParisTech"
   - family-names: Giraudet
     given-names: Louis-Gaetan
     affiliation: "CIRED, Ecole des Ponts ParisTech"

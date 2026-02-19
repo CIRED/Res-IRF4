@@ -43,6 +43,12 @@ python -m project.main -c project/config/config.json
 
 Results are written to `project/output/DDMMYYYY_HHMM/` with a `summary_run.pdf` and per-scenario CSV outputs.
 
+### Paper section mapping
+
+For the paper-oriented workflow (market failures, optimal subsidies, realistic policies, friction variants, distortion checks), use:
+
+- [`replication_paper_map.md`](replication_paper_map.md)
+
 ### Configuration files
 
 The `project/config/` directory contains configuration files for different analyses. Each config file defines one or more scenarios that can be run and compared.
