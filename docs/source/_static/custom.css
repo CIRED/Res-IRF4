@@ -18,8 +18,10 @@
 }
 
 /* Keep the primary sidebar visible and sticky on desktop */
-@media (min-width: 992px) {
-  .bd-sidebar-primary {
+@media (min-width: 960px) {
+  #pst-primary-sidebar.bd-sidebar-primary,
+  .bd-sidebar-primary,
+  .bd-sidebar-primary.hide-on-wide {
     display: block !important;
     visibility: visible !important;
     transform: none !important;
@@ -32,6 +34,10 @@
 
   body:not(.primary-sidebar-open) .bd-sidebar-primary {
     margin-left: 0 !important;
+  }
+
+  .bd-header button.primary-toggle {
+    display: none !important;
   }
 }
 
