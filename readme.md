@@ -20,7 +20,31 @@ specific functions. Use only with care and caution._**
 > household behaviour. Res-IRF has been developed to improve the behavioural realism that is typically lacking in
 > integrated models of energy demand.
 
-## Installation
+## Quick Start (standalone executable)
+
+Pre-built executables are available for Windows, macOS, and Linux. No Python installation is required.
+
+1. Go to the [Releases](https://github.com/CIRED/Res-IRF4/releases) page.
+2. Download the zip file for your operating system (`ResIRF-windows.zip`, `ResIRF-macos.zip`, or `ResIRF-linux.zip`).
+3. Unzip the archive.
+4. Open a terminal in the unzipped `ResIRF` folder and run:
+
+```bash
+# Test simulation (short run)
+./ResIRF -c project/config/test/test.json
+
+# Full reference scenario
+./ResIRF -c project/config/config.json
+
+# Parallel scenarios with 4 CPUs
+./ResIRF -c project/config/config.json -cpu 4
+```
+
+On Windows, replace `./ResIRF` with `ResIRF.exe`.
+
+Results are saved in the `project/output/` folder inside the `ResIRF` directory.
+
+## Installation (from source)
 
 **Step 1**: Git **clone Res-IRF folder** in your computer.
 

@@ -1,0 +1,71 @@
+name: Build Executables
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: ResIRF-linux
+          - os: windows-latest
+            artifact_name: ResIRF-windows
+          - os: macos-latest
+            artifact_name: ResIRF-macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Install project package
+        run: pip install -e .
+
+      - name: Build executable
+        run: pyinstaller res_irf.spec
+
+      - name: Create output directory in bundle
+        shell: bash
+        run: mkdir -p dist/ResIRF/project/output
+
+      - name: Archive bundle
+        shell: bash
+        env:
+          ARTIFACT_NAME: ${{ matrix.artifact_name }}
+        run: |
+          cd dist
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z a -tzip "../${ARTIFACT_NAME}.zip" ResIRF/
+          else
+            zip -r "../${ARTIFACT_NAME}.zip" ResIRF/
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.zip
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_name }}.zip
