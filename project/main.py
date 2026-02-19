@@ -43,9 +43,9 @@ def run(path=None, folder=None):
     output_compare = 'full'
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', default=os.path.join('project', 'config', 'test', 'config.json'), help='path config file')
+    parser.add_argument('-c', '--config', default=os.path.join('project', 'config', 'test', 'test.json'), help='path config file')
 
-    parser.add_argument('-d', '--directory', default='project/config/policies', help='path config directory')
+    parser.add_argument('-d', '--directory', default='project/config/policies/realistic', help='path config directory')
     parser.add_argument('-a', '--assessment', default=None, help='path config file with assessment')
     parser.add_argument('-y', '--year', default=None, help='end year')
     parser.add_argument('-cpu', '--cpu', default=6, help='number of cpu')
