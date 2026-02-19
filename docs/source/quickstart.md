@@ -1,13 +1,13 @@
 # Quickstart
 
-This guide walks you through installing Res-IRF4 and running your first simulation.
+This page gets you from clone to first successful Res-IRF4 run.
 
-## Prerequisites
+## 1. Prerequisites
 
 - [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/)
 - Git
 
-## Installation
+## 2. Setup
 
 ```bash
 git clone https://github.com/CIRED/Res-IRF4.git
@@ -16,57 +16,62 @@ conda env create -f environment.yml
 conda activate Res-IRF4
 ```
 
-## Running a simulation
+The expected conda environment name is `Res-IRF4` (from `environment.yml`).
 
-Launch from the repository root (not from `/project`):
+## 3. Run your first simulation
+
+Run from the repository root:
 
 ```bash
 python -m project.main -c project/config/config.json
 ```
 
-### Command-line options
+## 4. Check that the run succeeded
+
+A successful run creates a timestamped folder under `project/output/`:
+
+```bash
+ls -1 project/output | tail -n 5
+```
+
+Inside the latest run folder, you should see:
+
+- `summary_run.pdf`
+- one directory per scenario
+- scenario-level `output.csv` files
+- `img/` folders with generated figures
+
+## Useful CLI flags
 
 | Flag | Description | Default |
 |------|-------------|---------|
 | `-c`, `--config` | Path to configuration file | `project/config/test/test.json` |
-| `-d`, `--directory` | Path to policies directory | `project/config/policies/realistic` |
-| `-a`, `--assessment` | Path to assessment config | `None` |
-| `-y`, `--year` | Override end year | `None` |
+| `-y`, `--year` | Override simulation end year | unset |
 | `-cpu`, `--cpu` | Number of CPUs for parallel runs | `6` |
 
-## Understanding the output
+For batch execution of multiple configs in a folder:
 
-Results are saved in `project/output/DDMMYYYY_HHMM/`:
-
-- `summary_run.pdf` -- aggregated results summary
-- One folder per scenario with:
-  - `output.csv` -- detailed results (readable with Excel)
-  - `img/` -- scenario-specific figures
-- `img/` at the root -- cross-scenario comparison plots
-
-## Modifying a scenario
-
-Configuration files are JSON dictionaries in `project/config/`. The default `config.json` references a base scenario:
-
-```json
-{
-  "Reference": {
-    "file": "project/config/reference.json",
-    "end": 2020,
-    "policies": {
-      "file": "project/input/policies/policies_calibration.json"
-    }
-  }
-}
+```bash
+python -m project.runs -d project/config/policies/realistic
 ```
 
-Key parameters you can modify:
+## Edit a scenario quickly
 
-- `"end"`: simulation end year (e.g., `2050`)
-- `"policies"`: path to a policy configuration file
-- `"simple"`: simplification options (`"quintiles": true` for faster runs)
+Main config files are in `project/config/`.
 
-## Memory and performance
+High-impact fields:
 
-Each scenario requires up to 2 GB of RAM. For laptops, limit parallel runs to 3 scenarios.
-Use `"quintiles": true` and a restricted `"heating_system"` list in the `"simple"` block for lighter simulations.
+- `"end"`: simulation horizon (for example `2050`)
+- `"file"`: inherit from a baseline config
+- `"policies"`: inject policy sets
+- `"simple"`: run simplifications (`"quintiles": true`, limited heating systems) for faster iterations
+
+## Performance notes
+
+- Memory can reach about 2 GB per scenario depending on detail level.
+- On typical laptops, keep parallel runs to about 2-3 scenarios at once.
+
+```{seealso}
+- [Replication package](replication.md)
+- [Installation help](help_installation.md)
+```

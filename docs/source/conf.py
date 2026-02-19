@@ -65,6 +65,9 @@ html_theme_options = {
     "show_prev_next": False,
     "header_links_before_dropdown": 0,
     "navbar_center": [],
+    "collapse_navigation": False,
+    "navigation_depth": 4,
+    "show_nav_level": 2,
     "show_toc_level": 2,
     "secondary_sidebar_items": ["page-toc"],
     "icon_links": [
@@ -78,4 +81,12 @@ html_theme_options = {
 
 html_static_path = ['_static']
 html_css_files = ['custom.css']
+html_sidebars = {
+    "**": ["search-field.html", "sidebar-nav-bs.html"],
+}
 html_permalinks = False
+
+# Linkcheck tuning to reduce transient CI failures while keeping checks strict.
+linkcheck_timeout = 15
+linkcheck_retries = 2
+linkcheck_workers = 5

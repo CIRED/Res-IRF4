@@ -1,6 +1,11 @@
 
 # Simulation and sensitivity analysis
 
+```{warning}
+Legacy documentation notice: this page reports historical v3.0 simulation analyses based on 2012 calibration.
+For v4 workflows, use [Quickstart](quickstart.md) and [Replication package](replication.md).
+```
+
 ## Influence of exogenous variables
 
 The influence of technological progress, energy prices and aggregate household income is assessed by comparing the

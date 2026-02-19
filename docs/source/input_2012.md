@@ -1,6 +1,11 @@
 
 # Input Res-IRF version 3.0
 
+```{warning}
+Legacy documentation notice: this page documents the historical v3.0 setup and 2012 calibration.
+For current v4 usage, use [Start Here](start_here.md) and [Technical documentation](technical_documentation.md).
+```
+
 ## Building stock used in version 3.0
 
 The model is calibrated on base year 2012. What we refer to as existing dwellings corresponds to the stock of dwellings

@@ -1,6 +1,11 @@
 
 # Setting up public policies 
 
+```{warning}
+Legacy documentation notice: this page documents historical policy parameterization used in legacy v3.0 analyses.
+For current v4-oriented runs, start with [Quickstart](quickstart.md) and [Replication package](replication.md).
+```
+
 ## Implementation of policies in Res-IRF
 
 Add policy in the config file.
@@ -220,4 +225,3 @@ building sector. This assumption is embodied in our cost matrix.
 
 Investment choices in new construction are limited to BBC and BEPOS levels between 2012 and 2019, then to zero energy
 standard only from 2020.
-

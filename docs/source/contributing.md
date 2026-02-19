@@ -1,66 +1,65 @@
 # Contributing
 
-## Updating Documentation
-
-### Overview
+## Documentation contribution workflow
 
 Documentation source lives in `docs/source/` and is built with [Sphinx](https://www.sphinx-doc.org/).
-It is deployed automatically to GitHub Pages via GitHub Actions on every push to `master`.
+Published docs: <https://cired.github.io/Res-IRF4/>
 
-
-Live documentation: <https://cired.github.io/Res-IRF4/>
-
-### Local build
-
-1. Install documentation dependencies:
+## Local docs setup
 
 ```bash
 pip install -r docs/requirements.txt
 ```
 
-2. Build HTML locally:
+## Local quality checks
+
+Run from repository root:
 
 ```bash
 cd docs
 make clean
-make html
+sphinx-build -b html -W --keep-going source _build/html
+sphinx-build -b linkcheck -W --keep-going source _build/linkcheck
 ```
 
-3. Open `docs/_build/html/index.html` in your browser to preview.
+Open `_build/html/index.html` in your browser to preview.
 
-### Adding content
+## Adding or editing pages
 
-- Documentation pages are Markdown (`.md`) or reStructuredText (`.rst`) files in `docs/source/`.
-- Add new pages to the `toctree` in `docs/source/index.rst`.
-- Images go in `docs/source/img/`, data tables in `docs/source/table/`.
+- Write docs pages as `.md` or `.rst` under `docs/source/`.
+- Add each new page to an appropriate `toctree` (usually in `docs/source/index.rst`).
+- Store images in `docs/source/img/` and tabular assets in `docs/source/table/`.
+- Follow the [Documentation Style Guide](style_guide.md).
+
+## Docs PR checklist
+
+1. page is linked in navigation (`toctree`)
+2. commands and paths were tested
+3. local Sphinx build passes with warnings as errors
+4. local linkcheck passes
+5. legacy references are clearly labeled as legacy where relevant
 
 ## Git workflow
 
-### Creating a branch
-
-1. Update your local copy of master:
-
-```bash
-git pull
-```
-
-2. Create and switch to a new branch:
-
-```bash
-git checkout -b name_of_new_branch
-```
-
-3. Push the branch to GitHub:
-
-```bash
-git push origin name_of_new_branch
-```
-
-### Updating a branch from master
+Create a branch:
 
 ```bash
 git checkout master
 git pull
-git checkout name_of_the_branch
+git checkout -b <branch_name>
+```
+
+Update from `master`:
+
+```bash
+git checkout master
+git pull
+git checkout <branch_name>
 git merge master
+```
+
+Push branch:
+
+```bash
+git push origin <branch_name>
 ```

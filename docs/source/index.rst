@@ -5,9 +5,10 @@ Res-IRF4 Documentation
    :maxdepth: 2
    :caption: Getting Started
 
-   readme
+   start_here
    quickstart
    help_installation
+   readme
 
 .. toctree::
    :maxdepth: 2
@@ -28,12 +29,13 @@ Res-IRF4 Documentation
    :caption: Developer Guide
 
    modules
+   style_guide
    contributing
    changelog
 
 .. toctree::
    :maxdepth: 2
-   :caption: Legacy (Res-IRF v3.0)
+   :caption: Legacy Archive (v3.0 / 2012)
 
    legacy
 

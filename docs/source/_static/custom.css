@@ -16,3 +16,37 @@
 .bd-sidebar-primary {
   border-right: 1px solid var(--pst-color-border);
 }
+
+/* Keep the primary sidebar visible and sticky on desktop */
+@media (min-width: 992px) {
+  .bd-sidebar-primary {
+    display: block !important;
+    visibility: visible !important;
+    transform: none !important;
+    margin-left: 0 !important;
+    position: sticky;
+    top: calc(var(--pst-header-height) + 0.5rem);
+    max-height: calc(100vh - var(--pst-header-height) - 1rem);
+    overflow-y: auto;
+  }
+
+  body:not(.primary-sidebar-open) .bd-sidebar-primary {
+    margin-left: 0 !important;
+  }
+}
+
+/* Improve long-form readability */
+.bd-content .bd-article {
+  line-height: 1.65;
+}
+
+.bd-content .bd-article h1,
+.bd-content .bd-article h2,
+.bd-content .bd-article h3 {
+  letter-spacing: 0.01em;
+}
+
+/* Make admonitions slightly easier to scan */
+.bd-content .admonition {
+  border-radius: 0.4rem;
+}

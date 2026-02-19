@@ -1,6 +1,11 @@
 
 # Policies assessment
 
+```{warning}
+Legacy documentation notice: this page documents historical v3.0 policy-assessment assumptions and indicators.
+For active v4 documentation, use [Technical documentation](technical_documentation.md) and [Replication package](replication.md).
+```
+
 ## General principles
 
 The simulations are based on the following principles:
