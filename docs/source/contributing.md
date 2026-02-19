@@ -7,6 +7,7 @@
 Documentation source lives in `docs/source/` and is built with [Sphinx](https://www.sphinx-doc.org/).
 It is deployed automatically to GitHub Pages via GitHub Actions on every push to `master`.
 
+
 Live documentation: <https://cired.github.io/Res-IRF4/>
 
 ### Local build
