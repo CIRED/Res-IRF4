@@ -54,7 +54,7 @@ CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heati
 class ThermalBuildings:
     """ThermalBuildings classes.
 
-    Parameters:
+    Parameters
     ----------
     stock: Series
         Building stock.
@@ -67,10 +67,11 @@ class ThermalBuildings:
     income: Series
         Average income value by income class.
     consumption_ini: Series
+        Initial energy consumption.
     path: str, optional
     year: int, default: 2018
 
-    Attributes:
+    Attributes
     ----------
 
     """
@@ -967,7 +968,7 @@ class AgentBuildings(ThermalBuildings):
 
 
 
-    Parameters:
+    Parameters
     ----------
     stock: Series
         Building stock.
@@ -1006,8 +1007,6 @@ class AgentBuildings(ThermalBuildings):
     resources_data: dict, default None
     detailed_output: bool, default True
     figures: dict, default None
-
-
 
     Attributes
     ----------
@@ -4439,6 +4438,7 @@ class AgentBuildings(ThermalBuildings):
 
         1. Intensive margin
         2. Extensive margin
+
         Calibrate function first year.
 
         Consumption saving only depends on insulation work.
@@ -4717,7 +4717,7 @@ class AgentBuildings(ThermalBuildings):
 
         1. Heater replacement based on current stock segment.
         2. Knowing heater replacement (and new heating system) calculating retrofit rate by segment and market
-        share by segment.
+           share by segment.
         3. Then, managing inflow and outflow.
 
         Parameters
