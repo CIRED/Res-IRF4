@@ -18,12 +18,12 @@
     "end": 2022,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-       "multi_family": {
-    "start": 2019,
-    "end": 2051,
-    "policy": "regulation",
-    "gest": "insulation"
-  }
+      "multi_family": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      }
     }
   }
 }

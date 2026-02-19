@@ -91,7 +91,7 @@
         }
       },
       "energy_taxes": "project/input/energy/energy_taxes_ame2021.csv",
-      "energy_vta": "project/input/energy/energy_vta.csv",
+      "energy_vta": "project/input/energy/energy_vat.csv",
       "carbon_emission": "project/input/energy/carbon_emission_s1.csv",
       "renewable_gas": "project/input/energy/renewable_gas_s1.csv"
       },
@@ -117,7 +117,7 @@
     "health_cost_income": "project/input/policies/health_cost_income.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/policies_2021.json"
     },
     "simple": {
       "figures": true,

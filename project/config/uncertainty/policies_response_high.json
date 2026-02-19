@@ -14,61 +14,33 @@
   "sensitivity": {
     "activated": false,
     "Package2024Zil": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json",
-      "zero_interest_loan": {
-        "start": 2024,
-        "end": 2051,
-        "cost_max": 30000,
-        "gest": ["heater", "insulation"],
-        "value": 0.0,
-        "duration": 15,
-        "policy": "zero_interest_loan"
-    }
-    }},
-    "Regulation": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_calibration.json",
-      "obligation": {
-      "start": 2022,
+      "file": "project/config/reference_high_response.json",
+      "step": 1,
       "end": 2051,
-      "value": "project/input/policies/current/agenda_obligation_pb.csv",
-      "frequency": {
-        "value": [
-          0,
-          0.1,
-          0
-        ],
-        "index": [
-          "Owner-occupied",
-          "Privately rented",
-          "Social-housing"
-        ],
-        "name": "Occupancy status"
-      },
-      "intensive": "market_share",
-      "minimum_performance": "D",
-      "policy": "obligation"
-    },
-      "restriction_gas": {
-        "start": 2030,
-        "end": 2051,
-        "value": "Natural gas",
-        "policy": "restriction_energy"
+      "policies": {
+        "file": "project/input/policies/policies_2024.json",
+        "zero_interest_loan": {
+          "start": 2024,
+          "end": 2051,
+          "cost_max": 30000,
+          "gest": [
+            "heater",
+            "insulation"
+          ],
+          "value": 0.0,
+          "duration": 15,
+          "policy": "zero_interest_loan"
+        }
       }
     }
-  }
   },
   "uncertainty": {
     "activated": false,
-    "energy_prices_factor": [2, 5],
-    "carbon_emission" : [
+    "energy_prices_factor": [
+      2,
+      5
+    ],
+    "carbon_emission": [
       "project/input/energy/carbon_emission_tend.csv"
     ],
     "scale_renovation": [
@@ -79,7 +51,7 @@
     ]
   },
   "Reference": {
-    "file": "project/config/reference.json",
+    "file": "project/config/reference_high_response.json",
     "step": 1,
     "end": 2051,
     "policies": {
@@ -87,14 +59,15 @@
     }
   },
   "Package2024": {
-    "file": "project/config/reference.json",
+    "file": "project/config/reference_high_response.json",
     "step": 1,
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_2024.json"
-    }},
+    }
+  },
   "Package2024Ban": {
-    "file": "project/config/reference.json",
+    "file": "project/config/reference_high_response.json",
     "step": 1,
     "end": 2051,
     "policies": {
@@ -105,9 +78,10 @@
         "value": "Natural gas",
         "policy": "restriction_energy"
       }
-    }},
+    }
+  },
   "CarbonTax": {
-    "file": "project/config/reference.json",
+    "file": "project/config/reference_high_response.json",
     "step": 1,
     "end": 2051,
     "policies": {

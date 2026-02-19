@@ -38,9 +38,9 @@
       "preferences_insulation": "project/input/investment/stated_preferences_insulation.csv"
     },
     "switch_heater": {
-      "district_heating": "project/input/energy/district_heating_s4.csv",
+      "district_heating": "project/input/energy/district_heating_s2.csv",
       "ms_heater": "project/input/investment/market_share_heater_transition2050.csv",
-      "ms_heater_built": "project/input/investment/market_share_heater_construction_s4.csv",
+      "ms_heater_built": "project/input/investment/market_share_heater_construction_s2.csv",
       "preferences_heater": "project/input/investment/stated_preferences_heater.csv",
       "premature_replacement": null,
       "information_rate": 0.333,
@@ -91,15 +91,15 @@
         }
       },
       "energy_taxes": "project/input/energy/energy_taxes_ame2021.csv",
-      "energy_vta": "project/input/energy/energy_vta.csv",
-      "carbon_emission": "project/input/energy/carbon_emission_s4.csv",
-      "renewable_gas": "project/input/energy/renewable_gas_s4.csv"
+      "energy_vta": "project/input/energy/energy_vat.csv",
+      "carbon_emission": "project/input/energy/carbon_emission_s2.csv",
+      "renewable_gas": "project/input/energy/renewable_gas_s2.csv"
       },
     "macro": {
       "construction": true,
-      "flow_construction": "project/input/macro/flow_construction_s4.csv",
-      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_s4.csv",
-      "demolition_rate": "project/input/macro/demolition_rate_s4.csv",
+      "flow_construction": "project/input/macro/flow_construction_s2.csv",
+      "share_single_family_construction": "project/input/macro/share_singlefamily_construction_s2.csv",
+      "demolition_rate": "project/input/macro/demolition_rate_s2.csv",
       "income": "project/input/macro/income.csv",
       "income_rate": 0.012,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
@@ -117,7 +117,7 @@
     "health_cost_income": "project/input/policies/health_cost_income.csv",
     "carbon_value": "project/input/policies/carbon_value.csv",
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/policies_2021.json"
     },
     "simple": {
       "figures": true,
