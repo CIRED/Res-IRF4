@@ -34,7 +34,7 @@ renovation (e.g., inconvenience associated with insulation works), barriers to c
 homeowner associations, split incentives between landlords and tenants, credit constraints, and the so-called rebound
 effect.
 
-```{figure} img/elementary_model_structure.png
+```{figure} ../img/elementary_model_structure.png
 :name: model_figure
 
 Elementary structure model

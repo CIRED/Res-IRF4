@@ -36,7 +36,7 @@ Described in {cite:ps}`giraudetPoliciesLowcarbonAffordable2021`.
 - Multi-criteria policy evaluation (effectiveness, cost-effectiveness, leverage, distributional effects).
 - Six peer-reviewed publications.
 
-See [Input Res-IRF version 3.0](input_2012.md) and [Simulation and sensitivity analysis](simulation_2012.md) for detailed v3.0 documentation.
+See [Input Res-IRF version 3.0](../legacy/input_2012.md) and [Simulation and sensitivity analysis](../legacy/simulation_2012.md) for detailed v3.0 documentation.
 
 ```{bibliography}
 :filter: False

@@ -5,39 +5,31 @@ Res-IRF4 Documentation
    :maxdepth: 2
    :caption: Getting Started
 
-   start_here
-   quickstart
-   help_installation
-   readme
+   getting_started/index
 
 .. toctree::
    :maxdepth: 2
    :caption: Model Documentation
 
-   technical_documentation
+   model/index
 
 .. toctree::
    :maxdepth: 2
    :caption: Replication
 
-   replication
-   replication_paper_map
-   data_dictionary
+   replication/index
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer Guide
 
-   modules
-   style_guide
-   contributing
-   changelog
+   developer/index
 
 .. toctree::
    :maxdepth: 2
    :caption: Legacy Archive (v3.0 / 2012)
 
-   legacy
+   legacy/index
 
 
 Indices and tables

@@ -83,7 +83,7 @@ html_static_path = ['_static']
 html_css_files = ['custom.css']
 html_js_files = ['custom.js']
 html_sidebars = {
-    "**": ["search-field.html", "sidebar-nav-custom.html"],
+    "**": ["search-field.html", "sidebar-nav-bs.html"],
 }
 html_permalinks = False
 

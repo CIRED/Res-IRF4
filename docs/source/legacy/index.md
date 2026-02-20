@@ -4,7 +4,7 @@
 This section is **legacy documentation**.
 
 It describes historical v3.0 and 2012-calibration material and is not the primary reference for current v4 workflows.
-For active development and current usage, start from [Start Here](start_here.md) and [Quickstart](quickstart.md).
+For active development and current usage, start from [Start Here](../getting_started/start_here.md) and [Quickstart](../getting_started/quickstart.md).
 ```
 
 This archive is kept for transparency and historical reproducibility.

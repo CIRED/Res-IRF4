@@ -3,7 +3,7 @@
 
 ```{warning}
 Legacy documentation notice: this page documents historical v3.0 policy-assessment assumptions and indicators.
-For active v4 documentation, use [Technical documentation](technical_documentation.md) and [Replication package](replication.md).
+For active v4 documentation, use [Technical documentation](../model/technical_documentation.md) and [Replication package](../replication/replication.md).
 ```
 
 ## General principles

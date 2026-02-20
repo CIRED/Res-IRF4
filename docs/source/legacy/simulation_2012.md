@@ -3,7 +3,7 @@
 
 ```{warning}
 Legacy documentation notice: this page reports historical v3.0 simulation analyses based on 2012 calibration.
-For v4 workflows, use [Quickstart](quickstart.md) and [Replication package](replication.md).
+For v4 workflows, use [Quickstart](../getting_started/quickstart.md) and [Replication package](../replication/replication.md).
 ```
 
 ## Influence of exogenous variables
@@ -26,7 +26,7 @@ depending on the scenarios considered, between 2012 and 2050. Freezing technolog
 consumption by 12% in 2050 relative to the reference scenario. Additionally, freezing energy prices further increases
 energy consumption by 20%. Lastly, freezing income decreases energy consumption by another 15%.
 
-```{figure} img/simulation_2012/exogenous/consumption_actual.png
+```{figure} ../img/simulation_2012/exogenous/consumption_actual.png
 :name: consumption_actual_phebus_exogenous
 
 Evolution of final actual energy consumption
@@ -42,13 +42,13 @@ are augmenting this potential. {numref}`stock_performance_phebus_exogenous` show
 number of renovations generate fewer numbers in the low-efficiency labels (G to C) and more in high-efficiency ones (B
 and A).
 
-```{figure} img/simulation_2012/exogenous/flow_renovation.png
+```{figure} ../img/simulation_2012/exogenous/flow_renovation.png
 :name: flow_renovation_phebus_exogenous
 
 Renovation flows
 ```
 
-```{figure} img/simulation_2012/exogenous/stock_performance.png
+```{figure} ../img/simulation_2012/exogenous/stock_performance.png
 :name: stock_performance_phebus_exogenous
 
 Evolution of energy performance
@@ -66,7 +66,7 @@ Finally, the comparison of the last two scenarios illustrates the positive effec
 It is important to note that, at the same time, the growth in aggregate income increases the surface area of dwellings
 to be heated.
 
-```{figure} img/simulation_2012/exogenous/heating_intensity.png
+```{figure} ../img/simulation_2012/exogenous/heating_intensity.png
 :name: heating_intensity_phebus_exogenous
 
 Evolution of heating intensity
@@ -86,7 +86,7 @@ that, when all key drivers are frozen, this count consistently declines. The inc
 this trend, while the increase in energy prices does the opposite. In comparison, technological change has a modest
 effect on reducing fuel poverty.
 
-```{figure} img/simulation_2012/exogenous/energy_poverty.png
+```{figure} ../img/simulation_2012/exogenous/energy_poverty.png
 :name: energy_poverty_phebus_exogenous
 
 Number of households dedicating over 10% of their income to heating
@@ -110,25 +110,25 @@ weaker. In contrast, under the assumption of full capitalization, whereby landlo
 as owner-occupiers, energy efficiency improvements and, ultimately, energy savings are more important than in reference.
 
 
-```{figure} img/simulation_2012/capitalization/flow_renovation.png
+```{figure} ../img/simulation_2012/capitalization/flow_renovation.png
 :name: flow_renovation_phebus_capitalization
 
 Renovation flows
 ```
 
-```{figure} img/simulation_2012/capitalization/stock_performance.png
+```{figure} ../img/simulation_2012/capitalization/stock_performance.png
 :name: stock_performance_phebus_capitalization
 
 Evolution of energy performance
 ```
 
-```{figure} img/simulation_2012/capitalization/heating_intensity.png
+```{figure} ../img/simulation_2012/capitalization/heating_intensity.png
 :name: heating_intensity_phebus_capitalization
 
 Evolution of heating intensity
 ```
 
-```{figure} img/simulation_2012/capitalization/consumption_actual.png
+```{figure} ../img/simulation_2012/capitalization/consumption_actual.png
 :name: consumption_actual_phebus_capitalization
 
 Evolution of final actual energy consumption
@@ -145,25 +145,25 @@ As shown in the following figures, these variants have relatively modest effects
 consumption. Credit constraints therefore do not seem to play a major role in the model. This result is consistent with
 the conclusions of the sensitivity analysis to which Res-IRF 2.0 was subjected {cite:ps}`brangerGlobalSensitivityAnalysis2015`.
 
-```{figure} img/simulation_2012/creditconstraint/flow_renovation.png
+```{figure} ../img/simulation_2012/creditconstraint/flow_renovation.png
 :name: flow_renovation_phebus_creditconstraint
 
 Renovation flows
 ```
 
-```{figure} img/simulation_2012/creditconstraint/stock_performance.png
+```{figure} ../img/simulation_2012/creditconstraint/stock_performance.png
 :name: stock_performance_phebus_creditconstraint
 
 Evolution of energy performance
 ```
 
-```{figure} img/simulation_2012/creditconstraint/heating_intensity.png
+```{figure} ../img/simulation_2012/creditconstraint/heating_intensity.png
 :name: heating_intensity_phebus_creditconstraint
 
 Evolution of heating intensity
 ```
 
-```{figure} img/simulation_2012/creditconstraint/consumption_actual.png
+```{figure} ../img/simulation_2012/creditconstraint/consumption_actual.png
 :name: consumption_actual_phebus_creditconstraint
 
 Evolution of final actual energy consumption

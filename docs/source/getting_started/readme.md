@@ -23,10 +23,10 @@ Typical outputs include:
 ## Recommended workflow
 
 1. Follow the [Quickstart](quickstart.md) for a first successful run.
-2. Read the [Technical documentation](technical_documentation.md) for model structure.
-3. Use [Replication package](replication.md) and [Paper replication map](replication_paper_map.md) for publication workflows.
-4. Use [API reference](modules.rst) when extending internals.
+2. Read the [Technical documentation](../model/technical_documentation.md) for model structure.
+3. Use [Replication package](../replication/replication.md) and [Paper replication map](../replication/replication_paper_map.md) for publication workflows.
+4. Use [API reference](../developer/modules.rst) when extending internals.
 
 ## Citation
 
-If you use Res-IRF4, cite the software and paper metadata in `CITATION.cff` and the references listed in [Replication package](replication.md).
+If you use Res-IRF4, cite the software and paper metadata in `CITATION.cff` and the references listed in [Replication package](../replication/replication.md).

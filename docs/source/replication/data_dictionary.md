@@ -93,4 +93,4 @@ The model is calibrated to reproduce:
 - Renovation rates by housing type (source: OPEN 2016, USH 2017)
 - Market shares of energy efficiency upgrades (source: PUCA 2015)
 
-See [Input Res-IRF version 3.0](input_2012.md) for detailed calibration data documentation.
+See [Input Res-IRF version 3.0](../legacy/input_2012.md) for detailed calibration data documentation.

@@ -3,7 +3,7 @@
 
 ```{warning}
 Legacy documentation notice: this page documents historical policy parameterization used in legacy v3.0 analyses.
-For current v4-oriented runs, start with [Quickstart](quickstart.md) and [Replication package](replication.md).
+For current v4-oriented runs, start with [Quickstart](../getting_started/quickstart.md) and [Replication package](../replication/replication.md).
 ```
 
 ## Implementation of policies in Res-IRF

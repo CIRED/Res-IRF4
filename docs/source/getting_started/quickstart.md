@@ -72,6 +72,6 @@ High-impact fields:
 - On typical laptops, keep parallel runs to about 2-3 scenarios at once.
 
 ```{seealso}
-- [Replication package](replication.md)
+- [Replication package](../replication/replication.md)
 - [Installation help](help_installation.md)
 ```

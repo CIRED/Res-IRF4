@@ -3,7 +3,7 @@
 
 ```{warning}
 Legacy documentation notice: this page documents the historical v3.0 setup and 2012 calibration.
-For current v4 usage, use [Start Here](start_here.md) and [Technical documentation](technical_documentation.md).
+For current v4 usage, use [Start Here](../getting_started/start_here.md) and [Technical documentation](../model/technical_documentation.md).
 ```
 
 ## Building stock used in version 3.0
@@ -75,7 +75,7 @@ It was delineated by excluding from the Phébus sample: those dwellings heated w
 liquefied petroleum gas (LPG) and district heating; some dwellings for which it was not possible to identify a principal
 energy carrier; some dwellings for which the Phébus data were missing.
 
-```{figure} img/input_2012/buildingstock_2012_absolute.png
+```{figure} ../img/input_2012/buildingstock_2012_absolute.png
 :name: buildingstock_2012_absolute
 
 Building stock 2012
@@ -85,7 +85,7 @@ Building stock 2012
 
 The number of dwellings in each EPC band is directly given by Phébus-DPE. 
 
-```{figure} img/input_2012/buildingstock_ep_2012_percent.png
+```{figure} ../img/input_2012/buildingstock_ep_2012_percent.png
 :name: buildingstock_ep_2012_percent
 
 Building stock 2012 by Energy Performance
@@ -116,7 +116,7 @@ the Phébus-Clode database, we proceed as follows:
 3. When no main fuel is reported, we retain the main fuel declared as auxiliary, determined with the following order
    of priority: *electric heater > all-electric > mixed base > fixed non-electric > chimney*.
 
-```{figure} img/input_2012/energy_consumption_phebus.png
+```{figure} ../img/input_2012/energy_consumption_phebus.png
 :name: energy_consumption_phebus
 
 Energy consumption in Phébus
@@ -149,7 +149,7 @@ household income and the energy efficiency of their dwelling.[^dwelling]
 [^dwelling]: The low number of dwellings labelled A and B in Phébus makes income distribution statistics less accurate in these bands.
 
 
-```{figure} img/input_2012/income_energy_performance.png
+```{figure} ../img/input_2012/income_energy_performance.png
 :name: income_energy_performance
 
 Distribution of income categories within EPC bands. Source: Phébus
@@ -173,7 +173,7 @@ distribution is described in {numref}`income_owners_occ_status` and compared to 
 disparities appear, with households whose annual income falls below €34,210 representing 80% of tenants but only 20% of
 owner-occupiers.
 
-```{figure} img/input_2012/income_owners_occ_status.png
+```{figure} ../img/input_2012/income_owners_occ_status.png
 :name: income_owners_occ_status
 
 Distribution of tenants income categories by occupancy-status.
@@ -406,7 +406,7 @@ discount rate of 7% and a time horizon of 35 years.
 ```
 
 ## Appendix
-```{figure} img/input_2012/buildingstock_2012_percent.png
+```{figure} ../img/input_2012/buildingstock_2012_percent.png
 :name: buildingstock_2012_percent
 
 Building stock 2012 (%)
