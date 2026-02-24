@@ -2984,11 +2984,11 @@ class AgentBuildings(ThermalBuildings):
         if self.zcl_thermal_parameters.get('activated'):
             zcl = self.zcl_thermal_parameters.get('zcl')
             cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}_zcl{}.csv'.format(climate_model,zcl))
+            ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}_zcl{}.csv'.format(climate_model,zcl))
         else:
             cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}.csv'.format(climate_model))
+            ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}.csv'.format(climate_model))
         cdd26_deciles = get_pandas(cdd26_deciles_path)[str(year)]
-
-        ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}.csv'.format(climate_model))
         ltcdd26_deciles = get_pandas(ltcdd26_deciles_path)[str(year)]
 
         index = stock.index
