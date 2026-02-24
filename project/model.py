@@ -728,10 +728,10 @@ def res_irf(config, path, level_logger='DEBUG'):
 
             # change cooling systems of air/air HP in Heating system if cooling system activated
             if 'Cooling system' in f_built.index.names:
-                for idx in f_built[f_built.index.get_level_values(10)=='Electricity-Heat pump air'].index:
+                for idx in f_built[f_built.index.get_level_values('Heating system')=='Electricity-Heat pump air'].index:
                     if idx[5]=='Electricity-Heat pump air':
                         idx_no_ac = tuple([e if i != 5 else 'No AC' for i,e in enumerate(idx)])
-                        f_built.loc[idx] = f_built.loc[idx] + f_built.loc[idx] + f_built.loc[idx_no_ac]
+                        f_built.loc[idx] = f_built.loc[idx] + f_built.loc[idx_no_ac]
                     else:
                         f_built.loc[idx] = 0.
 
