@@ -1399,7 +1399,7 @@ class AgentBuildings(ThermalBuildings):
             {'Wall': 'Wall after', 'Roof': 'Roof after', 'Floor': 'Floor after', 'Windows': 'Windows after'},
             inplace=True)
 
-        replaced_by = replaced_by.stack(replaced_by.columns.names).rename('Data')
+        replaced_by = replaced_by.stack(replaced_by.columns.names, future_stack=True).rename('Data')
 
         replaced_by = replaced_by[replaced_by > 0]
 
@@ -1593,7 +1593,7 @@ class AgentBuildings(ThermalBuildings):
             s.index.rename(
                 {'Wall': 'Wall before', 'Floor': 'Floor before', 'Roof': 'Roof before', 'Windows': 'Windows before'},
                 inplace=True)
-            temp = s.fillna(0).stack(s.columns.names)
+            temp = s.fillna(0).stack(s.columns.names, future_stack=True)
             temp = temp.reset_index().drop(0, axis=1)
             for i in ['Wall', 'Floor', 'Roof', 'Windows']:
                 # keep the info to unstack later
