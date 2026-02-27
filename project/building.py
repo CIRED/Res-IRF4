@@ -2977,36 +2977,65 @@ class AgentBuildings(ThermalBuildings):
         return 
     
 
+    # ===================================================================
+    # New version allowing urban/rural split
     def endogenous_market_share_cooler(self, stock, calibration=False):
+        import numpy as np # 确保能使用 np.where 
+        
         year = self.year
         climate_model = self.climate_model
         
+        # ==============================================================================
+        # New Res-IRF-AC 4.1: Urban/Rural split input reading from config
+        # ==============================================================================
         if self.zcl_thermal_parameters.get('activated'):
             zcl = self.zcl_thermal_parameters.get('zcl')
-            cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}_zcl{}.csv'.format(climate_model,zcl))
-            ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}_zcl{}.csv'.format(climate_model,zcl))
         else:
-            cdd26_deciles_path = os.path.join('project','input','climatic','rolled_cdd26_deciles_{}.csv'.format(climate_model))
-            ltcdd26_deciles_path = os.path.join('project','input','climatic','rolled_lt20_cdd26_deciles_{}.csv'.format(climate_model))
-        cdd26_deciles = get_pandas(cdd26_deciles_path)[str(year)]
-        ltcdd26_deciles = get_pandas(ltcdd26_deciles_path)[str(year)]
+            zcl = 'France'
+            
+        has_area = 'Area' in stock.index.names
+        
+        cooler_config = self._resources_data['cooling_adoption'] 
+        
+        if has_area:
+            # Read input from config，if none use old version
+            cdd_urban_path = cooler_config.get('cdd_urban') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'cdd26_deciles_{climate_model}_{zcl}_urban.csv')
+            cdd_rural_path = cooler_config.get('cdd_rural') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'cdd26_deciles_{climate_model}_{zcl}_rural.csv')
+            lt_urban_path = cooler_config.get('lt_urban') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'ltcdd26_deciles_{climate_model}_{zcl}_urban.csv')
+            lt_rural_path = cooler_config.get('lt_rural') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'ltcdd26_deciles_{climate_model}_{zcl}_rural.csv')
+            
+            cdd26_urban = get_pandas(cdd_urban_path)[str(year)]
+            cdd26_rural = get_pandas(cdd_rural_path)[str(year)]
+            ltcdd26_urban = get_pandas(lt_urban_path)[str(year)]
+            ltcdd26_rural = get_pandas(lt_rural_path)[str(year)]
+        else:
+            # Baseline without split, use _all 
+            cdd_all_path = cooler_config.get('cdd_all') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'cdd26_deciles_{climate_model}_{zcl}_all.csv')
+            lt_all_path = cooler_config.get('lt_all') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'ltcdd26_deciles_{climate_model}_{zcl}_all.csv')
+            
+            cdd26_all = get_pandas(cdd_all_path)[str(year)]
+            ltcdd26_all = get_pandas(lt_all_path)[str(year)]
+        # ==============================================================================
 
         index = stock.index
         market_share = Series(False, index=index, dtype='float').to_frame().dot(Series(True, index=self._resources_data['index']['Cooling system']).to_frame().T)
+
         ms_index = market_share.index
         ms_cols = market_share.columns
         ms_len = len(market_share)
 
-        # market share reformat for computation
+        # market share reformat for computation (如果 index 里有 Area，这里 reset_index 后会自动变成列)
         market_share = market_share.reset_index()
+
         market_share['const'] = [1]*len(market_share)
         market_share['owner'] = (market_share['Occupancy status']=='Owner-occupied').astype(float)
         market_share['multifamily'] = (market_share['Housing type']=='Multi-family').astype(float)
         market_share['retrofit'] = (market_share['Heating system']!=market_share['Heating system final']).astype(float)
         market_share['income'] = market_share['Income tenant'].map(self.income.to_dict().get)
+
         market_share['cdd26'] = [0]*len(market_share)
         market_share['lt20_cdd26'] = [0]*len(market_share)
-        
+
         # computation of first stage : No AC -> AC
         logit_ac_dict = self._resources_data['cooling_adoption']['adoption_coefficients'].to_dict()
 
@@ -3019,15 +3048,31 @@ class AgentBuildings(ThermalBuildings):
 
         p_ac_list = asarray([0]*ms_len)
         data_array = concat([market_share[coeffs_vars]]*10, ignore_index=True)
+
+        # ==============================================================================
+        # New Res-IRF-AC 4.1: Injecting Urban/Rural split into the long-term CDD variable for the logit model
+        # ==============================================================================
+        if has_area:
+            is_urban = (market_share['Area'] == 'Urban').values
+
         for idx in range(10):
-            data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'cdd26'] = asarray([cdd26_deciles.iloc[idx]]*ms_len)
-            # hypothesis : cdd long term and cdd are distributed the same way over the territory
-            data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
+            start_idx = idx * ms_len
+            end_idx = (idx + 1) * ms_len
+            
+            if has_area:
+                data_array.loc[start_idx:end_idx-1, 'cdd26'] = np.where(is_urban, cdd26_urban.iloc[idx], cdd26_rural.iloc[idx])
+                data_array.loc[start_idx:end_idx-1, 'lt20_cdd26'] = np.where(is_urban, ltcdd26_urban.iloc[idx], ltcdd26_rural.iloc[idx])
+            else:
+                data_array.loc[start_idx:end_idx-1, 'cdd26'] = cdd26_all.iloc[idx]
+                data_array.loc[start_idx:end_idx-1, 'lt20_cdd26'] = ltcdd26_all.iloc[idx]
+        # ==============================================================================
+
         p_ac_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
         p_ac_calibration = exp(dot(data_array,coeffs_vals))
 
         for idx in range(10):
             p_ac_list = p_ac_list + p_ac_array[idx*ms_len:(idx+1)*ms_len]
+
         p_ac_list = p_ac_list/10
 
         # add price elasticity
@@ -3042,31 +3087,41 @@ class AgentBuildings(ThermalBuildings):
         ac_init_price = (ac_init_cost - ac_init_subsidies)*(1+ac_init_tax_rate)
 
         ac_elasticity = self._cooling_price_informations.get('price_elasticity')
+
         p_ac_list = (1+(ac_elasticity*(ac_price-ac_init_price)/ac_init_price))*p_ac_list
 
-        # verification of lower and upper limits 
+        # verification of lower and upper limits
         p_ac_list[p_ac_list<0] = 0.
         p_ac_list[p_ac_list>1] = 1.
 
         market_share['Electricity-AC'] = p_ac_list
-        
+
         # computation of second stage : AC -> split
         logit_split_dict = self._resources_data['cooling_adoption']['ms_coefficients'].to_dict()
+
         coeffs_vars = list(logit_split_dict.keys())
         coeffs_vals = asarray(list(logit_split_dict.values()))
 
         p_ac_split_list = asarray([0]*ms_len)
         data_array = concat([market_share[coeffs_vars]]*10, ignore_index=True)
+
         for idx in range(10):
-            data_array.loc[idx*ms_len:(idx+1)*ms_len-1, 'lt20_cdd26'] = [ltcdd26_deciles.iloc[idx]]*ms_len
+            start_idx = idx * ms_len
+            end_idx = (idx + 1) * ms_len
+            if has_area:
+                data_array.loc[start_idx:end_idx-1, 'lt20_cdd26'] = np.where(is_urban, ltcdd26_urban.iloc[idx], ltcdd26_rural.iloc[idx])
+            else:
+                data_array.loc[start_idx:end_idx-1, 'lt20_cdd26'] = ltcdd26_all.iloc[idx]
+
         p_ac_split_array = exp(dot(data_array,coeffs_vals))/(1+exp(dot(data_array,coeffs_vals)))
 
         for idx in range(10):
             p_ac_split_list = p_ac_split_list + p_ac_split_array[idx*ms_len:(idx+1)*ms_len]
+
         p_ac_split_list = p_ac_split_list/10
 
         market_share['Electricity-AC split'] = p_ac_split_list
-        
+
         # complete market share based on computed probabilities
         for ac_syst in self._resources_data['index']['Cooling system']:
             idx = market_share['Cooling system eol'] == ac_syst
@@ -3080,7 +3135,7 @@ class AgentBuildings(ThermalBuildings):
         market_share = market_share.set_index(ms_index)
         market_share = market_share[ms_cols]
 
-        # heat pump air as heater final implies AC heat pump air 
+        # heat pump air as heater final implies AC heat pump air
         idx_hpa = market_share.index.get_level_values('Heating system final')=='Electricity-Heat pump air'
         market_share.loc[idx_hpa, 'Electricity-Heat pump air'] = 1.
         market_share.loc[idx_hpa, 'Electricity-Portable unit'] = 0.
@@ -5543,9 +5598,16 @@ class AgentBuildings(ThermalBuildings):
             #         ['Heater replacement', 'Cooler adoption', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
             #         'Roof', 'Windows', 'Heating system', 'Heating system final', 'Cooling system', 'Cooling system adoption'])
             # else:
-            replaced_by.index = replaced_by.index.reorder_levels(
-                ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor',
-                'Roof', 'Windows', 'Heating system', 'Heating system final'])
+            # ==================================================================
+            # New version Res-IRF-AC 4.1 
+            # ==================================================================
+            names_ob = ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system', 'Heating system final']
+            
+            if 'Area' in replaced_by.index.names:
+                names_ob.insert(names_ob.index('Housing type') + 1, 'Area')
+                
+            replaced_by.index = replaced_by.index.reorder_levels(names_ob)
+            # ==================================================================
 
             # economic of switch to heat-pumps
             _, market_share = self.insulation_replacement(replaced_by, prices, cost_insulation,
@@ -5913,7 +5975,14 @@ class AgentBuildings(ThermalBuildings):
             else:
                 names = ['Heater replacement', 'Existing', 'Occupancy status', 'Income owner', 'Housing type', 'Wall',
                         'Floor', 'Roof', 'Windows', 'Heating system', 'Heating system final']
-                
+
+            # ==================================================================
+            # New version 4.1 : add urban/rural split
+            # ==================================================================
+            if 'Area' in self._replaced_by.index.names:
+                names.insert(names.index('Housing type') + 1, 'Area')
+            # ==================================================================
+
             self._replaced_by.index = self._replaced_by.index.reorder_levels(names)
         
             # self._renovation_store['discount'] = self.add_attribute(self._renovation_store['discount'], ['Cooler adoption','Cooling system','Cooling system adoption'])
@@ -6941,6 +7010,46 @@ class AgentBuildings(ThermalBuildings):
                                                 output['CBA Thermal loss prices (Billion euro)'] + output['CBA COFP (Billion euro)']
 
             output['Cost-benefits analysis (Billion euro)'] = output['CBA benefits (Billion euro)'] + output['CBA cost (Billion euro)']
+
+        # ==============================================================================
+        # New indicators with Area dimension - to be used in the dashboard
+        # ==============================================================================
+        if 'Area' in self.stock.index.names:
+            # 1. Stock with Area dimension (Urban, Rural) 
+            stock_area = self.stock.groupby('Area').sum() / 10**6
+            for area, val in stock_area.items():
+                output[f'Stock {area} (Million)'] = val
+
+            # 2. Housing type distribution with Area dimension
+            stock_ht_area = self.stock.groupby(['Housing type', 'Area']).sum() / 10**6
+            for (ht, area), val in stock_ht_area.items():
+                output[f'Stock {ht} {area} (Million)'] = val
+
+            # 3. Consumption with Area dimension
+            cons_actual = self.consumption_actual(prices, bill_rebate=bill_rebate) * self.stock
+            cons_area = cons_actual.groupby('Area').sum() / 10**9
+            for area, val in cons_area.items():
+                output[f'Consumption {area} (TWh)'] = val
+
+            # 4. Carbon emission with Area dimension
+            emi_actual = self.to_emission(cons_actual, inputs['carbon_emission'].loc[self.year, :])
+            emi_area = emi_actual.groupby('Area').sum() / 10**12
+            for area, val in emi_area.items():
+                output[f'Emission {area} (MtCO2)'] = val
+
+            if self.year > self.first_year:
+                # 5. Renovation with Area dimension
+                reno_area = self._replaced_by.sum(axis=1).groupby('Area').sum() / 10**3 / step
+                for area, val in reno_area.items():
+                    output[f'Renovation {area} (Thousand households)'] = val
+
+                # 6. Investment with Area dimension
+                if 'investment_total' in locals():
+                    inv_area = investment_total.groupby('Area').sum() / 10**9 / step
+                    for area, val in inv_area.items():
+                        output[f'Investment total {area} (Billion euro)'] = val
+        # ==============================================================================
+
 
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)

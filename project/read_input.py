@@ -175,6 +175,104 @@ class PublicPolicy:
             value[year_stop] = temp
             self.value = value
 
+# ==============================================================================
+# New version Res-IRF-AC 4.1 ：Urban/Rural split
+# ==============================================================================
+def _split_urban_rural(stock: pd.Series, config: dict) -> pd.Series:
+    urb_cfg = (config.get("urban_rural", {}) or {})
+    if not urb_cfg.get("activated", False):
+        return stock
+
+    a_path = urb_cfg.get("a_table", None)
+    if not a_path:
+        raise ValueError("urban_rural.activated=True but urban_rural.a_table is missing")
+
+    level_name = urb_cfg.get("level_name", "Area")
+    a_df = pd.read_csv(a_path)
+    a_df["a_urban"] = a_df["a_urban"].astype(float)
+
+    zcl_cfg = (config.get("climate_zone_run", {}) or {})
+    if not zcl_cfg.get("activated", False):
+        national_key = urb_cfg.get("national_key", None)
+        if not national_key:
+            raise ValueError("urban_rural split requires climate_zone_run.activated=True or national_key.")
+        zcl = national_key
+    else:
+        zcl = zcl_cfg.get("zcl")
+
+    # a_table columns contain 'zone' and 'housing_type'
+    sub = a_df[a_df["zone"] == zcl].set_index("housing_type")["a_urban"].to_dict()
+    if not sub:
+        raise ValueError(f"No rows found in a_table for zone={zcl}")
+
+    idx = stock.index
+    if "Housing type" not in idx.names:
+        raise ValueError(f"Stock index must contain level 'Housing type', got {idx.names}")
+
+    ht = pd.Series(idx.get_level_values("Housing type"), index=idx)
+
+    a = ht.map(lambda x: sub.get(x, pd.NA)).astype("float64")
+    
+    # ==================================================================
+    # >>> Patch: Intercept NaN black hole to prevent new buildings from evaporating
+    # ==================================================================
+    if a.isna().any():
+        missing_count = a.isna().sum()
+        print(f"⚠️ [Warning - ini Stock] {missing_count} cannot find urban percentage ！Forced to keep them as Urban(1.0) to prevent stock loss.")
+        a = a.fillna(1.0)  
+    # ==================================================================
+
+    stock_urban = stock * a.values
+    stock_rural = stock * (1.0 - a.values)
+
+    out = pd.concat({"Urban": stock_urban, "Rural": stock_rural}, names=[level_name])
+
+    names = list(out.index.names)
+    old_names = [n for n in names if n != level_name]
+    out = out.reorder_levels(old_names + [level_name]).sort_index()
+
+    return out
+
+def _split_urban_rural_any(x, config, area_level="Area"):
+    urb_cfg = config.get("urban_rural", {}) or {}
+    if not urb_cfg.get("activated", False):
+        return x
+    if area_level in getattr(x.index, "names", []):
+        return x
+    if "Housing type" not in x.index.names:
+        return x
+
+    a_df = pd.read_csv(urb_cfg["a_table"])
+    a_df["a_urban"] = a_df["a_urban"].astype(float)
+    zcl = config.get("climate_zone_run", {}).get("zcl")
+    sub = a_df[a_df["zone"] == zcl].set_index("housing_type")["a_urban"].to_dict()
+
+    ht = x.index.get_level_values("Housing type")
+    a = ht.map(lambda t: sub.get(t, pd.NA)).astype(float)
+
+    # ==================================================================
+    # >>> Patch: Intercept NaN black hole to prevent new buildings from evaporating
+    # ==================================================================
+    if a.isna().any():
+        missing_count = a.isna().sum()
+        print(f"⚠️ [Warning - ini Stock] {missing_count} cannot find urban percentage ！Forced to keep them as Urban(1.0) to prevent stock loss.")
+        a = a.fillna(1.0)
+    # ==================================================================
+
+    x_urban = x.mul(a.values, axis=0)
+    x_rural = x.mul((1 - a.values), axis=0)
+
+    out = pd.concat({"Urban": x_urban, "Rural": x_rural}, names=[area_level])
+
+    if "Existing" in out.index.names:
+        order = ["Existing", area_level] + [n for n in out.index.names if n not in ("Existing", area_level)]
+        out = out.reorder_levels(order).sort_index()
+    else:
+        order = [area_level] + [n for n in out.index.names if n != area_level]
+        out = out.reorder_levels(order).sort_index()
+    return out
+# ==============================================================================
+
 
 def read_stock(config):
     """Read initial building stock.
@@ -247,6 +345,15 @@ def read_stock(config):
 
     stock = stock.reorder_levels(idx_names)
     assert_almost_equal(stock.sum(), stock_sum)
+
+    # ==========================================================================
+    # New：Urban/Rural split stock
+    # ==========================================================================
+    stock = _split_urban_rural(stock, config)
+
+    if config.get("urban_rural", {}).get("activated"):
+        assert "Area" in stock.index.names, f"[urban_rural] split failed. index={stock.index.names}"
+    # ==========================================================================
 
     return stock
 
@@ -765,11 +872,27 @@ def read_inputs(config, other_inputs=generic_input):
     zcl = 'H1a' # default value
     if inputs.get('zcl_activation'):
         zcl = inputs.get('zcl_definition')
-    inputs.update({'zcl_thermal_parameters':{'activated':inputs.get('zcl_activation'),
-                                             'zcl':inputs.get('zcl_definition'),
-                                             'temperature_difference':get_series(config['climate_zone_run']['temperature_difference'], header=[0]).to_dict().get(zcl),
-                                             'days_heating_factor':get_series(config['climate_zone_run']['days_heating_factor'], header=[0]).to_dict().get(zcl)
-                                             }})
+    #==================================================================================
+    # New version Res-IRF-AC 4.1
+    #==================================================================================
+    inputs.update({'zcl_thermal_parameters': {
+        'activated': inputs.get('zcl_activation'),
+        'zcl': inputs.get('zcl_definition'),
+        'temperature_difference': get_series(
+            config['climate_zone_run']['temperature_difference'], header=[0]
+        ).to_dict().get(zcl),
+        'days_heating_factor': get_series(
+            config['climate_zone_run']['days_heating_factor'], header=[0]
+        ).to_dict().get(zcl),
+ 
+        'config': {
+            'urban_rural': config.get('urban_rural', {}),
+            'cooling_climate': config.get('cooling_climate', {}),
+            'climate_model': config.get('climate_model', {})
+        }
+        
+    }})
+    # ==========================================================
     
     inputs.update(other_inputs)
 
@@ -972,13 +1095,27 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'ms_heater_built': ms_heater_built.fillna(0)})
 
+    #==============================================================================
+    # New version Res-IRF-AC 4.1
     # variables related to AC integration
     ac_activation = config['adoption_cooler']['activated']
     inputs.update({'cooler_activation':ac_activation})
-    inputs.update({'cooler_adoption':{'adoption_coefficients':get_series(config['adoption_cooler']['adoption_coefficients'], header=[0]),
-                                      'ms_coefficients':get_series(config['adoption_cooler']['market_share_coefficients'], header=[0]),
-                                      'reference_sales':get_pandas(config['adoption_cooler']['reference_sales']).set_index('year')}})
-
+    inputs.update({'cooler_adoption':{
+        'adoption_coefficients':get_series(config['adoption_cooler']['adoption_coefficients'], header=[0]),
+        'ms_coefficients':get_series(config['adoption_cooler']['market_share_coefficients'], header=[0]),
+        'reference_sales':get_pandas(config['adoption_cooler']['reference_sales']).set_index('year'),
+        # ==========================================
+        # New: climate parameters for AC adoption reading from config
+        # ==========================================
+        'cdd_urban': config['adoption_cooler'].get('cdd_urban'),
+        'cdd_rural': config['adoption_cooler'].get('cdd_rural'),
+        'lt_urban': config['adoption_cooler'].get('lt_urban'),
+        'lt_rural': config['adoption_cooler'].get('lt_rural'),
+        'cdd_all': config['adoption_cooler'].get('cdd_all'),
+        'lt_all': config['adoption_cooler'].get('lt_all')
+        # ==========================================
+    }})
+    #==============================================================================
     # add info on ac prices and taxes
     inputs.update({'cooling_price_informations':{'ac_cost':get_series(config['adoption_cooler']['price'],header=None),
                                                  'subsidies':get_series(config['adoption_cooler']['subsidies'],header=None),
@@ -1218,17 +1355,27 @@ def parse_inputs(inputs, taxes, config, stock):
     performance_insulation = pd.concat([pd.Series(inputs['performance_insulation_construction'])] * construction.shape[0], axis=1,
                                        keys=construction.index).T
 
+    #==================================================================================
+    # New version Res-IRF-AC 4.1: add cooling system dimension to flow_built
     parsed_inputs['flow_built'] = pd.concat((construction, performance_insulation), axis=1).set_index(
         list(performance_insulation.keys()), append=True)
 
     if not parsed_inputs['cooler_activation']:
-        parsed_inputs['flow_built'] = parsed_inputs['flow_built'].groupby([i for i in parsed_inputs['flow_built'].index.names if i not in ['Cooling system']]).sum()
+        parsed_inputs['flow_built'] = parsed_inputs['flow_built'].groupby(
+            [i for i in parsed_inputs['flow_built'].index.names if i not in ['Cooling system']]
+        ).sum()
 
-    parsed_inputs['flow_built'] = pd.concat([parsed_inputs['flow_built']], keys=[False],
-                                            names=['Existing']).reorder_levels(stock.index.names)
+    if 'Existing' not in parsed_inputs['flow_built'].index.names:
+        parsed_inputs['flow_built'] = pd.concat([parsed_inputs['flow_built']], keys=[False], names=['Existing'])
+
+    if "Area" in stock.index.names and "Area" not in parsed_inputs['flow_built'].index.names:
+        parsed_inputs['flow_built'] = _split_urban_rural_any(parsed_inputs['flow_built'], config, area_level="Area")
+
+    parsed_inputs['flow_built'] = parsed_inputs['flow_built'].reorder_levels(stock.index.names).sort_index()
 
     if not config['macro']['construction']:
         parsed_inputs['flow_built'][parsed_inputs['flow_built'] > 0] = 0
+    #==================================================================================
 
     """
     parsed_inputs['health_expenditure'] = df['Health expenditure']
