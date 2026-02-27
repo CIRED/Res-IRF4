@@ -728,12 +728,27 @@ def res_irf(config, path, level_logger='DEBUG'):
 
             # change cooling systems of air/air HP in Heating system if cooling system activated
             if 'Cooling system' in f_built.index.names:
-                for idx in f_built[f_built.index.get_level_values('Heating system')=='Electricity-Heat pump air'].index:
-                    if idx[5]=='Electricity-Heat pump air':
-                        idx_no_ac = tuple([e if i != 5 else 'No AC' for i,e in enumerate(idx)])
-                        f_built.loc[idx] = f_built.loc[idx] + f_built.loc[idx_no_ac]
+                # get index of Cooling system and Heating system levels
+                idx_cool = f_built.index.names.index('Cooling system')
+                idx_heat = f_built.index.names.index('Heating system')
+                
+                for idx in f_built[f_built.index.get_level_values(idx_cool)=='Electricity-Heat pump air'].index:
+                    if idx[idx_heat] == 'Electricity-Heat pump air':
+                        idx_list = list(idx)
+                        idx_list[idx_cool] = 'No AC'
+                        idx_no_ac = tuple(idx_list)
+                        
+                        if idx_no_ac in f_built.index:
+                            val_no_ac = f_built.loc[idx_no_ac]
+                        else:
+                            val_no_ac = 0.0
+                            
+                        f_built.loc[idx] = f_built.loc[idx] + val_no_ac
+                        
+                        if idx_no_ac in f_built.index:
+                            f_built.loc[idx_no_ac] = 0.0
                     else:
-                        f_built.loc[idx] = 0.
+                        f_built.loc[idx] = 0.0
 
             if isinstance(f_built, pd.DataFrame):
                 f_built = f_built.sum(axis=1).rename(year)
