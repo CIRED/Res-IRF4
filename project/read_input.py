@@ -888,11 +888,20 @@ def read_inputs(config, other_inputs=generic_input):
         'config': {
             'urban_rural': config.get('urban_rural', {}),
             'cooling_climate': config.get('cooling_climate', {}),
-            'climate_model': config.get('climate_model', {})
+            'climate_model': config.get('climate_model', {}),
+            'climate_zone_run': config.get('climate_zone_run', {}),
+            'climate_data': config.get('climate_data', {}),
+            'freq': config.get('freq', 'year'),     
+            'smooth': config.get('smooth', False),   
+            'climate': config.get('climate', None),  
         }
         
     }})
-    # ==========================================================
+    freq_val = config.get('freq', 'year')
+    smooth_val = config.get('smooth', False)
+    climate_val = config.get('climate', None)
+    print(f"\n[Info climatic data] climate={climate_val}, freq='{freq_val}', smooth={smooth_val}")
+    # ===============================================
     
     inputs.update(other_inputs)
 

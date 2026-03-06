@@ -259,154 +259,152 @@ def size_heating_system(u_wall, u_floor, u_roof, u_windows, ratio_surface,
     return size
 
 
-def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
-                              th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                              air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
-                              hourly_profile=None, temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
-                              zcl_thermal_parameters=None
-                              ):
-    """Seasonal method for space heating need.
+def conventional_heating_need(
+    u_wall, u_floor, u_roof, u_windows, ratio_surface,
+    th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
+    air_rate=None, unobserved=None, climate=None, smooth=False, freq='year',
+    hourly_profile=None, temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
+    zcl_thermal_parameters=None,
+    # --- 4.2 Physics Additions ---
+    roof_albedo=None,             
+    h_ext_roof=None,              
+    wind_speed=None
+):
+    """Seasonal method for space heating need. Includes roof solar absorption channel."""
+    if zcl_thermal_parameters is None:
+        zcl_thermal_parameters = {
+            'activated': False, 'temperature_difference': 0, 'days_heating_factor': 1
+        }
+    else:
+        zcl_thermal_parameters = dict(zcl_thermal_parameters)
 
+    cfg = zcl_thermal_parameters.get('config', {})
+    
+    if 'freq' in cfg: freq = cfg['freq']
+    if 'smooth' in cfg: smooth = cfg['smooth']
+    if cfg.get('climate') is not None: climate = cfg['climate']
 
-    We apply a seasonal method according to EN ISO 13790 to estimate annual space heating demand by building type.
-    The detailed calculation can be found in the TABULA project documentation (Loga, 2013).
-    In a nutshell, the energy need for heating is the difference between the heat losses and the heat gain.
-    The total heat losses result from heat transfer by transmission and ventilation during the heating season
-    respectively proportional to the heat transfer coefficient $H_tr$ and $H_ve$.
-
-    To not consider gain_utilization_factor create a difference of 5%. For consistency between results and
-
-    Parameters
-    ----------
-    u_wall: pd.Series
-        Index should include Housing type {'Single-family', 'Multi-family'}.
-    u_floor: pd.Series
-    u_roof: pd.Series
-    u_windows: pd.Series
-    ratio_surface: pd.Series
-    th_bridging: {'Minimal', 'Low', 'Medium', 'High'}, default None
-    vent_types: {'Ventilation naturelle', 'VMC SF auto et VMC double flux', 'VMC SF hydrogérable'}, default None
-    infiltration: {'Minimal', 'Low', 'Medium', 'High'}, default None
-    air_rate: pd.Series, default None
-    unobserved: {'Minimal', 'High'}, default None
-    climate: int, default None
-        Climatic year to use to calculate heating need.
-    smooth: bool, default False
-        Use smooth daily data to calculate heating need.
-    freq
-    hourly_profile: optional, pd.Series
-    temp_indoor: optional, default temp_indoor
-    gain_utilization_factor: bool, default False
-        If False, for simplification we use gain_utilization_factor = 1.
-
-    Returns
-    -------
-    Conventional heating need (kWh/m2.a)
-    """
-
-    temp_ext = TEMP_EXT_3CL + zcl_thermal_parameters.get('temperature_difference')
-    days_heating_season = DAYS_HEATING_SEASON_3CL * zcl_thermal_parameters.get('days_heating_factor')
+    temp_ext = TEMP_EXT_3CL + zcl_thermal_parameters.get('temperature_difference', 0)
+    days_heating_season = DAYS_HEATING_SEASON_3CL * zcl_thermal_parameters.get('days_heating_factor', 1)
     solar_radiation = SOLAR_RADIATION_3CL
+
     if temp_indoor is None:
         temp_indoor = TEMP_INDOOR
 
-    if climate is not None:
-        if freq == 'year':
-            data = get_pandas(CLIMATE_DATA['year'],
-                              func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+    wind_speed_from_file = None
 
+    # Priority: 1. climate parameter in config, 2. default climate data
+    if climate is not None:
+        key = "smooth_day" if smooth else freq
+        clim_cfg = cfg.get('climate_data', {})
+        path = clim_cfg.get(key, CLIMATE_DATA.get(key))
+
+        data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+        
+        if freq == 'year':
             temp_ext = float(data.loc[data.index.year == climate, 'TEMP_EXT'])
             days_heating_season = float(data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'])
             solar_radiation = float(data.loc[data.index.year == climate, 'SOLAR_RADIATION'])
-            # print(temp_ext, days_heating_season, solar_radiation)
-
+            if wind_speed is None and 'WIND_SPEED' in data.columns:
+                wind_speed_from_file = float(data.loc[data.index.year == climate, 'WIND_SPEED'])
         else:
-            path = CLIMATE_DATA[freq]
-            if smooth:
-                path = CLIMATE_DATA['smooth_day']
-
-            data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
             temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
             days_heating_season = data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'].rename(None)
             days_heating_season = days_heating_season.replace({True: 1, False: float('nan')})
             solar_radiation = data.loc[data.index.year == climate, 'SOLAR_RADIATION'].rename(None)
-
+            if wind_speed is None and 'WIND_SPEED' in data.columns:
+                wind_speed_from_file = data.loc[data.index.year == climate, 'WIND_SPEED'].rename(None)
+    
+    # ---- U-values and Surfaces ----
     if unobserved == 'Minimal':
-        th_bridging = 'Minimal'
-        vent_types = 'VMC SF hydrogérable'
-        infiltration = 'Minimal'
+        th_bridging = 'Minimal'; vent_types = 'VMC SF hydrogérable'; infiltration = 'Minimal'
     elif unobserved == 'High':
-        th_bridging = 'High'
-        vent_types = 'Ventilation naturelle'
-        infiltration = 'High'
+        th_bridging = 'High'; vent_types = 'Ventilation naturelle'; infiltration = 'High'
 
     surface_components = ratio_surface.copy()
-
-    df = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
+    df_u = pd.concat([u_wall, u_floor, u_roof, u_windows], axis=1, keys=['Wall', 'Floor', 'Roof', 'Windows'])
     surface_components.loc[:, 'Floor'] *= FACTOR_SOIL
-    surface_components = reindex_mi(surface_components, df.index)
+    surface_components = reindex_mi(surface_components, df_u.index)
 
-    coefficient_transmission_transfer = (surface_components * df).sum(axis=1)
-    coefficient_transmission_transfer += surface_components.sum(axis=1) * THERMAL_BRIDGING[th_bridging]
+    H_tr_components = (surface_components * df_u).sum(axis=1)
+    H_tr = H_tr_components + surface_components.sum(axis=1) * THERMAL_BRIDGING[th_bridging]
 
     if air_rate is None:
         air_rate = VENTILATION_TYPES[vent_types] + AIR_TIGHTNESS_INFILTRATION[infiltration]
+    H_ve = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
+    H_total = H_tr + H_ve
 
-    coefficient_ventilation_transfer = HEAT_CAPACITY_AIR * air_rate * ROOM_HEIGHT
-    heat_transfer_coefficient = coefficient_ventilation_transfer + coefficient_transmission_transfer
-
-    solar_coefficient = FACTOR_SHADING * (1 - FACTOR_FRAME) * FACTOR_NON_PERPENDICULAR * SOLAR_ENERGY_TRANSMITTANCE * surface_components.loc[:, 'Windows']
+    solar_coefficient = (FACTOR_SHADING * (1 - FACTOR_FRAME) * FACTOR_NON_PERPENDICULAR *
+                         SOLAR_ENERGY_TRANSMITTANCE * surface_components.loc[:, 'Windows'])
 
     coefficient = 24 / 1000 * FACTOR_NON_UNIFORM * days_heating_season
     coefficient_climatic = coefficient * (temp_indoor - temp_ext)
     internal_heat_sources = 24 / 1000 * INTERNAL_HEAT_SOURCES * days_heating_season
 
     if freq == 'year':
-
-        heat_transfer = heat_transfer_coefficient * coefficient_climatic
+        heat_transfer = H_total * coefficient_climatic
         solar_load = solar_coefficient * solar_radiation
         heat_gains = solar_load + internal_heat_sources
 
+        if roof_albedo is not None:
+            v = wind_speed if wind_speed is not None else wind_speed_from_file
+            v = v if v is not None else 3.0
+            h = h_ext_roof if h_ext_roof is not None else (9.0 + 4.0 * v)
+            
+            if h > 0:
+                alpha = 1.0 - float(roof_albedo)
+                H_roof = surface_components.loc[:, 'Roof'] * df_u.loc[:, 'Roof']
+                annual_roof_gain = H_roof * (alpha * solar_radiation / h) * FACTOR_NON_UNIFORM
+                heat_gains = heat_gains + annual_roof_gain
+
         if gain_utilization_factor is True:
-            time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
+            time_constant = INTERNAL_HEAT_CAPACITY / (H_tr_components + H_ve)
             a_h = A_0 + time_constant / TAU_0
             heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
-            gain_utilization_factor = (1 - heat_balance_ratio ** a_h) / (1 - heat_balance_ratio ** (a_h + 1))
+            gain_utilization_factor_eff = (1 - heat_balance_ratio ** a_h) / (1 - heat_balance_ratio ** (a_h + 1))
         else:
-            gain_utilization_factor = 1
+            gain_utilization_factor_eff = 1
 
-        factor_tabula_3cl = FACTOR_TABULA_3CL
-        if zcl_thermal_parameters.get('activated'):
-            factor_tabula_3cl = 1.
-        heat_need = (heat_transfer - heat_gains * gain_utilization_factor) * factor_tabula_3cl
-
+        factor_tabula_3cl = 1.0 if zcl_thermal_parameters.get('activated') else FACTOR_TABULA_3CL
+        heat_need = (heat_transfer - heat_gains * gain_utilization_factor_eff) * factor_tabula_3cl
         return heat_need
 
     else:
-        heat_transfer = heat_transfer_coefficient.rename(None).to_frame().dot(coefficient_climatic.to_frame().T)
+        heat_transfer = H_total.rename(None).to_frame().dot(coefficient_climatic.to_frame().T)
         solar_load = solar_coefficient.rename(None).to_frame().dot(solar_radiation.to_frame().T)
         heat_gains = solar_load + internal_heat_sources
 
+        if roof_albedo is not None:
+            v = wind_speed if wind_speed is not None else wind_speed_from_file
+            v = v if v is not None else 3.0
+            h = h_ext_roof if h_ext_roof is not None else (9.0 + 4.0 * v)
+            
+            if h > 0:
+                alpha = 1.0 - float(roof_albedo)
+                H_roof = surface_components.loc[:, 'Roof'] * df_u.loc[:, 'Roof']
+                roof_solar_load = H_roof.rename(None).to_frame().dot((alpha / h * solar_radiation).to_frame().T)
+                heat_gains = heat_gains + (roof_solar_load * FACTOR_NON_UNIFORM)
+
         if gain_utilization_factor is True:
-            time_constant = INTERNAL_HEAT_CAPACITY / (coefficient_transmission_transfer + coefficient_ventilation_transfer)
+            time_constant = INTERNAL_HEAT_CAPACITY / (H_tr_components + H_ve)
             a_h = A_0 + time_constant / TAU_0
-            # average over the month
-            heat_balance_ratio = heat_gains.groupby(heat_gains.columns.month, axis=1).sum() / heat_transfer.groupby(heat_transfer.columns.month, axis=1).sum()
-            gain_utilization_factor = (1 - (heat_balance_ratio.T ** a_h).T) / (1 - (heat_balance_ratio.T ** (a_h + 1)).T)
+            heat_balance_ratio = (heat_gains.groupby(heat_gains.columns.month, axis=1).sum() /
+                                  heat_transfer.groupby(heat_transfer.columns.month, axis=1).sum())
+            guf_month = (1 - (heat_balance_ratio.T ** a_h).T) / (1 - (heat_balance_ratio.T ** (a_h + 1)).T)
+
             temp = []
-            for i in gain_utilization_factor.columns.astype(str):
+            for i in guf_month.columns.astype(str):
                 if len(i) == 1:
                     i = '0{}'.format(i)
                 temp.append(i)
-            gain_utilization_factor.columns = [np.datetime64('{}-{}'.format(climate, i), 'D') for i in temp]
-            gain_utilization_factor = gain_utilization_factor.reindex(heat_gains.columns, axis=1, method='pad')
+            guf_month.columns = [np.datetime64('{}-{}'.format(climate, i), 'D') for i in temp]
+            gain_utilization_factor_eff = guf_month.reindex(heat_gains.columns, axis=1, method='pad')
         else:
-            gain_utilization_factor = 1
+            gain_utilization_factor_eff = 1
 
-        factor_tabula_3cl = FACTOR_TABULA_3CL
-        if zcl_thermal_parameters.get('activated'):
-            factor_tabula_3cl = 1.
-        heat_need = ((heat_transfer - heat_gains * gain_utilization_factor) * factor_tabula_3cl).fillna(0)
+        factor_tabula_3cl = 1.0 if zcl_thermal_parameters.get('activated') else FACTOR_TABULA_3CL
+
+        heat_need = ((heat_transfer - heat_gains * gain_utilization_factor_eff) * factor_tabula_3cl).fillna(0)
         heat_need = heat_need.stack(heat_need.columns.names)
 
         if freq == 'hour':
@@ -422,12 +420,18 @@ def conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
         return heat_need.sort_index(axis=1)
 
 
-def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
-                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
-                               air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
-                               temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
-                               efficiency_hour=False, hourly_profile=None, temp_sink=None,
-                               zcl_thermal_parameters=None):
+def conventional_heating_final(
+    u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency,
+    th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
+    air_rate=None, unobserved=None, climate=None, freq='year', smooth=False,
+    temp_indoor=None, gain_utilization_factor=GAIN_UTILIZATION_FACTOR,
+    efficiency_hour=False, hourly_profile=None, temp_sink=None,
+    zcl_thermal_parameters=None,
+    # --- 4.2 Physics Additions ---
+    roof_albedo=None,             
+    h_ext_roof=None,              
+    wind_speed=None
+):
     """Monthly stead-state space heating final energy delivered.
 
 
@@ -460,23 +464,37 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
     -------
 
     """
-    heat_need = conventional_heating_need(u_wall, u_floor, u_roof, u_windows, ratio_surface,
-                                          th_bridging=th_bridging, vent_types=vent_types,
-                                          infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
-                                          climate=climate, freq=freq, smooth=smooth,
-                                          temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor,
-                                          hourly_profile=hourly_profile,zcl_thermal_parameters=zcl_thermal_parameters)
+    # =========================================================
+    if zcl_thermal_parameters is None:
+        zcl_thermal_parameters = {}
+    cfg = zcl_thermal_parameters.get('config', {})
+    if 'freq' in cfg: freq = cfg['freq']
+    if 'smooth' in cfg: smooth = cfg['smooth']
+    if cfg.get('climate') is not None: climate = cfg['climate']
+    # =========================================================
 
-    if (freq == 'hour') and (efficiency_hour is True):
-        path = CLIMATE_DATA[freq]
-        if smooth:
-            path = CLIMATE_DATA['smooth_day']
+    heat_need = conventional_heating_need(
+        u_wall, u_floor, u_roof, u_windows, ratio_surface,
+        th_bridging=th_bridging, vent_types=vent_types,
+        infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
+        climate=climate, freq=freq, smooth=smooth,
+        temp_indoor=temp_indoor, gain_utilization_factor=gain_utilization_factor,
+        hourly_profile=hourly_profile, zcl_thermal_parameters=zcl_thermal_parameters,
+        roof_albedo=roof_albedo, h_ext_roof=h_ext_roof, wind_speed=wind_speed
+    )
 
+    if (freq == 'hour' or freq == 'day') and (efficiency_hour is True):
+        key = "smooth_day" if smooth else freq
+        clim_cfg = cfg.get('climate_data', {})
+        path = clim_cfg.get(key, CLIMATE_DATA.get(key))
+        
         data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
         temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
+        
         if temp_sink is None:
             temp_sink = TEMP_SINK
         delta_temperature = temp_sink - temp_ext
+        
         # TODO replace 0 by nan
         efficiency_hp = 6.81 - 0.121 * delta_temperature + 0.00063 * (delta_temperature ** 2)
 
@@ -489,11 +507,17 @@ def conventional_heating_final(u_wall, u_floor, u_roof, u_windows, ratio_surface
 
     if isinstance(heat_need, pd.Series):
         return heat_need / efficiency
+        
     if isinstance(heat_need, pd.DataFrame):
         if isinstance(efficiency, pd.Series):
-            return (heat_need.T / efficiency).T
+            final_energy = (heat_need.T / efficiency).T
         elif isinstance(efficiency, pd.DataFrame):
-            return heat_need / efficiency
+            final_energy = heat_need / efficiency
+            
+        if freq != 'year':
+            return final_energy.sum(axis=1)
+            
+        return final_energy
 
 
 def conventional_dhw_final(index):

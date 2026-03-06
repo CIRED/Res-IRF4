@@ -4,6 +4,9 @@
     "output": "full",
     "full_stock_output": true,
     "start": 2017,
+    "freq": "year",
+    "smooth": false,
+    "climate": null,
     "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated_zcl.csv",
     "urban_rural": {
       "activated": false,
