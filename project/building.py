@@ -21,6 +21,7 @@ import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas import Series, DataFrame, MultiIndex, Index, IndexSlice, concat, to_numeric, unique
+import numpy as np
 from numpy import exp, log, append, array, allclose, asarray, dot
 from numpy.testing import assert_almost_equal
 from scipy.optimize import fsolve
@@ -49,7 +50,7 @@ NB_MEASURES = {1: [(False, False, False, True), (False, False, True, False), (Fa
 INSULATION = {'Wall': (True, False, False, False), 'Floor': (False, True, False, False),
               'Roof': (False, False, True, False), 'Windows': (False, False, False, True)}
 # CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system','Cooling system']
-CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system']
+CONSUMPTION_LEVELS = ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'Heating system', 'roof_albedo']
 
 
 class ThermalBuildings:
@@ -387,10 +388,31 @@ class ThermalBuildings:
         # TODO: add when index is not None grouped by levels
 
         if index is None:
-            levels = ['Housing type', 'Heating system', 'Wall', 'Floor', 'Roof', 'Windows']
+            # New code to include roof_albedo and urban/area columns in the grouping levels if they exist in the index
+            levels = ['Housing type', 'Heating system', 'Wall', 'Floor', 'Roof', 'Windows', 'roof_albedo']
+            
+            stock_index_names = self.stock.index.names
+            stock_cols = getattr(self.stock, 'columns', [])  
+            
+            area_cols = [n for n in (list(stock_index_names) + list(stock_cols)) 
+                         if n and ('urban' in n.lower() or n.lower() == 'area')]
+            
+            for col in set(area_cols):  
+                if col not in levels: levels.append(col)
+            # =========================================================
+
             index = self.stock.groupby(levels).sum().index
 
         levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', level_heater, 'Housing type']
+        
+        # New code to automatically include roof_albedo and urban/area columns in the grouping levels if they exist in the index
+        if 'roof_albedo' in index.names:
+            levels_consumption.append('roof_albedo')
+        area_levels = [n for n in index.names if n and ('urban' in n.lower() or n.lower() == 'area')]
+        if area_levels:
+            levels_consumption.extend(area_levels)
+        # ==============================
+
         _index = index.to_frame().loc[:, levels_consumption].set_index(levels_consumption).index
         _index = _index[~_index.duplicated()]
 
@@ -400,19 +422,36 @@ class ThermalBuildings:
         windows = Series(_index.get_level_values('Windows'), index=_index)
         heating_system = Series(_index.get_level_values(level_heater), index=_index).astype('object')
         efficiency = to_numeric(heating_system.replace(self._efficiency))
-        consumption = thermal.conventional_heating_final(wall, floor, roof, windows, self._ratio_surface.copy(),
-                                                         efficiency, climate=climate, freq=freq, smooth=smooth,
-                                                         efficiency_hour=efficiency_hour, hourly_profile=hourly_profile,
-                                                         temp_sink=temp_sink,zcl_thermal_parameters=self.zcl_thermal_parameters)
+
+        if 'roof_albedo' in _index.names:
+            albedo_data = pd.to_numeric(Series(_index.get_level_values('roof_albedo'), index=_index), errors='coerce')
+        else:
+            albedo_data = None  
+        # ====================================
+
+        consumption = thermal.conventional_heating_final(
+            wall, floor, roof, windows, self._ratio_surface.copy(),
+            efficiency, climate=climate, freq=freq, smooth=smooth,
+            efficiency_hour=efficiency_hour, hourly_profile=hourly_profile,
+            temp_sink=temp_sink, zcl_thermal_parameters=self.zcl_thermal_parameters,
+            # New parameters for 4.2 Physics Additions
+            roof_albedo=albedo_data
+            # =========================
+        )
 
         consumption = reindex_mi(consumption, index)
 
         if full_output is True:
-            certificate, consumption_3uses = thermal.conventional_energy_3uses(wall, floor, roof, windows,
-                                                                               self._ratio_surface.copy(),
-                                                                               efficiency, _index,
-                                                                               method=method,
-                                                                               zcl_thermal_parameters=self.zcl_thermal_parameters)
+            certificate, consumption_3uses = thermal.conventional_energy_3uses(
+                wall, floor, roof, windows,
+                self._ratio_surface.copy(),
+                efficiency, _index,
+                method=method,
+                zcl_thermal_parameters=self.zcl_thermal_parameters,
+                # New parameters for 4.2 Physics Additions
+                roof_albedo=albedo_data
+                # =========================
+            )
             certificate = reindex_mi(certificate, index)
             consumption_3uses = reindex_mi(consumption_3uses, index)
 
@@ -438,7 +477,7 @@ class ThermalBuildings:
         -------
         """
         # levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', level_heater, 'Cooling system','Housing type']
-        levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', level_heater, 'Housing type']
+        levels_consumption = ['Wall', 'Floor', 'Roof', 'Windows', level_heater, 'Housing type', 'roof_albedo']
         _index = index.to_frame().loc[:, levels_consumption].set_index(levels_consumption).index
         _index = _index[~_index.duplicated()]
 
@@ -1573,11 +1612,25 @@ class AgentBuildings(ThermalBuildings):
         _index = index.copy()
         # _index = _index.droplevel([i for i in _index.names if i not in ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows','Cooling system'] + [level_heater]])
         _index = _index.droplevel(
-            [i for i in _index.names if i not in ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows'] + [level_heater]])
+            [i for i in _index.names if i not in ['Housing type', 'Wall', 'Floor', 'Roof', 'Windows', 'roof_albedo'] + [level_heater]])
         _index = _index[~_index.duplicated()]
         _index = _index.rename({level_heater: 'Heating system'})
 
-        _index = _index.reorder_levels(CONSUMPTION_LEVELS)
+        # ===========================================================
+        # Old code to reorder levels
+        # _index = _index.reorder_levels(CONSUMPTION_LEVELS)
+        # ===========================================================
+        # New code to reorder levels in a more flexible way
+        target_levels = [lvl for lvl in _index.names]
+        
+        try:
+            # Try to reorder levels based on CONSUMPTION_LEVELS, but only if they are present in the index
+            order = [lvl for lvl in CONSUMPTION_LEVELS if lvl in target_levels]
+            missing = [lvl for lvl in target_levels if lvl not in order]
+            _index = _index.reorder_levels(order + missing)
+        except NameError:
+            pass
+        # ===========================================================
 
         # remove idx already calculated
         if not self._consumption_store['consumption_renovation'].empty and store is True:
@@ -2999,10 +3052,10 @@ class AgentBuildings(ThermalBuildings):
         
         if has_area:
             # Read input from config，if none use old version
-            cdd_urban_path = cooler_config.get('cdd_urban') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'cdd26_deciles_{climate_model}_{zcl}_urban.csv')
-            cdd_rural_path = cooler_config.get('cdd_rural') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'cdd26_deciles_{climate_model}_{zcl}_rural.csv')
-            lt_urban_path = cooler_config.get('lt_urban') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'ltcdd26_deciles_{climate_model}_{zcl}_urban.csv')
-            lt_rural_path = cooler_config.get('lt_rural') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'ltcdd26_deciles_{climate_model}_{zcl}_rural.csv')
+            cdd_urban_path = cooler_config.get('cdd_urban') or os.path.join('project', 'input', 'climatic', 'UrbanRural', f'rolled_cdd26_deciles_{climate_model}_zcl{zcl}_urban.csv')
+            cdd_rural_path = cooler_config.get('cdd_rural') or os.path.join('project', 'input', 'climatic', 'UrbanRural', f'rolled_cdd26_deciles_{climate_model}_zcl{zcl}_rural.csv')
+            lt_urban_path = cooler_config.get('lt_urban') or os.path.join('project', 'input', 'climatic', 'UrbanRural', f'rolled_lt20_cdd26_deciles_{climate_model}_zcl{zcl}_urban.csv')
+            lt_rural_path = cooler_config.get('lt_rural') or os.path.join('project', 'input', 'climatic', 'UrbanRural', f'rolled_lt20_cdd26_deciles_{climate_model}_zcl{zcl}_rural.csv')
             
             cdd26_urban = get_pandas(cdd_urban_path)[str(year)]
             cdd26_rural = get_pandas(cdd_rural_path)[str(year)]
@@ -3010,8 +3063,8 @@ class AgentBuildings(ThermalBuildings):
             ltcdd26_rural = get_pandas(lt_rural_path)[str(year)]
         else:
             # Baseline without split, use _all 
-            cdd_all_path = cooler_config.get('cdd_all') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'cdd26_deciles_{climate_model}_{zcl}_all.csv')
-            lt_all_path = cooler_config.get('lt_all') or os.path.join('project', 'input', 'climatic', 'CORDEX', f'ltcdd26_deciles_{climate_model}_{zcl}_all.csv')
+            cdd_all_path = cooler_config.get('cdd_all') or os.path.join('project', 'input', 'climatic', 'UrbanRural', f'rolled_cdd26_deciles_{climate_model}_zcl{zcl}_all.csv')
+            lt_all_path = cooler_config.get('lt_all') or os.path.join('project', 'input', 'climatic', 'UrbanRural', f'rolled_lt20_cdd26_deciles_{climate_model}_zcl{zcl}_all.csv')
             
             cdd26_all = get_pandas(cdd_all_path)[str(year)]
             ltcdd26_all = get_pandas(lt_all_path)[str(year)]
@@ -4968,11 +5021,12 @@ class AgentBuildings(ThermalBuildings):
                 level_heater='Heating system final',
                 default_quality=default_quality)
 
-            energy_saved_3uses = ((consumption_3uses_before - consumption_3uses.T) / consumption_3uses_before).T
+            # Use of .mul & .div & .sub to align index and avoid problem of missing value
+            energy_saved_3uses = - consumption_3uses.sub(consumption_3uses_before, axis=0).div(consumption_3uses_before, axis=0)
             energy_saved_3uses.dropna(inplace=True)
-
-            consumption_std_saved = (consumption_std_before - consumption_std_after.T).T
-            _consumption_std_saved = (reindex_mi(consumption_std_saved, index).T * reindex_mi(self._surface, index)).T
+            consumption_std_saved = - consumption_std_after.sub(consumption_std_before, axis=0)
+            surface_aligned = reindex_mi(self._surface, index)
+            _consumption_std_saved = consumption_std_saved.mul(surface_aligned, axis=0)
 
             # energy bill before
             consumption_std_before = reindex_mi(consumption_std_before, index) * reindex_mi(self._surface, index)
@@ -5024,7 +5078,6 @@ class AgentBuildings(ThermalBuildings):
             weights = self.add_level(stock, stock_mobile_cooling_agg, 'Income tenant')
             consumption_saved = (consumption_saved.T * weights).T
             consumption_saved = (consumption_saved.groupby(index.names).sum().T / weights.groupby(index.names).sum()).T
-
             health_cost_saved = self.calculate_health_cost_saved(stock, health_cost)
 
             cost_insulation = self.prepare_cost_insulation(cost_insulation_raw * self.surface_insulation)
@@ -5605,6 +5658,9 @@ class AgentBuildings(ThermalBuildings):
             
             if 'Area' in replaced_by.index.names:
                 names_ob.insert(names_ob.index('Housing type') + 1, 'Area')
+            
+            if 'roof_albedo' in replaced_by.index.names:
+                names_ob.append('roof_albedo')
                 
             replaced_by.index = replaced_by.index.reorder_levels(names_ob)
             # ==================================================================
@@ -5980,7 +6036,14 @@ class AgentBuildings(ThermalBuildings):
             # New version 4.1 : add urban/rural split
             # ==================================================================
             if 'Area' in self._replaced_by.index.names:
-                names.insert(names.index('Housing type') + 1, 'Area')
+                if 'Area' not in names:
+                    names.insert(names.index('Housing type') + 1, 'Area')
+            
+            # New version Res-IRF-AC 4.2 : add roof albedo
+            if 'roof_albedo' in self._replaced_by.index.names:
+                if 'roof_albedo' not in names:
+                    # put roof albedo after windows
+                    names.insert(names.index('Windows') + 1, 'roof_albedo')
             # ==================================================================
 
             self._replaced_by.index = self._replaced_by.index.reorder_levels(names)
@@ -6087,9 +6150,14 @@ class AgentBuildings(ThermalBuildings):
                         for k in consumption_before_retrofit.keys() if 'MtCO2' in k}
                 output.update(temp)
 
+            # ==================================================================
+            # consumption_saved_insulation = (self._replaced_by * self._renovation_store['consumption_saved_households']).groupby(levels).sum()
+            # New version Res-IRF-AC 4.1 : add reindex_mi to avoid issue when the index of consumption_saved_households is not the same as replaced_by
+            savings_std_aligned = reindex_mi(self._renovation_store['consumption_saved_households'], self._replaced_by.index)
             consumption_saved_insulation = (
-                        self._replaced_by * self._renovation_store['consumption_saved_households']).groupby(
-                levels).sum()
+                self._replaced_by.fillna(0) * savings_std_aligned.fillna(0)
+            ).groupby(levels).sum()
+            # ==================================================================
 
             temp = self.add_level(self._replaced_by.fillna(0), self._stock_ref, 'Income tenant')
             consumption_saved_actual_insulation = (
@@ -6128,6 +6196,8 @@ class AgentBuildings(ThermalBuildings):
             consumption = reindex_mi(consumption, self._renovation_store['consumption_saved_households'].index)
             consumption *= reindex_mi(self._surface, consumption.index)
             consumption_saved = (self._renovation_store['consumption_saved_households'].T / consumption).T
+            # replace inf and -inf by nan and then fillna with 0
+            consumption_saved = consumption_saved.replace([np.inf, -np.inf], np.nan).fillna(0)
             assert (consumption_saved <= 1).all().all(), 'Percent issue'
             consumption_saved_mean = (consumption_saved * self._replaced_by).sum().sum() / self._replaced_by.sum().sum()
             output.update({'Consumption standard saving insulation (%)': consumption_saved_mean})
@@ -6408,7 +6478,13 @@ class AgentBuildings(ThermalBuildings):
             output['Financing heater (Billion euro)'] = self._heater_store[
                                                             'cost_financing'].sum().sum() / 10 ** 9 / step
 
-            investment_insulation_full = (self._replaced_by * self._renovation_store['cost_households']).groupby(levels).sum()
+            # ==================================================================
+            # investment_insulation_full = (self._replaced_by * self._renovation_store['cost_households']).groupby(levels).sum()
+            # New version Res-IRF-AC 4.1 : add reindex_mi to avoid issue when the index of cost_households is not the same as replaced_by
+            investment_insulation_full = (
+                self._replaced_by * reindex_mi(self._renovation_store['cost_households'], self._replaced_by.index)
+            ).groupby(levels).sum()
+            # ==================================================================
             investment_insulation = investment_insulation_full.sum(axis=1)
             output['Investment insulation (Billion euro)'] = investment_insulation.sum() / 10 ** 9 / step
 
@@ -6458,7 +6534,7 @@ class AgentBuildings(ThermalBuildings):
             output['Hidden cost insulation (Billion euro)'] = hidden_cost.sum().sum() / 10 ** 9 / step
 
             # financing - how households finance renovation - state  / debt / saving ?
-            subsidies_insulation = (self._replaced_by * self._renovation_store['subsidies_households']).groupby(levels).sum()
+            subsidies_insulation = (self._replaced_by * reindex_mi(self._renovation_store['subsidies_households'], self._replaced_by.index)).groupby(levels).sum()
             to_pay = investment_insulation_full - subsidies_insulation
 
             # cost by income levels
@@ -6485,17 +6561,16 @@ class AgentBuildings(ThermalBuildings):
                 annuities_sub = calculate_annuities(output['Subsidies insulation (Billion euro)'], lifetime=lifetime_insulation, discount_rate=social_discount_rate)
                 output['Efficiency subsidies insulation (euro/kWh standard)'] = annuities_sub / output['Consumption standard saving insulation (TWh/year)']
 
-            subsidies_loan_insulation = (self._replaced_by * self._renovation_store['subsidies_loan_households']).groupby(levels).sum()
+            subsidies_loan_insulation = (self._replaced_by * reindex_mi(self._renovation_store['subsidies_loan_households'], self._replaced_by.index)).groupby(levels).sum()
             subsidies_loan_insulation = subsidies_loan_insulation.sum(axis=1)
             output['Subsidies loan insulation (Billion euro)'] = subsidies_loan_insulation.sum() / 10 ** 9 / step
 
-            debt = (self._replaced_by * self._renovation_store['debt_households']).groupby(levels).sum().sum(
-                axis=1).groupby(levels_owner).sum()
+            debt = (self._replaced_by * reindex_mi(self._renovation_store['debt_households'], self._replaced_by.index)).groupby(levels).sum().sum(axis=1).groupby(levels_owner).sum()
             del self._renovation_store['debt_households']
 
             output['Debt insulation (Billion euro)'] = debt.sum() / 10 ** 9 / step
 
-            saving = (self._replaced_by * self._renovation_store['saving_households']).groupby(
+            saving = (self._replaced_by * reindex_mi(self._renovation_store['saving_households'], self._replaced_by.index)).groupby(
                 levels).sum().sum(axis=1).groupby(levels_owner).sum()
             del self._renovation_store['saving_households']
             output['Saving insulation (Billion euro)'] = saving.sum() / 10 ** 9 / step
@@ -6772,7 +6847,7 @@ class AgentBuildings(ThermalBuildings):
             # economic state impact
             output['VAT heater (Billion euro)'] = self._heater_store['vat'] / 10 ** 9 / step
 
-            temp = (self._replaced_by * self._renovation_store['vat_households']).sum().sum()
+            temp = (self._replaced_by * reindex_mi(self._renovation_store['vat_households'], self._replaced_by.index)).sum().sum()
             output['VAT insulation (Billion euro)'] = temp / 10 ** 9 / step
             output['VAT (Billion euro)'] = output['VAT heater (Billion euro)'] + output['VAT insulation (Billion euro)']
             output['Investment heater WT (Billion euro)'] = output['Investment heater (Billion euro)'] - output[

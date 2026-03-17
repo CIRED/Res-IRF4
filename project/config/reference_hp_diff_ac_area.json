@@ -7,6 +7,10 @@
     "freq": "year",
     "smooth": false,
     "climate": null,
+    "climate_data": {
+      "wind_speed_file": null,
+      "roof_albedo_activated": false
+    },
     "building_stock": "project/input/stock/buildingstock_sdes2018_update_hpdiff_ac_inseecalibrated_zcl.csv",
     "urban_rural": {
       "activated": false,

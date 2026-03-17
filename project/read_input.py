@@ -287,12 +287,25 @@ def read_stock(config):
         MultiIndex Series with building stock attributes as levels.
     """
 
+    # ==========================================================================
+    # New version Res-IRF-AC 4.2 : Custom CSV reader to handle roof_albedo as discrete variable
+    # ==========================================================================
+    def _custom_csv_read(filepath):
+        df = pd.read_csv(filepath)
+        idx_cols = list(df.columns[:10])  # Assuming the first 10 columns are the index columns, adjust if necessary
+        if 'roof_albedo' in df.columns:
+            df['roof_albedo'] = df['roof_albedo'].astype(str)  
+            idx_cols.append('roof_albedo')
+        return df.set_index(idx_cols)
+    # ==========================================================================
+
     climate_zone_run = config.get('climate_zone_run').get('activated')
     if climate_zone_run:
         zcl = config.get('climate_zone_run').get('zcl')
-        stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze())[zcl].rename('Stock buildings')
+        stock = get_pandas(config['building_stock'], lambda x: _custom_csv_read(x).squeeze())[zcl].rename('Stock buildings')
     else:
-        stock = get_pandas(config['building_stock'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).squeeze()).sum(axis=1).rename('Stock buildings')
+        stock = get_pandas(config['building_stock'], lambda x: _custom_csv_read(x).squeeze()).sum(axis=1).rename('Stock buildings')
+    
     stock_sum = stock.sum()
 
     stock = stock.reset_index('Heating system')
@@ -342,6 +355,13 @@ def read_stock(config):
     stock = pd.concat([stock], keys=[True], names=['Existing'])
     idx_names = ['Existing', 'Occupancy status', 'Income owner', 'Income tenant', 'Housing type',
                  'Heating system', 'Cooling system', 'Wall', 'Floor', 'Roof', 'Windows']
+
+    # ==========================================================================
+    # New version Res-IRF-AC 4.2 : Handle roof_albedo as discrete variable in building stock
+    # ==========================================================================
+    if 'roof_albedo' in stock.index.names:
+        idx_names.append('roof_albedo')
+    # ==========================================================================
 
     stock = stock.reorder_levels(idx_names)
     assert_almost_equal(stock.sum(), stock_sum)
@@ -1379,6 +1399,17 @@ def parse_inputs(inputs, taxes, config, stock):
 
     if "Area" in stock.index.names and "Area" not in parsed_inputs['flow_built'].index.names:
         parsed_inputs['flow_built'] = _split_urban_rural_any(parsed_inputs['flow_built'], config, area_level="Area")
+
+    # ==========================================================================
+    # New version Res-IRF-AC 4.2: add roof_albedo dimension to flow_built if it is in stock but not in flow_built
+    # ==========================================================================
+    if 'roof_albedo' in stock.index.names and 'roof_albedo' not in parsed_inputs['flow_built'].index.names:
+        parsed_inputs['flow_built'] = pd.concat(
+            [parsed_inputs['flow_built']], 
+            keys=['0.2'], 
+            names=['roof_albedo']
+        )
+    # ==========================================================================
 
     parsed_inputs['flow_built'] = parsed_inputs['flow_built'].reorder_levels(stock.index.names).sort_index()
 

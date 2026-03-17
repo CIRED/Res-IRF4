@@ -1,7 +1,7 @@
 {
   "H2a": {
     "file": "project/config/reference_hp_diff_ac.json",
-    "end": 2051,
+    "end": 2026,
     "adoption_cooler": {
       "activated":true
     },

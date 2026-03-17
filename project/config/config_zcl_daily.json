@@ -1,0 +1,286 @@
+{
+  "Reference": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_France_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_France_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": false
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H1a": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH1a_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH1a_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H1a"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H1b": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH1b_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH1b_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H1b"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H1c": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH1c_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH1c_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H1c"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H2a": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2a_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2a_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H2a"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H2b": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2b_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2b_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H2b"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H2c": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2c_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2c_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H2c"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H2d": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2d_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH2d_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H2d"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  },
+  "H3": {
+    "file": "project/config/reference_hp_diff_ac_area.json",
+    "end": 2026,
+    "freq": "day",
+    "smooth": true,
+    "climate": 2019,
+    "urban_rural": {
+      "activated": false
+    },
+    "adoption_cooler": {
+      "activated": true,
+      "cdd_all": "project/input/climatic/UrbanRural/rolled_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH3_all.csv",
+      "lt_all": "project/input/climatic/UrbanRural/rolled_lt20_cdd26_deciles_EC-EARTH_HadREM3-GA7_zclH3_all.csv"
+    },
+    "climate_zone_run": {
+      "activated": true,
+      "zcl": "H3"
+    },
+    "renovation": {
+      "scale": {
+        "option": "price_elasticity",
+        "target": -0.8
+      }
+    },
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    },
+    "simple": {
+      "figures": true,
+      "quintiles": true
+    }
+  }
+}

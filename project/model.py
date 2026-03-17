@@ -608,7 +608,6 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
 
     return buildings, stock, output
 
-
 def res_irf(config, path, level_logger='DEBUG'):
     """Res-IRF model.
 
@@ -675,8 +674,37 @@ def res_irf(config, path, level_logger='DEBUG'):
 
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
                                           taxes=taxes)
-        stock = pd.concat((stock, s), axis=1)
+        
+        # =========================================================
+        # 🟢 PATCH 1 (Safe Version): 劫持宏观汇总表 s，安全注入 Area 维度
+        # =========================================================
+        # 1. 获取官方要求输出的层级（比如 ['Year', 'Housing type', 'Performance']）
+        levels_stock = list(s.index.names)
+        
+        # 2. 如果原始底表有 Area，我们强行把它加进输出要求名单
+        if 'Area' in buildings.stock.index.names and 'Area' not in levels_stock:
+            levels_stock.append('Area')
+            
+        # 3. 核心安全机制！过滤掉底表里当前还不存在的幽灵列（防止 KeyError: 'Performance'）
+        safe_levels = [lvl for lvl in levels_stock if lvl in buildings.stock.index.names]
+        
+        # 4. 用过滤后绝对安全的列进行底表分组求和
+        s_patched = buildings.stock.groupby(safe_levels).sum().rename(buildings.first_year)
+        
+        # 5. 合并并重设正确的表头
+        stock = pd.concat((stock, s_patched), axis=1)
+        stock.index.names = safe_levels
+        
         output = pd.concat((output, o), axis=1)
+        # =========================================================
+        
+        # =========================================================
+        # 🟢 PATCH 2 (A): 高效的内存收集器 (替代会报错崩溃的死循环读写)
+        # =========================================================
+        full_stock_list = []
+        if config.get('full_stock_output'):
+            full_stock_list.append(buildings.stock.rename(buildings.first_year))
+        # =========================================================
 
         timestep = 1
         if config.get('step'):
@@ -726,9 +754,7 @@ def res_irf(config, path, level_logger='DEBUG'):
             p_insulation = [p for p in policies_insulation if (year >= p.start) and (year < p.end)]
             f_built = inputs_dynamics['flow_built'].loc[:, yrs]
 
-            # change cooling systems of air/air HP in Heating system if cooling system activated
             if 'Cooling system' in f_built.index.names:
-                # get index of Cooling system and Heating system levels
                 idx_cool = f_built.index.names.index('Cooling system')
                 idx_heat = f_built.index.names.index('Heating system')
                 
@@ -788,21 +814,28 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              default_quality=config['technical'].get('default_quality'),
                                              credit_constraint=config['financing_cost'].get('credit_constraint', True))
 
-            if config['full_stock_output']:
-                file = 'full_stock.csv'
-                if file not in os.listdir(path):
-                    full_stock = pd.DataFrame(buildings.stock).rename(columns={0:buildings.year})
-                    full_stock.to_csv(os.path.join(path,file))
-                else:
-                    full_stock = pd.DataFrame(buildings.stock).rename(columns={0:buildings.year})
-                    all_years = get_pandas(os.path.join(path,file)).set_index(buildings.stock.index.names)
-                    all_years = all_years.join(full_stock)
-                    all_years.to_csv(os.path.join(path,file))
-
-            stock = pd.concat((stock, s), axis=1)
-            stock.index.names = s.index.names
+            # =========================================================
+            # 🟢 PATCH 1 (Safe Version 续): 循环计算每年的安全汇总表
+            # =========================================================
+            # 因为每年的建筑底表列名可能变动，我们在每一年都要重新校验安全名单
+            safe_levels_current = [lvl for lvl in levels_stock if lvl in buildings.stock.index.names]
+            
+            s_patched = buildings.stock.groupby(safe_levels_current).sum().rename(year)
+            stock = pd.concat((stock, s_patched), axis=1)
+            stock.index.names = safe_levels_current  # 保留包含 Area 的表头
+            
             output = pd.concat((output, o), axis=1)
+            # =========================================================
+            
+            # =========================================================
+            # 🟢 PATCH 2 (B): 将每一年的完整数据切片加入内存列表
+            # =========================================================
+            if config.get('full_stock_output'):
+                full_stock_list.append(buildings.stock.rename(year))
+            # =========================================================
+
             buildings.logger.info('Run time {}: {:,.0f} seconds.'.format(year, round(time() - start, 2)))
+            
             if year == buildings.first_year + 1 and config['output'] == 'full':
                 if buildings.path_ini is not None:
                     select_output(o, buildings.path)
@@ -828,31 +861,6 @@ def res_irf(config, path, level_logger='DEBUG'):
                                  axis=0)
                 temp.to_csv(os.path.join(buildings.path, 'subsidies_distortion.csv'))
 
-                """from project.utils import make_scatter_plot
-                temp = temp.reset_index()
-                col_colors = 'Income owner'
-                temp[col_colors] = temp[col_colors].apply(lambda x: buildings._resources_data['colors'][x])
-                col_colors = None
-
-                make_scatter_plot(temp, 'Subsidies', 'Distortion', 'Subsidies (Thousand euro)',
-                                  'Distortion (Thousand euro)',
-                                  annotate=False,
-                                  save=os.path.join(buildings.path_calibration, 'subsidies_distortion.png'),
-                                  format_y=lambda y, _: '{:.0f}'.format(y/1e3),
-                                  format_x=lambda x, _: '{:.0f}'.format(x/1e3),
-                                  s=10, diagonal_line=True, col_colors=col_colors)
-
-                temp['Subsidies gap'] = temp['Distortion'] - temp['Subsidies']
-                from project.utils import manual_sobol_analysis
-                outcome = 'Subsidies gap'
-                l_features = ['Occupancy status', 'Housing type', 'Performance', 'Energy', 'Income owner', 'Technology']
-                sobol_df = manual_sobol_analysis(temp, list(l_features), outcome)
-                from project.utils import horizontal_stack_bar_plot
-
-                horizontal_stack_bar_plot(sobol_df, columns=['First order', 'Total order'],
-                                          title='Attributes to close subsidies gap', order='Total order',
-                                          save_path=os.path.join(buildings.path_calibration, 'sobol_analysis.png'))"""
-
         if path is not None:
             buildings.logger.info('Writing output in {}'.format(path))
 
@@ -862,6 +870,15 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
+            # =========================================================
+            # 🟢 PATCH 2 (C): 循环全部结束，一次性极速写入完整的 full_stock
+            # =========================================================
+            if config.get('full_stock_output') and full_stock_list:
+                buildings.logger.info('Writing full_stock.csv ...')
+                full_stock_df = pd.concat(full_stock_list, axis=1)
+                full_stock_df.to_csv(os.path.join(path, 'full_stock.csv'))
+            # =========================================================
+            
             if config['output'] == 'full':
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))
             if buildings.path_ini is not None:
@@ -875,7 +892,6 @@ def res_irf(config, path, level_logger='DEBUG'):
     except Exception as e:
         logger.exception(e)
         raise e
-
 
 def calibration_res_irf(path, config=None, level_logger='DEBUG'):
     """Calibrate Res-IRF and returns calibrated parameters.

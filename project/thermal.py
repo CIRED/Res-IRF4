@@ -279,6 +279,18 @@ def conventional_heating_need(
         zcl_thermal_parameters = dict(zcl_thermal_parameters)
 
     cfg = zcl_thermal_parameters.get('config', {})
+    # ==================================================================
+    # Feature Toggle for Roof Albedo
+    # Read physics.roof_albedo_activated from the top-level JSON. If not configured, default to False for backward compatibility.
+    # ==================================================================
+    clim_cfg_early = cfg.get('climate_data', {})
+    is_albedo_activated = clim_cfg_early.get('roof_albedo_activated', False)
+
+    if not is_albedo_activated:
+        roof_albedo = None
+        h_ext_roof = None
+        wind_speed = None
+    # ==================================================================
     
     if 'freq' in cfg: freq = cfg['freq']
     if 'smooth' in cfg: smooth = cfg['smooth']
@@ -290,6 +302,12 @@ def conventional_heating_need(
 
     if temp_indoor is None:
         temp_indoor = TEMP_INDOOR
+    # =========================================================
+    # To be removed: Print once if roof_albedo is received
+    if roof_albedo is not None and not getattr(conventional_heating_need, '_has_printed_physics', False):
+        print(f"\n[Info Physics] Received roof_albedo, dynamic wind speed (v) and roof convective heat transfer (h) calculations activated!")
+        conventional_heating_need._has_printed_physics = True
+    # =========================================================
 
     wind_speed_from_file = None
 
@@ -300,21 +318,80 @@ def conventional_heating_need(
         path = clim_cfg.get(key, CLIMATE_DATA.get(key))
 
         data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
+        current_zcl = zcl_thermal_parameters.get('zcl', 'H1a')
+        delta_temp = zcl_thermal_parameters.get('temperature_difference', 0)
         
         if freq == 'year':
-            temp_ext = float(data.loc[data.index.year == climate, 'TEMP_EXT'])
+            temp_ext = float(data.loc[data.index.year == climate, 'TEMP_EXT']) + delta_temp
             days_heating_season = float(data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'])
             solar_radiation = float(data.loc[data.index.year == climate, 'SOLAR_RADIATION'])
-            if wind_speed is None and 'WIND_SPEED' in data.columns:
-                wind_speed_from_file = float(data.loc[data.index.year == climate, 'WIND_SPEED'])
         else:
-            temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
+            temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None) + delta_temp
             days_heating_season = data.loc[data.index.year == climate, 'DAYS_HEATING_SEASON'].rename(None)
             days_heating_season = days_heating_season.replace({True: 1, False: float('nan')})
             solar_radiation = data.loc[data.index.year == climate, 'SOLAR_RADIATION'].rename(None)
-            if wind_speed is None and 'WIND_SPEED' in data.columns:
-                wind_speed_from_file = data.loc[data.index.year == climate, 'WIND_SPEED'].rename(None)
-    
+
+        if wind_speed is None and is_albedo_activated:
+            ws_path = clim_cfg.get('wind_speed_file')
+            is_zcl_activated = zcl_thermal_parameters.get('activated', False)
+            # Wind speed is only relevant if subregion is activated, and we have a path to the wind speed data file
+            if is_zcl_activated and ws_path is not None:
+                try:
+                    ws_data = get_pandas(ws_path, func=lambda x: pd.read_csv(x, index_col=[0, 1]))
+                    # ==================================================================
+                    # [Debug print] Check if wind speed file been called and used
+                    # ==================================================================
+                    if not getattr(conventional_heating_need, '_has_printed_wind', False):
+                        print(f"[WIND SUCCESS] Loaded dynamically for Zone {current_zcl}! ")
+                        conventional_heating_need._has_printed_wind = True
+                    # ==================================================================
+                    is_urban = cfg.get('urban_rural', {}).get('activated', False)
+                    # 判断当前是否激活了城乡差异
+                    is_urban_activated = cfg.get('urban_rural', {}).get('activated', False)
+                    
+                    if not is_urban_activated:
+                        wind_speed_from_file = float(ws_data.loc[(current_zcl, 'Winter'), 'All'])
+                    else:
+                        # ==== 激活了城乡差异 ====
+                        
+                        # 尝试1：看顶层是否直接通过字典传了具体的 area (例如 'Urban' 或 'Rural')
+                        current_area = zcl_thermal_parameters.get('area')
+                        if current_area in ['Urban', 'Rural']:
+                            wind_speed_from_file = float(ws_data.loc[(current_zcl, 'Winter'), current_area])
+                            
+                        # 尝试2：如果字典里没传，看看建筑存量矩阵 (u_wall) 的索引里有没有城乡标识列
+                        else:
+                            # 寻找名为 'area', 'urban', 'rural' 相关的 MultiIndex 层级
+                            possible_names = [n for n in u_wall.index.names if n and ('urban' in n.lower() or n.lower() == 'area')]
+                            
+                            if possible_names:
+                                area_level = possible_names[0]
+                                
+                                # 读取 CSV 里对应的三个标量风速
+                                v_all = float(ws_data.loc[(current_zcl, 'Winter'), 'All'])
+                                v_urban = float(ws_data.loc[(current_zcl, 'Winter'), 'Urban'])
+                                v_rural = float(ws_data.loc[(current_zcl, 'Winter'), 'Rural'])
+                                
+                                # 此时风速不再是一个标量，而是变成了一个和建筑矩阵完全对齐的 Pandas Series
+                                wind_speed_from_file = pd.Series(v_all, index=u_wall.index)
+                                
+                                # 根据 Index 的值进行向量化掩码赋值 (兼容大小写)
+                                idx_urban = u_wall.index.get_level_values(area_level).astype(str).str.lower().isin(['urban', 'urbain'])
+                                idx_rural = u_wall.index.get_level_values(area_level).astype(str).str.lower().isin(['rural'])
+                                
+                                wind_speed_from_file.loc[idx_urban] = v_urban
+                                wind_speed_from_file.loc[idx_rural] = v_rural
+                                
+                            # 兜底：既没传参，矩阵里也没对应层级，回退到 All 以防崩溃
+                            else:
+                                wind_speed_from_file = float(ws_data.loc[(current_zcl, 'Winter'), 'All'])
+
+                except Exception as e:
+                    print(f"[Warning] can not read wind speed for {current_zcl} in winter ({e}), using default value 3.0")
+                    wind_speed_from_file = 3.0
+            else:
+                wind_speed_from_file = 3.0
+
     # ---- U-values and Surfaces ----
     if unobserved == 'Minimal':
         th_bridging = 'Minimal'; vent_types = 'VMC SF hydrogérable'; infiltration = 'Minimal'
@@ -351,22 +428,29 @@ def conventional_heating_need(
             v = v if v is not None else 3.0
             h = h_ext_roof if h_ext_roof is not None else (9.0 + 4.0 * v)
             
-            if h > 0:
-                alpha = 1.0 - float(roof_albedo)
-                H_roof = surface_components.loc[:, 'Roof'] * df_u.loc[:, 'Roof']
-                annual_roof_gain = H_roof * (alpha * solar_radiation / h) * FACTOR_NON_UNIFORM
-                heat_gains = heat_gains + annual_roof_gain
+            alpha = 1.0 - roof_albedo
+            H_roof = surface_components.loc[:, 'Roof'] * df_u.loc[:, 'Roof']
+            roof_factor = H_roof * (alpha / h)
+            annual_roof_gain = roof_factor * solar_radiation * FACTOR_NON_UNIFORM
+            heat_gains = heat_gains + annual_roof_gain
 
         if gain_utilization_factor is True:
             time_constant = INTERNAL_HEAT_CAPACITY / (H_tr_components + H_ve)
             a_h = A_0 + time_constant / TAU_0
-            heat_balance_ratio = (internal_heat_sources + solar_load) / heat_transfer
+            heat_balance_ratio = heat_gains / heat_transfer
             gain_utilization_factor_eff = (1 - heat_balance_ratio ** a_h) / (1 - heat_balance_ratio ** (a_h + 1))
         else:
             gain_utilization_factor_eff = 1
 
         factor_tabula_3cl = 1.0 if zcl_thermal_parameters.get('activated') else FACTOR_TABULA_3CL
         heat_need = (heat_transfer - heat_gains * gain_utilization_factor_eff) * factor_tabula_3cl
+        # ========================================
+        # [Debug] heat_need can not be negative, if negative, set to 0
+        if hasattr(heat_need, 'clip'):
+            heat_need = heat_need.clip(lower=0)
+        else:
+            heat_need = max(0, heat_need)
+        # ========================================
         return heat_need
 
     else:
@@ -379,11 +463,11 @@ def conventional_heating_need(
             v = v if v is not None else 3.0
             h = h_ext_roof if h_ext_roof is not None else (9.0 + 4.0 * v)
             
-            if h > 0:
-                alpha = 1.0 - float(roof_albedo)
-                H_roof = surface_components.loc[:, 'Roof'] * df_u.loc[:, 'Roof']
-                roof_solar_load = H_roof.rename(None).to_frame().dot((alpha / h * solar_radiation).to_frame().T)
-                heat_gains = heat_gains + (roof_solar_load * FACTOR_NON_UNIFORM)
+            alpha = 1.0 - roof_albedo.rename(None)
+            H_roof = surface_components.loc[:, 'Roof'] * df_u.loc[:, 'Roof']
+            roof_factor = H_roof * (alpha / h)
+            roof_solar_load = roof_factor.rename(None).to_frame().dot(solar_radiation.to_frame().T)
+            heat_gains = heat_gains + (roof_solar_load * FACTOR_NON_UNIFORM)
 
         if gain_utilization_factor is True:
             time_constant = INTERNAL_HEAT_CAPACITY / (H_tr_components + H_ve)
@@ -416,6 +500,11 @@ def conventional_heating_need(
             heat_need.columns = heat_need.columns.get_level_values(None) + heat_need.columns.get_level_values('time')
         else:
             heat_need = heat_need.unstack(['time'])
+
+        # ========================================
+        # [Debug] heat_need can not be negative, if negative, set to 0
+        heat_need = heat_need.clip(lower=0)
+        # ========================================
 
         return heat_need.sort_index(axis=1)
 
@@ -489,7 +578,8 @@ def conventional_heating_final(
         path = clim_cfg.get(key, CLIMATE_DATA.get(key))
         
         data = get_pandas(path, func=lambda x: pd.read_csv(x, index_col=[0], parse_dates=True))
-        temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None)
+        delta_temp = zcl_thermal_parameters.get('temperature_difference', 0)
+        temp_ext = data.loc[data.index.year == climate, 'TEMP_EXT'].rename(None) + delta_temp
         
         if temp_sink is None:
             temp_sink = TEMP_SINK
@@ -539,6 +629,8 @@ def conventional_dhw_final(index):
 def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface, efficiency, index,
                               th_bridging='Medium', vent_types='Ventilation naturelle', infiltration='Medium',
                               air_rate=None, unobserved=None, method='3uses',zcl_thermal_parameters=None,
+                              # New parameters for 4.2 Physics Additions
+                              roof_albedo=None, h_ext_roof=None, wind_speed=None
                               ):
     """Space heating conventional, and energy performance certificate.
 
@@ -570,6 +662,10 @@ def conventional_energy_3uses(u_wall, u_floor, u_roof, u_windows, ratio_surface,
                                                th_bridging=th_bridging, vent_types=vent_types,
                                                infiltration=infiltration, air_rate=air_rate, unobserved=unobserved,
                                                zcl_thermal_parameters=zcl_thermal_parameters,
+                                                # New parameters for 4.2 Physics Additions
+                                                roof_albedo=roof_albedo, 
+                                                h_ext_roof=h_ext_roof, 
+                                                wind_speed=wind_speed
                                                )
     dhw_final = conventional_dhw_final(index)
     ac_final = 0
