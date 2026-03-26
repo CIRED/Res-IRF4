@@ -75,7 +75,9 @@
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/analysis/policy_distortion_analysis.json"
+        "project/config/analysis/current_policies_distortion.json",
+        "-cpu",
+        "2"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"
