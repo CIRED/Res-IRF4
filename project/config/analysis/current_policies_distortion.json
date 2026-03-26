@@ -226,6 +226,15 @@
           "insulation"
         ],
         "proportional": "health_cost"
+      },
+      "subsidy_credit": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "subsidy_credit_constraint",
+        "gest": [
+          "heater",
+          "insulation"
+        ]
       }
     }
   }

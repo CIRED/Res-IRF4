@@ -1718,7 +1718,7 @@ class AgentBuildings(ThermalBuildings):
 
         condition = DataFrame(True, index=amount_debt.index, columns=amount_debt.columns)
 
-        sub = None
+        sub = DataFrame(0, index=amount_debt.index, columns=amount_debt.columns)
         if financing_cost['debt_income_ratio']:
             debt_reimbursement = calculate_annuities(amount_debt, lifetime=financing_cost['duration'],
                                                      discount_rate=financing_cost['interest_rate'].loc[self.year])
@@ -1734,7 +1734,7 @@ class AgentBuildings(ThermalBuildings):
             if bill_saved is not None:
                 condition = condition & (debt_reimbursement <= bill_saved)
 
-        return condition
+        return condition, sub
 
     def apply_subsidies_heater(self, index, policies_heater, cost_heater, consumption_saved, emission_saved,
                                bill_saved):
@@ -1780,7 +1780,7 @@ class AgentBuildings(ThermalBuildings):
         cost_heater += vat_heater
 
         policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap',
-                              'subsidy_present_bias']
+                              'subsidy_present_bias', 'subsidy_credit_constraint']
         self.policies += [i.name for i in policies_heater if i.policy in policies_incentive and i.name not in self.policies]
 
         cost_heater.sort_index(inplace=True)
@@ -2658,9 +2658,17 @@ class AgentBuildings(ThermalBuildings):
         epc_upgrade = - certificate.replace(EPC2INT).sub(
             certificate_before.replace(EPC2INT), axis=0)
 
+        p_credit_subsidy = [p for p in policies_heater if p.policy == 'subsidy_credit_constraint']
         p = [p for p in policies_heater if p.policy == 'credit_constraint']
         if credit_constraint and not p:
-            credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
+            credit_constraint, credit_subsidy = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
+            if p_credit_subsidy:
+                subsidies_details[p_credit_subsidy[0].name] = credit_subsidy.copy()
+                subsidies_total += credit_subsidy
+                # recompute financing with reduced cost
+                cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
+                    cost_heater, subsidies_total, financing_cost, policies=[pp for pp in policies_heater if pp.policy == 'zero_interest_loan'])
+                credit_constraint = None
         else:
             credit_constraint = None
 
@@ -3160,7 +3168,7 @@ class AgentBuildings(ThermalBuildings):
             condition = self._condition_store
 
         policies_incentive = ['subsidy_ad_valorem', 'subsidy_target', 'subsidy_proportional', 'subsidies_cap',
-                              'subsidy_present_bias', 'subsidy_landlord', 'subsidy_multi_family']
+                              'subsidy_present_bias', 'subsidy_landlord', 'subsidy_multi_family', 'subsidy_credit_constraint']
         self.policies += [i.name for i in policies_insulation if i.policy in policies_incentive and i.name not in self.policies]
 
         sub_non_cumulative = {}
@@ -4584,9 +4592,18 @@ class AgentBuildings(ThermalBuildings):
                 subsidies_details.update({policy.name: subsidies[policy.name]})
                 subsidies_loan += subsidies[policy.name]
 
+            p_credit_subsidy = [p for p in policies_insulation if p.policy == 'subsidy_credit_constraint']
             p = [p for p in policies_insulation if p.policy == 'credit_constraint']
             if credit_constraint and not p:
-                credit_constraint = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
+                credit_constraint, credit_subsidy = self.credit_constraint(amount_debt, financing_cost, bill_saved=None)
+                if p_credit_subsidy:
+                    subsidies_details[p_credit_subsidy[0].name] = credit_subsidy.copy()
+                    subsidies_total += credit_subsidy
+                    # recompute financing with reduced cost
+                    cost_total, cost_financing, amount_debt, amount_saving, discount, subsidies = self.calculate_financing(
+                        reindex_mi(cost_insulation, index), subsidies_total, financing_cost,
+                        policies=[pp for pp in policies_insulation if pp.policy == 'zero_interest_loan'])
+                    credit_constraint = None
             else:
                 credit_constraint = None
 
