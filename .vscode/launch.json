@@ -205,7 +205,9 @@
       "justMyCode": false,
       "args": [
         "-c",
-        "project/config/policies/optimal/policy_optimal.json"
+        "project/config/policies/optimal/policy_optimal.json",
+        "-cpu",
+        "2"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"

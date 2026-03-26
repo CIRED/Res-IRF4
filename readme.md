@@ -63,7 +63,7 @@ Results are saved in the `project/output/` folder inside the `ResIRF` directory.
 **Step 3**: **Activate the new environment**.
 
 - The first line of the yml file sets the new environment's name.
-- Type: `conda activate envResIRF` (in the terminal)
+- Type: `conda activate Res-IRF4` (in the terminal)
 
 **Step 4**: **Launch Res-IRF**
 
@@ -72,6 +72,26 @@ Results are saved in the `project/output/` folder inside the `ResIRF` directory.
 - `project/config/config.json` is the path to the configuration file
 - It is possible that some new packages are not integrated in the yml file. In this case you have to install these
   additional packages manually in the environment.
+
+## VS Code Remote SSH (INARI)
+
+If you use VS Code Remote SSH with the `inari` host, add this to your user settings JSON:
+
+```json
+{
+  "remote.SSH.defaultForwardedPorts": [],
+  "remote.SSH.remotePlatform": {
+    "inari": "linux"
+  },
+  "remote.SSH.defaultExtensions": []
+}
+```
+
+Then open [inari.code-workspace](inari.code-workspace) to connect directly to the remote repository at `/diskdata2/resirf/Res-IRF4`.
+This workspace also includes `/diskdata2/resirf/Res-IRF4/project/output` and sets the remote Python interpreter to `/data/software/anaconda3/envs/Res-IRF4/bin/python3.8`.
+
+If you only want the output folder, open [.vscode/inari-output.code-workspace](.vscode/inari-output.code-workspace).
+Once connected to the full repo workspace, the remote tasks in `.vscode/tasks.json` and debug entries in `.vscode/launch.json` are available.
 
 ## Getting started
 
