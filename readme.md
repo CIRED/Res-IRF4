@@ -87,11 +87,13 @@ If you use VS Code Remote SSH with the `inari` host, add this to your user setti
 }
 ```
 
-Then open [inari.code-workspace](inari.code-workspace) to connect directly to the remote repository at `/diskdata2/resirf/Res-IRF4`.
-This workspace also includes `/diskdata2/resirf/Res-IRF4/project/output` and sets the remote Python interpreter to `/data/software/anaconda3/envs/Res-IRF4/bin/python3.8`.
+Recommended workflow:
 
-If you only want the output folder, open [.vscode/inari-output.code-workspace](.vscode/inari-output.code-workspace).
-Once connected to the full repo workspace, the remote tasks in `.vscode/tasks.json` and debug entries in `.vscode/launch.json` are available.
+1. Use `Remote-SSH: Connect to Host...` and select `inari`.
+2. In the remote window, open the folder `/diskdata2/resirf/Res-IRF4`.
+3. Select the Python interpreter `/data/software/anaconda3/envs/envResIRF/bin/python3.8`.
+
+This keeps the repo in a normal VS Code window and gives access to the remote tasks in `.vscode/tasks.json` and debug entries in `.vscode/launch.json`.
 
 ## Getting started
 
