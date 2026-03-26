@@ -1634,6 +1634,101 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
     save_fig(fig, save=save)
 
 
+def horizontal_waterfall_chart(values, save_path=None, ylabel=None, total_label="Total",
+                               figsize=(10, 6), dpi=300):
+    """Publication-ready horizontal waterfall chart.
+
+    Parameters
+    ----------
+    values : pd.Series
+        Component values (e.g. Shapley values). Plotted sorted by value.
+    save_path : str, optional
+        Path to save the figure (PDF recommended).
+    ylabel : str, optional
+        Label for the x-axis (the value axis in a horizontal chart).
+    total_label : str, optional
+        Label for the total bar. Default ``"Total"``.
+    figsize : tuple, optional
+    dpi : int, optional
+    """
+    values = values.sort_values()
+    cumulative = values.cumsum().shift(1).fillna(0)
+    total = values.sum()
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Component bars — blue for negative, red for positive
+    bar_colors = ["#2166ac" if v < 0 else "#b2182b" for v in values]
+    ax.barh(
+        range(len(values)),
+        values,
+        left=cumulative,
+        color=bar_colors,
+        edgecolor="white",
+        linewidth=0.5,
+        height=0.6,
+        zorder=2,
+    )
+
+    # Total bar
+    ax.barh(
+        len(values),
+        total,
+        left=0,
+        color="#404040",
+        edgecolor="white",
+        linewidth=0.5,
+        height=0.6,
+        zorder=2,
+    )
+
+    # Connector lines between bars
+    for i in range(len(values)):
+        end = cumulative.iloc[i] + values.iloc[i]
+        if i < len(values) - 1:
+            ax.plot(
+                [end, end],
+                [i + 0.3, i + 0.7],
+                color="grey",
+                linewidth=0.5,
+                linestyle="--",
+                zorder=1,
+            )
+
+    # Value labels on each bar
+    offset = abs(total) * 0.02
+    for i, (val, cum) in enumerate(zip(values, cumulative)):
+        ax.text(cum + val + offset, i, f"{val:.2f}", va="center", ha="left", fontsize=9)
+    ax.text(
+        total + offset, len(values), f"{total:.2f}",
+        va="center", ha="left", fontsize=9, fontweight="bold",
+    )
+
+    # Y-axis labels
+    labels = list(values.index) + [total_label]
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=11)
+    ax.invert_yaxis()
+
+    # X-axis
+    if ylabel is not None:
+        ax.set_xlabel(ylabel, fontsize=11)
+    ax.axvline(0, color="black", linewidth=0.8)
+
+    # Clean spines
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(left=False)
+    ax.grid(axis="x", linestyle=":", alpha=0.4, zorder=0)
+
+    fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
+    return fig
+
+
 def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
                      format_y=lambda y, _: '{:.0f}'.format(y),
                      title=None, y_label="Emissions (MtCO2)"):
