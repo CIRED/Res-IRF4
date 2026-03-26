@@ -47,7 +47,7 @@ pre_processing/  →  static/  →  simulation  →  post_processing/
 
 | Folder | Notebooks | Purpose |
 |--------|-----------|---------|
-| `scenario_analysis/` | `summarize_many_scenarios_run`, `compare_policy_mix_to_reference`, `analyze_policy_packages_across_runs` | Parse and compare simulation scenarios |
+| `policy_decomposition/` | `summarize_scenario_run`, `analyze_factorial_combinations` | Factorial decomposition (Shapley, Sobol) of policy and market-failure interactions |
 | `policy_assessment/` | `summarize_policy_portfolio_indicators`, `analyze_policy_target_scenarios`, `analyze_subsidy_distortion_runs` | Evaluate policy instruments |
 | `reporting/` | `build_comparison_figures_from_run`, `compare_assumption_sets_npv`, `build_stock_transition_figures` | Publication figures and tables |
 | `elasticity/` | `estimate_long_term_price_elasticity` | Long-term price elasticity from sensitivity runs |

@@ -38,8 +38,8 @@ Outputs are written to `project/output/<timestamp>/`.
 - Preprocessing (when variants change):
   - `project/input/policies/interaction_mf/create_policies_scenarios.ipynb`
 - Postprocessing:
-  - `project/analysis/post_processing/scenario_analysis/summarize_many_scenarios_run.ipynb`
-  - `project/analysis/post_processing/scenario_analysis/analyze_policy_packages_across_runs.ipynb` with `assessment = "market_failures"`
+  - `project/analysis/post_processing/policy_decomposition/summarize_scenario_run.ipynb`
+  - `project/analysis/post_processing/policy_decomposition/analyze_factorial_combinations.ipynb` with `assessment = "market_failures"`
 
 ### 1.3 Standalone interaction-aligned set
 
@@ -62,7 +62,7 @@ Outputs are written to `project/output/<timestamp>/`.
 - Preprocessing:
   - `project/input/policies/interaction_optimal_pp/create_policies_scenarios.ipynb`
 - Postprocessing:
-  - `project/analysis/post_processing/scenario_analysis/analyze_policy_packages_across_runs.ipynb` with `assessment = "optimal_pp"`
+  - `project/analysis/post_processing/policy_decomposition/analyze_factorial_combinations.ipynb` with `assessment = "optimal_pp"`
 
 ### 2.3 Standalone interaction-aligned set
 
@@ -78,7 +78,7 @@ Outputs are written to `project/output/<timestamp>/`.
 - Preprocessing:
   - `project/input/policies/interaction_current_pp/create_policies_scenarios_reduced.ipynb`
 - Postprocessing:
-  - `project/analysis/post_processing/scenario_analysis/analyze_policy_packages_across_runs.ipynb` with `assessment = "policies"`
+  - `project/analysis/post_processing/policy_decomposition/analyze_factorial_combinations.ipynb` with `assessment = "policies"`
 
 ## 4) Friction assumption comparisons
 
@@ -115,7 +115,7 @@ Outputs are written to `project/output/<timestamp>/`.
   - `project/config/market_failures/interaction_market_failures.json`
   - `project/config/policies/realistic/interaction_policy.json`
 - Compare with:
-  - `project/analysis/post_processing/scenario_analysis/analyze_policy_packages_across_runs.ipynb`
+  - `project/analysis/post_processing/policy_decomposition/analyze_factorial_combinations.ipynb`
 
 ## Quick command block
 
