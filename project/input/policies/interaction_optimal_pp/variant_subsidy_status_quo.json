@@ -1,8 +1,8 @@
 {
-    "subsidy_status_quo": {
+    "subsidy_hp_statusquo": {
       "start": 2019,
       "end": 2051,
-      "policy": "subsidy_status_quo",
+      "policy": "subsidy_hp_statusquo",
       "gest": [
         "heater"
       ]
