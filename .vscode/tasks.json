@@ -4,133 +4,133 @@
     {
       "label": "INARI: Pull & Run (pick config)",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c ${input:configFile} -cpu ${input:cpuCount} > run_$(date +%Y%m%d_%H%M%S).log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c ${input:configFile} -cpu ${input:cpuCount} > run_$(date +%Y%m%d_%H%M%S).log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Optimal | Policy Design",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/optimal/policy_optimal.json -cpu 10 > run_optimal_policy.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/optimal/policy_optimal.json -cpu 10 > run_optimal_policy.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Optimal | Policy Design (interactive)",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/optimal/policy_optimal.json -cpu 10; exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/optimal/policy_optimal.json -cpu 10; exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Optimal | Policy Interactions",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/optimal/interaction_optimal_policy.json -cpu 10 > run_optimal_interaction.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/optimal/interaction_optimal_policy.json -cpu 10 > run_optimal_interaction.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Optimal | Standalone Policy",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/optimal/standalone_optimal_policy.json -cpu 10 > run_optimal_standalone.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/optimal/standalone_optimal_policy.json -cpu 10 > run_optimal_standalone.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Policy Packages",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/policies.json -cpu 10 > run_realistic_policies.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/policies.json -cpu 10 > run_realistic_policies.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Policy Interactions",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/interaction_policy.json -cpu 10 > run_realistic_interaction.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/interaction_policy.json -cpu 10 > run_realistic_interaction.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Compare Subsidies",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/compare_subsidies.json -cpu 10 > run_compare_subsidies.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/compare_subsidies.json -cpu 10 > run_compare_subsidies.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Ban Policy",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/policy_ban.json -cpu 10 > run_ban.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/policy_ban.json -cpu 10 > run_ban.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Mandatory Renovation",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/policy_mandatory_renovation.json -cpu 10 > run_mandatory_renovation.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/policy_mandatory_renovation.json -cpu 10 > run_mandatory_renovation.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Tax Policy",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/tax.json -cpu 10 > run_tax.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/tax.json -cpu 10 > run_tax.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Realistic | Subsidy Landlord",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/policies/realistic/subsidy_landlord.json -cpu 10 > run_subsidy_landlord.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/policies/realistic/subsidy_landlord.json -cpu 10 > run_subsidy_landlord.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Market Failures | Interaction Bundle",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/market_failures/interaction_market_failures.json -cpu 10 > run_mf_interaction.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/market_failures/interaction_market_failures.json -cpu 10 > run_mf_interaction.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Market Failures | Scenario Bundle",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/market_failures/market_failures_bundle.json -cpu 10 > run_mf_bundle.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/market_failures/market_failures_bundle.json -cpu 10 > run_mf_bundle.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Market Failures | Standalone Bundle",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/market_failures/standalone/standalone_market_failures.json -cpu 10 > run_mf_standalone.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/market_failures/standalone/standalone_market_failures.json -cpu 10 > run_mf_standalone.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Analysis | Policy Distortion",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/analysis/current_policies_distortion.json -cpu 10 > run_distortion.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/analysis/current_policies_distortion.json -cpu 10 > run_distortion.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Sensitivity",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/sensitivity/sensitivity.json -cpu 10 > run_sensitivity.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/sensitivity/sensitivity.json -cpu 10 > run_sensitivity.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Sensitivity | Prices",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/sensitivity/prices.json -cpu 10 > run_sensitivity_prices.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/sensitivity/prices.json -cpu 10 > run_sensitivity_prices.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Validation",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/validation.json -cpu 10 > run_validation.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/validation.json -cpu 10 > run_validation.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Uncertainty | Policies Reference",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/uncertainty/policies_response_reference.json -cpu 10 > run_uncertainty_ref.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/uncertainty/policies_response_reference.json -cpu 10 > run_uncertainty_ref.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Uncertainty | Policies High",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/uncertainty/policies_response_high.json -cpu 10 > run_uncertainty_high.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/uncertainty/policies_response_high.json -cpu 10 > run_uncertainty_high.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
       "label": "INARI: Uncertainty | Policies Low",
       "type": "shell",
-      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/Res-IRF4/bin/python3.8 -m project.main -c project/config/uncertainty/policies_response_low.json -cpu 10 > run_uncertainty_low.log 2>&1 & exec ${SHELL:-bash} -l'",
+      "command": "ssh -t inari 'cd /diskdata2/resirf/Res-IRF4 && git pull && nohup nice /data/software/anaconda3/envs/envResIRF/bin/python3.8 -m project.main -c project/config/uncertainty/policies_response_low.json -cpu 10 > run_uncertainty_low.log 2>&1 & exec ${SHELL:-bash} -l'",
       "problemMatcher": []
     },
     {
