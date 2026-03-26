@@ -2,7 +2,7 @@
   "scenarios": {
     "activated": false,
     "current_policies": null,
-    "no_policy": true,
+    "no_policy": null,
     "no_policy_insulation": null,
     "no_policy_heater": null,
     "prices_constant": null,
@@ -35,7 +35,7 @@
   },
   "Reference": {
     "file": "project/config/reference.json",
-    "end": 2020,
+    "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
       "carbon_tax": {
@@ -182,6 +182,50 @@
           "public_cost": 0.015,
           "policy": "zero_interest_loan",
           "target": null
+      }
+    }
+  },
+  "OptimalSubsidies": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "subsidy_emission": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "subsidy_proportional",
+        "gest": [
+          "heater",
+          "insulation"
+        ],
+        "value": "project/input/policies/current/carbon_tax_value.csv",
+        "proportional": "tCO2_cumac",
+        "growth": null
+      },
+      "subsidy_multi_family": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "subsidy_multi_family",
+        "gest": [
+          "insulation"
+        ]
+      },
+      "subsidy_landlord": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "subsidy_landlord",
+        "gest": [
+          "insulation"
+        ]
+      },
+      "subsidy_health_cost": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "subsidy_proportional",
+        "gest": [
+          "insulation"
+        ],
+        "proportional": "health_cost"
       }
     }
   }
