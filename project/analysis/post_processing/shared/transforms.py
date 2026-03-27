@@ -1,6 +1,8 @@
 """Common transformations used across post-processing notebooks."""
 from __future__ import annotations
 
+import re
+
 import pandas as pd
 
 
@@ -114,7 +116,17 @@ def extract_indicator_values(
     reference: str | None = None,
     reference_multiplier: float = 1e3,
 ) -> pd.Series:
-    """Extract indicator rows matching a regex and return one series per metric."""
+    """Extract indicator rows matching a regex and return one series per metric.
+
+    Parameters
+    ----------
+    select_value:
+        Supports:
+        - ``"avg"``: mean across the full time horizon
+        - ``"avg_firstN"``: mean across the first ``N`` year columns, capped by
+          the available horizon when fewer than ``N`` columns exist
+        - a specific year column such as ``2019`` or ``"2019"``
+    """
     index = table.index.to_series().astype(str)
     mask = index.str.match(pattern)
     filtered = table.loc[mask].copy()
@@ -133,6 +145,12 @@ def extract_indicator_values(
 
     if str(select_value).lower() == "avg":
         return filtered.mean(axis=1)
+
+    match = re.fullmatch(r"avg_first(\d+)", str(select_value).lower())
+    if match is not None:
+        window = int(match.group(1))
+        window = min(window, filtered.shape[1])
+        return filtered.iloc[:, :window].mean(axis=1)
 
     column = str(select_value)
     if column not in filtered.columns:

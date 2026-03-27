@@ -84,6 +84,24 @@
       }
     },
     {
+      "name": "Analysis | Policy Gap",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "project.main",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "-c",
+        "project/config/analysis/current_policies_gap.json",
+        "-cpu",
+        "2"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    {
       "name": "Market Failures | Interaction Bundle",
       "type": "debugpy",
       "request": "launch",

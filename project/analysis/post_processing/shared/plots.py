@@ -328,17 +328,19 @@ def plot_subsidy_delta_by_housing_status(
     housing_order=None,
     suptitle=None,
     xlabel=None,
+    legend_position="top",
 ):
     """Bar chart of subsidy gap vs. optimal (in M euros), one subplot per Housing x Status.
 
     Positive bars = scenario spends more than optimal; negative = spends less.
     """
+    scenarios = [scenario] if isinstance(scenario, str) else list(scenario)
     _housing_status_subplot_grid(
         parsed=delta_df,
-        scenarios=[scenario],
+        scenarios=scenarios,
         value_col="Delta",
         ylabel="Difference vs. optimal (M\u20ac)",
-        suptitle=suptitle or "Misallocation of subsidies: {} vs. {}".format(scenario, optimal_scenario),
+        suptitle=suptitle or "Misallocation of subsidies: {} vs. {}".format(", ".join(scenarios), optimal_scenario),
         label_size=label_size,
         same_axis_limits=same_axis_limits,
         save=save,
@@ -346,6 +348,7 @@ def plot_subsidy_delta_by_housing_status(
         exclude_status=exclude_status,
         housing_order=housing_order,
         xlabel=xlabel,
+        legend_position=legend_position,
     )
 
 
@@ -360,17 +363,19 @@ def plot_subsidy_delta_pct_by_housing_status(
     housing_order=None,
     suptitle=None,
     xlabel=None,
+    legend_position="top",
 ):
     """Bar chart of subsidy gap vs. optimal (in %), one subplot per Housing x Status.
 
     Positive bars = scenario spends more than optimal; negative = spends less.
     """
+    scenarios = [scenario] if isinstance(scenario, str) else list(scenario)
     _housing_status_subplot_grid(
         parsed=delta_df,
-        scenarios=[scenario],
+        scenarios=scenarios,
         value_col="DeltaPct",
         ylabel="Difference vs. optimal (%)",
-        suptitle=suptitle or "Misallocation of subsidies (%): {} vs. {}".format(scenario, optimal_scenario),
+        suptitle=suptitle or "Misallocation of subsidies (%): {} vs. {}".format(", ".join(scenarios), optimal_scenario),
         label_size=label_size,
         same_axis_limits=same_axis_limits,
         save=save,
@@ -378,6 +383,7 @@ def plot_subsidy_delta_pct_by_housing_status(
         exclude_status=exclude_status,
         housing_order=housing_order,
         xlabel=xlabel,
+        legend_position=legend_position,
     )
 
 
