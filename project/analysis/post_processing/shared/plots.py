@@ -96,6 +96,8 @@ def _housing_status_subplot_grid(
     exclude_status=None,
     housing_order=None,
     n_cols=None,
+    xlabel=None,
+    legend_position="top",
 ):
     """Generic clustered-bar grid: one subplot per Housing x Status, x-axis = Income, one bar per scenario."""
     if exclude_status is None:
@@ -131,7 +133,7 @@ def _housing_status_subplot_grid(
         pivot = pivot.reindex(index=incomes, columns=scenarios)
         pivot.plot.bar(ax=ax, rot=0, color=colors, edgecolor="white")
         ax.set_title(group, fontsize=label_size)
-        ax.set_xlabel("Income class", fontsize=label_size - 2)
+        ax.set_xlabel("" if xlabel in (None, "") else xlabel, fontsize=label_size - 2)
         ax.set_ylabel(ylabel, fontsize=label_size - 2)
         ax.tick_params(axis="both", labelsize=label_size - 2)
         legend = ax.get_legend()
@@ -157,16 +159,28 @@ def _housing_status_subplot_grid(
     fig.suptitle(suptitle, fontsize=label_size + 2)
     if figure_legend is not None:
         handles, labels = figure_legend
-        fig.legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, 0.98),
-            ncol=len(labels),
-            frameon=False,
-            fontsize=label_size - 2,
-        )
-        plt.tight_layout(rect=(0, 0, 1, 0.92))
+        if legend_position == "bottom":
+            fig.legend(
+                handles,
+                labels,
+                loc="lower center",
+                bbox_to_anchor=(0.5, -0.01),
+                ncol=len(labels),
+                frameon=False,
+                fontsize=label_size - 2,
+            )
+            plt.tight_layout(rect=(0, 0.08, 1, 0.95))
+        else:
+            fig.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, 0.98),
+                ncol=len(labels),
+                frameon=False,
+                fontsize=label_size - 2,
+            )
+            plt.tight_layout(rect=(0, 0, 1, 0.92))
     else:
         plt.tight_layout()
 
@@ -175,7 +189,7 @@ def _housing_status_subplot_grid(
     plt.show()
 
 
-def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scenario", value_formatter=None):
+def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scenario", value_formatter=None, title=None):
     """Plot one bar chart per indicator row.
 
     Parameters
@@ -191,6 +205,8 @@ def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scena
     value_formatter:
         Optional callable used to annotate each bar. Receives the numeric value
         and must return the display label.
+    title:
+        Optional figure-level title.
     """
     if summary.empty:
         raise ValueError("Summary dataframe is empty; no bar chart to plot.")
@@ -212,8 +228,10 @@ def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scena
         values = summary.values.flatten()
         ymin = float(np.nanmin(values))
         ymax = float(np.nanmax(values))
-        margin = (ymax - ymin) * 0.05 if ymax > ymin else 0.05
-        ylim = (ymin - margin, ymax + margin)
+        span = ymax - ymin
+        base_margin = span * 0.05 if span > 0 else max(abs(ymax) * 0.05, 0.05)
+        top_margin = max(base_margin, span * 0.12 if value_formatter is not None else base_margin)
+        ylim = (ymin - base_margin, ymax + top_margin)
     else:
         ylim = None
 
@@ -233,6 +251,13 @@ def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scena
             ax.set_xticklabels(scenarios, rotation=0)
         if ylim is not None:
             ax.set_ylim(*ylim)
+        elif value_formatter is not None:
+            local_min = float(np.nanmin(values.values))
+            local_max = float(np.nanmax(values.values))
+            span = local_max - local_min
+            margin = span * 0.12 if span > 0 else max(abs(local_max) * 0.12, 0.05)
+            lower = local_min - margin * 0.4 if local_min < 0 else 0
+            ax.set_ylim(lower, local_max + margin)
 
         if value_formatter is not None:
             for bar, value in zip(bars, values.values):
@@ -253,7 +278,11 @@ def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scena
     for ax in flat_axes[panel_count:]:
         ax.set_visible(False)
 
-    plt.tight_layout()
+    if title is not None:
+        fig.suptitle(title, fontsize=label_size + 2)
+        plt.tight_layout(rect=(0, 0, 1, 0.95))
+    else:
+        plt.tight_layout()
     plt.show()
 
 
@@ -265,6 +294,8 @@ def plot_subsidies_by_housing_status(
     save=None,
     exclude_status=None,
     housing_order=None,
+    suptitle=None,
+    xlabel=None,
 ):
     """Clustered bar: subsidy levels by income class, one subplot per Housing x Status.
 
@@ -275,12 +306,14 @@ def plot_subsidies_by_housing_status(
         scenarios=scenarios,
         value_col="Value",
         ylabel="Subsidies (M\u20ac)",
-        suptitle="Public spending on subsidies by income class and housing segment",
+        suptitle=suptitle or "Public spending on subsidies by income class and housing segment",
         label_size=label_size,
         same_axis_limits=same_axis_limits,
         save=save,
         exclude_status=exclude_status,
         housing_order=housing_order,
+        xlabel=xlabel,
+        legend_position="bottom",
     )
 
 
@@ -293,6 +326,8 @@ def plot_subsidy_delta_by_housing_status(
     save=None,
     exclude_status=None,
     housing_order=None,
+    suptitle=None,
+    xlabel=None,
 ):
     """Bar chart of subsidy gap vs. optimal (in M euros), one subplot per Housing x Status.
 
@@ -303,13 +338,14 @@ def plot_subsidy_delta_by_housing_status(
         scenarios=[scenario],
         value_col="Delta",
         ylabel="Difference vs. optimal (M\u20ac)",
-        suptitle="Misallocation of subsidies: {} vs. {}".format(scenario, optimal_scenario),
+        suptitle=suptitle or "Misallocation of subsidies: {} vs. {}".format(scenario, optimal_scenario),
         label_size=label_size,
         same_axis_limits=same_axis_limits,
         save=save,
         hline=0.0,
         exclude_status=exclude_status,
         housing_order=housing_order,
+        xlabel=xlabel,
     )
 
 
@@ -322,6 +358,8 @@ def plot_subsidy_delta_pct_by_housing_status(
     save=None,
     exclude_status=None,
     housing_order=None,
+    suptitle=None,
+    xlabel=None,
 ):
     """Bar chart of subsidy gap vs. optimal (in %), one subplot per Housing x Status.
 
@@ -332,13 +370,14 @@ def plot_subsidy_delta_pct_by_housing_status(
         scenarios=[scenario],
         value_col="DeltaPct",
         ylabel="Difference vs. optimal (%)",
-        suptitle="Misallocation of subsidies (%): {} vs. {}".format(scenario, optimal_scenario),
+        suptitle=suptitle or "Misallocation of subsidies (%): {} vs. {}".format(scenario, optimal_scenario),
         label_size=label_size,
         same_axis_limits=same_axis_limits,
         save=save,
         hline=0.0,
         exclude_status=exclude_status,
         housing_order=housing_order,
+        xlabel=xlabel,
     )
 
 
@@ -349,6 +388,7 @@ def plot_ad_valorem_ratio_by_housing_status(
     save=None,
     exclude_status=None,
     housing_order=None,
+    suptitle=None,
 ):
     """Clustered bar chart of implicit ad valorem subsidy rate by Housing x Status.
 
@@ -395,7 +435,7 @@ def plot_ad_valorem_ratio_by_housing_status(
         values = filtered.loc[group] * 100  # convert to percent
         values.plot.bar(ax=ax, rot=0, color=colors, edgecolor="white")
         ax.set_title(group, fontsize=label_size)
-        ax.set_xlabel("Scenario", fontsize=label_size - 2)
+        ax.set_xlabel("")
         ax.set_ylabel("Subsidy / Investment (%)", fontsize=label_size - 2)
         ax.tick_params(axis="both", labelsize=label_size - 2)
         if single_reference:
@@ -421,15 +461,18 @@ def plot_ad_valorem_ratio_by_housing_status(
     for idx in range(len(groups), len(flat_axes)):
         flat_axes[idx].set_visible(False)
 
-    fig.suptitle("Implicit ad valorem subsidy rate by housing segment", fontsize=label_size + 2)
-    plt.tight_layout()
+    fig.suptitle(
+        suptitle or "Implicit ad valorem subsidy rate by housing segment",
+        fontsize=label_size + 2,
+    )
+    plt.tight_layout(rect=(0, 0, 1, 0.95))
 
     if save is not None:
         plt.savefig(save, bbox_inches="tight")
     plt.show()
 
 
-def plot_subsidies_gap_boxplot(bundle, output_file):
+def plot_subsidies_gap_boxplot(bundle, output_file, title=None):
     """Draw and save scenario-wise boxplots for Subsidies Gap."""
     data = pd.concat(bundle, names=["Scenario"]).reset_index(level=0)
     if "Subsidies Gap" not in data.columns:
@@ -462,12 +505,21 @@ def plot_subsidies_gap_boxplot(bundle, output_file):
     ax.tick_params(axis="x", rotation=45)
     if single_reference:
         ax.set_xticklabels([])
+    if title is not None:
+        ax.set_title(title)
     plt.tight_layout()
     plt.savefig(output_file)
     plt.show()
 
 
-def plot_subsidy_vs_distortion(bundle, output_folder, technology_filter, make_scatter_fn):
+def plot_subsidy_vs_distortion(
+    bundle,
+    output_folder,
+    technology_filter,
+    make_scatter_fn,
+    title_template=None,
+    x_label="",
+):
     """Save one scatter plot per scenario using shared axis limits."""
     xmin = min(df["Subsidies"].min() for df in bundle.values())
     xmax = max(df["Subsidies"].max() for df in bundle.values())
@@ -487,8 +539,8 @@ def plot_subsidy_vs_distortion(bundle, output_folder, technology_filter, make_sc
             plot_df,
             "Subsidies",
             "Distortion",
-            "Subsidies (Thousand euro)",
-            "Distortion (Thousand euro)",
+            x_label,
+            (title_template or "Subsidies and distortion by technology: {scenario}").format(scenario=scenario),
             annotate=False,
             save=output_folder / "subsidies_distortion_{}.png".format(scenario),
             format_y=lambda y, _: "{:.0f}".format(y / 1e3),
