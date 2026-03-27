@@ -1597,6 +1597,68 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None, reference='Ref
 
 def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, duration_investment=30, policy_name=None,
                        reference='Reference', factor_cofp=0.2, order_scenarios=None, figure=True):
+    """Build policy comparison and indicator tables from scenario outputs.
+
+    This function is the main post-processing entry point used after a batch of
+    policy simulations has been run. It compares each scenario in ``result`` to
+    a reference scenario, converts yearly differences into discounted totals or
+    annualized indicators, and writes the standardized outputs consumed by the
+    rest of the workflow.
+
+    In practice, it is used to transform raw model outputs such as
+    ``output.csv`` tables into:
+    - a detailed comparison table of discounted differences by scenario
+    - a compact indicator table with cost, savings, emissions, and welfare
+      metrics
+    - optional policy assessment figures saved in ``<folder>/policies/``
+
+    The generated CSV files, especially ``comparison.csv``,
+    ``indicator.csv``, and ``summary_assessment.csv``, are then reused by the
+    analysis notebooks and reporting scripts to rank policies, study
+    interactions, and visualize policy performance without recomputing all
+    metrics from scratch.
+
+    Parameters
+    ----------
+    result : dict[str, pd.DataFrame]
+        Mapping from scenario name to model output table. Each dataframe is
+        expected to contain the yearly outputs for one scenario, indexed by
+        variable name and columned by year.
+    folder : str
+        Run folder where the ``policies`` subdirectory will be created or
+        updated.
+    cba_inputs : dict
+        Configuration used for the cost-benefit calculations. It provides the
+        external series and optional overrides needed for discounting, lifetime,
+        carbon values, energy prices, and public finance assumptions.
+    social_discount_rate : float, default 0.032
+        Discount rate used when valuing multi-year effects, unless overridden by
+        ``cba_inputs``.
+    duration_investment : int, default 30
+        Number of years over which persistent effects are extended, unless
+        overridden by ``cba_inputs``.
+    policy_name : str | list[str] | None, default None
+        Optional policy name used to compute policy-specific cost and
+        effectiveness indicators when direct policy cost rows are present in the
+        outputs.
+    reference : str, default "Reference"
+        Name of the baseline scenario used for most comparisons.
+    factor_cofp : float, default 0.2
+        Conversion factor applied to public budget balance when computing the
+        opportunity cost of public funds, unless overridden by ``cba_inputs``.
+    order_scenarios : list[str] | None, default None
+        Optional column order for saved tables and figures.
+    figure : bool, default True
+        Whether to save the policy assessment figures produced from the
+        cost-benefit decomposition.
+
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame | None]
+        ``comparison`` is the detailed discounted-difference table by scenario.
+        ``indicator`` is the synthesized indicator table written to
+        ``policies/indicator.csv`` when it can be computed.
+    """
 
     def double_difference(ref, scenario, values=None, discount_rate=social_discount_rate, years=duration_investment):
         """Calculate double difference.
@@ -2333,4 +2395,3 @@ def make_summary(path, option=None):
     new_images[0].save(
         pdf_path, 'PDF', resolution=100.0, save_all=True, append_images=new_images[1:]
     )
-
