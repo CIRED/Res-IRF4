@@ -11,6 +11,7 @@ import seaborn as sns
 # Consistent colour mapping across all plots
 SCENARIO_COLORS = {
     "OptimalSubsidies": "#1f77b4",  # blue
+    "Package2024": "#ff7f0e",       # orange
     "Reference": "#ff7f0e",         # orange
 }
 
@@ -26,10 +27,20 @@ DEFAULT_HOUSING_ORDER = ["Single-family", "Multi-family"]
 # Occupancy statuses to exclude by default (Social-housing has a single income
 # class, making the income-axis breakdown uninformative).
 DEFAULT_EXCLUDE_STATUS = ["Social-housing"]
+PREFERRED_SCENARIO_ORDER = ["Package2024", "OptimalSubsidies", "Reference"]
+
+
+def _order_scenarios(scenarios):
+    """Return scenarios in preferred display order, preserving unknown names."""
+    scenarios = list(scenarios)
+    preferred = [name for name in PREFERRED_SCENARIO_ORDER if name in scenarios]
+    remaining = [name for name in scenarios if name not in preferred]
+    return preferred + remaining
 
 
 def _scenario_color_list(scenarios):
     """Return a list of colours aligned with *scenarios*, using the fixed palette."""
+    scenarios = _order_scenarios(scenarios)
     return [
         SCENARIO_COLORS.get(s, _DEFAULT_FALLBACK_COLORS[i % len(_DEFAULT_FALLBACK_COLORS)])
         for i, s in enumerate(scenarios)
@@ -40,6 +51,23 @@ def _flatten_axes(axes):
     if isinstance(axes, np.ndarray):
         return list(axes.flatten())
     return [axes]
+
+
+def _is_single_reference(scenarios):
+    """Return True when the plot contains only the Reference scenario."""
+    return list(scenarios) == ["Reference"]
+
+
+def _has_single_scenario(scenarios):
+    """Return True when the plot contains exactly one scenario."""
+    return len(list(scenarios)) == 1
+
+
+def _grid_ncols(panel_count):
+    """Return the preferred number of subplot columns for grid-style figures."""
+    if panel_count == 4:
+        return 2
+    return min(3, max(1, panel_count))
 
 
 def _order_groups(groups, housing_order):
@@ -67,6 +95,7 @@ def _housing_status_subplot_grid(
     hline=None,
     exclude_status=None,
     housing_order=None,
+    n_cols=None,
 ):
     """Generic clustered-bar grid: one subplot per Housing x Status, x-axis = Income, one bar per scenario."""
     if exclude_status is None:
@@ -75,21 +104,25 @@ def _housing_status_subplot_grid(
         housing_order = DEFAULT_HOUSING_ORDER
 
     data = parsed[parsed["Income"] != "Total"].copy()
+    scenarios = _order_scenarios(scenarios)
     data = data[data["Scenario"].isin(scenarios)]
     if exclude_status:
         data = data[~data["Status"].isin(exclude_status)]
     data["Label"] = data["Housing"] + " - " + data["Status"]
     groups = _order_groups(data["Label"].unique(), housing_order)
     incomes = sorted(data["Income"].unique())
+    single_reference = _is_single_reference(scenarios)
+    single_scenario = _has_single_scenario(scenarios)
 
     n_groups = len(groups)
-    n_cols = min(3, max(1, n_groups))
+    n_cols = min(n_cols or _grid_ncols(n_groups), max(1, n_groups))
     n_rows = math.ceil(n_groups / n_cols)
 
     colors = _scenario_color_list(scenarios)
 
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.2 * n_cols, 4.2 * n_rows), squeeze=False)
     flat_axes = [ax for row in axes for ax in row]
+    figure_legend = None
 
     for idx, group in enumerate(groups):
         ax = flat_axes[idx]
@@ -101,7 +134,11 @@ def _housing_status_subplot_grid(
         ax.set_xlabel("Income class", fontsize=label_size - 2)
         ax.set_ylabel(ylabel, fontsize=label_size - 2)
         ax.tick_params(axis="both", labelsize=label_size - 2)
-        ax.legend(fontsize=label_size - 3)
+        legend = ax.get_legend()
+        if legend is not None:
+            if not single_reference and not single_scenario and figure_legend is None:
+                figure_legend = ax.get_legend_handles_labels()
+            legend.remove()
         if hline is not None:
             ax.axhline(hline, color="grey", linestyle="--", linewidth=0.8)
 
@@ -118,14 +155,27 @@ def _housing_status_subplot_grid(
         flat_axes[idx].set_visible(False)
 
     fig.suptitle(suptitle, fontsize=label_size + 2)
-    plt.tight_layout()
+    if figure_legend is not None:
+        handles, labels = figure_legend
+        fig.legend(
+            handles,
+            labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 0.98),
+            ncol=len(labels),
+            frameon=False,
+            fontsize=label_size - 2,
+        )
+        plt.tight_layout(rect=(0, 0, 1, 0.92))
+    else:
+        plt.tight_layout()
 
     if save is not None:
         plt.savefig(save, bbox_inches="tight")
     plt.show()
 
 
-def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scenario"):
+def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scenario", value_formatter=None):
     """Plot one bar chart per indicator row.
 
     Parameters
@@ -138,43 +188,70 @@ def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scena
         Font size for labels.
     xlabel:
         X-axis label shown on every subplot.
+    value_formatter:
+        Optional callable used to annotate each bar. Receives the numeric value
+        and must return the display label.
     """
     if summary.empty:
         raise ValueError("Summary dataframe is empty; no bar chart to plot.")
 
-    colors = _scenario_color_list(list(summary.columns))
+    scenarios = _order_scenarios(summary.columns)
+    summary = summary.reindex(columns=scenarios)
+    colors = _scenario_color_list(scenarios)
+    single_reference = _is_single_reference(scenarios)
 
     panel_count = len(summary.index)
-    n_cols = min(3, max(1, panel_count))
+    n_cols = _grid_ncols(panel_count)
     n_rows = math.ceil(panel_count / n_cols)
 
-    axes = summary.T.plot.bar(
-        rot=0,
-        subplots=True,
-        layout=(n_rows, n_cols),
-        figsize=(5.2 * n_cols, 4.2 * n_rows),
-        legend=False,
-        color=colors,
-    )
-
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.2 * n_cols, 4.2 * n_rows), squeeze=False)
     flat_axes = _flatten_axes(axes)
+    x_positions = np.arange(len(scenarios))
 
     if same_axis_limits:
         values = summary.values.flatten()
         ymin = float(np.nanmin(values))
         ymax = float(np.nanmax(values))
         margin = (ymax - ymin) * 0.05 if ymax > ymin else 0.05
-        for ax in flat_axes:
-            ax.set_ylim(ymin - margin, ymax + margin)
+        ylim = (ymin - margin, ymax + margin)
+    else:
+        ylim = None
 
-    for ax in flat_axes:
-        if not ax.has_data():
-            ax.set_visible(False)
-            continue
+    for idx, indicator in enumerate(summary.index):
+        ax = flat_axes[idx]
+        values = summary.loc[indicator, scenarios]
+        bars = ax.bar(x_positions, values.values, color=colors, edgecolor="white")
+        ax.set_title(str(indicator), fontsize=label_size)
         ax.set_xlabel(xlabel, fontsize=label_size - 2)
-        ax.title.set_fontsize(label_size)
-        ax.yaxis.label.set_fontsize(label_size)
+        ax.set_ylabel("")
         ax.tick_params(axis="both", labelsize=label_size)
+        if single_reference:
+            ax.set_xticklabels([])
+            ax.set_xticks([])
+        else:
+            ax.set_xticks(x_positions)
+            ax.set_xticklabels(scenarios, rotation=0)
+        if ylim is not None:
+            ax.set_ylim(*ylim)
+
+        if value_formatter is not None:
+            for bar, value in zip(bars, values.values):
+                if pd.isna(value):
+                    continue
+                offset = 3 if value >= 0 else -3
+                va = "bottom" if value >= 0 else "top"
+                ax.annotate(
+                    value_formatter(value),
+                    (bar.get_x() + bar.get_width() / 2, value),
+                    ha="center",
+                    va=va,
+                    fontsize=label_size - 3,
+                    xytext=(0, offset),
+                    textcoords="offset points",
+                )
+
+    for ax in flat_axes[panel_count:]:
+        ax.set_visible(False)
 
     plt.tight_layout()
     plt.show()
@@ -300,11 +377,14 @@ def plot_ad_valorem_ratio_by_housing_status(
         ]
 
     scenarios = list(filtered.columns)
+    scenarios = _order_scenarios(scenarios)
+    filtered = filtered.reindex(columns=scenarios)
     colors = _scenario_color_list(scenarios)
     groups = _order_groups(list(filtered.index), housing_order)
+    single_reference = _is_single_reference(scenarios)
 
     n_groups = len(groups)
-    n_cols = min(3, max(1, n_groups))
+    n_cols = _grid_ncols(n_groups)
     n_rows = math.ceil(n_groups / n_cols)
 
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(5.2 * n_cols, 4.2 * n_rows), squeeze=False)
@@ -318,14 +398,25 @@ def plot_ad_valorem_ratio_by_housing_status(
         ax.set_xlabel("Scenario", fontsize=label_size - 2)
         ax.set_ylabel("Subsidy / Investment (%)", fontsize=label_size - 2)
         ax.tick_params(axis="both", labelsize=label_size - 2)
+        if single_reference:
+            ax.set_xticklabels([])
 
-    if same_axis_limits:
-        all_vals = filtered.values.flatten() * 100
-        ymin = float(np.nanmin(all_vals))
-        ymax = float(np.nanmax(all_vals))
-        margin = (ymax - ymin) * 0.05 if ymax > ymin else 0.05
-        for i in range(len(groups)):
-            flat_axes[i].set_ylim(max(0, ymin - margin), ymax + margin)
+        for patch in ax.patches:
+            height = patch.get_height()
+            if pd.isna(height):
+                continue
+            ax.annotate(
+                "{:,.0f}%".format(height),
+                (patch.get_x() + patch.get_width() / 2, height),
+                ha="center",
+                va="bottom",
+                fontsize=label_size - 3,
+                xytext=(0, 3),
+                textcoords="offset points",
+            )
+
+    for i in range(len(groups)):
+        flat_axes[i].set_ylim(0, 100)
 
     for idx in range(len(groups), len(flat_axes)):
         flat_axes[idx].set_visible(False)
@@ -347,6 +438,7 @@ def plot_subsidies_gap_boxplot(bundle, output_file):
     sns.set_theme(style="whitegrid")
     fig, ax = plt.subplots(figsize=(12.8, 9.6))
     box = sns.boxplot(data=data, x="Scenario", y="Subsidies Gap", ax=ax)
+    single_reference = _is_single_reference(data["Scenario"].dropna().unique().tolist())
 
     medians = data.groupby("Scenario")["Subsidies Gap"].median()
     offset = data["Subsidies Gap"].median() * 0.05
@@ -368,6 +460,8 @@ def plot_subsidies_gap_boxplot(bundle, output_file):
     ax.set_xlabel("")
     ax.set_ylabel("Subsidies Gap")
     ax.tick_params(axis="x", rotation=45)
+    if single_reference:
+        ax.set_xticklabels([])
     plt.tight_layout()
     plt.savefig(output_file)
     plt.show()
