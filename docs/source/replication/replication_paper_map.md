@@ -107,7 +107,7 @@ Outputs are written to `project/output/<timestamp>/`.
 
 - Config: `project/config/analysis/policy_distortion_analysis.json`
 - Postprocessing:
-  - `project/analysis/post_processing/policy_assessment/analyze_subsidy_distortion_runs.ipynb`
+  - `project/analysis/post_processing/policy_assessment/analyze_subsidy_distortion.ipynb`
 
 ### 6.2 Market-failures vs policies comparison
 
