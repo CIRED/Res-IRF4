@@ -593,14 +593,14 @@ def plot_subsidies_time_series_by_segment(
             handles,
             labels,
             loc="lower center",
-            bbox_to_anchor=(0.5, -0.02),
+            bbox_to_anchor=(0.5, 0.02),
             ncol=len(labels),
             frameon=False,
             fontsize=label_size - 1,
         )
 
     fig.suptitle(suptitle, fontsize=label_size + 1, y=1.01)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.06, 1, 0.98))
 
     if save is not None:
         plt.savefig(save, bbox_inches="tight")
