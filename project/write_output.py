@@ -1596,7 +1596,7 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None, reference='Ref
 
 
 def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, duration_investment=30, policy_name=None,
-                       reference='Reference', factor_cofp=0.2, order_scenarios=None, figure=True):
+                       reference='Reference', factor_cofp=0.2, order_scenarios=None, figure=True, cofp=True):
     """Build policy comparison and indicator tables from scenario outputs.
 
     This function is the main post-processing entry point used after a batch of
@@ -1651,6 +1651,9 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
     figure : bool, default True
         Whether to save the policy assessment figures produced from the
         cost-benefit decomposition.
+    cofp : bool, default True
+        Whether to include the opportunity cost of public funds in the NPV
+        calculation and figures. Set to False to exclude it.
 
     Returns
     -------
@@ -2174,7 +2177,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         else:
             save = None
         cba = cost_benefit_analysis(comparison, effectiveness_scenarios, policy_name=policy_name, save=save,
-                                    order_scenarios=order_scenarios, years=years, factor_cofp=factor_cofp)
+                                    order_scenarios=order_scenarios, years=years, factor_cofp=factor_cofp, cofp=cofp)
         if indicator is not None:
             if set(list(cba.index)).issubset(list(indicator.index)):
                 indicator.loc[list(cba.index), s] = cba[s]
@@ -2282,6 +2285,50 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         t = pd.DataFrame({k:i.loc[list_output, :].sum(axis=1) for k,i in result.items()})
         t = t.rename(index=lambda x:'Cumulated {}'.format(x))
         temp = pd.concat((t, temp), axis=0)
+
+        # Energy poverty at end year (absolute and relative to reference)
+        ep_var = 'Energy poverty (Million)'
+        ref_ep = result[reference].loc[ep_var, end] if reference in result else None
+        ep_row = pd.Series({k: i.loc[ep_var, end] for k, i in result.items() if ep_var in i.index},
+                           name='{} {}'.format(ep_var, end))
+        if not ep_row.empty:
+            temp = pd.concat((temp, ep_row.to_frame().T), axis=0)
+            if ref_ep is not None and ref_ep != 0:
+                ep_diff = ep_row - ref_ep
+                ep_diff.name = 'Delta {} {}'.format(ep_var, end)
+                ep_diff_pct = ep_diff / abs(ref_ep)
+                ep_diff_pct.name = 'Delta Energy poverty {} (%)'.format(end)
+                temp = pd.concat((temp, ep_diff.to_frame().T, ep_diff_pct.to_frame().T), axis=0)
+
+        # Distributional balance as % of income by quintile at end year
+        # Balance = bill saving - annuities (Owner-occupied) or bill saving - rent increase (Tenant private)
+        # Normalised by average household income of the same segment and quintile
+        quintiles = resources_data.get('quintiles', ['C1', 'C2', 'C3', 'C4', 'C5'])
+        for tenure, balance_tpl, income_tpl in [
+            ('Owner-occupied',
+             'Balance Owner-occupied - {} (euro/year.household)',
+             'Income Single-family - Owner-occupied - {} (euro)'),
+            ('Tenant private',
+             'Balance Tenant private - {} (euro/year.household)',
+             'Income Single-family - Privately rented - {} (euro)'),
+        ]:
+            for q in quintiles:
+                bal_var = balance_tpl.format(q)
+                inc_var = income_tpl.format(q)
+                bal_ref = result[reference].loc[bal_var, end] if reference in result and bal_var in result[reference].index else None
+                inc_ref = result[reference].loc[inc_var, end] if reference in result and inc_var in result[reference].index else None
+                if bal_ref is None or inc_ref is None or inc_ref == 0:
+                    continue
+                row = {}
+                for k, i in result.items():
+                    if bal_var in i.index and inc_var in i.index:
+                        bal = i.loc[bal_var, end]
+                        inc = i.loc[inc_var, end]
+                        # delta balance vs reference, expressed as % of reference income
+                        row[k] = (bal - bal_ref) / inc_ref if inc_ref != 0 else float('nan')
+                if row:
+                    s = pd.Series(row, name='Delta balance {} {} pct income {}'.format(tenure, q, end))
+                    temp = pd.concat((temp, s.to_frame().T), axis=0)
 
         temp.round(3).to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
 
