@@ -1596,7 +1596,8 @@ def plot_compare_scenarios_simple(result, folder, quintiles=None, reference='Ref
 
 
 def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, duration_investment=30, policy_name=None,
-                       reference='Reference', factor_cofp=0.2, order_scenarios=None, figure=True, cofp=True):
+                       reference='Reference', factor_cofp=0.2, order_scenarios=None, figure=True, cofp=True,
+                       figure_ext='.png', horizontal_fontxtick=12, horizontal_figure_kwargs=None):
     """Build policy comparison and indicator tables from scenario outputs.
 
     This function is the main post-processing entry point used after a batch of
@@ -1654,6 +1655,13 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
     cofp : bool, default True
         Whether to include the opportunity cost of public funds in the NPV
         calculation and figures. Set to False to exclude it.
+    figure_ext : str, default ".png"
+        File extension used for saved policy figures.
+    horizontal_fontxtick : int, default 12
+        Tick-label font size for the horizontal policy decomposition figures.
+    horizontal_figure_kwargs : dict | None, default None
+        Additional keyword arguments forwarded to
+        ``project.utils.make_horizontal_stackedbar_plot``.
 
     Returns
     -------
@@ -1662,6 +1670,8 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         ``indicator`` is the synthesized indicator table written to
         ``policies/indicator.csv`` when it can be computed.
     """
+    figure_ext = f".{figure_ext.lstrip('.')}"
+    horizontal_figure_kwargs = {} if horizontal_figure_kwargs is None else horizontal_figure_kwargs.copy()
 
     def double_difference(ref, scenario, values=None, discount_rate=social_discount_rate, years=duration_investment):
         """Calculate double difference.
@@ -1804,16 +1814,16 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                                  format_y=lambda y, _: '{:.0f} B€'.format(y),
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
-                                 save=os.path.join(save, 'social_welfare_total.png'.lower().replace(' ', '_')),
+                                 save=os.path.join(save, f'social_welfare_total{figure_ext}'.lower().replace(' ', '_')),
                                  rotation=rotation, left=1.25, fontxtick=12, scatterplot_bis=scatterplot_bis)
             from project.utils import make_horizontal_stackedbar_plot
             make_horizontal_stackedbar_plot(npv.T, 'Social welfare (Billion euro)', ncol=3, ymin=None,
                                  format_x=lambda y, _: '{:.0f} B€'.format(y),
                                  hline=0, colors=resources_data['colors'],
                                  scatterplot=npv.sum(),
-                                 save=os.path.join(save, 'social_welfare_total_horizontal.png'.lower().replace(' ', '_')),
-                                 rotation=rotation, left=1.2, fontxtick=12, scatterplot_bis=scatterplot_bis,
-                                        )
+                                 save=os.path.join(save, f'social_welfare_total_horizontal{figure_ext}'.lower().replace(' ', '_')),
+                                 rotation=rotation, left=1.2, fontxtick=horizontal_fontxtick,
+                                 scatterplot_bis=scatterplot_bis, **horizontal_figure_kwargs)
 
             if years:
                 npv_annual = npv / years
@@ -1825,7 +1835,7 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                                      hline=0, colors=resources_data['colors'],
                                      scatterplot=npv_annual.sum(),
                                      save=os.path.join(save,
-                                                       'social_welfare_annual.png'.lower().replace(' ','_')),
+                                                       f'social_welfare_annual{figure_ext}'.lower().replace(' ','_')),
                                      rotation=rotation, left=1.25, fontxtick=12, scatterplot_bis=scatterplot_bis,
                                      annotate='{:.1f}')
 
@@ -1834,10 +1844,11 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                                                 hline=0, colors=resources_data['colors'],
                                                 scatterplot=npv_annual.sum(),
                                                 save=os.path.join(save,
-                                                                  'social_welfare_annual_horizontal.png'.lower().replace(
+                                                                  f'social_welfare_annual_horizontal{figure_ext}'.lower().replace(
                                                                       ' ', '_')),
-                                                rotation=rotation, left=1.2, fontxtick=12,
-                                                scatterplot_bis=scatterplot_bis, annotate='{:.1f}')
+                                                rotation=rotation, left=1.2, fontxtick=horizontal_fontxtick,
+                                                scatterplot_bis=scatterplot_bis, annotate='{:.1f}',
+                                                **horizontal_figure_kwargs)
 
         npv_sub = npv / comparison.loc['Balance state (Billion euro)', :]
         npv_sub.index = npv_sub.index.map(lambda x: 'MVP {} (%)'.format(x))
@@ -2333,6 +2344,133 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
         temp.round(3).to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
 
     return comparison, indicator
+
+
+def export_policy_latex_table(result, folder, cba_inputs, reference='No policy', order_scenarios=None,
+                              save_name='summary_assessment_table.txt'):
+    """Export a copy-paste LaTeX policy table from policy assessment outputs."""
+    folder_policies = os.path.join(folder, 'policies')
+    summary_path = os.path.join(folder_policies, 'summary_assessment.csv')
+    indicator_path = os.path.join(folder_policies, 'indicator.csv')
+    comparison_path = os.path.join(folder_policies, 'comparison.csv')
+
+    summary_df = pd.read_csv(summary_path, index_col=0)
+    indicator_df = pd.read_csv(indicator_path, index_col=0)
+    comparison_df = pd.read_csv(comparison_path, index_col=0)
+
+    default_order = [
+        'Carbon tax',
+        'Subsidies 2024',
+        'WCO 2024',
+        'Zero interest loan',
+        'Rental ban',
+        'Ban gas',
+    ]
+    if order_scenarios is None:
+        scenarios = [s for s in default_order if s in summary_df.columns and s != reference]
+    else:
+        scenarios = [s for s in order_scenarios if s in summary_df.columns and s != reference]
+
+    if not scenarios:
+        raise ValueError('No policy scenarios available for LaTeX export.')
+
+    label_map = {
+        'Carbon tax': 'C. tax',
+        'Subsidies 2024': 'Subsidies',
+        'WCO 2024': 'WCO',
+        'Zero interest loan': 'ZIL',
+        'Rental ban': 'Rental ban',
+        'Ban gas': 'Ban gas',
+    }
+
+    def _fmt(value, decimals=2, scale=1.0):
+        if pd.isna(value):
+            return ''
+        value = 0.0 if abs(value) < 5e-4 else value
+        return f'{value * scale:.{decimals}f}'
+
+    energy_expenditure_rows = [
+        f'Energy expenditures {energy} (Billion euro)'
+        for energy in resources_data['index']['Energy']
+        if f'Energy expenditures {energy} (Billion euro)' in comparison_df.index
+    ]
+    discounted_energy_expenditures_wt = comparison_df.loc[energy_expenditure_rows, scenarios].sum(axis=0)
+
+    investment_wt = comparison_df.loc['Investment total WT (Billion euro)', scenarios]
+    energy_delta = comparison_df.loc['Consumption (TWh)', scenarios]
+    emission_delta = comparison_df.loc['Emission (MtCO2)', scenarios]
+    negawatt_cost_net = - (investment_wt + discounted_energy_expenditures_wt) / energy_delta
+    abatement_cost = indicator_df.loc['Investment / emission (euro/tCO2)', scenarios]
+    abatement_cost_net = - (investment_wt + discounted_energy_expenditures_wt) / emission_delta * 10 ** 3
+
+    table_rows = [
+        ('Energy use', 'TWh', comparison_df.loc['Consumption (TWh)', scenarios], 1.0),
+        ('CO$_2$', 'MtCO$_2$', comparison_df.loc['Emission (MtCO2)', scenarios], 1.0),
+        ('Investment', 'B\\euro/year', summary_df.loc['Delta investment (Billion euro/year)', scenarios], 1.0),
+        ('Energy saving', 'B\\euro/year', summary_df.loc['Delta energy saving (Billion euro/year)', scenarios], 1.0),
+        ('Thermal comfort', 'B\\euro/year', summary_df.loc['Delta thermal comfort (Billion euro/year)', scenarios], 1.0),
+        ('Unobserved value', 'B\\euro/year', summary_df.loc['Delta unobserved value (Billion euro/year)', scenarios], 1.0),
+        ('Opportunity cost', 'B\\euro/year', summary_df.loc['Delta opportunity cost (Billion euro/year)', scenarios], 1.0),
+        ('Emission saving', 'B\\euro/year', summary_df.loc['Delta emission saving (Billion euro/year)', scenarios], 1.0),
+        ('Health cost', 'B\\euro/year', summary_df.loc['Delta health cost (Billion euro/year)', scenarios], 1.0),
+        ('NET BALANCE', 'B\\euro/year', summary_df.loc['Delta NPV annual (Billion euro/year)', scenarios], 1.0),
+        ('MVP', '\\%', summary_df.loc['MVP (%)', scenarios], 100.0),
+        ('Negawatthour cost', '\\euro/kWh', indicator_df.loc['Investment / energy savings (euro/kWh)', scenarios], 1.0),
+        ('Negawatthour cost (net EE)', '\\euro/kWh', negawatt_cost_net, 1.0),
+        ('Abatement cost', '\\euro/tCO$_2$', abatement_cost, 1.0),
+        ('Abatement cost (net EE)', '\\euro/tCO$_2$', abatement_cost_net, 1.0),
+    ]
+
+    header = ''.join([f' & \\textbf{{{label_map.get(s, s)}}}' for s in scenarios])
+    lines = []
+
+    balance_rows_present = any(
+        str(idx).startswith('Balance Owner-occupied') or str(idx).startswith('Balance Tenant private')
+        for idx in result[reference].index
+    )
+    if not balance_rows_present:
+        lines.append('% Household balance as % of income was implemented in post-processing logic,')
+        lines.append('% but this run output does not contain the required Balance Owner-occupied / Balance Tenant private rows.')
+
+    lines.extend([
+        '\\begin{table}[!ht]',
+        '    \\centering',
+        '    \\scriptsize',
+        '    \\begin{tabular}{p{0.2\\linewidth}p{0.1\\linewidth}' + 'p{0.1\\linewidth}' * len(scenarios) + '} \\hline',
+        f'        & Unit{header}\\\\ \\hline',
+    ])
+
+    separator_after = {'CO$_2$', 'Health cost', 'NET BALANCE', 'MVP', 'Negawatthour cost (net EE)', 'Abatement cost (net EE)'}
+    for label, unit, values, scale in table_rows:
+        formatted = ' & '.join(_fmt(values.loc[s], scale=scale) for s in scenarios)
+        lines.append(f'        {label} & {unit} & {formatted} \\\\')
+        if label in separator_after:
+            lines[-1] += ' \\hline'
+
+    caption = (
+        'Cost-benefit and cost-effectiveness assessment of standalone policies relative to the no-policy counterfactual. '
+        'Energy use and CO$_2$ report discounted cumulated differences. '
+        'Investment, energy saving, thermal comfort, unobserved value, opportunity cost, emission saving, health cost, '
+        'and net balance report annualized discounted differences from the social-welfare decomposition. '
+        'The energy-saving monetary term is computed with energy prices excluding taxes. '
+        'Negawatthour cost is computed as $-\\Delta I^{WT} / \\Delta E$. '
+        'Negawatthour cost (net EE) is computed as $-(\\Delta I^{WT} + \\Delta B^{WT}) / \\Delta E$, '
+        'where $\\Delta I^{WT}$ is the discounted investment difference excluding VAT and '
+        '$\\Delta B^{WT}$ is the discounted no-tax energy-expenditure difference computed with the same double-difference method as the welfare decomposition. '
+        'Abatement costs use the same numerators divided by discounted cumulated emission changes.'
+    )
+    lines.extend([
+        '    \\end{tabular}',
+        f'    \\caption{{{caption}}}',
+        '    \\label{table:cost_benefit_policy_assessment}',
+        '\\end{table}',
+    ])
+
+    save_path = os.path.join(folder_policies, save_name)
+    with open(save_path, 'w') as file:
+        file.write('\n'.join(lines) + '\n')
+
+    return save_path
 
 
 def compare_results(output, path):

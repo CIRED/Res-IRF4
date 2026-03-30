@@ -706,7 +706,8 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     return ax
 
 
-def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, order='reverse'):
+def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, order='reverse',
+                  handles=None, fontsize=None):
     try:
         leg = None
         if loc == 'upper':
@@ -716,27 +717,34 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, ord
 
             # Put a legend below current axis
             if labels is not None:
-                leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                                frameon=False, shadow=True, ncol=ncol)
+                if handles is not None:
+                    leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                                    frameon=False, shadow=True, ncol=ncol, fontsize=fontsize)
+                else:
+                    leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                                    frameon=False, shadow=True, ncol=ncol, fontsize=fontsize)
             else:
                 leg = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                                frameon=False, shadow=False, ncol=ncol)
+                                frameon=False, shadow=False, ncol=ncol, fontsize=fontsize)
         elif loc == 'left':
             # Shrink current axis by 20%
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
 
             # Put a legend to the right of the current axis
-            if labels is not None:
+            if handles is not None and labels is not None:
+                leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(left, 0.7),
+                                frameon=False, shadow=True, fontsize=fontsize)
+            elif labels is not None:
                 leg = ax.legend(labels, loc='center left', bbox_to_anchor=(1, 0.5),
-                                frameon=False, shadow=False)
+                                frameon=False, shadow=False, fontsize=fontsize)
             else:
                 handles, labels = ax.get_legend_handles_labels()
                 if order == 'reverse':
                     handles = handles[::-1]
                     labels = labels[::-1]
                 leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(left, 0.7),
-                                frameon=False, shadow=True)
+                                frameon=False, shadow=True, fontsize=fontsize)
         texts = leg.get_texts()
         for text in texts:
             text.set_color(COLOR)
@@ -1443,7 +1451,8 @@ def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y,
                                     ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
                                     scatterplot=None, fontxtick=16, scatterplot_bis=None,
                                     legend_label='Social benefits',
-                                    annotate='{:.0f}'):
+                                    annotate='{:.0f}', legend_exclude=None,
+                                    annotation_fontsize=None, legend_fontsize=None):
     """Make stackedbar plot.
 
     Parameters
@@ -1484,6 +1493,18 @@ def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y,
         lineplot.plot(ax=ax, kind='line', color='black', marker='*')
 
     custom_handles, i = [], 0
+    def _filter_legend_items(handles, labels):
+        if legend_exclude is None:
+            return list(handles), list(labels)
+        excluded = set(legend_exclude)
+        filtered = [(handle, label) for handle, label in zip(handles, labels) if label not in excluded]
+        if not filtered:
+            return [], []
+        filtered_handles, filtered_labels = zip(*filtered)
+        return list(filtered_handles), list(filtered_labels)
+
+    label_fontsize = annotation_fontsize if annotation_fontsize is not None else max(fontxtick - 1, 9)
+
     if scatterplot is not None:
         scatterplot.index = scatterplot.index.astype(str)
         scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
@@ -1493,8 +1514,16 @@ def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y,
         i += 1
 
         x_range = abs(ax.get_xlim()[1] - ax.get_xlim()[0])
+        offset = max(x_range / 55, 0.05)
         for _, x in scatterplot.iterrows():
-            ax.annotate(annotate.format(x['Value']), (x['Value'] + x_range / 40, x['Attribute']), va="center")
+            if x['Value'] >= 0:
+                position = x['Value'] + offset
+                ha = 'left'
+            else:
+                position = x['Value'] - offset
+                ha = 'right'
+            ax.annotate(annotate.format(x['Value']), (position, x['Attribute']), ha=ha, va="center",
+                        fontsize=label_fontsize)
 
     if scatterplot_bis is not None:
         for k, item in scatterplot_bis.items():
@@ -1515,14 +1544,16 @@ def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y,
     ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
     ax.set(xlabel=None, ylabel=None)
 
-    format_legend(ax, loc=loc, left=left)
+    legend_handles, legend_labels = _filter_legend_items(*ax.get_legend_handles_labels())
+    format_legend(ax, loc=loc, left=left, handles=legend_handles, labels=legend_labels,
+                  fontsize=legend_fontsize)
 
     if scatterplot_bis is not None:
 
         # Add the additional legend
         # Adjust the bbox_to_anchor values as needed to place the second legend
         # Retrieve the existing handles and labels
-        existing_handles, existing_labels = ax.get_legend_handles_labels()
+        existing_handles, existing_labels = _filter_legend_items(*ax.get_legend_handles_labels())
 
         # Combine existing handles/labels with the new ones
         all_handles = custom_handles + existing_handles
@@ -1531,7 +1562,7 @@ def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y,
         # Create a unified legend with all handles and labels
         # Adjust the bbox_to_anchor values as needed to place the legend
         leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
-                        frameon=False)
+                        frameon=False, fontsize=legend_fontsize)
 
         texts = leg.get_texts()
         for text in texts:
@@ -1722,6 +1753,124 @@ def horizontal_waterfall_chart(values, save_path=None, ylabel=None, total_label=
     ax.grid(axis="x", linestyle=":", alpha=0.4, zorder=0)
 
     fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
+    return fig
+
+
+def vertical_waterfall_chart(values, save_path=None, ylabel=None, total_label="Total",
+                             figsize=(8.5, 6.5), dpi=300, tick_fontsize=11, label_fontsize=10,
+                             title=None):
+    """Publication-ready vertical waterfall chart with value and share labels."""
+    values = values.sort_values()
+    cumulative = values.cumsum().shift(1).fillna(0)
+    total = values.sum()
+
+    if np.isclose(total, 0):
+        shares = pd.Series(0.0, index=values.index)
+    else:
+        shares = values / total
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    bar_colors = ["#2166ac" if value < 0 else "#b2182b" for value in values]
+    ax.bar(
+        range(len(values)),
+        values,
+        bottom=cumulative,
+        color=bar_colors,
+        edgecolor="white",
+        linewidth=0.6,
+        width=0.7,
+        zorder=2,
+    )
+
+    ax.bar(
+        len(values),
+        total,
+        bottom=0,
+        color="#404040",
+        edgecolor="white",
+        linewidth=0.6,
+        width=0.7,
+        zorder=2,
+    )
+
+    for i in range(len(values)):
+        end = cumulative.iloc[i] + values.iloc[i]
+        if i < len(values) - 1:
+            ax.plot(
+                [i + 0.35, i + 0.65],
+                [end, end],
+                color="grey",
+                linewidth=0.5,
+                linestyle="--",
+                zorder=1,
+            )
+
+    min_y = min(cumulative.min(), (cumulative + values).min(), total, 0)
+    max_y = max(cumulative.max(), (cumulative + values).max(), total, 0)
+    y_range = max(max_y - min_y, 1.0)
+    component_offset = y_range * 0.04
+    total_offset = y_range * 0.07
+
+    for i, (value, start, share) in enumerate(zip(values, cumulative, shares)):
+        endpoint = start + value
+        position = endpoint + component_offset if value >= 0 else endpoint - component_offset
+        va = "bottom" if value >= 0 else "top"
+        ax.text(
+            i,
+            position,
+            f"{value:.2f}\n({share * 100:.0f}%)",
+            ha="center",
+            va=va,
+            fontsize=label_fontsize,
+        )
+
+    total_percent = 0 if np.isclose(total, 0) else 100
+    total_position = total + total_offset if total >= 0 else total - total_offset
+    total_va = "bottom" if total >= 0 else "top"
+    ax.text(
+        len(values),
+        total_position,
+        f"{total:.2f}\n({total_percent:.0f}%)",
+        ha="center",
+        va=total_va,
+        fontsize=label_fontsize,
+        fontweight="bold",
+    )
+
+    labels = list(values.index) + [total_label]
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, fontsize=tick_fontsize)
+    tick_labels = ax.get_xticklabels()
+    for tick_label in tick_labels[:-1]:
+        tick_label.set_rotation(20)
+        tick_label.set_ha("right")
+    tick_labels[-1].set_rotation(0)
+    tick_labels[-1].set_ha("center")
+
+    if ylabel is not None:
+        ax.set_ylabel(ylabel, fontsize=tick_fontsize)
+    if title is not None:
+        ax.set_title(title, fontsize=tick_fontsize + 1, fontweight="bold")
+    else:
+        ax.set_title("Shapley waterfall", fontsize=tick_fontsize + 1, fontweight="bold")
+
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(axis="y", labelsize=tick_fontsize)
+    ax.tick_params(axis="x", length=0)
+    ax.grid(axis="y", linestyle=":", alpha=0.4, zorder=0)
+    ax.margins(x=0.06)
+    ax.set_xlim(-0.5, len(values) + 0.75)
+    ax.set_ylim(min_y - 2.5 * total_offset, max_y + 1.5 * component_offset)
+
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.19)
     if save_path is not None:
         fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
     plt.close(fig)
@@ -2365,5 +2514,173 @@ def manual_shapley_analysis(scenarios, list_features, y):
                 shapley_value += weight * (val_Si - val_S)
         shapley_df.loc[i, 'Shapley value'] = shapley_value
 
-    shapley_df['Shapley share'] = shapley_df['Shapley value'] / shapley_df['Shapley value'].sum()
+    total = shapley_df['Shapley value'].sum()
+    if np.isclose(total, 0):
+        shapley_df['Shapley share'] = 0.0
+    else:
+        shapley_df['Shapley share'] = shapley_df['Shapley value'] / total
     return shapley_df
+
+
+def slope_graph(
+    df,
+    save_path=None,
+    xlabel=None,
+    color_dict=None,
+    figsize=(10, 7),
+    dpi=300,
+    annotation_gap=0.012,
+):
+    """Publication-ready slope graph comparing policy welfare across normative perspectives.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Rows are policies, columns are perspectives (ordered left to right).
+        Values are welfare (billion euro/year).
+    save_path : str, optional
+        Path to save the figure (PDF recommended).
+    xlabel : str, optional
+        Label for the y-axis.
+    color_dict : dict, optional
+        Mapping from policy name to color. Falls back to tab10 palette.
+    figsize : tuple, optional
+    dpi : int, optional
+    annotation_gap : float, optional
+        Fraction of y-range used to detect label collisions and offset them.
+    """
+    perspectives = list(df.columns)
+    n_cols = len(perspectives)
+    x_positions = list(range(n_cols))
+
+    # Build a default color cycle if not provided
+    tab10 = plt.get_cmap("tab10")
+    default_colors = {policy: tab10(i % 10) for i, policy in enumerate(df.index)}
+    colors = {**default_colors, **(color_dict or {})}
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    y_all = df.values.flatten()
+    y_range = float(np.nanmax(y_all) - np.nanmin(y_all))
+    label_offset = annotation_gap * y_range
+
+    for policy in df.index:
+        vals = df.loc[policy]
+        c = colors.get(policy, "grey")
+        ax.plot(
+            x_positions,
+            vals.values,
+            color=c,
+            linewidth=2.2,
+            marker="o",
+            markersize=7,
+            zorder=3,
+            solid_capstyle="round",
+        )
+
+    # Zero reference line
+    ax.axhline(0, color="black", linewidth=0.8, linestyle="--", zorder=1, alpha=0.5)
+
+    # Left-side labels (first perspective)
+    left_labels = [(df.loc[p, perspectives[0]], p) for p in df.index]
+    left_labels_adjusted = _adjust_labels(left_labels, label_offset)
+    for (y_orig, policy), y_adj in zip(left_labels, left_labels_adjusted):
+        c = colors.get(policy, "grey")
+        ax.text(
+            -0.08,
+            y_adj,
+            policy,
+            ha="right",
+            va="center",
+            fontsize=11,
+            color=c,
+            fontweight="bold",
+        )
+        if abs(y_adj - y_orig) > label_offset * 0.3:
+            ax.plot([-0.06, 0], [y_adj, y_orig], color=c, linewidth=0.6, alpha=0.5)
+
+    # Right-side value labels (last perspective)
+    right_labels = [(df.loc[p, perspectives[-1]], p) for p in df.index]
+    right_labels_adjusted = _adjust_labels(right_labels, label_offset)
+    for (y_orig, policy), y_adj in zip(right_labels, right_labels_adjusted):
+        c = colors.get(policy, "grey")
+        ax.text(
+            n_cols - 1 + 0.08,
+            y_adj,
+            f"{y_orig:+.2f}",
+            ha="left",
+            va="center",
+            fontsize=11,
+            color=c,
+        )
+        if abs(y_adj - y_orig) > label_offset * 0.3:
+            ax.plot(
+                [n_cols - 1, n_cols - 1 + 0.06],
+                [y_orig, y_adj],
+                color=c,
+                linewidth=0.6,
+                alpha=0.5,
+            )
+
+    # Axes formatting
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(perspectives, fontsize=13, fontweight="bold", color=COLOR)
+    ax.tick_params(axis="x", length=0)
+    ax.set_xlim(-1.2, n_cols - 1 + 0.9)
+
+    if xlabel is not None:
+        ax.set_ylabel(xlabel, fontsize=13, color=COLOR, fontweight="bold")
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_linewidth(1.2)
+    ax.spines["bottom"].set_color(COLOR)
+    ax.tick_params(left=False)
+    ax.yaxis.set_tick_params(labelsize=11)
+    ax.grid(axis="y", linestyle=":", alpha=0.35, zorder=0)
+
+    # Shade "positive welfare" region very lightly
+    y_min, y_max = ax.get_ylim()
+    ax.axhspan(0, y_max, color="green", alpha=0.03, zorder=0)
+    ax.axhspan(y_min, 0, color="red", alpha=0.03, zorder=0)
+
+    fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
+    return fig
+
+
+def _adjust_labels(labels, min_gap):
+    """Nudge overlapping y-labels apart (greedy bottom-up pass).
+
+    Parameters
+    ----------
+    labels : list of (y_value, name)
+    min_gap : float
+        Minimum vertical gap between adjacent label centres.
+
+    Returns
+    -------
+    list of float
+        Adjusted y positions, same order as input.
+    """
+    indexed = sorted(enumerate(labels), key=lambda item: item[1][0])
+    adjusted = [y for y, _ in [lab for _, lab in indexed]]
+
+    # Bottom-up: push labels up if too close
+    for i in range(1, len(adjusted)):
+        if adjusted[i] - adjusted[i - 1] < min_gap:
+            adjusted[i] = adjusted[i - 1] + min_gap
+
+    # Top-down: push labels down if too close (after upward pass)
+    for i in range(len(adjusted) - 2, -1, -1):
+        if adjusted[i + 1] - adjusted[i] < min_gap:
+            adjusted[i] = adjusted[i + 1] - min_gap
+
+    # Map back to original order
+    result = [0.0] * len(labels)
+    for rank, (orig_idx, _) in enumerate(indexed):
+        result[orig_idx] = adjusted[rank]
+    return result
