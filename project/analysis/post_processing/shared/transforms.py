@@ -184,6 +184,52 @@ def build_indicator_summary(
     return final
 
 
+def build_subsidy_time_series_by_segment(
+    output_bundle: dict[str, pd.DataFrame],
+    pattern: str = r"^Subsidies total (.*) \(Million euro\)$",
+    exclude_income_breakdown: bool = True,
+) -> pd.DataFrame:
+    """Build a long-form yearly subsidy table by scenario and housing segment."""
+    records = []
+
+    for scenario, table in output_bundle.items():
+        index = table.index.to_series().astype(str)
+        mask = index.str.match(pattern)
+        filtered = table.loc[mask].copy()
+        if filtered.empty:
+            continue
+
+        filtered.index = index[mask].str.extract(pattern, expand=False)
+        if exclude_income_breakdown:
+            filtered = filtered[~filtered.index.to_series().str.contains(r" - C\d$")]
+
+        year_cols = sorted([col for col in filtered.columns if str(col).isdigit()], key=lambda col: int(col))
+        if not year_cols:
+            continue
+
+        for segment, row in filtered[year_cols].iterrows():
+            parts = [part.strip() for part in str(segment).split(" - ", 1)]
+            housing = parts[0]
+            status = parts[1] if len(parts) > 1 else ""
+
+            for year, value in row.items():
+                records.append(
+                    {
+                        "Scenario": scenario,
+                        "Segment": segment,
+                        "Housing": housing,
+                        "Status": status,
+                        "Year": int(year),
+                        "Value": value,
+                    }
+                )
+
+    return pd.DataFrame.from_records(
+        records,
+        columns=["Scenario", "Segment", "Housing", "Status", "Year", "Value"],
+    )
+
+
 def parse_subsidy_indicator_index(summary: pd.DataFrame) -> pd.DataFrame:
     """Parse the Metric index of a subsidy summary into structured columns.
 

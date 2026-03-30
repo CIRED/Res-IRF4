@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -23,6 +24,7 @@ _DEFAULT_FALLBACK_COLORS = [
 # Default subplot ordering: Single-family first, then Multi-family.
 # Groups whose Housing component appears earlier in this list are shown first.
 DEFAULT_HOUSING_ORDER = ["Single-family", "Multi-family"]
+DEFAULT_STATUS_ORDER = ["Owner-occupied", "Privately rented", "Social-housing"]
 
 # Occupancy statuses to exclude by default (Social-housing has a single income
 # class, making the income-axis breakdown uninformative).
@@ -81,6 +83,28 @@ def _order_groups(groups, housing_order):
             rank = len(housing_order)
         return (rank, label)
     return sorted(groups, key=_sort_key)
+
+
+def _order_segments(segments, housing_order=None, status_order=None):
+    """Sort ``Housing - Status`` labels using preferred housing and status order."""
+    housing_order = housing_order or DEFAULT_HOUSING_ORDER
+    status_order = status_order or DEFAULT_STATUS_ORDER
+
+    def _sort_key(label):
+        parts = str(label).split(" - ", 1)
+        housing = parts[0]
+        status = parts[1] if len(parts) > 1 else ""
+        try:
+            housing_rank = housing_order.index(housing)
+        except ValueError:
+            housing_rank = len(housing_order)
+        try:
+            status_rank = status_order.index(status)
+        except ValueError:
+            status_rank = len(status_order)
+        return (housing_rank, status_rank, str(label))
+
+    return sorted(segments, key=_sort_key)
 
 
 def _housing_status_subplot_grid(
@@ -189,7 +213,15 @@ def _housing_status_subplot_grid(
     plt.show()
 
 
-def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scenario", value_formatter=None, title=None):
+def plot_indicator_bar_grid(
+    summary,
+    same_axis_limits,
+    label_size,
+    xlabel="Scenario",
+    value_formatter=None,
+    title=None,
+    save=None,
+):
     """Plot one bar chart per indicator row.
 
     Parameters
@@ -283,6 +315,9 @@ def plot_indicator_bar_grid(summary, same_axis_limits, label_size, xlabel="Scena
         plt.tight_layout(rect=(0, 0, 1, 0.95))
     else:
         plt.tight_layout()
+
+    if save is not None:
+        plt.savefig(save, bbox_inches="tight")
     plt.show()
 
 
@@ -472,6 +507,100 @@ def plot_ad_valorem_ratio_by_housing_status(
         fontsize=label_size + 2,
     )
     plt.tight_layout(rect=(0, 0, 1, 0.95))
+
+    if save is not None:
+        plt.savefig(save, bbox_inches="tight")
+    plt.show()
+
+
+def plot_subsidies_time_series_by_segment(
+    timeseries: pd.DataFrame,
+    label_size: int = 14,
+    save=None,
+    scenario_title_labels: dict[str, str] | None = None,
+    ylabel: str = "M€",
+    suptitle: str = "Total renovation subsidies over time by housing segment (Million €)",
+    xlabel: str = "",
+    housing_order=None,
+    status_order=None,
+    n_cols: int = 3,
+):
+    """Plot yearly subsidy series in a grid of housing-segment subplots."""
+    required_cols = {"Scenario", "Segment", "Year", "Value"}
+    missing = required_cols.difference(timeseries.columns)
+    if missing:
+        raise KeyError("Missing required time-series columns: {}".format(sorted(missing)))
+    if timeseries.empty:
+        raise ValueError("Time-series dataframe is empty; no plot to draw.")
+
+    scenario_title_labels = scenario_title_labels or {}
+    data = timeseries.copy()
+    data["Year"] = data["Year"].astype(int)
+    scenarios = _order_scenarios(data["Scenario"].dropna().unique().tolist())
+    segments = _order_segments(
+        data["Segment"].dropna().unique().tolist(),
+        housing_order=housing_order,
+        status_order=status_order,
+    )
+
+    colors = _scenario_color_list(scenarios)
+    linestyles = ["-", "--", "-.", ":"]
+    scenario_color = {scenario: colors[i] for i, scenario in enumerate(scenarios)}
+    scenario_ls = {scenario: linestyles[i % len(linestyles)] for i, scenario in enumerate(scenarios)}
+
+    n_rows = math.ceil(len(segments) / n_cols)
+    fig, axes = plt.subplots(
+        n_rows,
+        n_cols,
+        figsize=(15, 3.8 * n_rows),
+        squeeze=False,
+        sharey="row",
+    )
+    flat_axes = _flatten_axes(axes)
+
+    for ax, segment in zip(flat_axes, segments):
+        subset = data[data["Segment"] == segment]
+        for scenario in scenarios:
+            series = subset[subset["Scenario"] == scenario].sort_values("Year")
+            series = series.dropna(subset=["Value"])
+            if series.empty:
+                continue
+            ax.plot(
+                series["Year"],
+                series["Value"],
+                label=scenario_title_labels.get(scenario, scenario),
+                color=scenario_color[scenario],
+                linestyle=scenario_ls[scenario],
+                linewidth=1.8,
+                marker="o",
+                markersize=3,
+            )
+        ax.set_title(segment, fontsize=label_size - 1, pad=6)
+        ax.set_xlabel(xlabel, fontsize=label_size - 2)
+        ax.set_ylabel(ylabel, fontsize=label_size - 2)
+        ax.tick_params(labelsize=label_size - 3)
+        ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+        ax.grid(axis="y", linestyle="--", alpha=0.4)
+        ax.spines[["top", "right"]].set_visible(False)
+
+    for ax in flat_axes[len(segments):]:
+        ax.set_visible(False)
+
+    legend_source = next((ax for ax in flat_axes if ax.lines), None)
+    if legend_source is not None:
+        handles, labels = legend_source.get_legend_handles_labels()
+        fig.legend(
+            handles,
+            labels,
+            loc="lower center",
+            bbox_to_anchor=(0.5, -0.02),
+            ncol=len(labels),
+            frameon=False,
+            fontsize=label_size - 1,
+        )
+
+    fig.suptitle(suptitle, fontsize=label_size + 1, y=1.01)
+    fig.tight_layout()
 
     if save is not None:
         plt.savefig(save, bbox_inches="tight")
