@@ -2311,39 +2311,41 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                 ep_diff_pct.name = 'Delta Energy poverty {} (%)'.format(end)
                 temp = pd.concat((temp, ep_diff.to_frame().T, ep_diff_pct.to_frame().T), axis=0)
 
-        # Total energy burden by quintile at end year: Total expenditure / aggregate income
-        # Total expenditure = energy bill + net renovation cost (investment - subsidies)
-        # Aggregate income = sum of Income across all housing × status segments for each quintile
-        quintiles = resources_data.get('quintiles', ['C1', 'C2', 'C3', 'C4', 'C5'])
+        # Energy burden for C1 by housing segment at end year (excluding social housing)
+        # Burden = (Energy expenditures + Annuities) / Income per segment
+        # Annuities are already net of subsidies (cost - subsidies)
         ref_output = result.get(reference)
-        te_var = 'Total expenditure {} (Billion euro)'
-        for q in quintiles:
-            if ref_output is None or te_var.format(q) not in ref_output.index:
-                break
-            inc_rows = [r for r in ref_output.index
-                        if r.startswith('Income') and r.endswith('{} (euro)'.format(q)) and 'state' not in r]
-            if not inc_rows:
-                break
-            row = {}
-            ref_te = ref_output.loc[te_var.format(q), end]
-            ref_inc = sum(ref_output.loc[r, end] for r in inc_rows)
+        burden_segments = [
+            ('Single-family', 'Owner-occupied'),
+            ('Single-family', 'Privately rented'),
+            ('Multi-family', 'Owner-occupied'),
+            ('Multi-family', 'Privately rented'),
+        ]
+        q = 'C1'
+        for housing, status in burden_segments:
+            ee_var = 'Energy expenditures {} - {} - {} (euro)'.format(housing, status, q)
+            ann_var = 'Annuities {} - {} - {}'.format(housing, status, q)
+            inc_var = 'Income {} - {} - {} (euro)'.format(housing, status, q)
+            if ref_output is None or ee_var not in ref_output.index:
+                continue
+            if ann_var not in ref_output.index or inc_var not in ref_output.index:
+                continue
+            ref_inc = ref_output.loc[inc_var, end]
             if ref_inc == 0:
                 continue
-            ref_burden = ref_te * 1e9 / ref_inc
+            ref_burden = (ref_output.loc[ee_var, end] + ref_output.loc[ann_var, end]) / ref_inc
+            row = {}
             for k, i in result.items():
-                if te_var.format(q) not in i.index:
+                if ee_var not in i.index or ann_var not in i.index or inc_var not in i.index:
                     continue
-                te = i.loc[te_var.format(q), end]
-                inc = sum(i.loc[r, end] for r in inc_rows if r in i.index)
+                inc = i.loc[inc_var, end]
                 if inc == 0:
                     continue
-                row[k] = te * 1e9 / inc
+                row[k] = (i.loc[ee_var, end] + i.loc[ann_var, end]) / inc - ref_burden
             if row:
-                s = pd.Series(row, name='Energy burden {} {} (%)'.format(q, end))
+                label = 'Delta burden {} {} {} {} (pp)'.format(housing, status, q, end)
+                s = pd.Series(row, name=label)
                 temp = pd.concat((temp, s.to_frame().T), axis=0)
-                # Delta vs reference
-                s_delta = pd.Series(row, name='Delta energy burden {} {} (pp)'.format(q, end)) - ref_burden
-                temp = pd.concat((temp, s_delta.to_frame().T), axis=0)
 
         temp.round(3).to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
 
@@ -2436,17 +2438,18 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
                 ('$\\Delta$ Energy poverty (\\%)', '\\%', summary_df.loc[ep_delta_pct_key, scenarios], 100.0),
             )
 
-    # Energy burden by quintile (if available)
-    for q, label in [('C1', 'C1 (lowest)'), ('C5', 'C5 (highest)')]:
-        burden_key = 'Energy burden {} {} (%)'.format(q, end)
-        delta_key = 'Delta energy burden {} {} (pp)'.format(q, end)
-        if burden_key in summary_df.index:
-            table_rows.append(
-                ('Energy burden {}'.format(label), '\\%', summary_df.loc[burden_key, scenarios], 100.0),
-            )
+    # Energy burden delta for C1 by housing segment (if available)
+    burden_segments = [
+        ('Single-family', 'Owner-occupied', 'SF Owner'),
+        ('Single-family', 'Privately rented', 'SF Renter'),
+        ('Multi-family', 'Owner-occupied', 'MF Owner'),
+        ('Multi-family', 'Privately rented', 'MF Renter'),
+    ]
+    for housing, status, short_label in burden_segments:
+        delta_key = 'Delta burden {} {} C1 {} (pp)'.format(housing, status, end)
         if delta_key in summary_df.index:
             table_rows.append(
-                ('$\\Delta$ burden {}'.format(label), 'pp', summary_df.loc[delta_key, scenarios], 100.0),
+                ('$\\Delta$ burden C1 {}'.format(short_label), 'pp', summary_df.loc[delta_key, scenarios], 100.0),
             )
 
     table_rows.extend([
@@ -2469,12 +2472,9 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
 
     separator_after = {'CO$_2$', 'Health cost', 'NET BALANCE', 'Negawatthour cost (net EE)', 'Abatement cost (net EE)'}
     # Separator after the distributional block — find the last row present
-    delta_burden_c5_key = 'Delta energy burden C5 {} (pp)'.format(end)
-    burden_c5_key = 'Energy burden C5 {} (%)'.format(end)
-    if delta_burden_c5_key in summary_df.index:
-        separator_after.add('$\\Delta$ burden C5 (highest)')
-    elif burden_c5_key in summary_df.index:
-        separator_after.add('Energy burden C5 (highest)')
+    last_burden_key = 'Delta burden Multi-family Privately rented C1 {} (pp)'.format(end)
+    if last_burden_key in summary_df.index:
+        separator_after.add('$\\Delta$ burden C1 MF Renter')
     elif ep_delta_pct_key in summary_df.index:
         separator_after.add('$\\Delta$ Energy poverty (\\%)')
     elif ep_delta_key in summary_df.index:
@@ -2495,10 +2495,9 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
         'Balance state is the discounted cumulated public budget impact. '
         'MVP (marginal value of public funds) is the net balance divided by balance state, expressed in \\%. '
         'Energy poverty reports the change in the number of energy-poor households at end year. '
-        'Energy burden is computed per income quintile as total household expenditure divided by aggregate household income, '
-        'where total expenditure is the sum of energy expenditures and net renovation costs '
-        '(investment in heating systems and insulation minus subsidies received). '
-        '$\\Delta$ burden reports the difference in percentage points relative to the reference scenario. '
+        '$\\Delta$ burden C1 reports the change in energy burden for the lowest income quintile '
+        'by housing segment (excluding social housing), in percentage points relative to the reference scenario. '
+        'Energy burden is computed as (energy expenditures + annuities net of subsidies) divided by household income. '
         'The energy-saving monetary term is computed with energy prices excluding taxes. '
         'Negawatthour cost is computed as $-\\Delta I^{WT} / \\Delta E$. '
         'Negawatthour cost (net EE) is computed as $-(\\Delta I^{WT} + \\Delta B^{WT}) / \\Delta E$, '
