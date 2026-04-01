@@ -2311,35 +2311,39 @@ def indicator_policies(result, folder, cba_inputs, social_discount_rate=0.032, d
                 ep_diff_pct.name = 'Delta Energy poverty {} (%)'.format(end)
                 temp = pd.concat((temp, ep_diff.to_frame().T, ep_diff_pct.to_frame().T), axis=0)
 
-        # Distributional balance as % of income by quintile at end year
-        # Balance = bill saving - annuities (Owner-occupied) or bill saving - rent increase (Tenant private)
-        # Normalised by average household income of the same segment and quintile
+        # Total energy burden by quintile at end year: Total expenditure / aggregate income
+        # Total expenditure = energy bill + net renovation cost (investment - subsidies)
+        # Aggregate income = sum of Income across all housing × status segments for each quintile
         quintiles = resources_data.get('quintiles', ['C1', 'C2', 'C3', 'C4', 'C5'])
-        for tenure, balance_tpl, income_tpl in [
-            ('Owner-occupied',
-             'Balance Owner-occupied - {} (euro/year.household)',
-             'Income Single-family - Owner-occupied - {} (euro)'),
-            ('Tenant private',
-             'Balance Tenant private - {} (euro/year.household)',
-             'Income Single-family - Privately rented - {} (euro)'),
-        ]:
-            for q in quintiles:
-                bal_var = balance_tpl.format(q)
-                inc_var = income_tpl.format(q)
-                bal_ref = result[reference].loc[bal_var, end] if reference in result and bal_var in result[reference].index else None
-                inc_ref = result[reference].loc[inc_var, end] if reference in result and inc_var in result[reference].index else None
-                if bal_ref is None or inc_ref is None or inc_ref == 0:
+        ref_output = result.get(reference)
+        te_var = 'Total expenditure {} (Billion euro)'
+        for q in quintiles:
+            if ref_output is None or te_var.format(q) not in ref_output.index:
+                break
+            inc_rows = [r for r in ref_output.index
+                        if r.startswith('Income') and r.endswith('{} (euro)'.format(q)) and 'state' not in r]
+            if not inc_rows:
+                break
+            row = {}
+            ref_te = ref_output.loc[te_var.format(q), end]
+            ref_inc = sum(ref_output.loc[r, end] for r in inc_rows)
+            if ref_inc == 0:
+                continue
+            ref_burden = ref_te * 1e9 / ref_inc
+            for k, i in result.items():
+                if te_var.format(q) not in i.index:
                     continue
-                row = {}
-                for k, i in result.items():
-                    if bal_var in i.index and inc_var in i.index:
-                        bal = i.loc[bal_var, end]
-                        inc = i.loc[inc_var, end]
-                        # delta balance vs reference, expressed as % of reference income
-                        row[k] = (bal - bal_ref) / inc_ref if inc_ref != 0 else float('nan')
-                if row:
-                    s = pd.Series(row, name='Delta balance {} {} pct income {}'.format(tenure, q, end))
-                    temp = pd.concat((temp, s.to_frame().T), axis=0)
+                te = i.loc[te_var.format(q), end]
+                inc = sum(i.loc[r, end] for r in inc_rows if r in i.index)
+                if inc == 0:
+                    continue
+                row[k] = te * 1e9 / inc
+            if row:
+                s = pd.Series(row, name='Energy burden {} {} (%)'.format(q, end))
+                temp = pd.concat((temp, s.to_frame().T), axis=0)
+                # Delta vs reference
+                s_delta = pd.Series(row, name='Delta energy burden {} {} (pp)'.format(q, end)) - ref_burden
+                temp = pd.concat((temp, s_delta.to_frame().T), axis=0)
 
         temp.round(3).to_csv(os.path.join(folder_policies, 'summary_assessment.csv'))
 
@@ -2432,6 +2436,19 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
                 ('$\\Delta$ Energy poverty (\\%)', '\\%', summary_df.loc[ep_delta_pct_key, scenarios], 100.0),
             )
 
+    # Energy burden by quintile (if available)
+    for q, label in [('C1', 'C1 (lowest)'), ('C5', 'C5 (highest)')]:
+        burden_key = 'Energy burden {} {} (%)'.format(q, end)
+        delta_key = 'Delta energy burden {} {} (pp)'.format(q, end)
+        if burden_key in summary_df.index:
+            table_rows.append(
+                ('Energy burden {}'.format(label), '\\%', summary_df.loc[burden_key, scenarios], 100.0),
+            )
+        if delta_key in summary_df.index:
+            table_rows.append(
+                ('$\\Delta$ burden {}'.format(label), 'pp', summary_df.loc[delta_key, scenarios], 100.0),
+            )
+
     table_rows.extend([
         ('Negawatthour cost', '\\euro/kWh', indicator_df.loc['Investment / energy savings (euro/kWh)', scenarios], 1.0),
         ('Negawatthour cost (net EE)', '\\euro/kWh', negawatt_cost_net, 1.0),
@@ -2442,14 +2459,6 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
     header = ''.join([f' & \\textbf{{{label_map.get(s, s)}}}' for s in scenarios])
     lines = []
 
-    balance_rows_present = any(
-        str(idx).startswith('Balance Owner-occupied') or str(idx).startswith('Balance Tenant private')
-        for idx in result[reference].index
-    )
-    if not balance_rows_present:
-        lines.append('% Household balance as % of income was implemented in post-processing logic,')
-        lines.append('% but this run output does not contain the required Balance Owner-occupied / Balance Tenant private rows.')
-
     lines.extend([
         '\\begin{table}[!ht]',
         '    \\centering',
@@ -2459,8 +2468,14 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
     ])
 
     separator_after = {'CO$_2$', 'Health cost', 'NET BALANCE', 'Negawatthour cost (net EE)', 'Abatement cost (net EE)'}
-    # Separator after the MVP/energy poverty block — whichever comes last
-    if ep_delta_pct_key in summary_df.index:
+    # Separator after the distributional block — find the last row present
+    delta_burden_c5_key = 'Delta energy burden C5 {} (pp)'.format(end)
+    burden_c5_key = 'Energy burden C5 {} (%)'.format(end)
+    if delta_burden_c5_key in summary_df.index:
+        separator_after.add('$\\Delta$ burden C5 (highest)')
+    elif burden_c5_key in summary_df.index:
+        separator_after.add('Energy burden C5 (highest)')
+    elif ep_delta_pct_key in summary_df.index:
         separator_after.add('$\\Delta$ Energy poverty (\\%)')
     elif ep_delta_key in summary_df.index:
         separator_after.add('$\\Delta$ Energy poverty')
@@ -2480,6 +2495,7 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
         'Balance state is the discounted cumulated public budget impact. '
         'MVP (marginal value of public funds) is the net balance divided by balance state, expressed in \\%. '
         'Energy poverty reports the change in the number of energy-poor households at end year. '
+        'Energy burden is the ratio of total household expenditure (energy bill + net renovation cost) to aggregate income per quintile. '
         'The energy-saving monetary term is computed with energy prices excluding taxes. '
         'Negawatthour cost is computed as $-\\Delta I^{WT} / \\Delta E$. '
         'Negawatthour cost (net EE) is computed as $-(\\Delta I^{WT} + \\Delta B^{WT}) / \\Delta E$, '
