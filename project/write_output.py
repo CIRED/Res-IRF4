@@ -2403,6 +2403,11 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
     abatement_cost = indicator_df.loc['Investment / emission (euro/tCO2)', scenarios]
     abatement_cost_net = - (investment_wt + discounted_energy_expenditures_wt) / emission_delta * 10 ** 3
 
+    # Energy poverty delta row (may not be present in older runs)
+    end = result[reference].columns[-1]
+    ep_delta_key = 'Delta Energy poverty (Million) {}'.format(end)
+    ep_delta_pct_key = 'Delta Energy poverty {} (%)'.format(end)
+
     table_rows = [
         ('Energy use', 'TWh', comparison_df.loc['Consumption (TWh)', scenarios], 1.0),
         ('CO$_2$', 'MtCO$_2$', comparison_df.loc['Emission (MtCO2)', scenarios], 1.0),
@@ -2410,16 +2415,29 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
         ('Energy saving', 'B\\euro/year', summary_df.loc['Delta energy saving (Billion euro/year)', scenarios], 1.0),
         ('Thermal comfort', 'B\\euro/year', summary_df.loc['Delta thermal comfort (Billion euro/year)', scenarios], 1.0),
         ('Unobserved value', 'B\\euro/year', summary_df.loc['Delta unobserved value (Billion euro/year)', scenarios], 1.0),
-        ('Opportunity cost', 'B\\euro/year', summary_df.loc['Delta opportunity cost (Billion euro/year)', scenarios], 1.0),
         ('Emission saving', 'B\\euro/year', summary_df.loc['Delta emission saving (Billion euro/year)', scenarios], 1.0),
         ('Health cost', 'B\\euro/year', summary_df.loc['Delta health cost (Billion euro/year)', scenarios], 1.0),
         ('NET BALANCE', 'B\\euro/year', summary_df.loc['Delta NPV annual (Billion euro/year)', scenarios], 1.0),
+        ('Balance state', 'B\\euro', summary_df.loc['Balance state (Billion euro)', scenarios], 1.0),
         ('MVP', '\\%', summary_df.loc['MVP (%)', scenarios], 100.0),
+    ]
+
+    # Energy poverty (if available)
+    if ep_delta_key in summary_df.index:
+        table_rows.append(
+            ('$\\Delta$ Energy poverty', 'M', summary_df.loc[ep_delta_key, scenarios], 1.0),
+        )
+        if ep_delta_pct_key in summary_df.index:
+            table_rows.append(
+                ('$\\Delta$ Energy poverty (\\%)', '\\%', summary_df.loc[ep_delta_pct_key, scenarios], 100.0),
+            )
+
+    table_rows.extend([
         ('Negawatthour cost', '\\euro/kWh', indicator_df.loc['Investment / energy savings (euro/kWh)', scenarios], 1.0),
         ('Negawatthour cost (net EE)', '\\euro/kWh', negawatt_cost_net, 1.0),
         ('Abatement cost', '\\euro/tCO$_2$', abatement_cost, 1.0),
         ('Abatement cost (net EE)', '\\euro/tCO$_2$', abatement_cost_net, 1.0),
-    ]
+    ])
 
     header = ''.join([f' & \\textbf{{{label_map.get(s, s)}}}' for s in scenarios])
     lines = []
@@ -2440,7 +2458,14 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
         f'        & Unit{header}\\\\ \\hline',
     ])
 
-    separator_after = {'CO$_2$', 'Health cost', 'NET BALANCE', 'MVP', 'Negawatthour cost (net EE)', 'Abatement cost (net EE)'}
+    separator_after = {'CO$_2$', 'Health cost', 'NET BALANCE', 'Negawatthour cost (net EE)', 'Abatement cost (net EE)'}
+    # Separator after the MVP/energy poverty block — whichever comes last
+    if ep_delta_pct_key in summary_df.index:
+        separator_after.add('$\\Delta$ Energy poverty (\\%)')
+    elif ep_delta_key in summary_df.index:
+        separator_after.add('$\\Delta$ Energy poverty')
+    else:
+        separator_after.add('MVP')
     for label, unit, values, scale in table_rows:
         formatted = ' & '.join(_fmt(values.loc[s], scale=scale) for s in scenarios)
         lines.append(f'        {label} & {unit} & {formatted} \\\\')
@@ -2450,8 +2475,11 @@ def export_policy_latex_table(result, folder, cba_inputs, reference='No policy',
     caption = (
         'Cost-benefit and cost-effectiveness assessment of standalone policies relative to the no-policy counterfactual. '
         'Energy use and CO$_2$ report discounted cumulated differences. '
-        'Investment, energy saving, thermal comfort, unobserved value, opportunity cost, emission saving, health cost, '
+        'Investment, energy saving, thermal comfort, unobserved value, emission saving, health cost, '
         'and net balance report annualized discounted differences from the social-welfare decomposition. '
+        'Balance state is the discounted cumulated public budget impact. '
+        'MVP (marginal value of public funds) is the net balance divided by balance state, expressed in \\%. '
+        'Energy poverty reports the change in the number of energy-poor households at end year. '
         'The energy-saving monetary term is computed with energy prices excluding taxes. '
         'Negawatthour cost is computed as $-\\Delta I^{WT} / \\Delta E$. '
         'Negawatthour cost (net EE) is computed as $-(\\Delta I^{WT} + \\Delta B^{WT}) / \\Delta E$, '
