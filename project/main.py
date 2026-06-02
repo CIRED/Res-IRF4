@@ -467,7 +467,7 @@ def run(path=None, folder=None):
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
         logger.exception(e)
-        raise e
+        0
 
 
 if __name__ == '__main__':
