@@ -4602,18 +4602,18 @@ class AgentBuildings(ThermalBuildings):
                 self._renovation_store.update({'consumer_surplus': consumer_surplus})
 
                 if exogenous_social is not None:
-                    index = renovation_rate[
+                    index_social = renovation_rate[
                         renovation_rate.index.get_level_values('Occupancy status') == 'Social-housing'].index
-                    s = self.add_certificate(stock[index])
+                    s = self.add_certificate(stock[index_social])
                     renovation_rate_social = reindex_mi(exogenous_social.loc[:, self.year], s.index).droplevel(
                         'Performance')
-                    renovation_rate.drop(index, inplace=True)
+                    renovation_rate.drop(index_social, inplace=True)
                     renovation_rate = concat((renovation_rate, renovation_rate_social), axis=0)
 
             else:
                 renovation_rate, market_share = self.exogenous_renovation(stock, condition)
 
-            if self.year == self.first_year + 2 and self.no_friction is False:
+            if self.year == self.first_year + 2 and self.no_friction is False and carbon_value is not None:
                 distortion_grouped = self.calculate_distortion_insulation(index, stock, cost_insulation,
                                                                           consumption_saved, health_cost_saved,
                                                                           bill_saved, carbon_value, cap=True)
