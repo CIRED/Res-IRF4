@@ -112,7 +112,8 @@ DAYS_HEATING_SEASON_3CL = 209
 SOLAR_RADIATION_3CL = 306.4 # kWh/m2.an
 
 DHW_NEED = pd.Series([15.3, 19.8], index=pd.Index(['Single-family',	'Multi-family'], name='Housing type')) # kWh/m2.a
-DHW_EFFICIENCY = {'Electricity-Performance boiler': 0.95,
+DHW_EFFICIENCY = {'Electricity-Direct electric': 0.95,
+                 'Electricity-Wood stove': 0.95,
                   'Electricity-Heat pump air': 0.95,
                   'Electricity-Heat pump': 2.5,
                   'Electricity-Heat pump water': 2.5,
@@ -128,7 +129,8 @@ DHW_EFFICIENCY = {'Electricity-Performance boiler': 0.95,
                   }
 
 # kWh/m2.a from EDF
-AUXILIARY_CONSUMPTION = {'Electricity-Performance boiler': 1.4,
+AUXILIARY_CONSUMPTION = {'Electricity-Direct electric': 1.4,
+                         'Electricity-Wood stove': 1.4,
                          'Electricity-Heat pump air': 2.17,
                          'Electricity-Heat pump': 2.17,
                          'Electricity-Heat pump water': 2.17,
@@ -150,7 +152,8 @@ CARBON_CONTENT = {'Electricity': 0.079,
                   'Wood fuel': 0.03,
                   'Heating': 0.227
                   }
-CARBON_CONTENT = {'Electricity-Performance boiler': 0.079,
+CARBON_CONTENT = {'Electricity-Direct electric': 0.079,
+                    'Electricity-Wood stove': 0.079,
                   'Electricity-Heat pump air': 0.079,
                   'Electricity-Heat pump': 0.079,
                   'Electricity-Heat pump water': 0.079,

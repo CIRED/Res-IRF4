@@ -1,0 +1,11 @@
+{
+    "subsidy_health_cost": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_proportional",
+      "gest": [
+        "insulation"
+      ],
+      "proportional": "health_cost"
+    }
+}

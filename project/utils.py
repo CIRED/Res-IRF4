@@ -35,6 +35,11 @@ from pathlib import Path, PosixPath, WindowsPath
 import sys
 import json
 import re
+from matplotlib.lines import Line2D
+import itertools
+import math
+
+
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
                      'D5': 'C3', 'D6': 'C3',
@@ -408,6 +413,27 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * factor
 
 
+def factor_annuities(lifetime=50, discount_rate=0.032):
+    if isinstance(discount_rate, (float, int, np.float64, np.int64)):
+        if discount_rate == 0:
+            return 1 / lifetime
+    factor = discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
+    if isinstance(factor, (pd.Series, pd.DataFrame)):
+        factor.fillna(1 / lifetime, inplace=True)
+    return factor
+
+
+def calculate_loan_annuity(capex, lifetime=50, discount_rate=0.032):
+    if isinstance(discount_rate, (float, int, np.float64, np.int64)):
+        if discount_rate == 0:
+            return capex / lifetime
+    factor = (discount_rate * (1 + discount_rate) ** lifetime) / ((1 + discount_rate) ** lifetime - 1)
+
+    if isinstance(factor, (pd.Series, pd.DataFrame)):
+        factor.fillna(1 / lifetime, inplace=True)
+    return capex * factor
+
+
 def calculate_average(df, lifetime=50, discount_rate=0.032):
     idx = range(df.index[0], df.index[0] + lifetime)
     discount_series = pd.Series([(1 + discount_rate) ** -i for i in range(lifetime)], index=idx)
@@ -426,6 +452,7 @@ def add_no_renovation(df):
     temp = pd.concat((no_renovation, temp), axis=1)
     temp.columns.names = df.columns.names
     return temp
+
 
 def conditional_expectation(x):
     """
@@ -460,7 +487,12 @@ def make_policies_tables(policies, path, plot=True):
                    'restriction_energy': 'Restriction energy',
                    'subsidies_cap': 'Subsidy, cap',
                    'regulation': 'Regulation instrument',
-                   'zero_interest_loan': 'Regulated loan'
+                   'credit_constraint': 'Regulation instrument',
+                   'zero_interest_loan': 'Regulated loan',
+                   'subsidy_present_bias': 'Behavioral instrument',
+                   'subsidy_multi_family': 'Regulation instrument',
+                   'subsidy_landlord': 'Regulation instrument',
+                   'subsidy_hp_statusquo': 'Subsidy, bonus'
                    }
 
     heater_replace = {'Electricity-Heat pump air': 'HP-air',
@@ -612,7 +644,8 @@ def make_sensitivity_tables(table_result, path):
 
 
 def format_ax(ax, y_label=None, title=None, format_x=None,
-              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None):
+              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None,
+              horizontal=False):
     """
 
     Parameters
@@ -631,13 +664,14 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(True)
     ax.spines['left'].set_visible(True)
-
     ax.set_facecolor('none')
     ax.grid(False)
 
     ax.xaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_tick_params(which=u'both', length=0)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+    if horizontal is False:
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
+
     if format_x is not None:
         ax.xaxis.set_major_formatter(plt.FuncFormatter(format_x))
 
@@ -658,7 +692,7 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
         ax.set_xlim(xmax=xmax, xmin=xmin)
 
     if ymin is not None:
-        ax.set_ylim(ymin=0)
+        ax.set_ylim(ymin=ymin)
         _, y_max = ax.get_ylim()
         ax.set_ylim(ymax=y_max * 1.1)
 
@@ -672,7 +706,8 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     return ax
 
 
-def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, order='reverse'):
+def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, order='reverse',
+                  handles=None, fontsize=None):
     try:
         leg = None
         if loc == 'upper':
@@ -682,27 +717,34 @@ def format_legend(ax, ncol=3, offset=1, labels=None, loc='upper', left=1.04, ord
 
             # Put a legend below current axis
             if labels is not None:
-                leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                                frameon=False, shadow=True, ncol=ncol)
+                if handles is not None:
+                    leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                                    frameon=False, shadow=True, ncol=ncol, fontsize=fontsize)
+                else:
+                    leg = ax.legend(labels, loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
+                                    frameon=False, shadow=True, ncol=ncol, fontsize=fontsize)
             else:
                 leg = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07 * offset),
-                                frameon=False, shadow=False, ncol=ncol)
+                                frameon=False, shadow=False, ncol=ncol, fontsize=fontsize)
         elif loc == 'left':
             # Shrink current axis by 20%
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width * 0.85, box.height])
 
             # Put a legend to the right of the current axis
-            if labels is not None:
+            if handles is not None and labels is not None:
+                leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(left, 0.7),
+                                frameon=False, shadow=True, fontsize=fontsize)
+            elif labels is not None:
                 leg = ax.legend(labels, loc='center left', bbox_to_anchor=(1, 0.5),
-                                frameon=False, shadow=False)
+                                frameon=False, shadow=False, fontsize=fontsize)
             else:
                 handles, labels = ax.get_legend_handles_labels()
                 if order == 'reverse':
                     handles = handles[::-1]
                     labels = labels[::-1]
                 leg = ax.legend(handles, labels, loc='upper center', bbox_to_anchor=(left, 0.7),
-                                frameon=False, shadow=True)
+                                frameon=False, shadow=True, fontsize=fontsize)
         texts = leg.get_texts()
         for text in texts:
             text.set_color(COLOR)
@@ -764,7 +806,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
                integer=False, loc='upper', left=1.04, ymax=None, ymin=0, format_x=None, hlines=None,
                scatter_dict=None, labels=None, order_legend='reverse', x_tick_interval=None, ncol=3, xmin=None,
-               xmax=None):
+               xmax=None, export_csv=False):
     """Make plot.
 
     Parameters
@@ -792,6 +834,10 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
         else:
             df.plot(ax=ax, color=colors, style=STYLES)
 
+        if export_csv is True:
+            save_csv = save.replace('.png', f'_{key}.csv')
+            df.to_csv(save_csv)
+
         if scatter_dict is not None:
             if key in scatter_dict.keys():
                 item = scatter_dict[key]
@@ -804,7 +850,7 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x,
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x,
                    xmin=xmin, xmax=xmax)
 
     if x_tick_interval is not None:
@@ -870,7 +916,8 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
 
 
 def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
-                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
+                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True,
+                      xmax=None, ymax=None, diagonal_line=False, s=30):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     colors = None
@@ -888,7 +935,7 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
             scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
 
     else:
-        ax.scatter(x=df[x], y=df[y], s=30, c=colors)
+        ax.scatter(x=df[x], y=df[y], s=s, c=colors)
 
     if annotate:
         for k, v in df.iterrows():
@@ -899,7 +946,14 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
     if hlines is not None:
         ax.axhline(y=hlines, linewidth=1, color='grey')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin)
+    if diagonal_line:
+        xlims = ax.get_xlim()
+        ax.plot([xlims[0], xlims[1]],
+                [xlims[0], xlims[1]],
+                linestyle='-', color='black', linewidth=1)
+
+    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin,
+                   ymax=ymax, xmax=xmax)
     ax.set(xlabel=x_label, ylabel=None)
 
     if col_size is not None:
@@ -928,7 +982,7 @@ def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=
 
 
 def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
-                 title=None):
+                 title=None, format_y=lambda y, _: y):
 
     g = sns.relplot(
         data=df, x=x, y=y,
@@ -938,7 +992,7 @@ def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
     )
     for k, ax in g.axes_dict.items():
         ax.set(xlabel=None, ylabel=None)
-        format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
+        format_ax(ax, format_y=format_y, ymin=None, ymax=None, xinteger=False)
         ax.set_title(k, fontsize=15)
 
     if title is not None:
@@ -1199,8 +1253,9 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
 
 def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18, color=None,
                              save=None, subplot_groups=['Housing type', 'Occupancy status'],
-                             index_group='Income tenant', stack_group='Type', ncol=None,
-                             annotate='{:.0f}€', bottom=0.1):
+                             index_group='Income tenant', stack_group='Type',
+                             annotate='{:.0f}€', annotate_bis=None, replace_legend=None,
+                             figtitle=None):
     """Make stacked bar plot.
 
     Parameters
@@ -1215,8 +1270,8 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
     # Pivot the DataFrame to get the necessary structure for a stacked bar plot
     df.name = 'Value'
     pivot_df = df.reset_index().pivot_table(index=subplot_groups + [index_group],
-                                                 columns=stack_group,
-                                                 values='Value').reset_index()
+                                            columns=stack_group,
+                                            values='Value').reset_index()
 
     fig, axes = plt.subplots(2, 2, figsize=(12.8, 9.6), sharey=True)
     axes = axes.flatten()
@@ -1227,15 +1282,20 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         group.drop(subplot_groups, axis=1, inplace=True)
         group.plot(kind='bar', stacked=True, ax=axes[i], title=f'{housing_type} | {occupancy_status}', rot=0,
                    color=color)
-        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick)
+        # remove bold from ax title
+
+        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick, fontweight='normal')
         axes[i].set_xlabel('')
         axes[i].set_ylabel('')
         axes[i].spines['top'].set_visible(False)
         axes[i].spines['right'].set_visible(False)
         axes[i].spines['left'].set_visible(False)
+        axes[i].spines['bottom'].set_visible(False)
         axes[i].set_xticklabels(group.index, rotation=0)
         axes[i].tick_params(axis='x', labelsize=fonttick, length=0)
         axes[i].tick_params(axis='y', labelsize=fonttick, length=0)
+
+        axes[i].axhline(y=0, color='black', linewidth=1.3)
 
         # use the function format_y to format the y-ticks
         axes[i].yaxis.set_major_formatter(plt.FuncFormatter(format_y))
@@ -1248,29 +1308,48 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         if annotate is not None:
             for index, row in group.iterrows():
                 total = row.sum()
-                axes[i].annotate(annotate.format(total), (index, total), ha='center', va='bottom', fontsize=fonttick)
+                # add margin to the total value
+                margin = 0.05
+                axes[i].annotate(annotate.format(total), (index, total + margin), ha='center', va='bottom', fontsize=fonttick)
                 axes[i].plot(index, total, marker='d', color='black', markersize=5)
+
+                if annotate_bis is not None:
+                    total = row[annotate_bis].sum()
+                    axes[i].plot(index, total, marker='x', color='red', markersize=5)
 
         # group.sum(axis=1)
 
     # Adjust legend
-    try:
-        if ncol is None:
-            ncol = len(labels)
-        fig.legend(handles, labels, loc='lower center', ncol=ncol, fontsize=fonttick, frameon=False,
-                bbox_to_anchor=(0.5, 0))
-    except UnboundLocalError:
-        pass
+    if replace_legend is not None:
+        labels = [replace_legend[i] for i in labels]
+
+    fig.legend(handles, labels, loc='center left', fontsize=fonttick, frameon=False,
+               bbox_to_anchor=(1, 0.5))
+
+    if figtitle is not None:
+        fig.suptitle(figtitle, x=0.5, y=1, weight='bold', color='black', size=fonttick)
+
+    if annotate_bis is not None:
+        custom_handles = [
+            Line2D([0], [0], marker='d', color='black', lw=0, label='With subsidies'),
+            Line2D([0], [0], marker='x', color='red', lw=0, label='Without subsidy and tax'),
+        ]
+
+        # Add the additional legend
+        # Adjust the bbox_to_anchor values as needed to place the second legend
+        fig.legend(handles=custom_handles, loc='upper left', bbox_to_anchor=(1, 0.8), fontsize=fonttick, frameon=False)
 
     plt.tight_layout()
-    plt.subplots_adjust(bottom=bottom)  # Adjust the bottom margin
+    # plt.subplots_adjust(right=0.2)  # Adjust the bottom margin
     if save is not None:
-        plt.savefig(save, bbox_inches='tight')
+        fig.savefig(save, bbox_inches='tight')
+        plt.close(fig)
 
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
-                         scatterplot=None, fontxtick=16):
+                         scatterplot=None, fontxtick=16, scatterplot_bis=None, legend_label='Social benefits',
+                         annotate='{:.0f}'):
     """Make stackedbar plot.
 
     Parameters
@@ -1280,9 +1359,23 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     colors: dict
     format_y: function
     save: str, optional
+    ncol: int, default 3
+    ymin: float, optional
+    hline: float, optional
+    lineplot: pd.Series, default None
+    rotation: int, default 0
+    loc: str, default 'left'
+    left: float, default 1.04
+    xmin: int, default None
+    scatterplot: pd.Series, default None
+    fontxtick: int, default 16
+    scatterplot_bis: dict, default None
+    legend_label: str, default 'Social benefits'
+    annotate: str, default '{:.0f}'
     """
     df.index = df.index.astype(str)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    markers = ['o', 'd', 's', '^', 'v', '<', '>', 'p', 'h', 'H', 'D', 'P', 'X']
 
     if colors is None:
         df.plot(ax=ax, kind='bar', stacked=True, linewidth=0)
@@ -1297,30 +1390,185 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
         lineplot.plot(ax=ax, kind='line', color='black', marker='*')
         # lineplot.rename('data').reset_index().plot(ax=ax, kind='scatter', x='index', y='data')
 
+    custom_handles, i = [], 0
     if scatterplot is not None:
         scatterplot.index = scatterplot.index.astype(str)
         scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
         scatterplot.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
-                         color='black', s=50, xlabel=None)
+                         color='black', s=50, xlabel=None, marker=markers[i])
+        custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=legend_label))
+        i += 1
 
         y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
         for _, y in scatterplot.iterrows():
-            ax.annotate("{:,.0f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
+            ax.annotate(annotate.format(y['Value']), (y['Attribute'], y['Value'] + y_range / 40), ha="center")
+
+    if scatterplot_bis is not None:
+        for k, item in scatterplot_bis.items():
+            item.index = item.index.astype(str)
+            item = item.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+            item.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
+                      color='black', s=50, xlabel=None, marker=markers[i])
+            custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=k))
+            i += 1
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
 
     ax.spines['left'].set_visible(False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
-    # ax.set_xticklabels(df.index, rotation=rotation)
 
     ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
     ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
     ax.set(xlabel=None, ylabel=None)
 
     format_legend(ax, loc=loc, left=left)
+
+    if scatterplot_bis is not None:
+
+        # Add the additional legend
+        # Adjust the bbox_to_anchor values as needed to place the second legend
+        # Retrieve the existing handles and labels
+        existing_handles, existing_labels = ax.get_legend_handles_labels()
+
+        # Combine existing handles/labels with the new ones
+        all_handles = custom_handles + existing_handles
+        all_labels = [handle.get_label() for handle in custom_handles] + existing_labels
+
+        # Create a unified legend with all handles and labels
+        # Adjust the bbox_to_anchor values as needed to place the legend
+        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
+                        frameon=False)
+
+        texts = leg.get_texts()
+        for text in texts:
+            text.set_color(COLOR)
+
     save_fig(fig, save=save)
 
+
+def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y, _: y, save=None, ncol=3,
+                                    ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
+                                    scatterplot=None, fontxtick=16, scatterplot_bis=None,
+                                    legend_label='Social benefits',
+                                    annotate='{:.0f}', legend_exclude=None,
+                                    annotation_fontsize=None, legend_fontsize=None):
+    """Make stackedbar plot.
+
+    Parameters
+    ----------
+    df: pd.DataFrame
+    y_label: str
+    colors: dict
+    format_x: function
+    save: str, optional
+    ncol: int, default 3
+    ymin: float, optional
+    hline: float, optional
+    lineplot: pd.Series, default None
+    rotation: int, default 0
+    loc: str, default 'left'
+    left: float, default 1.04
+    xmin: int, default None
+    scatterplot: pd.Series, default None
+    fontxtick: int, default 16
+    scatterplot_bis: dict, default None
+    legend_label: str, default 'Social benefits'
+    annotate: str, default '{:.0f}'
+    """
+    df.index = df.index.astype(str)
+    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
+    markers = ['o', 'd', 's', '^', 'v', '<', '>', 'p', 'h', 'H', 'D', 'P', 'X']
+
+    if colors is None:
+        df.plot(ax=ax, kind='barh', stacked=True, linewidth=0)
+    else:
+        df.plot(ax=ax, kind='barh', stacked=True, color=colors, linewidth=0)
+
+    if hline is not None:
+        ax.axvline(x=hline, linewidth=1, color='grey')
+
+    if lineplot is not None:
+        lineplot.index = lineplot.index.astype(str)
+        lineplot.plot(ax=ax, kind='line', color='black', marker='*')
+
+    custom_handles, i = [], 0
+    def _filter_legend_items(handles, labels):
+        if legend_exclude is None:
+            return list(handles), list(labels)
+        excluded = set(legend_exclude)
+        filtered = [(handle, label) for handle, label in zip(handles, labels) if label not in excluded]
+        if not filtered:
+            return [], []
+        filtered_handles, filtered_labels = zip(*filtered)
+        return list(filtered_handles), list(filtered_labels)
+
+    label_fontsize = annotation_fontsize if annotation_fontsize is not None else max(fontxtick - 1, 9)
+
+    if scatterplot is not None:
+        scatterplot.index = scatterplot.index.astype(str)
+        scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+        scatterplot.plot(kind='scatter', x='Value', y='Attribute', legend=False, zorder=10, ax=ax,
+                         color='black', s=50, ylabel=None, marker=markers[i])
+        custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=legend_label))
+        i += 1
+
+        x_range = abs(ax.get_xlim()[1] - ax.get_xlim()[0])
+        offset = max(x_range / 55, 0.05)
+        for _, x in scatterplot.iterrows():
+            if x['Value'] >= 0:
+                position = x['Value'] + offset
+                ha = 'left'
+            else:
+                position = x['Value'] - offset
+                ha = 'right'
+            ax.annotate(annotate.format(x['Value']), (position, x['Attribute']), ha=ha, va="center",
+                        fontsize=label_fontsize)
+
+    if scatterplot_bis is not None:
+        for k, item in scatterplot_bis.items():
+            item.index = item.index.astype(str)
+            item = item.reset_index().set_axis(['Attribute', 'Value'], axis=1)
+            item.plot(kind='scatter', x='Value', y='Attribute', legend=False, zorder=10, ax=ax,
+                      color='black', s=50, ylabel=None, marker=markers[i])
+            custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=k))
+            i += 1
+
+    ax = format_ax(ax, title=y_label, format_x=format_x, xmin=xmin, horizontal=True, ymin=None)
+
+    ax.spines['bottom'].set_visible(False)
+
+    # plt.setp(ax.yaxis.get_majorticklabels(), rotation=rotation)
+
+    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
+    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
+    ax.set(xlabel=None, ylabel=None)
+
+    legend_handles, legend_labels = _filter_legend_items(*ax.get_legend_handles_labels())
+    format_legend(ax, loc=loc, left=left, handles=legend_handles, labels=legend_labels,
+                  fontsize=legend_fontsize)
+
+    if scatterplot_bis is not None:
+
+        # Add the additional legend
+        # Adjust the bbox_to_anchor values as needed to place the second legend
+        # Retrieve the existing handles and labels
+        existing_handles, existing_labels = _filter_legend_items(*ax.get_legend_handles_labels())
+
+        # Combine existing handles/labels with the new ones
+        all_handles = custom_handles + existing_handles
+        all_labels = [handle.get_label() for handle in custom_handles] + existing_labels
+
+        # Create a unified legend with all handles and labels
+        # Adjust the bbox_to_anchor values as needed to place the legend
+        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
+                        frameon=False, fontsize=legend_fontsize)
+
+        texts = leg.get_texts()
+        for text in texts:
+            text.set_color('black')
+
+    save_fig(fig, save=save)
 
 def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):
     """Make waterfall chart. Used for Social Economic Assessment.
@@ -1416,6 +1664,219 @@ def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6))
     save_fig(fig, save=save)
 
 
+def horizontal_waterfall_chart(values, save_path=None, ylabel=None, total_label="Total",
+                               figsize=(10, 6), dpi=300):
+    """Publication-ready horizontal waterfall chart.
+
+    Parameters
+    ----------
+    values : pd.Series
+        Component values (e.g. Shapley values). Plotted sorted by value.
+    save_path : str, optional
+        Path to save the figure (PDF recommended).
+    ylabel : str, optional
+        Label for the x-axis (the value axis in a horizontal chart).
+    total_label : str, optional
+        Label for the total bar. Default ``"Total"``.
+    figsize : tuple, optional
+    dpi : int, optional
+    """
+    values = values.sort_values()
+    cumulative = values.cumsum().shift(1).fillna(0)
+    total = values.sum()
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Component bars — blue for negative, red for positive
+    bar_colors = ["#2166ac" if v < 0 else "#b2182b" for v in values]
+    ax.barh(
+        range(len(values)),
+        values,
+        left=cumulative,
+        color=bar_colors,
+        edgecolor="white",
+        linewidth=0.5,
+        height=0.6,
+        zorder=2,
+    )
+
+    # Total bar
+    ax.barh(
+        len(values),
+        total,
+        left=0,
+        color="#404040",
+        edgecolor="white",
+        linewidth=0.5,
+        height=0.6,
+        zorder=2,
+    )
+
+    # Connector lines between bars
+    for i in range(len(values)):
+        end = cumulative.iloc[i] + values.iloc[i]
+        if i < len(values) - 1:
+            ax.plot(
+                [end, end],
+                [i + 0.3, i + 0.7],
+                color="grey",
+                linewidth=0.5,
+                linestyle="--",
+                zorder=1,
+            )
+
+    # Value labels on each bar
+    offset = abs(total) * 0.02
+    for i, (val, cum) in enumerate(zip(values, cumulative)):
+        ax.text(cum + val + offset, i, f"{val:.2f}", va="center", ha="left", fontsize=9)
+    ax.text(
+        total + offset, len(values), f"{total:.2f}",
+        va="center", ha="left", fontsize=9, fontweight="bold",
+    )
+
+    # Y-axis labels
+    labels = list(values.index) + [total_label]
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=11)
+    ax.invert_yaxis()
+
+    # X-axis
+    if ylabel is not None:
+        ax.set_xlabel(ylabel, fontsize=11)
+    ax.axvline(0, color="black", linewidth=0.8)
+
+    # Clean spines
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(left=False)
+    ax.grid(axis="x", linestyle=":", alpha=0.4, zorder=0)
+
+    fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
+    return fig
+
+
+def vertical_waterfall_chart(values, save_path=None, ylabel=None, total_label="Total",
+                             figsize=(8.5, 6.5), dpi=300, tick_fontsize=11, label_fontsize=10,
+                             title=None):
+    """Publication-ready vertical waterfall chart with value and share labels."""
+    values = values.sort_values()
+    cumulative = values.cumsum().shift(1).fillna(0)
+    total = values.sum()
+
+    if np.isclose(total, 0):
+        shares = pd.Series(0.0, index=values.index)
+    else:
+        shares = values / total
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    bar_colors = ["#2166ac" if value < 0 else "#b2182b" for value in values]
+    ax.bar(
+        range(len(values)),
+        values,
+        bottom=cumulative,
+        color=bar_colors,
+        edgecolor="white",
+        linewidth=0.6,
+        width=0.7,
+        zorder=2,
+    )
+
+    ax.bar(
+        len(values),
+        total,
+        bottom=0,
+        color="#404040",
+        edgecolor="white",
+        linewidth=0.6,
+        width=0.7,
+        zorder=2,
+    )
+
+    for i in range(len(values)):
+        end = cumulative.iloc[i] + values.iloc[i]
+        if i < len(values) - 1:
+            ax.plot(
+                [i + 0.35, i + 0.65],
+                [end, end],
+                color="grey",
+                linewidth=0.5,
+                linestyle="--",
+                zorder=1,
+            )
+
+    min_y = min(cumulative.min(), (cumulative + values).min(), total, 0)
+    max_y = max(cumulative.max(), (cumulative + values).max(), total, 0)
+    y_range = max(max_y - min_y, 1.0)
+    component_offset = y_range * 0.04
+    total_offset = y_range * 0.07
+
+    for i, (value, start, share) in enumerate(zip(values, cumulative, shares)):
+        endpoint = start + value
+        position = endpoint + component_offset if value >= 0 else endpoint - component_offset
+        va = "bottom" if value >= 0 else "top"
+        ax.text(
+            i,
+            position,
+            f"{value:.2f}\n({share * 100:.0f}%)",
+            ha="center",
+            va=va,
+            fontsize=label_fontsize,
+        )
+
+    total_percent = 0 if np.isclose(total, 0) else 100
+    total_position = total + total_offset if total >= 0 else total - total_offset
+    total_va = "bottom" if total >= 0 else "top"
+    ax.text(
+        len(values),
+        total_position,
+        f"{total:.2f}\n({total_percent:.0f}%)",
+        ha="center",
+        va=total_va,
+        fontsize=label_fontsize,
+        fontweight="bold",
+    )
+
+    labels = list(values.index) + [total_label]
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, fontsize=tick_fontsize)
+    tick_labels = ax.get_xticklabels()
+    for tick_label in tick_labels[:-1]:
+        tick_label.set_rotation(20)
+        tick_label.set_ha("right")
+    tick_labels[-1].set_rotation(0)
+    tick_labels[-1].set_ha("center")
+
+    if ylabel is not None:
+        ax.set_ylabel(ylabel, fontsize=tick_fontsize)
+    if title is not None:
+        ax.set_title(title, fontsize=tick_fontsize + 1, fontweight="bold")
+    else:
+        ax.set_title("Shapley waterfall", fontsize=tick_fontsize + 1, fontweight="bold")
+
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(axis="y", labelsize=tick_fontsize)
+    ax.tick_params(axis="x", length=0)
+    ax.grid(axis="y", linestyle=":", alpha=0.4, zorder=0)
+    ax.margins(x=0.06)
+    ax.set_xlim(-0.5, len(values) + 0.75)
+    ax.set_ylim(min_y - 2.5 * total_offset, max_y + 1.5 * component_offset)
+
+    fig.tight_layout()
+    fig.subplots_adjust(bottom=0.19)
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
+    return fig
+
+
 def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
                      format_y=lambda y, _: '{:.0f}'.format(y),
                      title=None, y_label="Emissions (MtCO2)"):
@@ -1474,6 +1935,7 @@ def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
     ax.tick_params(axis='both', which='major', labelsize=14)
     save_fig(fig, save=save)
+
 
 def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ymin=0, save=None, scatter=None,
                           columns=None, ncol=3, offset=1, loc='upper', left=1.04, reference='Reference'):
@@ -1604,6 +2066,13 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
 
     for k in range(n_rows * n_columns):
 
+        row = floor(k / n_columns)
+        column = k % n_columns
+        if n_rows == 1:
+            ax = axes[column]
+        else:
+            ax = axes[row, column]
+
         try:
             label = labels[k]
         except IndexError:
@@ -1620,12 +2089,7 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
         else:
             format_y = lambda y, _: '{:,.0f}M'.format(y / 1000000)
 
-        row = floor(k / n_columns)
-        column = k % n_columns
-        if n_rows == 1:
-            ax = axes[column]
-        else:
-            ax = axes[row, column]
+
 
         if dict_color is not None:
             stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
@@ -1712,7 +2176,7 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
                 ax.set_title(stock_label.index.name, fontsize=12)
             else:
                 stock_label.plot.pie(ax=ax, explode=None, labels=stock_label.index, autopct='%1.1f%%', shadow=False,
-                                     textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+                                     textprops={'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
         else:
             if dict_color is not None:
                 stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
@@ -1741,7 +2205,7 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
 
 
 def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_order={}, dict_color={}, percent=False,
-                             save=None):
+                             save=None, legend=True, left=1.1):
     fig, ax = plt.subplots(figsize=(12.8, 9.6))
     if suptitle is not None:
         fig.suptitle(suptitle, fontsize=20, fontweight='bold')
@@ -1765,9 +2229,11 @@ def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
-    ax.legend(loc='best', frameon=False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
+
+    if legend:
+        format_legend(ax, loc='left', left=left)
 
     if save is not None:
         fig.savefig(save, bbox_inches='tight')
@@ -1903,3 +2369,318 @@ def plot_thermal_insulation(stock, save=None):
         x = stock / 10 ** 6
         temp.update({i: cumulated_plot(x, y, plot=False)})
     cumulated_plots(temp, 'Thermal transmittance U (W/m2.K)', ylim=3, save=save)
+
+
+def horizontal_stack_bar_plot(df, columns=None, title=None, order=None, save_path=None):
+    """
+    Create a horizontal stacked bar plot from a DataFrame.
+
+    Examples: horizontal_stack_bar_plot(sobol_df.rename(index=NAME_COLUMNS), columns=['First order', 'Total order'],
+        title='Influence of parameters that the ban i', order='Total order',
+        save_path=folder_name / Path('sobol_ban.png'))
+
+    Parameters
+    ----------
+    df
+    columns
+    title
+    order
+    save_path
+
+    Returns
+    -------
+
+    """
+    # If no specific columns are provided, use all columns in the DataFrame
+    if columns is None:
+        columns = df.columns
+
+    if order is not None:
+        df = df.sort_values(by=order, ascending=True)
+
+    # Number of rows and bars to plot
+    n_rows = len(df)
+    n_cols = len(columns)
+    bar_width = 0.8 / n_cols  # Adjust bar width based on number of columns
+    y_positions = np.arange(n_rows)
+    fig, ax = plt.subplots(1, 1, figsize=(14, 9.6))
+
+    # Plot each column
+    for i, col in enumerate(columns):
+        ax.barh(y_positions - 0.4 + (i + 0.5) * bar_width, df[col], height=bar_width, label=col,
+                )
+
+    # Set the y-ticks to use the index of the DataFrame
+    ax.set_yticks(y_positions, df.index)
+    #ax.yticks(y_positions, df.index)
+
+    # Hide the top, right, and left spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    # size of x-axis and y-axis ticks
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    # size of title
+
+    # Remove the x-axis and y-axis titles
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+
+
+    # Set title if provided align on the left
+    if title:
+        ax.set_title(title, fontsize=20, fontweight='bold', loc='left')
+
+    # Place legend to the right of the figure, without frame
+    ax.legend(frameon=False, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=18)
+
+    if save_path:
+        fig.savefig(save_path, bbox_inches='tight', dpi=300)
+        plt.close(fig)
+
+
+def manual_sobol_analysis(scenarios, list_features, y):
+    """Computes manually the Sobol indices for a given set of scenarios and a given output variable y
+
+    scenarios: DataFrame
+        DataFrame containing the scenarios
+    list_features: list
+        List of features to consider
+    y: str
+        Output variable
+    """
+    sobol_df = pd.DataFrame(index=list_features, columns=['First order', 'Total order'])
+
+    expectation, variance = scenarios[y].mean(), scenarios[y].var()
+
+    for col in list_features:
+        # first order
+        conditional_means = scenarios.groupby(col)[y].mean()
+        counts = scenarios.groupby(col).size() / len(scenarios)
+        sobol_first_order = (counts * (conditional_means - expectation) ** 2).sum() / variance
+        sobol_df.loc[col, 'First order'] = sobol_first_order
+
+        # total order
+        list_features_minus_i = list_features.copy()
+        list_features_minus_i.remove(col)
+        conditional_means = scenarios.groupby(list_features_minus_i)[y].mean()
+        counts = scenarios.groupby(list_features_minus_i).size() / len(scenarios)
+        sobol_total_order = 1 - (counts * (conditional_means - expectation) ** 2).sum() / variance
+        sobol_df.loc[col, 'Total order'] = sobol_total_order
+    return sobol_df
+
+
+def manual_shapley_analysis(scenarios, list_features, y):
+    import itertools, math, pandas as pd
+
+    shapley_df = pd.DataFrame(index=list_features, columns=['Shapley value'], dtype=float)
+
+    # Compute mean outcome for each combination of categorical states
+    grouped = scenarios.groupby(list_features)[y].mean()
+    grouped = grouped.reset_index()
+
+    # Create lookup table: tuple(feature_values) → mean outcome
+    Y_dict = {}
+    for _, row in grouped.iterrows():
+        key = tuple(row[f] for f in list_features)
+        Y_dict[key] = row[y]
+
+    K = len(list_features)
+    factorial = math.factorial
+
+    # Helper: get value for subset of "removed" features
+    def get_subset_value(subset):
+        pattern = []
+        for f in list_features:
+            if f in subset:
+                pattern.append(next(v for v in scenarios[f].unique() if v.startswith('no_')))
+            else:
+                pattern.append(next(v for v in scenarios[f].unique() if not v.startswith('no_')))
+        return Y_dict.get(tuple(pattern), None)
+
+    # Compute Shapley value for each feature
+    for i in list_features:
+        others = [f for f in list_features if f != i]
+        shapley_value = 0.0
+        for L in range(len(others) + 1):
+            for subset in itertools.combinations(others, L):
+                S = set(subset)
+                val_S = get_subset_value(S)
+                val_Si = get_subset_value(S.union({i}))
+                if val_S is None or val_Si is None:
+                    continue
+                weight = factorial(len(S)) * factorial(K - len(S) - 1) / factorial(K)
+                shapley_value += weight * (val_Si - val_S)
+        shapley_df.loc[i, 'Shapley value'] = shapley_value
+
+    total = shapley_df['Shapley value'].sum()
+    if np.isclose(total, 0):
+        shapley_df['Shapley share'] = 0.0
+    else:
+        shapley_df['Shapley share'] = shapley_df['Shapley value'] / total
+    return shapley_df
+
+
+def slope_graph(
+    df,
+    save_path=None,
+    xlabel=None,
+    color_dict=None,
+    figsize=(10, 7),
+    dpi=300,
+    annotation_gap=0.012,
+):
+    """Publication-ready slope graph comparing policy welfare across normative perspectives.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Rows are policies, columns are perspectives (ordered left to right).
+        Values are welfare (billion euro/year).
+    save_path : str, optional
+        Path to save the figure (PDF recommended).
+    xlabel : str, optional
+        Label for the y-axis.
+    color_dict : dict, optional
+        Mapping from policy name to color. Falls back to tab10 palette.
+    figsize : tuple, optional
+    dpi : int, optional
+    annotation_gap : float, optional
+        Fraction of y-range used to detect label collisions and offset them.
+    """
+    perspectives = list(df.columns)
+    n_cols = len(perspectives)
+    x_positions = list(range(n_cols))
+
+    # Build a default color cycle if not provided
+    tab10 = plt.get_cmap("tab10")
+    default_colors = {policy: tab10(i % 10) for i, policy in enumerate(df.index)}
+    colors = {**default_colors, **(color_dict or {})}
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    y_all = df.values.flatten()
+    y_range = float(np.nanmax(y_all) - np.nanmin(y_all))
+    label_offset = annotation_gap * y_range
+
+    for policy in df.index:
+        vals = df.loc[policy]
+        c = colors.get(policy, "grey")
+        ax.plot(
+            x_positions,
+            vals.values,
+            color=c,
+            linewidth=2.2,
+            marker="o",
+            markersize=7,
+            zorder=3,
+            solid_capstyle="round",
+        )
+
+    # Zero reference line
+    ax.axhline(0, color="black", linewidth=0.8, linestyle="--", zorder=1, alpha=0.5)
+
+    # Left-side labels (first perspective)
+    left_labels = [(df.loc[p, perspectives[0]], p) for p in df.index]
+    left_labels_adjusted = _adjust_labels(left_labels, label_offset)
+    for (y_orig, policy), y_adj in zip(left_labels, left_labels_adjusted):
+        c = colors.get(policy, "grey")
+        ax.text(
+            -0.08,
+            y_adj,
+            policy,
+            ha="right",
+            va="center",
+            fontsize=11,
+            color=c,
+            fontweight="bold",
+        )
+        if abs(y_adj - y_orig) > label_offset * 0.3:
+            ax.plot([-0.06, 0], [y_adj, y_orig], color=c, linewidth=0.6, alpha=0.5)
+
+    # Right-side value labels (last perspective)
+    right_labels = [(df.loc[p, perspectives[-1]], p) for p in df.index]
+    right_labels_adjusted = _adjust_labels(right_labels, label_offset)
+    for (y_orig, policy), y_adj in zip(right_labels, right_labels_adjusted):
+        c = colors.get(policy, "grey")
+        ax.text(
+            n_cols - 1 + 0.08,
+            y_adj,
+            f"{y_orig:+.2f}",
+            ha="left",
+            va="center",
+            fontsize=11,
+            color=c,
+        )
+        if abs(y_adj - y_orig) > label_offset * 0.3:
+            ax.plot(
+                [n_cols - 1, n_cols - 1 + 0.06],
+                [y_orig, y_adj],
+                color=c,
+                linewidth=0.6,
+                alpha=0.5,
+            )
+
+    # Axes formatting
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(perspectives, fontsize=13, fontweight="bold", color=COLOR)
+    ax.tick_params(axis="x", length=0)
+    ax.set_xlim(-1.2, n_cols - 1 + 0.9)
+
+    if xlabel is not None:
+        ax.set_ylabel(xlabel, fontsize=13, color=COLOR, fontweight="bold")
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_linewidth(1.2)
+    ax.spines["bottom"].set_color(COLOR)
+    ax.tick_params(left=False)
+    ax.yaxis.set_tick_params(labelsize=11)
+    ax.grid(axis="y", linestyle=":", alpha=0.35, zorder=0)
+
+    # Shade "positive welfare" region very lightly
+    y_min, y_max = ax.get_ylim()
+    ax.axhspan(0, y_max, color="green", alpha=0.03, zorder=0)
+    ax.axhspan(y_min, 0, color="red", alpha=0.03, zorder=0)
+
+    fig.tight_layout()
+    if save_path is not None:
+        fig.savefig(save_path, bbox_inches="tight", dpi=dpi)
+    plt.close(fig)
+    return fig
+
+
+def _adjust_labels(labels, min_gap):
+    """Nudge overlapping y-labels apart (greedy bottom-up pass).
+
+    Parameters
+    ----------
+    labels : list of (y_value, name)
+    min_gap : float
+        Minimum vertical gap between adjacent label centres.
+
+    Returns
+    -------
+    list of float
+        Adjusted y positions, same order as input.
+    """
+    indexed = sorted(enumerate(labels), key=lambda item: item[1][0])
+    adjusted = [y for y, _ in [lab for _, lab in indexed]]
+
+    # Bottom-up: push labels up if too close
+    for i in range(1, len(adjusted)):
+        if adjusted[i] - adjusted[i - 1] < min_gap:
+            adjusted[i] = adjusted[i - 1] + min_gap
+
+    # Top-down: push labels down if too close (after upward pass)
+    for i in range(len(adjusted) - 2, -1, -1):
+        if adjusted[i + 1] - adjusted[i] < min_gap:
+            adjusted[i] = adjusted[i + 1] - min_gap
+
+    # Map back to original order
+    result = [0.0] * len(labels)
+    for rank, (orig_idx, _) in enumerate(indexed):
+        result[orig_idx] = adjusted[rank]
+    return result

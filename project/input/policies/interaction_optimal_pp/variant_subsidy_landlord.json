@@ -1,0 +1,10 @@
+{
+    "subsidy_landlord": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_landlord",
+      "gest": [
+        "insulation"
+      ]
+    }
+}

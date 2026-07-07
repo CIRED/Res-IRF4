@@ -1,0 +1,17 @@
+Housing type,Occupancy status,Income owner,Income tenant,Wall,Floor,Roof,Windows,Heating system,0
+Single-family,Owner-occupied,D1,D1,0.4,0.3,0.3,2.6,Natural gas-Standard boiler,1
+Single-family,Owner-occupied,D1,D1,0.2,0.3,0.2,1.3,Electricity-Heat pump,1
+Single-family,Owner-occupied,D5,D5,1.0,0.9,2.5,4.3,Oil fuel-Performance boiler,1
+Single-family,Owner-occupied,D5,D5,0.4,0.5,0.3,2.6,Wood fuel-Performance boiler,1
+Single-family,Owner-occupied,D10,D10,0.2,0.3,0.2,1.3,Natural gas-Performance boiler,1
+Single-family,Privately rented,D3,D3,0.5,0.5,0.3,2.6,Oil fuel-Standard boiler,1
+Single-family,Privately rented,D3,D7,0.4,0.3,0.3,1.3,Electricity-Performance boiler,1
+Single-family,Privately rented,D8,D3,0.2,2.0,0.2,1.3,Natural gas-Performance boiler,1
+Multi-family,Owner-occupied,D1,D1,0.4,0.3,0.3,2.6,Natural gas-Standard boiler,1
+Multi-family,Owner-occupied,D1,D1,0.2,0.3,0.2,1.3,Heating-District heating,1
+Multi-family,Owner-occupied,D5,D5,0.4,0.9,0.3,2.6,Natural gas-Performance boiler,1
+Multi-family,Owner-occupied,D10,D10,0.2,0.3,0.2,1.3,Electricity-Heat pump,1
+Multi-family,Privately rented,D3,D3,0.5,0.5,0.5,3.0,Oil fuel-Performance boiler,1
+Multi-family,Privately rented,D7,D3,0.4,0.3,0.3,1.3,Natural gas-Performance boiler,1
+Multi-family,Social-housing,D1,D1,0.4,0.9,2.5,2.6,Oil fuel-Standard boiler,1
+Multi-family,Social-housing,D1,D3,0.2,0.3,0.2,1.3,Natural gas-Performance boiler,1

@@ -4,7 +4,7 @@
     "step": 1,
     "end": 2051,
     "policies": {
-      "file": "project/input/policies/current/policies_ref.json"
+      "file": "project/input/policies/policies_2021.json"
     },
     "simple": {
       "figures": true,

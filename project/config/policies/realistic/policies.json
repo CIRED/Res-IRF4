@@ -1,0 +1,158 @@
+{
+  "scenarios": {
+    "activated": false,
+    "current_policies": true,
+    "no_policy": true,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "sensitivity": {
+    "activated": false
+  },
+  "uncertainty": {
+    "activated": false,
+    "energy_prices_factor": [2, 5],
+    "carbon_emission" : [
+      "project/input/energy/carbon_emission_tend.csv"
+    ],
+    "scale_renovation": [
+      {
+        "option": "share_fg",
+        "target": 0.4
+      }
+    ],
+      "CarbonTax": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+        "start": 2017,
+        "end": 2051,
+        "tax": "project/input/policies/carbon_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": null,
+        "recycling_ini": null
+      }
+    }
+  },
+  "Package2024Ban": {
+    "file": "project/config/reference.json",
+    "end": 2031,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "restriction_gas": {
+        "start": 2030,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+    }
+  }
+  },
+  "Reference": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    }
+  },
+  "BaselinePackage": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    }},
+  "BaselinePackage + Ban": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "restriction_gas": {
+            "start": 2030,
+            "end": 2051,
+            "value": "Natural gas",
+            "policy": "restriction_energy",
+            "variable": false
+      }
+    }},
+  "NoFriction": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "credit_constraint": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "credit_constraint",
+        "gest": [
+          "insulation",
+          "heater"
+        ]
+      },
+      "health_cost": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "regulation",
+          "gest": ["insulation"]
+        },
+      "carbon_tax_vsc": {
+        "start": 2019,
+        "end": 2051,
+        "tax": "project/input/policies/carbon_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": null,
+        "policy": "carbon_tax"
+      },
+      "landlord_dilemma": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      },
+      "multi_family": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      },
+      "present_bias": {
+        "start": 2019,
+        "end": 2051,
+        "value": 0.032,
+        "policy": "regulation",
+        "gest": [
+          "heater",
+          "insulation"
+        ]
+      },
+      "status_quo_bias": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "heater",
+        "value": 0.2
+      }
+    }
+  },
+  "SCCBenchmark": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax_vsc": {
+      "start": 2019,
+      "end": 2051,
+      "tax": "project/input/policies/carbon_value.csv",
+      "emission": "project/input/policies/current/carbon_tax_emission.csv",
+      "recycling": null,
+      "policy": "carbon_tax"
+  }
+    }
+  }
+}

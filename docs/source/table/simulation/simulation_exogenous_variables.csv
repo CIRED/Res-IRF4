@@ -1,0 +1,5 @@
+﻿Scenario,Endogenous techological change,Energy prices,Housholds income
+Reference,Learning rate of 15% for new construction and 10% for renovation.,ADEME scenario,"Growth rate of 1,2%/yr"
+No technological change,Frozen. Learning rates set to zero.,ADEME scenario,"Growth rate of 1,2%/yr"
+"No technological change, frozen price",Frozen. Learning rates set to zero.,Frozen,"Growth rate of 1,2%/yr"
+"No technological change, frozen price and income",Frozen. Learning rates set to zero.,Frozen,Frozen

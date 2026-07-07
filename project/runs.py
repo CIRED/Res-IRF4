@@ -18,6 +18,7 @@
 import os
 import argparse
 import logging
+from pathlib import Path
 
 from project.main import run
 from json import load, dumps
@@ -41,8 +42,9 @@ if __name__ == '__main__':
     configs, folder = [], None
 
     if args.directory is not None:
-        configs = [os.path.join(args.directory, c) for c in os.listdir(args.directory) if c.split('.')[1] == 'json']
-        configs = sorted(configs)
+        directory = Path(args.directory)
+        # Allow grouped config folders that contain nested subfolders.
+        configs = sorted(str(p) for p in directory.rglob('*.json') if p.is_file())
 
     if args.assessment is not None:
         configs = []
@@ -99,4 +101,3 @@ if __name__ == '__main__':
     for c in configs:
         # add try/except to continue if one config fail
         run(path=c, folder=folder)
-

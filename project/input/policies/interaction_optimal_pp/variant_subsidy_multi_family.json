@@ -1,0 +1,10 @@
+{
+    "subsidy_multi_family": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_multi_family",
+      "gest": [
+        "insulation"
+      ]
+    }
+}

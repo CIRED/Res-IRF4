@@ -1,6 +1,11 @@
-# Res-IRF
+# Res-IRF4
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10405492.svg)](https://doi.org/10.5281/zenodo.10405492)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://cired.github.io/Res-IRF4/)
+
+**[Documentation](https://cired.github.io/Res-IRF4/)** | **[Replication Package](https://cired.github.io/Res-IRF4/replication.html)**
 
 ## Disclaimer
 
@@ -15,7 +20,31 @@ specific functions. Use only with care and caution._**
 > household behaviour. Res-IRF has been developed to improve the behavioural realism that is typically lacking in
 > integrated models of energy demand.
 
-## Installation
+## Quick Start (standalone executable)
+
+Pre-built executables are available for Windows, macOS, and Linux. No Python installation is required.
+
+1. Go to the [Releases](https://github.com/CIRED/Res-IRF4/releases) page.
+2. Download the zip file for your operating system (`ResIRF-windows.zip`, `ResIRF-macos.zip`, or `ResIRF-linux.zip`).
+3. Unzip the archive.
+4. Open a terminal in the unzipped `ResIRF` folder and run:
+
+```bash
+# Test simulation (short run)
+./ResIRF -c project/config/test/test.json
+
+# Full reference scenario
+./ResIRF -c project/config/config.json
+
+# Parallel scenarios with 4 CPUs
+./ResIRF -c project/config/config.json -cpu 4
+```
+
+On Windows, replace `./ResIRF` with `ResIRF.exe`.
+
+Results are saved in the `project/output/` folder inside the `ResIRF` directory.
+
+## Installation (from source)
 
 **Step 1**: Git **clone Res-IRF folder** in your computer.
 
@@ -34,7 +63,7 @@ specific functions. Use only with care and caution._**
 **Step 3**: **Activate the new environment**.
 
 - The first line of the yml file sets the new environment's name.
-- Type: `conda activate envResIRF` (in the terminal)
+- Type: `conda activate Res-IRF4` (in the terminal)
 
 **Step 4**: **Launch Res-IRF**
 
@@ -43,6 +72,28 @@ specific functions. Use only with care and caution._**
 - `project/config/config.json` is the path to the configuration file
 - It is possible that some new packages are not integrated in the yml file. In this case you have to install these
   additional packages manually in the environment.
+
+## VS Code Remote SSH (INARI)
+
+If you use VS Code Remote SSH with the `inari` host, add this to your user settings JSON:
+
+```json
+{
+  "remote.SSH.defaultForwardedPorts": [],
+  "remote.SSH.remotePlatform": {
+    "inari": "linux"
+  },
+  "remote.SSH.defaultExtensions": []
+}
+```
+
+Recommended workflow:
+
+1. Use `Remote-SSH: Connect to Host...` and select `inari`.
+2. In the remote window, open the folder `/diskdata2/resirf/Res-IRF4`.
+3. Select the Python interpreter `/data/software/anaconda3/envs/envResIRF/bin/python3.8`.
+
+This keeps the repo in a normal VS Code window and gives access to the remote tasks in `.vscode/tasks.json` and debug entries in `.vscode/launch.json`.
 
 ## Getting started
 
@@ -74,7 +125,7 @@ Among the possible parameters used to describe a scenario:
 - `file` : use another setting file as a reference. This feature facilitates the modification
 of one parameter compared to the Reference scenario without repeating all parameters.
 - `policies`: policies can be included directly in the configuration file or by making reference to an independent policy file (
-see `input/policies/policies_ref.json`). This feature ensures that different scenarios have the same policies setting.
+see `project/input/policies/policies_2021.json`). This feature ensures that different scenarios have the same policies setting.
 - `simple`: modification of one specific feature of the scenario. For example, it is possible to run a scenario with
 quintiles instead of deciles, or to run a scenario with a limited number of heating systems. It also allows to
 simplify the simulation by running with price or income constant. 
@@ -89,14 +140,14 @@ Headers are an easy way to create additional variants of scenario.
 The advantage is to ensure that all other parameters are the same as in the main settings.
 There are different headers:
 
-- `scenarios` : basic variant of the Reference scenario. An example of such header can be found in `test/config_validation.json`.
+- `scenarios` : basic variant of the Reference scenario. An example of such header can be found in `project/config/validation.json`.
 Among the possible variants that can be created automatically:
   - `current_policies: True`. Keep the same public policies used during calibration throughout the simulation ("Current Policies").
   - `no_policy: True`. Removing all public policies in the year after calibration ("No policy").
   - `prices_constant: True`. Retain the same energy prices as used during calibration ("Constant Prices").
 - `sensitivity` : modify one or multiple parameters of the Reference scenario.
 It has been implemented for a limited number of parameters. 
-Check `config/list_sensitivity.json` for a comprehensive list of available parameters.
+Check `project/config/sensitivity/sensitivity_list.example.json` for a comprehensive list of available parameters.
 - `uncertainty` : run all possible permutation of modified parameters (still in progress). 
 - `policies_scenarios` : simplified output for large number of scenarios,
 - `assessment_test` : run assessment indicators for one policy (still in progress).
@@ -167,12 +218,10 @@ If you find `Res-IRF` useful, please kindly cite our last paper:
 
 ```
 @article{
-  author  = {Giraudet, Louis-Gaëtan and Bourgeois, Cyril and Quirion, Philippe},
-  title   = {Policies for low-carbon and affordable home heating: A French outlook},
-  journal = {Energy Policy},
-  year    = {2021},
-  volume  = {151},
-  url     = {https://www.sciencedirect.com/science/article/pii/S0301421521000094}
+  author = {Vivier, Lucas and Giraudet, Louis-Gaëtan},
+  title = {Is {{France}} on Track for Decarbonizing Its Residential Sector? {{Assessing}} Recent Policy Changes and the Way Forward.},
+  date = {2024-01},
+  url = {https://hal.science/hal-04510798},
 }
 ```
 
