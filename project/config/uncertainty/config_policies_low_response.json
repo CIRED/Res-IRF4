@@ -1,0 +1,125 @@
+{
+  "scenarios": {
+    "activated": true,
+    "current_policies": true,
+    "no_policy": true,
+    "prices_constant": null,
+    "constant": null,
+    "policies": null,
+    "add_policies": null,
+    "remove_policies": null,
+    "policies_scenarios": null,
+    "no_natural_replacement": null
+  },
+  "sensitivity": {
+    "activated": false,
+    "Package2024Zil": {
+    "file": "project/config/reference_low_response.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "zero_interest_loan": {
+        "start": 2024,
+        "end": 2051,
+        "cost_max": 30000,
+        "gest": ["heater", "insulation"],
+        "value": 0.0,
+        "duration": 15,
+        "policy": "zero_interest_loan"
+    }
+    }},
+    "Regulation": {
+    "file": "project/config/reference_low_response.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "obligation": {
+      "start": 2022,
+      "end": 2051,
+      "value": "project/input/policies/current/agenda_obligation_pb.csv",
+      "frequency": {
+        "value": [
+          0,
+          0.1,
+          0
+        ],
+        "index": [
+          "Owner-occupied",
+          "Privately rented",
+          "Social-housing"
+        ],
+        "name": "Occupancy status"
+      },
+      "intensive": "market_share",
+      "minimum_performance": "D",
+      "policy": "obligation"
+    },
+      "restriction_gas": {
+        "start": 2030,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+    }
+  }
+  },
+  "uncertainty": {
+    "activated": false,
+    "energy_prices_factor": [2, 5],
+    "carbon_emission" : [
+      "project/input/energy/carbon_emission_tend.csv"
+    ],
+    "scale_renovation": [
+      {
+        "option": "share_fg",
+        "target": 0.4
+      }
+    ]
+  },
+  "Reference": {
+    "file": "project/config/reference_low_response.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2021.json"
+    }
+  },
+  "Package2024": {
+    "file": "project/config/reference_low_response.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    }},
+  "Package2024Ban": {
+    "file": "project/config/reference_low_response.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json",
+      "restriction_gas": {
+        "start": 2030,
+        "end": 2051,
+        "value": "Natural gas",
+        "policy": "restriction_energy"
+      }
+    }},
+  "CarbonTax": {
+    "file": "project/config/reference_low_response.json",
+    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+        "start": 2017,
+        "end": 2051,
+        "tax": "project/input/policies/current/carbon_tax_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": true,
+        "recycling_ini": false
+      }
+    }
+  }
+}

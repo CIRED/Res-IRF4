@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technical documentation &mdash; Res-IRF4 0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Policies assessment" href="policies_assessment.html" />
+    <link rel="prev" title="Res-IRF" href="readme.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Res-IRF4
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Res-IRF</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Technical documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#context">Context</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview-of-the-model">Overview of the model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#previous-developments">Previous developments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#energy-use">Energy use</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#conventional-energy-use">Conventional energy use</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#specific-consumption">Specific consumption</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#actual-energy-use">Actual energy use</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#total-energy-use">Total energy use</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#energy-efficiency-improvements">Energy efficiency improvements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#stock-dynamics">Stock dynamics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#investment-decisions-general-case">Investment decisions – general case</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#new-constructions">New constructions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#renovation-of-existing-dwellings">Renovation of existing dwellings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#intensive-margin">Intensive margin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extensive-margins">Extensive margins</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#behavioural-parameters">Behavioural parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#endogenous-technical-change">Endogenous technical change</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="policies_assessment.html">Policies assessment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="policies_parameters.html">Setting up public policies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="help_installation.html">Installation help</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Policies evaluation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Res-IRF4</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Technical documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/technical_documentation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<section class="tex2jax_ignore mathjax_ignore" id="technical-documentation">
+<h1>Technical documentation</h1>
+<section id="context">
+<h2>Context</h2>
+<section id="overview-of-the-model">
+<h3>Overview of the model</h3>
+<blockquote>
+<div><p>The Res-IRF model<a class="footnote-reference brackets" href="#model" id="id1">1</a> is a tool for simulating energy consumption and energy efficiency improvements in the
+French residential building sector. It currently focuses on space heating as the main usage.
+The rationale for its development is to integrate a detailed description of the energy performance of the dwelling
+stock with a rich description of household behaviour. Res-IRF has been developed to improve the behavioural realism
+that is typically lacking in integrated models of energy demand.</p>
+</div></blockquote>
+<p>Fed by population growth, household income growth and energy prices as exogenous inputs, the model returns construction
+and renovation costs and flows, energy consumption and heating comfort as endogenous outputs (<a class="reference internal" href="#model-figure"><span class="std std-numref">Fig. 1</span></a>).
+This process is iterated on an annual time-step basis. The energy efficiency of a dwelling is characterized by its Energy
+Performance Certificate (EPC, diagnostic de performance énergétique ) and energy efficiency improvements correspond to
+upgrade to one a more efficient label. Energy consumption results from household decisions along three margins: the
+extensive margin of investment – the decision of whether or not to renovate –, the intensive margin of investment – the
+magnitude of the energy efficiency upgrade – and the intensity with which the heating infrastructure is used after
+renovation. Investment decisions are based on a net present value (NPV) calculation that incorporates a number of
+barriers at the source of the so-called ‘energy-efficiency gap’ – the discrepancy between observed energy-efficiency
+levels and those predicted by engineering studies<span id="id2">[<a class="reference internal" href="#id34" title="Adam B. Jaffe and Robert N. Stavins. The energy-efficiency gap What does it mean? Energy Policy, 22(10):804–810, October 1994. URL: https://www.sciencedirect.com/science/article/pii/0301421594901384 (visited on 2021-10-28), doi:10.1016/0301-4215(94)90138-4.">Jaffe and Stavins, 1994</a>]</span>,
+<span id="id3">[<a class="reference internal" href="#id35" title="Kenneth Gillingham, Richard G. Newell, and Karen Palmer. Energy Efficiency Economics and Policy. Annual Review of Resource Economics, 1(1):597–620, 2009. _eprint: https://doi.org/10.1146/annurev.resource.102308.124234. URL: https://doi.org/10.1146/annurev.resource.102308.124234 (visited on 2021-10-28), doi:10.1146/annurev.resource.102308.124234.">Gillingham, Newell, and Palmer, 2009</a>]</span>,
+<span id="id4">[<a class="reference internal" href="#id36" title="Hunt Allcott and Michael Greenstone. Is There an Energy Efficiency Gap? Journal of Economic Perspectives, 26(1):3–28, February 2012. URL: https://www.aeaweb.org/articles?id=10.1257/jep.26.1.3 (visited on 2021-10-28), doi:10.1257/jep.26.1.3.">Allcott and Greenstone, 2012</a>]</span>. These include: myopic expectation of energy prices, hidden costs of
+renovation (e.g., inconvenience associated with insulation works), barriers to collective decision-making within
+homeowner associations, split incentives between landlords and tenants, credit constraints, and the so-called rebound
+effect.</p>
+<figure class="align-default" id="model-figure">
+<img alt="img/elementary_model_structure.png" src="img/elementary_model_structure.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Elementary structure model</span></p>
+</figcaption>
+</figure>
+</section>
+<section id="previous-developments">
+<h3>Previous developments</h3>
+<p>The development of Res-IRF has produced six peer-reviewed articles to this day, of which an overview is provided in
+<a class="reference internal" href="#previous-development"><span class="std std-numref">Table 1</span></a>.</p>
+<p><strong>Overview of achievements with Res-IRF</strong></p>
+<table class="docutils align-default" id="previous-development">
+<caption><span class="caption-number">Table 1 </span><span class="caption-text">Previous Developments</span></caption>
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Version</p></th>
+<th class="head"><p>Peer-reviewed publications</p></th>
+<th class="head"><p>Approach</p></th>
+<th class="head"><p>Main results</p></th>
+<th class="head"><p>Main data source</p></th>
+<th class="head"><p>Main additions to preceding version</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>Giraudet et al., Energy Journal, 2011</p></td>
+<td><p>Policy analysis</p></td>
+<td><p>Policy portfolio considered (energy efficiency subsidies, carbon tax, building codes) does not permit attainment of sectoral energy saving targets</p></td>
+<td><p>ANAH (2008)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Giraudet et al., Energy Economics, 2012*</p></td>
+<td><p>Sensitivity analysis</p></td>
+<td><p>Business as usual reduction in energy use of 37% to 2050, with an additional 21% if barriers to energy efficiency are removed</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Mathy et al., Energy Policy, 2015</p></td>
+<td><p>Policy analysis</p></td>
+<td><p>Carbon dioxide emission reductions of 58% to 81% by 2050</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>Branger et al., Environmental Modelling &amp; Software, 2015*</p></td>
+<td><p>Sensitivity analysis</p></td>
+<td><p>Monte Carlo simulations point to 13% overall uncertainty in model outputs. Morris method of elementary effects identifies energy prices as the most influential variable.</p></td>
+<td></td>
+<td><p>Updating of retrofit costs and heating intensity parameters; introduction of fuel wood and social housing.</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>Giraudet et al., working paper, 2018</p></td>
+<td><p>Policy analysis</p></td>
+<td><p>Policy interactions imply a 10% variation in policy effectiveness</p></td>
+<td><p>Phébus (2013)</p></td>
+<td><p>Comprehensive updating of model parameters; calibration on base year 2012 ; disaggregation of households by income categories.</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Bourgeois et al., ECEEE proceedings, 2019</p></td>
+<td><p>Policy analysis</p></td>
+<td><p>Carbon tax generates more environmental, social and economic benefits when its revenue is recycled as energy efficiency subsidies than as a lump-sum transfer</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>3.1</p></td>
+<td><p>Glotin et al., Energy Economics, 2019*</p></td>
+<td><p>Backtesting</p></td>
+<td><p>Model reproduces past energy consumption with an average percentage error of 1.5%. Analysis reveals inaccuracies in fuel switch due to off-model, politically-driven processes</p></td>
+<td><p>CEREN archives</p></td>
+<td><p>Calibration of version 3.0 on base year 1984 (instead of 2012).</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>Giraudet et al., Energy Policy, 2021*</p></td>
+<td><p>Policy analysis</p></td>
+<td><p>Carbon tax is the most effective, yet most regressive, policy. Subsidy programmes save energy at a cost of €0.05–0.08</p></td>
+<td><p>Phébus (2013)</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>Bourgeois et al., Ecological Economics, 2021</p></td>
+<td><p>Policy analysis</p></td>
+<td><p>Subsidy recycling saves energy and increases comfort more cost-effectively than lump-sum</p></td>
+<td><p>Phébus (2013)</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><em>Note : The symbol * points to the reference that contains the most comprehensive description of the associated version
+of the model. The most comprehensive description of version 3.0 is to be found in the present document.</em></p>
+<p>The documentation reflects the latest version of the model. The model is intended to be input-agnostic and the
+documentation is structured to reflect this paradigm. For the sake of clarity, however, some processes are
+illustrated with numerical examples from version 3.0, which was used in several recent publications.</p>
+</section>
+</section>
+<section id="energy-use">
+<h2>Energy use</h2>
+<p>The model uses two metrics for energy use: the conventional consumption predicted by the EPC label of the dwelling; and
+the actual consumption that determines energy expenditure. The two are linked by the intensity of heating of the heating
+infrastructure, which is an endogenous function of the model.</p>
+<section id="conventional-energy-use">
+<h3>Conventional energy use</h3>
+<p>Integrating new data on specific consumption (kWh/m²/year) and housing surface area (m²) allowed us to improve the
+accuracy of total consumption parameters (kWh/year).</p>
+<section id="specific-consumption">
+<h4>Specific consumption</h4>
+<p>The conventional specfic consumption of an existing dwelling is directly given by its EPC label<a class="footnote-reference brackets" href="#label" id="id5">2</a>. By including a
+precise measurement of the conventional energy consumption of each dwelling, the Phébus-DPE database made it possible to
+estimate for each band an average consumption.</p>
+<p>Since the EPC covers energy consumption for heating, hot water and air conditioning, adjustments are needed to isolate
+the part specifically dedicated to heating. Here again, the Phébus-DPE database, by distinguishing energy between
+heating use, hot water use and photovoltaic production, makes it possible to estimate an average share dedicated to
+heating for each EPC band.</p>
+<p>New dwellings fall into two categories of energy performance:</p>
+<ul class="simple">
+<li><p>Low Energy (LE) level, aligned with the prevailing building code at 50 kWh/m²/year of primary energy,</p></li>
+<li><p>Net Zero Energy (NZ) level, mandating zero consumption, net of production from renewable sources. Since we focus
+on gross energy consumption, we assign a consumption of 40 kWhEP/m²/year to NZ dwellings.</p></li>
+</ul>
+<p>The same coefficient of 0.4 is applied to BBC and BEPOS consumption in order to isolate
+heating from the five usages covered by building code prescriptions (instead of three usages in the case of the EPC in
+existing dwellings). Note that the energy requirements of EPC band A are also net of production from renewable sources.
+Our focus on gross consumption leads us to apply a coefficient that is greater than 1. These calculations are detailed
+in <code class="xref std std-numref docutils literal notranslate"><span class="pre">conventional_energy</span></code>.</p>
+<section id="surface-area">
+<h5>Surface area</h5>
+<p>The same approach was used to set surface area parameters bases on average values estimated on Phébus data, by
+category of dwelling.</p>
+</section>
+</section>
+<section id="actual-energy-use">
+<h4>Actual energy use</h4>
+<p>A growing number of academic studies point to a gap between the conventional energy consumption predicted by energy
+performance certificates and actual energy consumption. The most common explanation is a more intense heating of the
+heating infrastructure after an energy efficiency improvement – a phenomenon commonly referred to as the “rebound
+effect.” <a class="footnote-reference brackets" href="#rebound-effect" id="id6">3</a></p>
+<p>In version 3.0, we included a third variable: household income. This
+development was made possible by several improvements in the data available, including the Phébus database and
+additional work by EDF R&amp;D <span id="id7">[<a class="reference internal" href="#id53" title="Cayla and Osso. Does energy efficiency reduce inequalities? Impact of policies in residential sector on household budget. ECEEE Summer Study, 2013. URL: https://www.eceee.org/library/conference_proceedings/eceee_Summer_Studies/2013/5a-cutting-the-energy-use-of-buildings-projects-and-technologies/does-energy-efficiency-reduce-inequalities-impact-of-policies-in-residential-sector-on-household-budget/ (visited on 2021-10-28).">Cayla and Osso, 2013</a>]</span>, which now connects heating intensity to the
+income share devoted to heating, i.e. conventional expenditure as a percentage of income.</p>
+<p>Heating intensity in Res-IRF follows the equation:</p>
+<div class="math notranslate nohighlight">
+\[\text{Heating Intensity} =-0,191*log(\text{Income share})+0,1105\]</div>
+<p>with:</p>
+<div class="math notranslate nohighlight">
+\[\text{Heating Intensity} = \frac{\text{Actual energy use}}{\text{Conventional energy use}}\]</div>
+<p>and:</p>
+<div class="math notranslate nohighlight">
+\[\text{Income share} =\frac{\text{Energy price} * \text{Surface}* \text{Conventional energy use}}{\text{Income}}\]</div>
+</section>
+<section id="total-energy-use">
+<h4>Total energy use</h4>
+<p>The total final actual energy consumption generated by Res-IRF from data for the initial year differs from the values
+produced by CEREN. These differences are due to differing scopes between the initial building stock and CEREN databases
+and to the adjustments needed to select the main heating fuel.</p>
+<p>To ensure consistency with the CEREN data, which is the reference commonly used in modelling exercises, Res-IRF is
+calibrated to reproduce the final energy consumption given by CEREN for each fuel in the initial year. The resulting
+conversion coefficients applied to the Phebus Building Stock are listed in <code class="xref std std-numref docutils literal notranslate"><span class="pre">calibration_energy</span></code>. They indicate
+that Res-IRF reproduces natural gas and heating oil consumption fairly accurately, with an error of around 5%. On the
+other hand, electricity consumption is clearly overestimated and fuel-wood consumption is greatly underestimated. The
+succinct documentation of the CEREN database did not allow us to clearly identify the reasons for these biases. However,
+it can reasonably be assumed that they are attributable to the procedure for selecting a main heating fuel in Res-IRF,
+which probably implies some substitution of electricity for wood in dwellings that are mainly heated with electricity
+but use wood as auxiliary heating. The difficulties inherent in converting different forms of wood (logs, pellets, etc.)
+into TWh can also explain the differences observed in wood consumption.</p>
+</section>
+</section>
+</section>
+<section id="energy-efficiency-improvements">
+<h2>Energy efficiency improvements</h2>
+<section id="stock-dynamics">
+<h3>Stock dynamics</h3>
+<p>The number of dwellings and their surface area are determined each year in Res-IRF by exogenous projections of
+population and aggregate household income projection. The former is based on <span id="id8">[<a class="reference internal" href="#id42" title="INSEE. Projections de population pour la France métropolitaine à l’horizon 2050 : la population continue de croître et le vieillissement se poursuit. Insee Première n°1089. 2006.">INSEE, 2006</a>]</span>;
+in the absence of an authoritative scenario, the latter is based on a growth assumption of 1.2%/year, which extrapolates
+the trend given by INSEE for the period 2009-2013<a class="footnote-reference brackets" href="#insee" id="id9">4</a>. Based on the annual needs thus determined, the total housing
+stock is divided into two components:</p>
+<ul class="simple">
+<li><p>The stock of “existing dwellings” corresponds to the total stock of the initial year. It is eroded at a rate of
+0.35%/year due to destruction, based on <span id="id10">[<a class="reference internal" href="#id56" title="Allaire, Gaudière, Majchrzak, and Masi. Problématique qualitative et quantitative de la sortie du parc national de bâtiments. 2008.">Allaire, Gaudière, Majchrzak, and Masi, 2008</a>]</span>. Destructions are
+assumed to affect in priority the lowest energy performance labels, based on based on <span id="id11">[<a class="reference internal" href="#id47" title="Jean-Pierre Traisnel. Habitat et développement durable, bilan rétrospectif et prospectif. Les cahiers du CLIP, n°13, pages 74, 2001.">Traisnel, 2001</a>]</span>.</p></li>
+<li><p>New constructions are calculated to match housing needs, determined by total projected housing needs net of the
+existing stock. The cumulative sum of new constructions since the initial year constitutes the stock of “new
+dwellings.”</p></li>
+</ul>
+<p>This specification produces a flow of new constructions of 365,000 in 2013, 357,000 in 2014 and 348,000 in 2015, similar
+to the average of 374,000 given by <span id="id12">[<a class="reference internal" href="#id44" title="INSEE. 374 000 logements supplémentaires chaque année entre 2010 et 2015 – La vacance résidentielle s’accentue. Insee Première n° 1700. 2018. URL: https://www.insee.fr/fr/statistiques/3572689.">INSEE, 2018</a>]</span> over a slightly wider area including the French
+overseas departments and territories, except Mayotte.</p>
+<p>Res-IRF reflects thanks to recent empirical work linking the increase in the share of multi-family housing in the total
+stock to the rate of growth of the total stock housing growth <span id="id13">[<a class="reference internal" href="#id50" title="Fisch, Marfaing, and Rognant. Dynamique d’efficacité énergétique comparée dans le parc de logements individuel et collectif. 2015.">Fisch, Marfaing, and Rognant, 2015</a>]</span>.
+This relationship in particular reflects urbanization effects. The share of owner-occupied and rented
+dwellings is held constant.</p>
+</section>
+<section id="investment-decisions-general-case">
+<h3>Investment decisions – general case</h3>
+<p>The energy performance of the housing stock in Res-IRF is affected by both the construction of new dwellings and the
+renovation of existing ones. Both effects are modelled by discrete choice functions. Generally speaking, the owner of a
+dwelling of initial performance i∈{1…n} chooses to upgrade it to an option of final performance f∈{i+1,…,n} by comparing
+its life-cycle cost to that of other options. The life-cycle cost <span class="math notranslate nohighlight">\(LCC_{i,f}\)</span> of an option is the sum of three terms:</p>
+<div class="math notranslate nohighlight">
+\[LCC_{i,f}= INV_{i,f}+ γ * ENER_f + IC_{i,f}\]</div>
+<p>where INV is the investment cost; ENER is the life-cycle discounted cost of conventional energy use, calculated using
+the energy price for the year under consideration; IC are some “intangible costs,” representing non-energy attributes of
+the investment, such as aesthetic or acoustic benefits, inconvenience generated by insulation works, etc…</p>
+<p>The assumption of myopic expectation, which materializes by applying the discount factor to the contemporaneous energy
+price, is justified by a number of econometric studies <span id="id14">[<a class="reference internal" href="#id55" title="Soren T. Anderson, Ryan Kellogg, and James M. Sallee. What Do Consumers Believe About Future Gasoline Prices? Working Paper 16974, National Bureau of Economic Research, April 2011. Series: Working Paper Series. URL: https://www.nber.org/papers/w16974 (visited on 2021-10-28), doi:10.3386/w16974.">Anderson, Kellogg, and Sallee, 2011</a>]</span> The discount factor γ
+depends on the discount rate r and the investment horizon l according to the following relationship:</p>
+<div class="math notranslate nohighlight">
+\[γ(r,l)=∑_{t=0} (1+r)^{-t} = \frac{1-(1+r)^{-l)}}{r}\]</div>
+<p>The two parameters are set in Res-IRF to capture various barriers to home renovation:</p>
+<ul class="simple">
+<li><p>The discount rate captures both the tighter credit constraints facing lower-income households and the barriers to
+decision-making within homeowner associations.</p></li>
+<li><p>The investment horizon reflects the intensity with which real estate and rental markets capitalize the “green value”
+of the housing, i.e., magnitude of the rental or resale premium for a property that has just undergone energy
+efficiency improvements.</p></li>
+</ul>
+<p>The market share <span class="math notranslate nohighlight">\(MS_{i,f}\)</span> of upgrades from labels i to f, resulting from the aggregation of individual choices, is
+determined by their life-cycle cost from the following equation:</p>
+<div class="math notranslate nohighlight">
+\[MS_{i,f} = \frac{LCC_{i,f}^{-v}}{∑_{k=i+1} LCC_{i,k} ^{-v}}\]</div>
+<p>Parameter v characterizing the heterogeneity of preferences is set to 8 in the model.<a class="footnote-reference brackets" href="#id62" id="id15">5</a>  Intangible costs are
+calibrated so that the observed market shares are reproduced in the initial year.</p>
+<p>The paragraphs thereafter describe in detail the specification of energy efficiency improvements, which are based on two
+types of technical data – the market shares of the different options in the initial year and their investment cost – and
+two types of behavioural data – the discount rate and the investment horizon.</p>
+</section>
+<section id="new-constructions">
+<h3>New constructions</h3>
+<p>Construction costs at the LE and NZ levels have been updated in Res-IRF 3.0 based on estimates recently made available
+by CGDD (2015) <a class="footnote-reference brackets" href="#constructions" id="id16">6</a></p>
+<p>The market shares used to calibrate intangible costs were also updated in 3.0, based on trends provided by CEREN.</p>
+<p>The massive penetration of natural gas at the expense of electric heating observed over the past ten years in
+multi-family housing is mainly due to the anticipation and subsequent application of the 2012 building code. In order to
+abstract from short-term variations, the 2012 market shares are set in Res-IRF on the average of the years 2012-2015 <code class="xref std std-numref docutils literal notranslate"><span class="pre">heating_fuel_construction</span></code>.</p>
+<p>Considering that the quality of new constructions results from decisions made by building and real estate professionals
+rather than by future owners, we subject these decisions in the model to private investment criteria, reflected by a
+discount rate of 7% and a time horizon of 25 years.</p>
+</section>
+<section id="renovation-of-existing-dwellings">
+<h3>Renovation of existing dwellings</h3>
+<p>The model simultaneously determines the number of renovations and their performance. The process is therefore more
+complex than in new construction, where the two margins are distinct. For the sake of clarity, we hereafter describe
+them sequentially.</p>
+<section id="intensive-margin">
+<h4>Intensive margin</h4>
+<p>Renovation costs <span class="math notranslate nohighlight">\(INV_{i,f}\)</span> are described by an upper diagonal matrix linking the initial EPC label i of the dwelling
+to its final label f <code class="xref std std-numref docutils literal notranslate"><span class="pre">renovation_cost</span></code>. Parameterization of the matrix is based on piecemeal data supplemented
+with values interpolated according to the following principles:</p>
+<ul class="simple">
+<li><p>Decreasing returns, i.e., increasing incremental cost of renovation:
+<span class="math notranslate nohighlight">\(INV_{i,f+2}-INV_{i,f+1} &gt; INV_{i,f+1} - INV_{i,f}\)</span></p></li>
+<li><p>Economies of scale, i.e., deep retrofits costing less than a succession of incremental renovations:
+<span class="math notranslate nohighlight">\(INV_{i,f} &lt; INV_{i,i+k} + INV_{i+k,f}\)</span> for all k such that <span class="math notranslate nohighlight">\(1≤k&lt;f-i\)</span></p></li>
+</ul>
+<p>The matrix equally applies to single- and multi-family dwellings, in both private and social housing.</p>
+<p>The same is true for the matrix of market shares used to calibrate intangible costs of renovation, which was based on
+<span id="id17">[<a class="reference internal" href="#id41" title="PUCA. L'habitat existant dans la lutte contre l'effet de serre – évaluer et faire progresser les performances énergétiques et environnementales des OPAH – Bilan de l'évaluation technique. 2015. URL: http://www.urbanisme-puca.gouv.fr/IMG/pdf/bilan_final_opah.pdf (visited on 2021-10-28).">PUCA, 2015</a>]</span> (Table 11).</p>
+<p>Intangible costs are calibrated so that the life-cycle cost model, fed with the investment costs reported in
+<code class="xref std std-numref docutils literal notranslate"><span class="pre">renovation_cost</span></code>, matches the market shares reported in <code class="xref std std-numref docutils literal notranslate"><span class="pre">market_share</span></code>. The resulting intangible
+costs for Res-IRF 3.0 are reported in <code class="xref std std-numref docutils literal notranslate"><span class="pre">intangible_cost</span></code>.</p>
+<p>The costs reported in <code class="xref std std-numref docutils literal notranslate"><span class="pre">renovation_cost</span></code>, weighted by the market shares reported in <code class="xref std std-numref docutils literal notranslate"><span class="pre">market_share</span></code>
+and <code class="xref std std-numref docutils literal notranslate"><span class="pre">renovation_share_ep</span></code>, result in an average renovation cost of 112 €/m², very close to the 110 €/m² value
+given by OPEN (9 978 € of average expenditure compared to 91 m²). Compared to the cumulative energy savings they
+generate (assuming an average lifetime of 26 years), they correspond to an average “negawatt-hour cost” of 83 €/MWh,
+with extreme values of 25 and 446. These values are in line with those recently produced by <span id="id18">[<a class="reference internal" href="#id51" title="DG Trésor. Barrières à l’investissement dans l’efficacité énergétique : quels outils pour quelles économies ? 2017. URL: https://www.tresor.economie.gouv.fr/Ressources/File/434150.">Trésor, 2017</a>]</span>.</p>
+</section>
+<section id="extensive-margins">
+<h4>Extensive margins</h4>
+<p>An upgrade an initial label i is determined by its net present value (NPV), calculated as the sum of the life-cycle cost
+of the different options f∈{i+1,…,n}, weighted by their market share:</p>
+<div class="math notranslate nohighlight">
+\[NPV_i=∑_{f&gt;i}^n MS_{i,f} * LCC_{i,f}\]</div>
+<p>The renovation rate <span class="math notranslate nohighlight">\(τ_i\)</span> of dwellings labelled i is then calculated as a logistic function of the NPV:</p>
+<div class="math notranslate nohighlight">
+\[τ_i=\frac{τ_{max}}{1+(τ_{max}/τ_{min} -1) e^{-ρ(NPV_i- NPV_{min})}}\]</div>
+<p>with <span class="math notranslate nohighlight">\(τ_{min}=0,001%\)</span>, <span class="math notranslate nohighlight">\(NPV_{min}=-1 000€\)</span> and <span class="math notranslate nohighlight">\(τ_{max}=20%\)</span>. The logistic form captures heterogeneity in heating
+preference and habits, assuming they are normally distributed<a class="footnote-reference brackets" href="#distributed" id="id19">7</a>. Parameter ρ is calibrated, for each type of
+decision-maker and each initial label (i.e., 6x6=36 values), so that the NPVs calculated with the subsidies in effect in
+2012 <span id="id20">[<a class="reference internal" href="#id23" title="Louis-Gaëtan Giraudet, Céline Guivarch, and Philippe Quirion. Exploring the potential for energy conservation in French households through hybrid modeling. Energy Economics, 34(2):426–445, March 2012. URL: https://www.sciencedirect.com/science/article/pii/S014098831100140X (visited on 2021-02-22), doi:10.1016/j.eneco.2011.07.010.">Giraudet, Guivarch, and Quirion, 2012</a>]</span> reproduce the renovation rates described in
+<code class="xref std std-numref docutils literal notranslate"><span class="pre">renovation_share_ep</span></code> and <code class="xref std std-numref docutils literal notranslate"><span class="pre">renovation_rate_dm</span></code> and their aggregation represents 3% (686,757
+units) of the housing stock of the initial year.</p>
+</section>
+<section id="behavioural-parameters">
+<h4>Behavioural parameters</h4>
+<section id="discount-rate">
+<h5>Discount rate</h5>
+<p>In private housing, discount rates are differentiated by housing type in order to capture the heterogeneous constraints
+faced by investors <code class="xref std std-numref docutils literal notranslate"><span class="pre">discount_rate_existing</span></code>. Specifically, the discount rates decrease with the owner’s income to reflect
+tighter credit constraints faced by lower-income households. Discount rates are also higher in multi-family housing than
+in single-family homes to capture the difficulties associated with decision-making within homeowner associations. In
+social housing, on the other hand, the discount rate is set at 4%, the value commonly used in public decision-making.</p>
+</section>
+<section id="investment-horizon">
+<h5>Investment horizon</h5>
+<p>The investment horizon is subject to different scenario variants, reflecting different intensities of market
+capitalization of energy savings <code class="xref std std-numref docutils literal notranslate"><span class="pre">investment_horizon</span></code>:</p>
+<ul class="simple">
+<li><p>In the ‘full capitalization’ scenario, the investment horizon corresponds to the entire lifetime of energy retrofits,
+i.e., 30 years for improvements on the envelope and 16 years for the improvements on heating systems. Investors enjoy
+the benefits of the investment as long as they own the property (possibly in the form of higher rents); upon
+reselling, they receive a premium equal to the discounted sum of the residual monetary savings generated by the
+investment.</p></li>
+<li><p>The reference scenario corresponds to a situation where the horizon of landlords is reduced to three years, the
+average term of a lease. This assumption reflects an inability to increase rents in an attempt to recoup investment.
+This situation, often referred to as the “landlord-tenant dilemma,” is the most common in practice <span id="id21">[<a class="reference internal" href="#id29" title="Louis-Gaëtan Giraudet, Sébastien Houde, and Joseph Maher. Moral Hazard and the Energy Efficiency Gap: Theory and Evidence. Journal of the Association of Environmental and Resource Economists, October 2018. URL: https://hal.archives-ouvertes.fr/hal-01420872 (visited on 2021-06-18), doi:10.1086/698446.">Giraudet, Houde, and Maher, 2018</a>]</span>.</p></li>
+<li><p>In the ‘no sale capitalization,’ the investment horizon is limited to seven years, equivalent to the average length of
+ownership of a property. This assumption totally ignores the residual benefits of the investment at the time of
+resale.</p></li>
+<li><p>In the ‘no sale nor rent capitalization’ scenario, the owner-tenant dilemma adds to the lack of capitalization of the
+resale premium.</p></li>
+</ul>
+</section>
+</section>
+<section id="endogenous-technical-change">
+<h4>Endogenous technical change</h4>
+<p>In both new construction and renovation, the life-cycle costs of the various energy efficiency options decrease
+endogenously with their cumulative production. These mechanisms are calibrated as in the previous version of the model
+as follows:</p>
+<ul class="simple">
+<li><p>Investment costs decrease exponentially with the cumulative sum of operations to capture the classical
+“learning-by-doing” process. The rate of cost reduction is set at 15% in new construction and 10% in renovation for a
+doubling of production. The lower value in the former case is motivated by the fact the renovation technologies tend
+to be more mature.</p></li>
+<li><p>Intangible renovation costs decrease according to a logistic curve with the same cumulative production to
+capture peer effects and knowledge diffusion. The rate of decrease is set at 25% for a doubling of cumulative
+production.</p></li>
+</ul>
+<p>In both cases, reductions in the life-cycle cost of an option increase its market share compared to that of alternative
+options.</p>
+<div class="docutils container" id="id22">
+<dl class="citation">
+<dt class="label" id="id34"><span class="brackets"><a class="fn-backref" href="#id2">1</a></span></dt>
+<dd><p>Adam B. Jaffe and Robert N. Stavins. The energy-efficiency gap What does it mean? <em>Energy Policy</em>, 22(10):804–810, October 1994. URL: <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/0301421594901384">https://www.sciencedirect.com/science/article/pii/0301421594901384</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.1016/0301-4215(94)90138-4">doi:10.1016/0301-4215(94)90138-4</a>.</p>
+</dd>
+<dt class="label" id="id35"><span class="brackets"><a class="fn-backref" href="#id3">2</a></span></dt>
+<dd><p>Kenneth Gillingham, Richard G. Newell, and Karen Palmer. Energy Efficiency Economics and Policy. <em>Annual Review of Resource Economics</em>, 1(1):597–620, 2009. _eprint: https://doi.org/10.1146/annurev.resource.102308.124234. URL: <a class="reference external" href="https://doi.org/10.1146/annurev.resource.102308.124234">https://doi.org/10.1146/annurev.resource.102308.124234</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.1146/annurev.resource.102308.124234">doi:10.1146/annurev.resource.102308.124234</a>.</p>
+</dd>
+<dt class="label" id="id36"><span class="brackets"><a class="fn-backref" href="#id4">3</a></span></dt>
+<dd><p>Hunt Allcott and Michael Greenstone. Is There an Energy Efficiency Gap? <em>Journal of Economic Perspectives</em>, 26(1):3–28, February 2012. URL: <a class="reference external" href="https://www.aeaweb.org/articles?id=10.1257/jep.26.1.3">https://www.aeaweb.org/articles?id=10.1257/jep.26.1.3</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.1257/jep.26.1.3">doi:10.1257/jep.26.1.3</a>.</p>
+</dd>
+<dt class="label" id="id53"><span class="brackets"><a class="fn-backref" href="#id7">4</a></span></dt>
+<dd><p>Cayla and Osso. Does energy efficiency reduce inequalities? Impact of policies in residential sector on household budget. <em>ECEEE Summer Study</em>, 2013. URL: <a class="reference external" href="https://www.eceee.org/library/conference_proceedings/eceee_Summer_Studies/2013/5a-cutting-the-energy-use-of-buildings-projects-and-technologies/does-energy-efficiency-reduce-inequalities-impact-of-policies-in-residential-sector-on-household-budget/">https://www.eceee.org/library/conference_proceedings/eceee_Summer_Studies/2013/5a-cutting-the-energy-use-of-buildings-projects-and-technologies/does-energy-efficiency-reduce-inequalities-impact-of-policies-in-residential-sector-on-household-budget/</a> (visited on 2021-10-28).</p>
+</dd>
+<dt class="label" id="id42"><span class="brackets"><a class="fn-backref" href="#id8">5</a></span></dt>
+<dd><p>INSEE. Projections de population pour la France métropolitaine à l’horizon 2050 : la population continue de croître et le vieillissement se poursuit. Insee Première n°1089. 2006.</p>
+</dd>
+<dt class="label" id="id56"><span class="brackets"><a class="fn-backref" href="#id10">6</a></span></dt>
+<dd><p>Allaire, Gaudière, Majchrzak, and Masi. Problématique qualitative et quantitative de la sortie du parc national de bâtiments. 2008.</p>
+</dd>
+<dt class="label" id="id47"><span class="brackets"><a class="fn-backref" href="#id11">7</a></span></dt>
+<dd><p>Jean-Pierre Traisnel. Habitat et développement durable, bilan rétrospectif et prospectif. <em>Les cahiers du CLIP, n°13</em>, pages 74, 2001.</p>
+</dd>
+<dt class="label" id="id44"><span class="brackets"><a class="fn-backref" href="#id12">8</a></span></dt>
+<dd><p>INSEE. 374 000 logements supplémentaires chaque année entre 2010 et 2015 – La vacance résidentielle s’accentue. Insee Première n° 1700. 2018. URL: <a class="reference external" href="https://www.insee.fr/fr/statistiques/3572689">https://www.insee.fr/fr/statistiques/3572689</a>.</p>
+</dd>
+<dt class="label" id="id50"><span class="brackets"><a class="fn-backref" href="#id13">9</a></span></dt>
+<dd><p>Fisch, Marfaing, and Rognant. Dynamique d’efficacité énergétique comparée dans le parc de logements individuel et collectif. 2015.</p>
+</dd>
+<dt class="label" id="id55"><span class="brackets"><a class="fn-backref" href="#id14">10</a></span></dt>
+<dd><p>Soren T. Anderson, Ryan Kellogg, and James M. Sallee. What Do Consumers Believe About Future Gasoline Prices? Working Paper 16974, National Bureau of Economic Research, April 2011. Series: Working Paper Series. URL: <a class="reference external" href="https://www.nber.org/papers/w16974">https://www.nber.org/papers/w16974</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.3386/w16974">doi:10.3386/w16974</a>.</p>
+</dd>
+<dt class="label" id="id41"><span class="brackets"><a class="fn-backref" href="#id17">11</a></span></dt>
+<dd><p>PUCA. L'habitat existant dans la lutte contre l'effet de serre – évaluer et faire progresser les performances énergétiques et environnementales des OPAH – Bilan de l'évaluation technique. 2015. URL: <a class="reference external" href="http://www.urbanisme-puca.gouv.fr/IMG/pdf/bilan_final_opah.pdf">http://www.urbanisme-puca.gouv.fr/IMG/pdf/bilan_final_opah.pdf</a> (visited on 2021-10-28).</p>
+</dd>
+<dt class="label" id="id51"><span class="brackets"><a class="fn-backref" href="#id18">12</a></span></dt>
+<dd><p>DG Trésor. Barrières à l’investissement dans l’efficacité énergétique : quels outils pour quelles économies ? 2017. URL: <a class="reference external" href="https://www.tresor.economie.gouv.fr/Ressources/File/434150">https://www.tresor.economie.gouv.fr/Ressources/File/434150</a>.</p>
+</dd>
+<dt class="label" id="id23"><span class="brackets">13</span><span class="fn-backref">(<a href="#id20">1</a>,<a href="#id59">2</a>)</span></dt>
+<dd><p>Louis-Gaëtan Giraudet, Céline Guivarch, and Philippe Quirion. Exploring the potential for energy conservation in French households through hybrid modeling. <em>Energy Economics</em>, 34(2):426–445, March 2012. URL: <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S014098831100140X">https://www.sciencedirect.com/science/article/pii/S014098831100140X</a> (visited on 2021-02-22), <a class="reference external" href="https://doi.org/10.1016/j.eneco.2011.07.010">doi:10.1016/j.eneco.2011.07.010</a>.</p>
+</dd>
+<dt class="label" id="id29"><span class="brackets"><a class="fn-backref" href="#id21">14</a></span></dt>
+<dd><p>Louis-Gaëtan Giraudet, Sébastien Houde, and Joseph Maher. Moral Hazard and the Energy Efficiency Gap: Theory and Evidence. <em>Journal of the Association of Environmental and Resource Economists</em>, October 2018. URL: <a class="reference external" href="https://hal.archives-ouvertes.fr/hal-01420872">https://hal.archives-ouvertes.fr/hal-01420872</a> (visited on 2021-06-18), <a class="reference external" href="https://doi.org/10.1086/698446">doi:10.1086/698446</a>.</p>
+</dd>
+<dt class="label" id="id32"><span class="brackets"><a class="fn-backref" href="#id58">15</a></span></dt>
+<dd><p>Olivier Sassi, Renaud Crassous, Jean-Charles Hourcade, Vincent Gitz, Henri Waisman, and Celine Guivarch. IMACLIM-R: a modelling framework to simulate sustainable development pathways. <em>International Journal of Global Environmental Issues</em>, 10(1-2):5–24, January 2010. Publisher: Inderscience Publishers. URL: <a class="reference external" href="https://www.inderscienceonline.com/doi/abs/10.1504/IJGENVI.2010.030566">https://www.inderscienceonline.com/doi/abs/10.1504/IJGENVI.2010.030566</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.1504/IJGENVI.2010.030566">doi:10.1504/IJGENVI.2010.030566</a>.</p>
+</dd>
+<dt class="label" id="id33"><span class="brackets"><a class="fn-backref" href="#id60">16</a></span></dt>
+<dd><p>Sandrine Mathy, Meike Fink, and Ruben Bibas. Rethinking the role of scenarios: Participatory scripting of low-carbon scenarios for France. <em>Energy Policy</em>, 77:176–190, February 2015. URL: <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0301421514005709">https://www.sciencedirect.com/science/article/pii/S0301421514005709</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.1016/j.enpol.2014.11.002">doi:10.1016/j.enpol.2014.11.002</a>.</p>
+</dd>
+<dt class="label" id="id54"><span class="brackets"><a class="fn-backref" href="#id61">17</a></span></dt>
+<dd><p>Erdal Aydin, Nils Kok, and Dirk Brounen. Energy efficiency and household behavior: the rebound effect in the residential sector. <em>The RAND Journal of Economics</em>, 48(3):749–782, 2017. _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1111/1756-2171.12190. URL: <a class="reference external" href="https://onlinelibrary.wiley.com/doi/abs/10.1111/1756-2171.12190">https://onlinelibrary.wiley.com/doi/abs/10.1111/1756-2171.12190</a> (visited on 2021-10-28), <a class="reference external" href="https://doi.org/10.1111/1756-2171.12190">doi:10.1111/1756-2171.12190</a>.</p>
+</dd>
+<dt class="label" id="id24"><span class="brackets"><a class="fn-backref" href="#id63">18</a></span></dt>
+<dd><p>Frédéric Branger, Louis-Gaëtan Giraudet, Céline Guivarch, and Philippe Quirion. Global sensitivity analysis of an energy–economy model of the residential building sector. <em>Environmental Modelling &amp; Software</em>, 70:45–54, August 2015. URL: <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S1364815215001097">https://www.sciencedirect.com/science/article/pii/S1364815215001097</a> (visited on 2021-02-22), <a class="reference external" href="https://doi.org/10.1016/j.envsoft.2015.03.021">doi:10.1016/j.envsoft.2015.03.021</a>.</p>
+</dd>
+</dl>
+</div>
+<hr class="footnotes docutils" />
+<dl class="footnote brackets">
+<dt class="label" id="model"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>The acronym Res-IRF stands for the Residential module of IMACLIM-R France. Also developed at CIRED, IMACLIM-R
+France is a general equilibrium model of the French economy <span id="id58">[<a class="reference internal" href="#id32" title="Olivier Sassi, Renaud Crassous, Jean-Charles Hourcade, Vincent Gitz, Henri Waisman, and Celine Guivarch. IMACLIM-R: a modelling framework to simulate sustainable development pathways. International Journal of Global Environmental Issues, 10(1-2):5–24, January 2010. Publisher: Inderscience Publishers. URL: https://www.inderscienceonline.com/doi/abs/10.1504/IJGENVI.2010.030566 (visited on 2021-10-28), doi:10.1504/IJGENVI.2010.030566.">Sassi, Crassous, Hourcade, Gitz, Waisman, and Guivarch, 2010</a>]</span>. The two
+models are linked in <span id="id59">[<a class="reference internal" href="#id23" title="Louis-Gaëtan Giraudet, Céline Guivarch, and Philippe Quirion. Exploring the potential for energy conservation in French households through hybrid modeling. Energy Economics, 34(2):426–445, March 2012. URL: https://www.sciencedirect.com/science/article/pii/S014098831100140X (visited on 2021-02-22), doi:10.1016/j.eneco.2011.07.010.">Giraudet, Guivarch, and Quirion, 2012</a>]</span> and
+<span id="id60">[<a class="reference internal" href="#id33" title="Sandrine Mathy, Meike Fink, and Ruben Bibas. Rethinking the role of scenarios: Participatory scripting of low-carbon scenarios for France. Energy Policy, 77:176–190, February 2015. URL: https://www.sciencedirect.com/science/article/pii/S0301421514005709 (visited on 2021-10-28), doi:10.1016/j.enpol.2014.11.002.">Mathy, Fink, and Bibas, 2015</a>]</span>. The linkage in these papers is ‘soft’ in that it only concerns energy
+markets:
+Res-IRF sends energy demand to IMACLIM-R France which in turn sends back updated energy prices.</p>
+</dd>
+<dt class="label" id="label"><span class="brackets"><a class="fn-backref" href="#id5">2</a></span></dt>
+<dd><p>Final energy consumption is deducted from primary energy consumption by a coefficient of 1 for natural gas,
+heating oil and wood energy and by the conventional coefficient of 1/2.58 that applies to electricity in France.</p>
+</dd>
+<dt class="label" id="rebound-effect"><span class="brackets"><a class="fn-backref" href="#id6">3</a></span></dt>
+<dd><p>See for example <span id="id61">[<a class="reference internal" href="#id54" title="Erdal Aydin, Nils Kok, and Dirk Brounen. Energy efficiency and household behavior: the rebound effect in the residential sector. The RAND Journal of Economics, 48(3):749–782, 2017. _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1111/1756-2171.12190. URL: https://onlinelibrary.wiley.com/doi/abs/10.1111/1756-2171.12190 (visited on 2021-10-28), doi:10.1111/1756-2171.12190.">Aydin, Kok, and Brounen, 2017</a>]</span>. Another explanation sometimes put forward is the pre-bound effect,
+according to which consumption before renovation, from which energy savings are predicted, is overestimated (
+Sunikka-Blank et al., 2012).</p>
+</dd>
+<dt class="label" id="insee"><span class="brackets"><a class="fn-backref" href="#id9">4</a></span></dt>
+<dd><p>Based on a gross disposable household income of €1,318.3 billion in
+2012 (https://www.insee.fr/fr/statistiques/2569356?sommaire=2587886).</p>
+</dd>
+<dt class="label" id="id62"><span class="brackets"><a class="fn-backref" href="#id15">5</a></span></dt>
+<dd><p>In the absence of data allowing a more precise estimate, this value is set in an ad hoc manner. Sensitivity
+analysis of the model has shown that this parameter only had a small influence on the simulated energy consumption <span id="id63">[<a class="reference internal" href="#id24" title="Frédéric Branger, Louis-Gaëtan Giraudet, Céline Guivarch, and Philippe Quirion. Global sensitivity analysis of an energy–economy model of the residential building sector. Environmental Modelling &amp; Software, 70:45–54, August 2015. URL: https://www.sciencedirect.com/science/article/pii/S1364815215001097 (visited on 2021-02-22), doi:10.1016/j.envsoft.2015.03.021.">Branger, Giraudet, Guivarch, and Quirion, 2015</a>]</span>.</p>
+</dd>
+<dt class="label" id="constructions"><span class="brackets"><a class="fn-backref" href="#id16">6</a></span></dt>
+<dd><p>The study does not include information on housing heated with fuel oil or on multi-family homes heated with
+wood. The former are therefore assigned the costs of new buildings heated with natural gas, and the latter the costs of
+single-family homes heated with wood, to which we add the average additional cost of multi-family homes.</p>
+</dd>
+<dt class="label" id="distributed"><span class="brackets"><a class="fn-backref" href="#id19">7</a></span></dt>
+<dd><p>For a micro-founded justification of the logistic form, see Giraudet et al. (2018, Online Appendix, Figure A3).</p>
+</dd>
+</dl>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="readme.html" class="btn btn-neutral float-left" title="Res-IRF" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="policies_assessment.html" class="btn btn-neutral float-right" title="Policies assessment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Lucas Vivier.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

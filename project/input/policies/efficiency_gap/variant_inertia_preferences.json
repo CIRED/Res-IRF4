@@ -1,0 +1,8 @@
+{
+  "inertia_heater": {
+    "start": 2019,
+    "end": 2051,
+    "policy": "regulation",
+    "gest": "heater"
+  }
+}
