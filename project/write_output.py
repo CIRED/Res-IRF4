@@ -389,6 +389,8 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
             temp = temp.squeeze().unstack('Years')
 
             try:
+                if temp.empty or temp.shape[1] == 0:
+                    raise ValueError('No data to plot')
                 make_clusterstackedbar_plot(temp, 'Policies', colors=resources_data['colors'],
                                             format_y=lambda y, _: '{:.0f} B€'.format(y),
                                             save=os.path.join(path, 'policies_validation.png'),
@@ -399,7 +401,7 @@ def plot_scenario(output, stock, buildings, detailed_graph=False):
                 make_area_plot(subset, 'Policies cost (Billion euro)', save=os.path.join(path, 'policies.png'),
                                colors=resources_data['colors'], format_y=lambda y, _: '{:.0f} B€'.format(y),
                                loc='left', left=1.2)
-            except TypeError:
+            except (TypeError, ValueError):
                 pass
 
         else:
