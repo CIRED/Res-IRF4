@@ -436,10 +436,18 @@ def run(path=None, folder=None):
 
     logger.debug('Scenarios: {}'.format(', '.join(configuration.keys())))
     try:
-        logger.debug('Launching processes')
-        with Pool(int(args.cpu)) as pool:
-            results = pool.starmap(res_irf,
-                                   zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
+        # logger.debug('Launching processes')
+        # with Pool(int(args.cpu)) as pool:
+        #    results = pool.starmap(res_irf,
+        #                           zip(configuration.values(), [os.path.join(folder, n) for n in configuration.keys()]))
+        # 
+        logger.debug('Launching processes (Single Thread mode for cProfile)')
+        results = []
+        for config_val, n in zip(configuration.values(), configuration.keys()):
+            save_path = os.path.join(folder, n)
+            # 让主程序亲自调用 res_irf，这样 cProfile 就能看清里面的一切了！
+            res = res_irf(config_val, save_path) 
+            results.append(res)
         result = {i[0]: i[1] for i in results}
         # stocks = {i[0]: i[2] for i in results}
 
@@ -467,7 +475,8 @@ def run(path=None, folder=None):
         logger.debug('Run time: {:,.0f} minutes.'.format((time() - start) / 60))
     except Exception as e:
         logger.exception(e)
-        raise e
+        print('An error occurred during the execution. Please check the log file for more details.')
+        # raise e
 
 
 if __name__ == '__main__':

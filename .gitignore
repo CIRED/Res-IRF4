@@ -8,6 +8,7 @@
 .vscode/
 .~*
 *.out
+*.ipynb
 /project/.spyproject/
 /ResIRF.egg-info/
 /project/test.py

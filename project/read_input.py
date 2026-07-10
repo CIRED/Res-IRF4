@@ -176,7 +176,7 @@ class PublicPolicy:
             self.value = value
 
 # ==============================================================================
-# New version Res-IRF-AC 4.1 ：Urban/Rural split
+# New version Res-IRF-AC 4.1: Urban/Rural split
 # ==============================================================================
 def _split_urban_rural(stock: pd.Series, config: dict) -> pd.Series:
     urb_cfg = (config.get("urban_rural", {}) or {})
@@ -218,7 +218,7 @@ def _split_urban_rural(stock: pd.Series, config: dict) -> pd.Series:
     # ==================================================================
     if a.isna().any():
         missing_count = a.isna().sum()
-        print(f"⚠️ [Warning - ini Stock] {missing_count} cannot find urban percentage ！Forced to keep them as Urban(1.0) to prevent stock loss.")
+        print(f"⚠️ [Warning - ini Stock] {missing_count} cannot find urban percentage! Forced to keep them as Urban(1.0) to prevent stock loss.")
         a = a.fillna(1.0)  
     # ==================================================================
 
@@ -255,7 +255,7 @@ def _split_urban_rural_any(x, config, area_level="Area"):
     # ==================================================================
     if a.isna().any():
         missing_count = a.isna().sum()
-        print(f"⚠️ [Warning - ini Stock] {missing_count} cannot find urban percentage ！Forced to keep them as Urban(1.0) to prevent stock loss.")
+        print(f"⚠️ [Warning - ini Stock] {missing_count} cannot find urban percentage! Forced to keep them as Urban(1.0) to prevent stock loss.")
         a = a.fillna(1.0)
     # ==================================================================
 
@@ -367,7 +367,7 @@ def read_stock(config):
     assert_almost_equal(stock.sum(), stock_sum)
 
     # ==========================================================================
-    # New：Urban/Rural split stock
+    # New: Urban/Rural split stock
     # ==========================================================================
     stock = _split_urban_rural(stock, config)
 

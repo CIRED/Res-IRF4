@@ -247,8 +247,10 @@ def reindex_mi(df, mi_index, levels=None, axis=0):
             levels = df.columns.names
 
     if len(levels) > 1:
-        tuple_index = (mi_index.get_level_values(level).tolist() for level in levels)
-        new_miindex = pd.MultiIndex.from_tuples(list(zip(*tuple_index)))
+        # tuple_index = (mi_index.get_level_values(level).tolist() for level in levels)
+        # new_miindex = pd.MultiIndex.from_tuples(list(zip(*tuple_index)))
+        arrays = [mi_index.get_level_values(level) for level in levels]
+        new_miindex = pd.MultiIndex.from_arrays(arrays, names=levels)
         if axis == 0:
             df = df.reorder_levels(levels)
         else:

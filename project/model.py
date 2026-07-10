@@ -523,8 +523,14 @@ def stock_turnover(buildings, prices, taxes, cost_heater, cost_insulation, frequ
     buildings.logger.info('Writing output')
     if output_options == 'full':
         buildings.logger.debug('Full output')
-        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
-                                                   bill_rebate=bill_rebate)
+        # --- Time check (to be removed) ---
+        start_parse = time()
+        stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes, bill_rebate=bill_rebate)
+        buildings.logger.info(f"DEBUG TIMING: parse_output_run took {time() - start_parse:.2f} seconds")
+        
+        # stock, output = buildings.parse_output_run(prices, post_inputs, climate=climate, step=step, taxes=taxes,
+        #                                            bill_rebate=bill_rebate)
+        # --- Time check (to be removed) ---
     elif output_options == 'cost_benefit':
         buildings.logger.debug('Cost-benefit output')
         stock = buildings.simplified_stock().rename(year)
@@ -649,8 +655,13 @@ def res_irf(config, path, level_logger='DEBUG'):
         inputs_dynamics = initialize(inputs, stock, year, taxes, path=path, config=config, logger=logger)
         buildings, energy_prices = inputs_dynamics['buildings'], inputs_dynamics['energy_prices']
         technical_progress = inputs_dynamics['technical_progress']
+        buildings.config = config
+        buildings.ratio_surface = inputs['ratio_surface']
 
-        output, stock = pd.DataFrame(), pd.DataFrame()
+        output_list = []
+        stock_list = []
+        full_stock_list = []
+        
         buildings.logger.info('Calibration energy consumption {}'.format(buildings.first_year))
 
         if config['output'] == 'full' and buildings.path_ini is not None:
@@ -674,34 +685,20 @@ def res_irf(config, path, level_logger='DEBUG'):
 
         s, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
                                           taxes=taxes)
-        
+
         # =========================================================
-        # 🟢 PATCH 1 (Safe Version): 劫持宏观汇总表 s，安全注入 Area 维度
+        # PATCH 1 
         # =========================================================
-        # 1. 获取官方要求输出的层级（比如 ['Year', 'Housing type', 'Performance']）
         levels_stock = list(s.index.names)
-        
-        # 2. 如果原始底表有 Area，我们强行把它加进输出要求名单
         if 'Area' in buildings.stock.index.names and 'Area' not in levels_stock:
             levels_stock.append('Area')
             
-        # 3. 核心安全机制！过滤掉底表里当前还不存在的幽灵列（防止 KeyError: 'Performance'）
         safe_levels = [lvl for lvl in levels_stock if lvl in buildings.stock.index.names]
+        s_patched = buildings.stock.groupby(level=safe_levels).sum().rename(buildings.first_year)
         
-        # 4. 用过滤后绝对安全的列进行底表分组求和
-        s_patched = buildings.stock.groupby(safe_levels).sum().rename(buildings.first_year)
-        
-        # 5. 合并并重设正确的表头
-        stock = pd.concat((stock, s_patched), axis=1)
-        stock.index.names = safe_levels
-        
-        output = pd.concat((output, o), axis=1)
-        # =========================================================
-        
-        # =========================================================
-        # 🟢 PATCH 2 (A): 高效的内存收集器 (替代会报错崩溃的死循环读写)
-        # =========================================================
-        full_stock_list = []
+        stock_list.append(s_patched)
+        output_list.append(o)
+
         if config.get('full_stock_output'):
             full_stock_list.append(buildings.stock.rename(buildings.first_year))
         # =========================================================
@@ -726,9 +723,9 @@ def res_irf(config, path, level_logger='DEBUG'):
                 if p.variable:
                     p.end = config['start'] + 2
 
+        # --------------------- LOOP STARTS -----------------------
         for k, year in enumerate(years):
             buildings.logger.info('Iteration {}'.format(year))
-
             start = time()
 
             if year == config['end'] - 1:
@@ -815,21 +812,65 @@ def res_irf(config, path, level_logger='DEBUG'):
                                              credit_constraint=config['financing_cost'].get('credit_constraint', True))
 
             # =========================================================
-            # 🟢 PATCH 1 (Safe Version 续): 循环计算每年的安全汇总表
+            # OPTIMIZATION 2: Index Masking for cool roof
             # =========================================================
-            # 因为每年的建筑底表列名可能变动，我们在每一年都要重新校验安全名单
+            start_albedo = time()
+            if hasattr(buildings, 'new_cool_roof_adopters_index') and len(buildings.new_cool_roof_adopters_index) > 0:
+                try:
+                    adopters_df = buildings.new_cool_roof_adopters_index.to_frame(index=False)
+                    
+                    cols_to_drop = [c for c in ['Heating system', 'Cooling system', 'Performance'] if c in adopters_df.columns]
+                    adopters_df = adopters_df.drop(columns=cols_to_drop)
+                    
+                    rename_map = {'Cooling system eol': 'Cooling system', 'Heating system final': 'Heating system', 'Performance final': 'Performance'}
+                    adopters_df = adopters_df.rename(columns=rename_map)
+                    
+                    merge_cols = [c for c in adopters_df.columns if c in buildings.stock.index.names and c != 'roof_albedo']
+                    
+                    if merge_cols:
+                        idx_df = buildings.stock.index.to_frame(index=False)
+                        idx_df['_row_id'] = range(len(idx_df))
+                        
+                        adopters_match_df = adopters_df[merge_cols].drop_duplicates()
+                        matched = idx_df[merge_cols + ['_row_id']].merge(adopters_match_df, on=merge_cols, how='inner')
+                        row_ids = matched['_row_id'].values
+                        
+                        if len(row_ids) > 0:
+                            flow_out = buildings.stock.iloc[row_ids]
+                            
+                            arrays = [flow_out.index.get_level_values(i) for i in range(flow_out.index.nlevels)]
+                            albedo_idx = flow_out.index.names.index('roof_albedo')
+                            
+                            arrays[albedo_idx] = ['0.8'] * len(row_ids)
+                            
+                            new_mi = pd.MultiIndex.from_arrays(arrays, names=flow_out.index.names)
+                            flow_in = pd.Series(flow_out.values, index=new_mi, name=buildings.stock.name)
+                            
+                            flow_in = flow_in.groupby(level=flow_in.index.names).sum()
+                            
+                            buildings.stock = buildings.stock.sub(flow_out, fill_value=0.0).add(flow_in, fill_value=0.0)
+                            
+                            buildings.stock = buildings.stock[buildings.stock > 1e-5]
+                            
+                            buildings.stock = buildings.stock.sort_index()
+                            
+                            buildings.logger.info(f"SUCCESS: Permanent memory applied. Upgraded roof_albedo to 0.8 for {len(row_ids)} building segments.")
+                except Exception as e:
+                    buildings.logger.warning(f"WARNING: Permanent memory injection failed: {e}. Simulation continues without memory.")
+                    
+                buildings.new_cool_roof_adopters_index = pd.Index([])
+            buildings.logger.info(f"DEBUG TIMING: Roof Albedo injection took {time() - start_albedo:.2f} seconds")    
+            # =========================================================
+
+            # =========================================================
+            # PATCH 1: 
+            # =========================================================
             safe_levels_current = [lvl for lvl in levels_stock if lvl in buildings.stock.index.names]
+            s_patched = buildings.stock.groupby(level=safe_levels_current).sum().rename(year)
             
-            s_patched = buildings.stock.groupby(safe_levels_current).sum().rename(year)
-            stock = pd.concat((stock, s_patched), axis=1)
-            stock.index.names = safe_levels_current  # 保留包含 Area 的表头
+            stock_list.append(s_patched)
+            output_list.append(o)
             
-            output = pd.concat((output, o), axis=1)
-            # =========================================================
-            
-            # =========================================================
-            # 🟢 PATCH 2 (B): 将每一年的完整数据切片加入内存列表
-            # =========================================================
             if config.get('full_stock_output'):
                 full_stock_list.append(buildings.stock.rename(year))
             # =========================================================
@@ -861,6 +902,13 @@ def res_irf(config, path, level_logger='DEBUG'):
                                  axis=0)
                 temp.to_csv(os.path.join(buildings.path, 'subsidies_distortion.csv'))
 
+        # --------------------- LOOP ENDS -----------------------
+
+        # OPTIMIZATION 3: One single concatenation of all yearly outputs instead of multiple concatenations
+        buildings.logger.info('Concatenating all yearly outputs...')
+        stock = pd.concat(stock_list, axis=1)
+        output = pd.concat(output_list, axis=1)
+
         if path is not None:
             buildings.logger.info('Writing output in {}'.format(path))
 
@@ -870,14 +918,10 @@ def res_irf(config, path, level_logger='DEBUG'):
             output.round(3).to_csv(os.path.join(path, 'output.csv'))
             buildings.logger.info('Dumping output in {}'.format(os.path.join(path, 'output.csv')))
 
-            # =========================================================
-            # 🟢 PATCH 2 (C): 循环全部结束，一次性极速写入完整的 full_stock
-            # =========================================================
             if config.get('full_stock_output') and full_stock_list:
                 buildings.logger.info('Writing full_stock.csv ...')
                 full_stock_df = pd.concat(full_stock_list, axis=1)
                 full_stock_df.to_csv(os.path.join(path, 'full_stock.csv'))
-            # =========================================================
             
             if config['output'] == 'full':
                 stock.round(2).to_csv(os.path.join(path, 'stock.csv'))

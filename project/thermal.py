@@ -346,43 +346,43 @@ def conventional_heating_need(
                         conventional_heating_need._has_printed_wind = True
                     # ==================================================================
                     is_urban = cfg.get('urban_rural', {}).get('activated', False)
-                    # 判断当前是否激活了城乡差异
+                    # Check if urban/rural differentiation is activated in the configuration. If not, use the 'All' wind speed value.
                     is_urban_activated = cfg.get('urban_rural', {}).get('activated', False)
                     
                     if not is_urban_activated:
                         wind_speed_from_file = float(ws_data.loc[(current_zcl, 'Winter'), 'All'])
                     else:
-                        # ==== 激活了城乡差异 ====
+                        # ==== Urban/Rural ====
                         
-                        # 尝试1：看顶层是否直接通过字典传了具体的 area (例如 'Urban' 或 'Rural')
+                        # First test: check if area is specified ('Urban' or 'Rural')
                         current_area = zcl_thermal_parameters.get('area')
                         if current_area in ['Urban', 'Rural']:
                             wind_speed_from_file = float(ws_data.loc[(current_zcl, 'Winter'), current_area])
                             
-                        # 尝试2：如果字典里没传，看看建筑存量矩阵 (u_wall) 的索引里有没有城乡标识列
+                        # Second test: if not passed in the dictionary, check the index of the building stock matrix (u_wall) for urban/rural identifiers
                         else:
-                            # 寻找名为 'area', 'urban', 'rural' 相关的 MultiIndex 层级
+                            # Search for MultiIndex levels related to 'area', 'urban', 'rural'
                             possible_names = [n for n in u_wall.index.names if n and ('urban' in n.lower() or n.lower() == 'area')]
                             
                             if possible_names:
                                 area_level = possible_names[0]
                                 
-                                # 读取 CSV 里对应的三个标量风速
+                                # Read the three scalar wind speeds from the CSV
                                 v_all = float(ws_data.loc[(current_zcl, 'Winter'), 'All'])
                                 v_urban = float(ws_data.loc[(current_zcl, 'Winter'), 'Urban'])
                                 v_rural = float(ws_data.loc[(current_zcl, 'Winter'), 'Rural'])
                                 
-                                # 此时风速不再是一个标量，而是变成了一个和建筑矩阵完全对齐的 Pandas Series
+                                # At this point, wind speed is no longer a scalar but a Pandas Series aligned with the building matrix
                                 wind_speed_from_file = pd.Series(v_all, index=u_wall.index)
                                 
-                                # 根据 Index 的值进行向量化掩码赋值 (兼容大小写)
+                                # Index vectorized mask assignment for urban and rural areas
                                 idx_urban = u_wall.index.get_level_values(area_level).astype(str).str.lower().isin(['urban', 'urbain'])
                                 idx_rural = u_wall.index.get_level_values(area_level).astype(str).str.lower().isin(['rural'])
                                 
                                 wind_speed_from_file.loc[idx_urban] = v_urban
                                 wind_speed_from_file.loc[idx_rural] = v_rural
                                 
-                            # 兜底：既没传参，矩阵里也没对应层级，回退到 All 以防崩溃
+                            #  Third test: if no urban/rural information is found, default to the 'All' wind speed value
                             else:
                                 wind_speed_from_file = float(ws_data.loc[(current_zcl, 'Winter'), 'All'])
 
