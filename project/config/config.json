@@ -11,7 +11,7 @@
     "add_policies": null,
     "remove_policies": null,
     "policies_scenarios": null,
-    "no_natural_replacement": null
+    "no_natural_replacement": false
   },
   "sensitivity": {
     "activated": false

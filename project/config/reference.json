@@ -107,7 +107,7 @@
       "income": "project/input/macro/income.csv",
       "income_rate": 0.008,
       "rotation_rate": "project/input/macro/rotation_rate.csv",
-      "consumption_ini": "project/input/macro/consumption_ini.csv",
+      "consumption_ini": "project/input/macro/consumption_ini_agg.csv",
       "present_discount_rate": "project/input/investment/present_discount_rate.csv",
       "vat_heating_system": "project/input/macro/vat_heating_system.csv",
       "population": null,
@@ -138,12 +138,12 @@
       "income_constant": false,
       "prices_constant": false,
       "heating_system": {
-        "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
-        "Natural gas-Standard boiler": "Natural gas-Performance boiler",
-        "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
-        "Natural gas-Collective boiler": "Natural gas-Performance boiler",
-        "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
-        "Electricity-Heat pump air": "Electricity-Heat pump water"
+      "Oil fuel-Standard boiler": "Oil fuel-Performance boiler",
+      "Natural gas-Standard boiler": "Natural gas-Performance boiler",
+      "Wood fuel-Standard boiler": "Wood fuel-Performance boiler",
+      "Natural gas-Collective boiler": "Natural gas-Performance boiler",
+      "Oil fuel-Collective boiler": "Oil fuel-Performance boiler",
+      "Electricity-Heat pump air": "Electricity-Heat pump water"
       },
       "insulation": false,
       "no_heating_switch": false,

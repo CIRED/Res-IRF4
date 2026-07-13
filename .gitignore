@@ -19,6 +19,8 @@
 /project/config/validation/
 /project/test
 /project/input/stock/buildingstock_sdes2018_medium_3.csv
+/project/input/stock/20241205_buildingstock_sdes2023_medium_3.csv
+/project/input/stock/20241205_buildingstock_sdes2023_update.csv
 /project/analysis/
 /project/input/macro/_old/
 /project/input/policies/_old/
@@ -34,5 +36,7 @@ __pycache__/
 **/__pycache__
 *.py[cod]
 /project/config/hidden_cost/
+/venv/*
+/.vscode/launch.json
 /project/input/stock/buildingstock_sdes2018_medium_3_update.csv
 /project/input/stock/buildingstock_sdes2018_update.csv

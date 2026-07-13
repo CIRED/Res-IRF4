@@ -125,7 +125,8 @@
         "mpr_efficacite",
         "mpr_serenite",
         "mpr_performance",
-        "mpr_multifamily"
+        "mpr_multifamily",
+        "mpr_multifamily_updated"
       ],
       "target": "energy_condition_50",
       "policy": "subsidy_ad_valorem"
@@ -139,6 +140,7 @@
         "mpr_serenite",
         "mpr_performance",
         "mpr_multifamily",
+        "mpr_multifamily_updated",
         "mpr_multifamily_deep",
         "mpr",
         "mpr_efficacite",
@@ -163,6 +165,7 @@
         "mpr_performance",
         "mpr_multifamily",
         "mpr_multifamily_deep",
+        "mpr_multifamily_updated",
         "mpr",
         "mpr_efficacite",
         "cite",
