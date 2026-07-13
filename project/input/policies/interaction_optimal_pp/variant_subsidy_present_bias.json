@@ -1,0 +1,10 @@
+{
+    "subsidy_present_bias": {
+      "start": 2019,
+      "end": 2051,
+      "gest": [
+        "insulation"
+      ],
+      "policy": "subsidy_present_bias"
+    }
+}

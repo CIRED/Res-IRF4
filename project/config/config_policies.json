@@ -1,6 +1,6 @@
 {
   "scenarios": {
-    "activated": true,
+    "activated": false,
     "current_policies": true,
     "no_policy": true,
     "prices_constant": null,
@@ -25,27 +25,25 @@
         "option": "share_fg",
         "target": 0.4
       }
-    ]
-  },
-  "Reference": {
+    ],
+      "CarbonTax": {
     "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
+    "end": 2031,
     "policies": {
-      "file": "project/input/policies/policies_2021.json"
+      "file": "project/input/policies/policies_calibration.json",
+      "carbon_tax": {
+        "start": 2017,
+        "end": 2051,
+        "tax": "project/input/policies/carbon_value.csv",
+        "emission": "project/input/policies/current/carbon_tax_emission.csv",
+        "recycling": null,
+        "recycling_ini": null
+      }
     }
   },
-  "Package2024": {
-    "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
-    "policies": {
-      "file": "project/input/policies/policies_2024.json"
-    }},
   "Package2024Ban": {
     "file": "project/config/reference.json",
-    "step": 1,
-    "end": 2051,
+    "end": 2031,
     "policies": {
       "file": "project/input/policies/policies_2024.json",
       "restriction_gas": {
@@ -54,20 +52,78 @@
         "value": "Natural gas",
         "policy": "restriction_energy"
       }
-    }},
-  "CarbonTax": {
+    }
+  }
+  },
+  "Reference": {
     "file": "project/config/reference.json",
-    "step": 1,
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_calibration.json"
+    }
+  },
+  "Package2024": {
+    "file": "project/config/reference.json",
+    "end": 2051,
+    "policies": {
+      "file": "project/input/policies/policies_2024.json"
+    }},
+  "NoMF": {
+    "file": "project/config/reference.json",
     "end": 2051,
     "policies": {
       "file": "project/input/policies/policies_calibration.json",
-      "carbon_tax": {
-        "start": 2017,
+      "credit_constraint": {
+        "start": 2019,
         "end": 2051,
-        "tax": "project/input/policies/current/carbon_tax_value.csv",
+        "policy": "credit_constraint",
+        "gest": [
+          "insulation",
+          "heater"
+        ]
+      },
+      "health_cost": {
+          "start": 2019,
+          "end": 2051,
+          "policy": "regulation",
+          "gest": ["insulation"]
+        },
+      "carbon_tax_vsc": {
+        "start": 2019,
+        "end": 2051,
+        "tax": "project/input/policies/carbon_value.csv",
         "emission": "project/input/policies/current/carbon_tax_emission.csv",
-        "recycling": true,
-        "recycling_ini": false
+        "recycling": null,
+        "policy": "carbon_tax"
+      },
+      "landlord_dilemma": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      },
+      "multi_family": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "insulation"
+      },
+      "present_bias": {
+        "start": 2019,
+        "end": 2051,
+        "value": 0.032,
+        "policy": "regulation",
+        "gest": [
+          "heater",
+          "insulation"
+        ]
+      },
+      "status_quo_bias": {
+        "start": 2019,
+        "end": 2051,
+        "policy": "regulation",
+        "gest": "heater",
+        "value": 0.2
       }
     }
   }

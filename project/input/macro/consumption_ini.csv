@@ -1,6 +1,11 @@
-Heating energy,
-Electricity,38
-Natural gas,132
-Oil fuel,43
-Wood fuel,74
-Heating,11
+Housing type,Energy,
+Single-family,Wood fuel,69.143
+Single-family,Electricity,25.408
+Single-family,Heating,0
+Single-family,Natural gas,66.583
+Single-family,Oil fuel,35.268
+Multi-family,Wood fuel,0
+Multi-family,Electricity,10.961
+Multi-family,Heating,10.823
+Multi-family,Natural gas,53.803
+Multi-family,Oil fuel,4.773

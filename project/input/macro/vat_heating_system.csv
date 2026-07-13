@@ -1,0 +1,11 @@
+﻿Heating system final,
+Electricity-Heat pump water,0.1
+Electricity-Heat pump air,0.1
+Electricity-Direct electric,0.1
+Electricity-Wood stove,0.1
+Natural gas-Performance boiler,0.1
+Natural gas-Collective boiler,0.1
+Oil fuel-Performance boiler,0.1
+Oil fuel-Collective boiler,0.1
+Wood fuel-Performance boiler,0.1
+Heating-District heating,0.1

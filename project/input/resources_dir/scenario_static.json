@@ -1,0 +1,178 @@
+{
+  "Deep insulation, private": {
+    "measures": "deep_insulation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null
+  },
+  "Global insulation, private": {
+    "measures": "global_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": null
+  },
+  "Deep renovation, private": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null
+  },
+  "Deep renovation, social": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": true
+  },
+  "I, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_energy": false,
+    "include_carbon": null
+  },
+  "I-E, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null
+  },
+  "I-C, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_energy": false,
+    "include_carbon": true
+  },
+  "I-E-C, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": null
+  },
+  "I-C-S, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_energy": false,
+    "include_carbon": true,
+    "include_health": true
+  },
+  "I-E-S, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": null,
+    "include_health": "include_health"
+  },
+  "I-E-C-S, isolation": {
+    "measures": "deep_insulation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": true
+  },
+  "I, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_energy": false,
+    "include_carbon": null
+  },
+  "I-E-C-S": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": true
+  },
+  "I-E-S": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": null,
+    "include_health": true
+  },
+  "I-E-C": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": null
+  },
+  "I-E social discount": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": null
+  },
+  "I-E": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null
+  },
+  "I-E-MF Bailleurs": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures_landlords": true
+  },
+  "I-E-MF Bailleurs + Collectifs": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures": true
+  },
+  "I-E-MF Contrainte crédit": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures": true,
+    "include_credit_constraint": true
+  },
+  "I-E-S, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": null,
+    "include_health": true
+  },
+  "I-E-C-S, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": true
+  },
+    "I-E social discount, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": null
+  },
+  "I-E, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null
+  },
+  "I-E-MF, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures": true
+  },
+  "I-E-MF Contrainte crédit, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures": true,
+    "include_credit_constraint": true
+  },
+  "I-E-MF Bailleurs, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures_landlords": true
+  },
+  "I-E-MF Collectifs, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "private_discount_rate",
+    "include_carbon": null,
+    "include_failures_multi": true
+  },
+  "I-E-C, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_carbon": true,
+    "include_health": null
+  },
+  "I-C-S, isolation & chauffage": {
+    "measures": "deep_renovation",
+    "discount_rate": "social_discount_rate",
+    "include_energy": false,
+    "include_carbon": true,
+    "include_health": true
+  }
+}

@@ -1,6 +1,6 @@
 Year,Heating system,
 2015,Electricity-Heat pump water,2.5
-2015,Electricity-Performance boiler,0.95
+2015,Electricity-Direct electric,0.95
 2015,Natural gas-Performance boiler,0.76
 2015,Natural gas-Standard boiler,0.6
 2015,Oil fuel-Performance boiler,0.76
@@ -12,7 +12,7 @@ Year,Heating system,
 2015,Oil fuel-Collective boiler,0.76
 2015,Heating-District heating,0.76
 2030,Electricity-Heat pump water,3
-2030,Electricity-Performance boiler,0.95
+2030,Electricity-Direct electric,0.95
 2030,Natural gas-Performance boiler,0.76
 2030,Natural gas-Standard boiler,0.6
 2030,Oil fuel-Performance boiler,0.76
@@ -24,7 +24,7 @@ Year,Heating system,
 2030,Oil fuel-Collective boiler,0.76
 2030,Heating-District heating,0.76
 2040,Electricity-Heat pump water,4
-2040,Electricity-Performance boiler,0.95
+2040,Electricity-Direct electric,0.95
 2040,Natural gas-Performance boiler,0.76
 2040,Natural gas-Standard boiler,0.6
 2040,Oil fuel-Performance boiler,0.76
@@ -36,7 +36,7 @@ Year,Heating system,
 2040,Oil fuel-Collective boiler,0.76
 2040,Heating-District heating,0.76
 2050,Electricity-Heat pump water,4
-2050,Electricity-Performance boiler,0.95
+2050,Electricity-Direct electric,0.95
 2050,Natural gas-Performance boiler,0.76
 2050,Natural gas-Standard boiler,0.6
 2050,Oil fuel-Performance boiler,0.76

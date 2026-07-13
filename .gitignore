@@ -28,16 +28,15 @@
 /project/input/revealed_data/_old/
 /project/config/coupling/old/
 /project/input/investment/_old/
-/project/input/sfec/
-/project/config/sfec/
-/project/input/stock/
-
+*sfec*
+*stock*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 **/__pycache__
 *.py[cod]
 /project/config/hidden_cost/
-
 /venv/*
 /.vscode/launch.json
+/project/input/stock/buildingstock_sdes2018_medium_3_update.csv
+/project/input/stock/buildingstock_sdes2018_update.csv

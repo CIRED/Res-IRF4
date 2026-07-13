@@ -1,0 +1,9 @@
+{
+  "status_quo_bias": {
+    "start": 2019,
+    "end": 2051,
+    "policy": "regulation",
+    "gest": "heater",
+    "value": 0.2
+  }
+}

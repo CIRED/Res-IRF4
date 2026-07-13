@@ -1,0 +1,10 @@
+{
+    "subsidy_status_quo": {
+      "start": 2019,
+      "end": 2051,
+      "policy": "subsidy_status_quo",
+      "gest": [
+        "heater"
+      ]
+    }
+}

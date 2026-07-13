@@ -1,0 +1,13 @@
+{
+  "zero_interest_loan": {
+        "start": 2019,
+        "end": 2051,
+        "cost_max": 15000,
+        "gest": ["insulation"],
+        "value": 0.0,
+        "duration": 15,
+        "public_cost": 0.015,
+        "policy": "zero_interest_loan",
+        "target": null
+    }
+}

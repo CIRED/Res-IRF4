@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "module": "project.main",
-            "args": ["--config","project/config/config.json"]
+            "args": ["--config","project/config/sfec/ame24/config_ame_24.json"]
         }
     ]
 }
