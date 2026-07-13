@@ -250,11 +250,9 @@ def read_policies(config):
     # TODO: target should be a list with combination of simple condition.
     def read_mpr(data):
         l = list()
-        heater = get_series(data['heater']).unstack('Heating system final')
-        if 'Year' in heater.index.names:
-            heater = {y: heater.loc[heater.index.get_level_values('Year') == y, :].droplevel('Year') for y in
-                      heater.index.get_level_values('Year').unique()}
-        elif data.get('growth_heater'):
+        heater = get_pandas(data['heater'],
+                            lambda x: pd.read_csv(x, index_col=[0, 1]).squeeze().unstack('Heating system final'))
+        if data.get('growth_heater'):
             growth_heater = get_pandas(data['growth_heater'], lambda x: pd.read_csv(x, index_col=[0], header=None).squeeze())
             heater = {k: i * heater for k, i in growth_heater.items()}
 
@@ -281,16 +279,12 @@ def read_policies(config):
                                   target='out_worst', year_stop=data.get('year_stop'),
                                   years_stop=data.get('years_stop')))
 
-        if data['heater'] is not None:
-            l.append(PublicPolicy(data['name'], data['start'], data['end'], heater, 'subsidy_target',
-                                  gest='heater',
-                                  year_stop=data.get('year_stop'),
-                                  years_stop=data.get('years_stop')))
-        if data['insulation'] is not None:
-            l.append(PublicPolicy(data['name'], data['start'], data['end'], insulation, 'subsidy_target',
-                                  gest='insulation',
-                                  target=data.get('target'), year_stop=data.get('year_stop'),
-                                  years_stop=data.get('years_stop')))
+        l.append(PublicPolicy(data['name'], data['start'], data['end'], heater, 'subsidy_target', gest='heater',
+                              year_stop=data.get('year_stop'),
+                              years_stop=data.get('years_stop')))
+        l.append(PublicPolicy(data['name'], data['start'], data['end'], insulation, 'subsidy_target', gest='insulation',
+                              target=data.get('target'), year_stop=data.get('year_stop'),
+                              years_stop=data.get('years_stop')))
 
         return l
 
@@ -341,44 +335,36 @@ def read_policies(config):
         else:
             raise NotImplemented
 
-        if data['cumac_heater'] is not None:
-            cumac_heater = get_series(data['cumac_heater'])
-            cee_heater = cumac_heater * cee_value / 1000
-            cee_heater = cee_heater.unstack('Heating system final')
-            cee_heater = {y: cee_heater.loc[cee_heater.index.get_level_values('Year') == y, :].droplevel('Year') for y in
-                          cee_heater.index.get_level_values('Year').unique()}
+        cumac_heater = get_series(data['cumac_heater'])
+        cee_heater = cumac_heater * cee_value / 1000
+        cee_heater = cee_heater.unstack('Heating system final')
+        cee_heater = {y: cee_heater.loc[cee_heater.index.get_level_values('Year') == y, :].droplevel('Year') for y in
+                      cee_heater.index.get_level_values('Year').unique()}
 
-            l.append(PublicPolicy('cee', data['start'], data['end'], cee_heater, 'subsidy_target', gest='heater',
-                                  social_housing=True, year_stop=data.get('year_stop'), years_stop=data.get('years_stop')))
+        cumac_insulation = get_series(data['cumac_insulation'])
+        cee_insulation = cumac_insulation * cee_value / 1000
+        cee_insulation = cee_insulation.unstack('Insulation').rename_axis(None, axis=1)
+        cee_insulation = {y: cee_insulation.loc[cee_insulation.index.get_level_values('Year') == y, :].squeeze() for y
+                          in cee_insulation.index.get_level_values('Year').unique()}
 
+        bonus_heater = get_series(data['bonus_heater']['value']).unstack('Heating system final')
+        bonus_heater = bonus_heater.reindex(cee_heater[data['start']].columns, axis=1).fillna(0)
+        end = min(data['bonus_heater']['end'], data['end'])
+        l.append(PublicPolicy('cee', data['bonus_heater']['start'], end, bonus_heater, 'bonus', gest='heater',
+                              social_housing=True, year_stop=data.get('year_stop'),
+                              years_stop=data.get('years_stop')))
 
-            bonus_heater = get_series(data['bonus_heater']['value']).unstack('Heating system final')
-            bonus_heater = bonus_heater.reindex(cee_heater[data['start']].columns, axis=1).fillna(0)
-            if 'Year' in bonus_heater.index.names:
-                bonus_heater = {y: bonus_heater.loc[bonus_heater.index.get_level_values('Year') == y, :].droplevel('Year') for y in
-                                bonus_heater.index.get_level_values('Year').unique()}
-            end = min(data['bonus_heater']['end'], data['end'])
-            l.append(PublicPolicy('cee', data['bonus_heater']['start'], end, bonus_heater, 'bonus', gest='heater',
-                                  social_housing=True, year_stop=data.get('year_stop'),
-                                  years_stop=data.get('years_stop')))
+        bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))
 
-        if data['cumac_insulation'] is not None:
-            cumac_insulation = get_series(data['cumac_insulation'])
-            cee_insulation = cumac_insulation * cee_value / 1000
-            cee_insulation = cee_insulation.unstack('Insulation').rename_axis(None, axis=1)
-            cee_insulation = {y: cee_insulation.loc[cee_insulation.index.get_level_values('Year') == y, :].squeeze() for y
-                              in cee_insulation.index.get_level_values('Year').unique()}
+        end = min(data['bonus_heater']['end'], data['end'])
+        l.append(PublicPolicy('cee', data['bonus_insulation']['start'], end, bonus_insulation, 'bonus',
+                              gest='insulation', social_housing=True, year_stop=data.get('year_stop'),
+                              years_stop=data.get('years_stop')))
 
-            bonus_insulation = get_pandas(data['bonus_insulation']['value'], lambda x: pd.read_csv(x, index_col=[0]))
-
-            end = min(data['bonus_heater']['end'], data['end'])
-            l.append(PublicPolicy('cee', data['bonus_insulation']['start'], end, bonus_insulation, 'bonus',
-                                  gest='insulation', social_housing=True, year_stop=data.get('year_stop'),
-                                  years_stop=data.get('years_stop')))
-
-            l.append(PublicPolicy('cee', data['start'], data['end'], cee_insulation, 'subsidy_target',
-                                  gest='insulation', social_housing=True, year_stop=data.get('year_stop'),
-                                  years_stop=data.get('years_stop')))
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_heater, 'subsidy_target', gest='heater',
+                              social_housing=True, year_stop=data.get('year_stop'), years_stop=data.get('years_stop')))
+        l.append(PublicPolicy('cee', data['start'], data['end'], cee_insulation, 'subsidy_target', gest='insulation',
+                              social_housing=True, year_stop=data.get('year_stop'), years_stop=data.get('years_stop')))
 
         coefficient_obligation = get_pandas(data['coefficient_obligation'], lambda x: pd.read_csv(x, index_col=[0])).rename_axis('Energy', axis=1)
         cee_tax = (coefficient_obligation.T * cee_value).T / 1000
@@ -520,10 +506,9 @@ def read_policies(config):
     def read_proportional(data):
         l = list()
 
-        value = data.get('value')
+        value = data['value']
         if isinstance(value, str):
             value = get_series(data['value'])
-            value = value.to_dict()
 
         by = 'index'
         if data.get('index') is not None:
@@ -604,25 +589,7 @@ def read_policies(config):
         return l
 
     def read_regulation(data):
-        if isinstance(data['gest'], list):
-            l = list()
-            for gest in data['gest']:
-                l.append(PublicPolicy(data['name'], data['start'], data['end'], data.get('value'), data['policy'], gest=gest))
-            return l
-        else:
-            return [PublicPolicy(data['name'], data['start'], data['end'], data.get('value'), data['policy'], gest=data['gest'])]
-
-    def read_standard_policy(data):
-        l = list()
-        if isinstance(data['gest'], str):
-            gest = [data['gest']]
-        else:
-            gest = data['gest']
-
-        for g in gest:
-            l.append(PublicPolicy(data['name'], data['start'], data['end'], None, data['policy'],
-                                  gest=g))
-        return l
+        return [PublicPolicy(data['name'], data['start'], data['end'], None, 'regulation', gest=data['gest'])]
 
     read = {'mpr': read_mpr,
             'mpr_variant': read_mpr,
@@ -638,9 +605,6 @@ def read_policies(config):
             'mpr_serenite_multifamily_variant': read_mpr_serenite,
             'cee': read_cee,
             'cee_variant': read_cee,
-            'cee_2018': read_cee,
-            'cee_2021': read_cee,
-            'cee_2024': read_cee,
             'cap': read_cap,
             'cap_updated': read_cap,
             'cap_variant': read_cee,
@@ -661,8 +625,6 @@ def read_policies(config):
         else:
             if item.get('policy') == 'subsidy_ad_valorem':
                 list_policies += read_ad_valorem(item)
-            elif item.get('policy') == 'wco':
-                list_policies += read_cee(item)
             elif item.get('policy') == 'subsidy_proportional':
                 list_policies += read_proportional(item)
             elif item.get('policy') == 'zero_interest_loan':
@@ -677,15 +639,6 @@ def read_policies(config):
                 list_policies += read_obligation(item)
             elif item.get('policy') == 'regulation':
                 list_policies += read_regulation(item)
-            elif item.get('policy') == 'credit_constraint':
-                list_policies += read_regulation(item)
-            elif item.get('policy') == 'carbon_tax':
-                list_policies += read_carbon_tax(item)
-            elif item.get('policy') == 'subsidy_cap':
-                list_policies += read_cap(item)
-            elif item.get('policy') in ['subsidy_present_bias', 'subsidy_multi_family', 'subsidy_landlord',
-                                        'tax_status_quo', 'subsidy_status_quo']:
-                list_policies += read_standard_policy(item)
             else:
                 print('{} reading function is not implemented'.format(key))
 
@@ -741,8 +694,6 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'energy_vat': get_series(config['energy']['energy_vat'], header=None)})
 
-    inputs.update({'vat_heater': get_series(config['macro']['vat_heating_system'], header=[0])})
-
     inputs.update({'cost_heater': get_series(config['technical']['cost_heater'], header=[0])})
 
     inputs.update({'efficiency': get_series(config['technical']['efficiency'], header=[0])})
@@ -753,7 +704,7 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'cost_insulation': get_series(config['technical']['cost_insulation'], header=[0])})
 
-    inputs.update({'frequency_insulation': config['renovation']['frequency_insulation']})
+    inputs.update({'lifetime_insulation': config['renovation']['lifetime_insulation']})
 
     inputs.update({'performance_insulation_renovation': get_series(config['technical']['performance_insulation_renovation'], header=None).to_dict()})
 
@@ -927,6 +878,9 @@ def read_inputs(config, other_inputs=generic_input):
     else:
         inputs.update({'use_subsidies': pd.Series(dtype=float)})
 
+    if 'implicit_discount_rate' in config.keys():
+        inputs['implicit_discount_rate'] = get_series(config['implicit_discount_rate'])
+
     if 'hourly_profile' in config['technical'].keys():
         temp = get_series(config['technical']['hourly_profile'], header=None)
         temp.index = pd.TimedeltaIndex(range(0, 24), unit='h')
@@ -937,12 +891,17 @@ def read_inputs(config, other_inputs=generic_input):
         temp_idx = get_series(inputs['input_financing']['upfront_max']).index
         inputs['input_financing']['upfront_max'] = pd.Series(100000, index=temp_idx)
         inputs['input_financing']['saving_rate'] = pd.Series(0, index=idx)
-        inputs['input_financing']['interest_rate'] = pd.Series(0.1, index=idx)
+        inputs['input_financing']['interest_rate'] = pd.Series(0, index=idx)
 
     else:
         inputs['input_financing']['upfront_max'] = get_series(inputs['input_financing']['upfront_max'])
         inputs['input_financing']['saving_rate'] = get_series(inputs['input_financing']['saving_rate'], header=None)
         inputs['input_financing']['interest_rate'] = get_series(inputs['input_financing']['interest_rate'], header=None)
+
+    if config['energy'].get('pef_elec'):
+        df = pd.read_csv(config['energy']['pef_elec'])
+        pef_elec = pd.Series(df['Electricity'].values, index=pd.Index(df['Year'].values, name='Year'), name=None)
+        inputs['pef_elec'] = pef_elec
 
     return inputs
 
@@ -966,6 +925,25 @@ def parse_inputs(inputs, taxes, config, stock):
     dict
         Parsed input
     """
+
+    # Fill missing years in a Pandas DataFrame or Series by copying values from the previous year.
+    def fill_missing_years(data, start_year=config['start'], end_year=config['end']):
+
+        if isinstance(data, pd.Series) and data.index.name == 'Year':
+            full_years = list(range(start_year, end_year + 1))
+            df = data.reindex(full_years)
+            df = df.ffill()
+            return df
+
+        if 'Year' in data.index.names:
+            df = data.unstack(level='Year')
+            full_years = list(range(start_year, end_year + 1))
+            df = df.reindex(columns=full_years)
+            df = df.ffill(axis=1)
+            df = df.stack('Year')
+            return df
+
+        raise ValueError("L'index doit contenir 'Year'.")
 
     idx = range(config['start'], config['end'])
 
@@ -1185,6 +1163,9 @@ def parse_inputs(inputs, taxes, config, stock):
                                  'information_rate': config['switch_heater']['information_rate']}
     parsed_inputs.update({'premature_replacement': premature_replacement})
 
+    if inputs.get('pef_elec') is not None:
+        parsed_inputs['pef_elec'] = fill_missing_years(inputs['pef_elec'], config['start'], config['end'])
+
     return parsed_inputs
 
 
@@ -1335,6 +1316,8 @@ def data2dict_inputs(data, metadata):
             parsed_input.update({variables: Series(df['value'].values, index=df['index'].values).to_dict()})
 
     return parsed_input
+
+
 
 
 def create_simple_policy(start, end, value=0.3, gest='insulation'):

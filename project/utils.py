@@ -35,8 +35,6 @@ from pathlib import Path, PosixPath, WindowsPath
 import sys
 import json
 import re
-from matplotlib.lines import Line2D
-
 DECILES2QUINTILES = {'D1': 'C1', 'D2': 'C1',
                      'D3': 'C2', 'D4': 'C2',
                      'D5': 'C3', 'D6': 'C3',
@@ -410,27 +408,6 @@ def calculate_annuities(capex, lifetime=50, discount_rate=0.032):
     return capex * factor
 
 
-def factor_annuities(lifetime=50, discount_rate=0.032):
-    if isinstance(discount_rate, (float, int, np.float64, np.int64)):
-        if discount_rate == 0:
-            return 1 / lifetime
-    factor = discount_rate / (1 - (1 + discount_rate) ** (-lifetime))
-    if isinstance(factor, (pd.Series, pd.DataFrame)):
-        factor.fillna(1 / lifetime, inplace=True)
-    return factor
-
-
-def calculate_loan_annuity(capex, lifetime=50, discount_rate=0.032):
-    if isinstance(discount_rate, (float, int, np.float64, np.int64)):
-        if discount_rate == 0:
-            return capex / lifetime
-    factor = (discount_rate * (1 + discount_rate) ** lifetime) / ((1 + discount_rate) ** lifetime - 1)
-
-    if isinstance(factor, (pd.Series, pd.DataFrame)):
-        factor.fillna(1 / lifetime, inplace=True)
-    return capex * factor
-
-
 def calculate_average(df, lifetime=50, discount_rate=0.032):
     idx = range(df.index[0], df.index[0] + lifetime)
     discount_series = pd.Series([(1 + discount_rate) ** -i for i in range(lifetime)], index=idx)
@@ -449,7 +426,6 @@ def add_no_renovation(df):
     temp = pd.concat((no_renovation, temp), axis=1)
     temp.columns.names = df.columns.names
     return temp
-
 
 def conditional_expectation(x):
     """
@@ -484,13 +460,7 @@ def make_policies_tables(policies, path, plot=True):
                    'restriction_energy': 'Restriction energy',
                    'subsidies_cap': 'Subsidy, cap',
                    'regulation': 'Regulation instrument',
-                   'credit_constraint': 'Regulation instrument',
-                   'zero_interest_loan': 'Regulated loan',
-                   'subsidy_present_bias': 'Behavioral instrument',
-                   'subsidy_multi_family': 'Regulation instrument',
-                   'subsidy_landlord': 'Regulation instrument',
-                   'tax_status_quo': 'Tax',
-                   'subsidy_status_quo': 'Subsidy, bonus'
+                   'zero_interest_loan': 'Regulated loan'
                    }
 
     heater_replace = {'Electricity-Heat pump air': 'HP-air',
@@ -642,8 +612,7 @@ def make_sensitivity_tables(table_result, path):
 
 
 def format_ax(ax, y_label=None, title=None, format_x=None,
-              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None,
-              horizontal=False):
+              format_y=lambda y, _: y, ymin=0, ymax=None, xinteger=True, xmin=None, xmax=None):
     """
 
     Parameters
@@ -662,14 +631,13 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(True)
     ax.spines['left'].set_visible(True)
+
     ax.set_facecolor('none')
     ax.grid(False)
 
     ax.xaxis.set_tick_params(which=u'both', length=0)
     ax.yaxis.set_tick_params(which=u'both', length=0)
-    if horizontal is False:
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
-
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(format_y))
     if format_x is not None:
         ax.xaxis.set_major_formatter(plt.FuncFormatter(format_x))
 
@@ -690,7 +658,7 @@ def format_ax(ax, y_label=None, title=None, format_x=None,
         ax.set_xlim(xmax=xmax, xmin=xmin)
 
     if ymin is not None:
-        ax.set_ylim(ymin=ymin)
+        ax.set_ylim(ymin=0)
         _, y_max = ax.get_ylim()
         ax.set_ylim(ymax=y_max * 1.1)
 
@@ -796,7 +764,7 @@ def make_plot(df, y_label, colors=None, format_x=None, format_y=lambda y, _: y, 
 def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None, scatter=None, legend=True,
                integer=False, loc='upper', left=1.04, ymax=None, ymin=0, format_x=None, hlines=None,
                scatter_dict=None, labels=None, order_legend='reverse', x_tick_interval=None, ncol=3, xmin=None,
-               xmax=None, export_csv=False):
+               xmax=None):
     """Make plot.
 
     Parameters
@@ -824,10 +792,6 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
         else:
             df.plot(ax=ax, color=colors, style=STYLES)
 
-        if export_csv is True:
-            save_csv = save.replace('.png', f'_{key}.csv')
-            df.to_csv(save_csv)
-
         if scatter_dict is not None:
             if key in scatter_dict.keys():
                 item = scatter_dict[key]
@@ -840,7 +804,7 @@ def make_plots(dict_df, y_label, colors=None, format_y=lambda y, _: y, save=None
     if scatter is not None:
         scatter.plot(ax=ax, style='.', ms=15, c='red')
 
-    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=integer, ymax=ymax, format_x=format_x,
+    ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, ymax=ymax, format_x=format_x,
                    xmin=xmin, xmax=xmax)
 
     if x_tick_interval is not None:
@@ -906,8 +870,7 @@ def stack_catplot(x, y, cat, stack, data, palette, y_label, save=None, leg_title
 
 
 def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y, _: y, format_x=lambda x, _: x,
-                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True,
-                      xmax=None, ymax=None, diagonal_line=False, s=30):
+                      save=None, xmin=None, ymin=None, col_size=None, leg_title=None, col_colors=None, annotate=True):
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
 
     colors = None
@@ -925,7 +888,7 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
             scatter = ax.scatter(x=df[x], y=df[y], s=size, c=colors)
 
     else:
-        ax.scatter(x=df[x], y=df[y], s=s, c=colors)
+        ax.scatter(x=df[x], y=df[y], s=30, c=colors)
 
     if annotate:
         for k, v in df.iterrows():
@@ -936,14 +899,7 @@ def make_scatter_plot(df, x, y, x_label, y_label, hlines=None, format_y=lambda y
     if hlines is not None:
         ax.axhline(y=hlines, linewidth=1, color='grey')
 
-    if diagonal_line:
-        xlims = ax.get_xlim()
-        ax.plot([xlims[0], xlims[1]],
-                [xlims[0], xlims[1]],
-                linestyle='-', color='black', linewidth=1)
-
-    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin,
-                   ymax=ymax, xmax=xmax)
+    ax = format_ax(ax, title=y_label, format_y=format_y, format_x=format_x, ymin=ymin, xmin=xmin)
     ax.set(xlabel=x_label, ylabel=None)
 
     if col_size is not None:
@@ -972,7 +928,7 @@ def make_swarmplot(df, y_label, hue=None, colors=None, hue_order=None, format_y=
 
 
 def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
-                 title=None, format_y=lambda y, _: y):
+                 title=None):
 
     g = sns.relplot(
         data=df, x=x, y=y,
@@ -982,7 +938,7 @@ def make_relplot(df, x, y, col=None, hue=None, palette=None, save=None,
     )
     for k, ax in g.axes_dict.items():
         ax.set(xlabel=None, ylabel=None)
-        format_ax(ax, format_y=format_y, ymin=None, ymax=None, xinteger=False)
+        format_ax(ax, format_y=lambda y, _: '{:.0%}'.format(y), ymin=None, ymax=None, xinteger=False)
         ax.set_title(k, fontsize=15)
 
     if title is not None:
@@ -1243,9 +1199,8 @@ def make_clusterstackedbar_plot(df, groupby, colors=None, format_y=lambda y, _: 
 
 def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fonttick=18, color=None,
                              save=None, subplot_groups=['Housing type', 'Occupancy status'],
-                             index_group='Income tenant', stack_group='Type',
-                             annotate='{:.0f}€', annotate_bis=None, replace_legend=None,
-                             figtitle=None):
+                             index_group='Income tenant', stack_group='Type', ncol=None,
+                             annotate='{:.0f}€', bottom=0.1):
     """Make stacked bar plot.
 
     Parameters
@@ -1260,8 +1215,8 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
     # Pivot the DataFrame to get the necessary structure for a stacked bar plot
     df.name = 'Value'
     pivot_df = df.reset_index().pivot_table(index=subplot_groups + [index_group],
-                                            columns=stack_group,
-                                            values='Value').reset_index()
+                                                 columns=stack_group,
+                                                 values='Value').reset_index()
 
     fig, axes = plt.subplots(2, 2, figsize=(12.8, 9.6), sharey=True)
     axes = axes.flatten()
@@ -1272,20 +1227,15 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         group.drop(subplot_groups, axis=1, inplace=True)
         group.plot(kind='bar', stacked=True, ax=axes[i], title=f'{housing_type} | {occupancy_status}', rot=0,
                    color=color)
-        # remove bold from ax title
-
-        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick, fontweight='normal')
+        axes[i].set_title(f'{housing_type} | {occupancy_status}', fontsize=fonttick)
         axes[i].set_xlabel('')
         axes[i].set_ylabel('')
         axes[i].spines['top'].set_visible(False)
         axes[i].spines['right'].set_visible(False)
         axes[i].spines['left'].set_visible(False)
-        axes[i].spines['bottom'].set_visible(False)
         axes[i].set_xticklabels(group.index, rotation=0)
         axes[i].tick_params(axis='x', labelsize=fonttick, length=0)
         axes[i].tick_params(axis='y', labelsize=fonttick, length=0)
-
-        axes[i].axhline(y=0, color='black', linewidth=1.3)
 
         # use the function format_y to format the y-ticks
         axes[i].yaxis.set_major_formatter(plt.FuncFormatter(format_y))
@@ -1298,48 +1248,29 @@ def make_stacked_bar_subplot(df, format_y=lambda y, _: '{:.0f}€'.format(y), fo
         if annotate is not None:
             for index, row in group.iterrows():
                 total = row.sum()
-                # add margin to the total value
-                margin = 0.05
-                axes[i].annotate(annotate.format(total), (index, total + margin), ha='center', va='bottom', fontsize=fonttick)
+                axes[i].annotate(annotate.format(total), (index, total), ha='center', va='bottom', fontsize=fonttick)
                 axes[i].plot(index, total, marker='d', color='black', markersize=5)
-
-                if annotate_bis is not None:
-                    total = row[annotate_bis].sum()
-                    axes[i].plot(index, total, marker='x', color='red', markersize=5)
 
         # group.sum(axis=1)
 
     # Adjust legend
-    if replace_legend is not None:
-        labels = [replace_legend[i] for i in labels]
-
-    fig.legend(handles, labels, loc='center left', fontsize=fonttick, frameon=False,
-               bbox_to_anchor=(1, 0.5))
-
-    if figtitle is not None:
-        fig.suptitle(figtitle, x=0.5, y=1, weight='bold', color='black', size=fonttick)
-
-    if annotate_bis is not None:
-        custom_handles = [
-            Line2D([0], [0], marker='d', color='black', lw=0, label='With subsidies'),
-            Line2D([0], [0], marker='x', color='red', lw=0, label='Without subsidy'),
-        ]
-
-        # Add the additional legend
-        # Adjust the bbox_to_anchor values as needed to place the second legend
-        fig.legend(handles=custom_handles, loc='upper left', bbox_to_anchor=(1, 0.8), fontsize=fonttick, frameon=False)
+    try:
+        if ncol is None:
+            ncol = len(labels)
+        fig.legend(handles, labels, loc='lower center', ncol=ncol, fontsize=fonttick, frameon=False,
+                bbox_to_anchor=(0.5, 0))
+    except UnboundLocalError:
+        pass
 
     plt.tight_layout()
-    # plt.subplots_adjust(right=0.2)  # Adjust the bottom margin
+    plt.subplots_adjust(bottom=bottom)  # Adjust the bottom margin
     if save is not None:
-        fig.savefig(save, bbox_inches='tight')
-        plt.close(fig)
+        plt.savefig(save, bbox_inches='tight')
 
 
 def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save=None, ncol=3,
                          ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
-                         scatterplot=None, fontxtick=16, scatterplot_bis=None, legend_label='Social benefits',
-                         annotate='{:.0f}'):
+                         scatterplot=None, fontxtick=16):
     """Make stackedbar plot.
 
     Parameters
@@ -1349,23 +1280,9 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
     colors: dict
     format_y: function
     save: str, optional
-    ncol: int, default 3
-    ymin: float, optional
-    hline: float, optional
-    lineplot: pd.Series, default None
-    rotation: int, default 0
-    loc: str, default 'left'
-    left: float, default 1.04
-    xmin: int, default None
-    scatterplot: pd.Series, default None
-    fontxtick: int, default 16
-    scatterplot_bis: dict, default None
-    legend_label: str, default 'Social benefits'
-    annotate: str, default '{:.0f}'
     """
     df.index = df.index.astype(str)
     fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-    markers = ['o', 'd', 's', '^', 'v', '<', '>', 'p', 'h', 'H', 'D', 'P', 'X']
 
     if colors is None:
         df.plot(ax=ax, kind='bar', stacked=True, linewidth=0)
@@ -1380,162 +1297,30 @@ def make_stackedbar_plot(df, y_label, colors=None, format_y=lambda y, _: y, save
         lineplot.plot(ax=ax, kind='line', color='black', marker='*')
         # lineplot.rename('data').reset_index().plot(ax=ax, kind='scatter', x='index', y='data')
 
-    custom_handles, i = [], 0
     if scatterplot is not None:
         scatterplot.index = scatterplot.index.astype(str)
         scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
         scatterplot.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
-                         color='black', s=50, xlabel=None, marker=markers[i])
-        custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=legend_label))
-        i += 1
+                         color='black', s=50, xlabel=None)
 
         y_range = abs(ax.get_ylim()[1] - ax.get_ylim()[0])
         for _, y in scatterplot.iterrows():
-            ax.annotate(annotate.format(y['Value']), (y['Attribute'], y['Value'] + y_range / 40), ha="center")
-
-    if scatterplot_bis is not None:
-        for k, item in scatterplot_bis.items():
-            item.index = item.index.astype(str)
-            item = item.reset_index().set_axis(['Attribute', 'Value'], axis=1)
-            item.plot(kind='scatter', x='Attribute', y='Value', legend=False, zorder=10, ax=ax,
-                      color='black', s=50, xlabel=None, marker=markers[i])
-            custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=k))
-            i += 1
+            ax.annotate("{:,.0f} B€".format(y['Value']), (y['Attribute'], y['Value'] + y_range / 20), ha="center")
 
     ax = format_ax(ax, title=y_label, format_y=format_y, ymin=ymin, xinteger=True, xmin=xmin)
 
     ax.spines['left'].set_visible(False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=rotation)
+    # ax.set_xticklabels(df.index, rotation=rotation)
 
     ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
     ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=16)
     ax.set(xlabel=None, ylabel=None)
 
     format_legend(ax, loc=loc, left=left)
-
-    if scatterplot_bis is not None:
-
-        # Add the additional legend
-        # Adjust the bbox_to_anchor values as needed to place the second legend
-        # Retrieve the existing handles and labels
-        existing_handles, existing_labels = ax.get_legend_handles_labels()
-
-        # Combine existing handles/labels with the new ones
-        all_handles = custom_handles + existing_handles
-        all_labels = [handle.get_label() for handle in custom_handles] + existing_labels
-
-        # Create a unified legend with all handles and labels
-        # Adjust the bbox_to_anchor values as needed to place the legend
-        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
-                        frameon=False)
-
-        texts = leg.get_texts()
-        for text in texts:
-            text.set_color(COLOR)
-
     save_fig(fig, save=save)
 
-
-def make_horizontal_stackedbar_plot(df, y_label, colors=None, format_x=lambda y, _: y, save=None, ncol=3,
-                                    ymin=0, hline=None, lineplot=None, rotation=0, loc='left', left=1.04, xmin=None,
-                                    scatterplot=None, fontxtick=16, scatterplot_bis=None,
-                                    legend_label='Social benefits',
-                                    annotate='{:.0f}'):
-    """Make stackedbar plot.
-
-    Parameters
-    ----------
-    df: pd.DataFrame
-    y_label: str
-    colors: dict
-    format_x: function
-    save: str, optional
-    ncol: int, default 3
-    ymin: float, optional
-    hline: float, optional
-    lineplot: pd.Series, default None
-    rotation: int, default 0
-    loc: str, default 'left'
-    left: float, default 1.04
-    xmin: int, default None
-    scatterplot: pd.Series, default None
-    fontxtick: int, default 16
-    scatterplot_bis: dict, default None
-    legend_label: str, default 'Social benefits'
-    annotate: str, default '{:.0f}'
-    """
-    df.index = df.index.astype(str)
-    fig, ax = plt.subplots(1, 1, figsize=(12.8, 9.6))
-    markers = ['o', 'd', 's', '^', 'v', '<', '>', 'p', 'h', 'H', 'D', 'P', 'X']
-
-    if colors is None:
-        df.plot(ax=ax, kind='barh', stacked=True, linewidth=0)
-    else:
-        df.plot(ax=ax, kind='barh', stacked=True, color=colors, linewidth=0)
-
-    if hline is not None:
-        ax.axvline(x=hline, linewidth=1, color='grey')
-
-    if lineplot is not None:
-        lineplot.index = lineplot.index.astype(str)
-        lineplot.plot(ax=ax, kind='line', color='black', marker='*')
-
-    custom_handles, i = [], 0
-    if scatterplot is not None:
-        scatterplot.index = scatterplot.index.astype(str)
-        scatterplot = scatterplot.reset_index().set_axis(['Attribute', 'Value'], axis=1)
-        scatterplot.plot(kind='scatter', x='Value', y='Attribute', legend=False, zorder=10, ax=ax,
-                         color='black', s=50, ylabel=None, marker=markers[i])
-        custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=legend_label))
-        i += 1
-
-        x_range = abs(ax.get_xlim()[1] - ax.get_xlim()[0])
-        for _, x in scatterplot.iterrows():
-            ax.annotate(annotate.format(x['Value']), (x['Value'] + x_range / 40, x['Attribute']), va="center")
-
-    if scatterplot_bis is not None:
-        for k, item in scatterplot_bis.items():
-            item.index = item.index.astype(str)
-            item = item.reset_index().set_axis(['Attribute', 'Value'], axis=1)
-            item.plot(kind='scatter', x='Value', y='Attribute', legend=False, zorder=10, ax=ax,
-                      color='black', s=50, ylabel=None, marker=markers[i])
-            custom_handles.append(Line2D([0], [0], marker=markers[i], color='black', lw=0, label=k))
-            i += 1
-
-    ax = format_ax(ax, title=y_label, format_x=format_x, xmin=xmin, horizontal=True, ymin=None)
-
-    ax.spines['bottom'].set_visible(False)
-
-    # plt.setp(ax.yaxis.get_majorticklabels(), rotation=rotation)
-
-    ax.xaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
-    ax.yaxis.set_tick_params(which=u'both', length=0, labelsize=fontxtick)
-    ax.set(xlabel=None, ylabel=None)
-
-    format_legend(ax, loc=loc, left=left)
-
-    if scatterplot_bis is not None:
-
-        # Add the additional legend
-        # Adjust the bbox_to_anchor values as needed to place the second legend
-        # Retrieve the existing handles and labels
-        existing_handles, existing_labels = ax.get_legend_handles_labels()
-
-        # Combine existing handles/labels with the new ones
-        all_handles = custom_handles + existing_handles
-        all_labels = [handle.get_label() for handle in custom_handles] + existing_labels
-
-        # Create a unified legend with all handles and labels
-        # Adjust the bbox_to_anchor values as needed to place the legend
-        leg = ax.legend(handles=all_handles, labels=all_labels, loc='upper center', bbox_to_anchor=(left, 0.7),
-                        frameon=False)
-
-        texts = leg.get_texts()
-        for text in texts:
-            text.set_color('black')
-
-    save_fig(fig, save=save)
 
 def waterfall_chart(df, title=None, save=None, colors=None, figsize=(12.8, 9.6)):
     """Make waterfall chart. Used for Social Economic Assessment.
@@ -1690,7 +1475,6 @@ def plot_ldmi_method(channel, emission, colors=None, rotation=0, save=None,
     ax.tick_params(axis='both', which='major', labelsize=14)
     save_fig(fig, save=save)
 
-
 def make_uncertainty_plot(df, title, detailed=False, format_y=lambda y, _: y, ymin=0, save=None, scatter=None,
                           columns=None, ncol=3, offset=1, loc='upper', left=1.04, reference='Reference'):
     """Plot multi scenarios and uncertainty area between lower value and higher value of scenarios.
@@ -1820,13 +1604,6 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
 
     for k in range(n_rows * n_columns):
 
-        row = floor(k / n_columns)
-        column = k % n_columns
-        if n_rows == 1:
-            ax = axes[column]
-        else:
-            ax = axes[row, column]
-
         try:
             label = labels[k]
         except IndexError:
@@ -1843,7 +1620,12 @@ def subplots_attributes(stock, dict_order={}, suptitle=None, percent=False, dict
         else:
             format_y = lambda y, _: '{:,.0f}M'.format(y / 1000000)
 
-
+        row = floor(k / n_columns)
+        column = k % n_columns
+        if n_rows == 1:
+            ax = axes[column]
+        else:
+            ax = axes[row, column]
 
         if dict_color is not None:
             stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
@@ -1930,7 +1712,7 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
                 ax.set_title(stock_label.index.name, fontsize=12)
             else:
                 stock_label.plot.pie(ax=ax, explode=None, labels=stock_label.index, autopct='%1.1f%%', shadow=False,
-                                     textprops={'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
+                                     textprops = {'fontsize': 10},  ylabel='', xlabel=stock_label.index.name)
         else:
             if dict_color is not None:
                 stock_label.plot.bar(ax=ax, color=[dict_color[key] for key in stock_label.index])
@@ -1959,7 +1741,7 @@ def subplots_pie(stock, dict_order={}, pie={}, suptitle=None, percent=False, dic
 
 
 def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_order={}, dict_color={}, percent=False,
-                             save=None, legend=True, left=1.1):
+                             save=None):
     fig, ax = plt.subplots(figsize=(12.8, 9.6))
     if suptitle is not None:
         fig.suptitle(suptitle, fontsize=20, fontweight='bold')
@@ -1983,11 +1765,9 @@ def plot_attribute2attribute(stock, attribute1, attribute2, suptitle=None, dict_
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.spines['left'].set_visible(False)
+    ax.legend(loc='best', frameon=False)
 
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0)
-
-    if legend:
-        format_legend(ax, loc='left', left=left)
 
     if save is not None:
         fig.savefig(save, bbox_inches='tight')
@@ -2123,103 +1903,3 @@ def plot_thermal_insulation(stock, save=None):
         x = stock / 10 ** 6
         temp.update({i: cumulated_plot(x, y, plot=False)})
     cumulated_plots(temp, 'Thermal transmittance U (W/m2.K)', ylim=3, save=save)
-
-
-def horizontal_stack_bar_plot(df, columns=None, title=None, order=None, save_path=None):
-    """
-    Create a horizontal stacked bar plot from a DataFrame.
-
-    Examples: horizontal_stack_bar_plot(sobol_df.rename(index=NAME_COLUMNS), columns=['First order', 'Total order'],
-        title='Influence of parameters that the ban i', order='Total order',
-        save_path=folder_name / Path('sobol_ban.png'))
-
-    Parameters
-    ----------
-    df
-    columns
-    title
-    order
-    save_path
-
-    Returns
-    -------
-
-    """
-    # If no specific columns are provided, use all columns in the DataFrame
-    if columns is None:
-        columns = df.columns
-
-    if order is not None:
-        df = df.sort_values(by=order, ascending=True)
-
-    # Number of rows and bars to plot
-    n_rows = len(df)
-    n_cols = len(columns)
-    bar_width = 0.8 / n_cols  # Adjust bar width based on number of columns
-    y_positions = np.arange(n_rows)
-    fig, ax = plt.subplots(1, 1, figsize=(14, 9.6))
-
-    # Plot each column
-    for i, col in enumerate(columns):
-        ax.barh(y_positions - 0.4 + (i + 0.5) * bar_width, df[col], height=bar_width, label=col,
-                )
-
-    # Set the y-ticks to use the index of the DataFrame
-    ax.set_yticks(y_positions, df.index)
-    #ax.yticks(y_positions, df.index)
-
-    # Hide the top, right, and left spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-
-    # size of x-axis and y-axis ticks
-    ax.tick_params(axis='both', which='major', labelsize=18)
-    # size of title
-
-    # Remove the x-axis and y-axis titles
-    ax.set_xlabel('')
-    ax.set_ylabel('')
-
-
-    # Set title if provided align on the left
-    if title:
-        ax.set_title(title, fontsize=20, fontweight='bold', loc='left')
-
-    # Place legend to the right of the figure, without frame
-    ax.legend(frameon=False, loc='center left', bbox_to_anchor=(1, 0.5), fontsize=18)
-
-    if save_path:
-        fig.savefig(save_path, bbox_inches='tight', dpi=300)
-        plt.close(fig)
-
-
-def manual_sobol_analysis(scenarios, list_features, y):
-    """Computes manually the Sobol indices for a given set of scenarios and a given output variable y
-
-    scenarios: DataFrame
-        DataFrame containing the scenarios
-    list_features: list
-        List of features to consider
-    y: str
-        Output variable
-    """
-    sobol_df = pd.DataFrame(index=list_features, columns=['First order', 'Total order'])
-
-    expectation, variance = scenarios[y].mean(), scenarios[y].var()
-
-    for col in list_features:
-        # first order
-        conditional_means = scenarios.groupby(col)[y].mean()
-        counts = scenarios.groupby(col).size() / len(scenarios)
-        sobol_first_order = (counts * (conditional_means - expectation) ** 2).sum() / variance
-        sobol_df.loc[col, 'First order'] = sobol_first_order
-
-        # total order
-        list_features_minus_i = list_features.copy()
-        list_features_minus_i.remove(col)
-        conditional_means = scenarios.groupby(list_features_minus_i)[y].mean()
-        counts = scenarios.groupby(list_features_minus_i).size() / len(scenarios)
-        sobol_total_order = 1 - (counts * (conditional_means - expectation) ** 2).sum() / variance
-        sobol_df.loc[col, 'Total order'] = sobol_total_order
-    return sobol_df
