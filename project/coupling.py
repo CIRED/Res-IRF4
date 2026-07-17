@@ -84,7 +84,8 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
 
     output = pd.DataFrame()
     # run first year - consumption
-    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'])
+    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
+                                      pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year])
     output = pd.concat((output, o), axis=1)
 
     if config['simple'].get('no_policy_insulation'):
@@ -123,7 +124,8 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
                                      demolition_rate=inputs_dynamics['demolition_rate'],
                                      exogenous_social=inputs.get('exogenous_social'),
                                      output_options=config['output'],
-                                     carbon_content=c_content
+                                     carbon_content=c_content,
+                                     pef_elec=inputs_dynamics['pef_elec'].loc[year]
                                      )
 
     output = pd.concat((output, o), axis=1)
@@ -217,7 +219,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                  demolition_rate=None,
                  output_consumption=False, technical_progress=None,
                  premature_replacement=None, flow_district_heating=None, exogenous_social=None, carbon_content=None,
-                 hourly_profile=None
+                 hourly_profile=None, pef_elec=None
                  ):
 
     # initialize policies
@@ -267,7 +269,8 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
                                          exogenous_social=exogenous_social,
                                          output_options=output_options,
                                          carbon_content=c_content,
-                                         prices_before=prices_before
+                                         prices_before=prices_before,
+                                         pef_elec=pef_elec.loc[year]
                                          )
         output.update({year: o})
         if output_options == 'full':
@@ -283,7 +286,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
 
         consumption = buildings.consumption_agg(prices=prices, freq='hour', standard=False, climate=climate,
                                                 smooth=smooth, efficiency_hour=efficiency_hour,
-                                                hourly_profile=hourly_profile)
+                                                hourly_profile=hourly_profile, pef_elec=pef_elec.loc[year])
 
     buildings.logger.info('End of Res-IRF simulation')
     return output, stock, consumption
@@ -341,7 +344,8 @@ def run_simu(config, output_consumption=False, start=2019, end=2021):
                                               premature_replacement=inputs_dynamics['premature_replacement'],
                                               output_options='full',
                                               carbon_content=inputs_dynamics['post_inputs']['carbon_emission'],
-                                              hourly_profile=inputs_dynamics['hourly_profile']
+                                              hourly_profile=inputs_dynamics['hourly_profile'],
+                                              pef_elec=inputs_dynamics['pef_elec']
                                               )
 
     concat_output = concat((concat_output, output), axis=1)
