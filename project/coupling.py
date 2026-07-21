@@ -84,7 +84,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
 
     output = pd.DataFrame()
     # run first year - consumption
-    _, o = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
+    _, o, _, _, _ = buildings.parse_output_run(energy_prices.loc[buildings.first_year, :], inputs_dynamics['post_inputs'],
                                       pef_elec=inputs_dynamics['pef_elec'].loc[buildings.first_year])
     output = pd.concat((output, o), axis=1)
 
@@ -110,7 +110,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
     if inputs_dynamics['flow_district_heating'] is not None:
         flow_district_heating = inputs_dynamics['flow_district_heating'].loc[year]
 
-    buildings, _, o = stock_turnover(buildings, prices, taxes,
+    buildings, _, o, _, _, _ = stock_turnover(buildings, prices, taxes,
                                      inputs_dynamics['cost_heater'],
                                      inputs_dynamics['cost_insulation'],
                                      inputs_dynamics['frequency_insulation'],
@@ -257,7 +257,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
         if flow_district_heating is not None:
             f_district_heating = flow_district_heating.loc[year]
 
-        buildings, s, o = stock_turnover(buildings, prices, taxes,
+        buildings, s, o, _, _, _ = stock_turnover(buildings, prices, taxes,
                                          cost_heater,
                                          cost_insulation, frequency_insulation,
                                          p_heater, p_insulation, f_built, year,

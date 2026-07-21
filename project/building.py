@@ -1133,6 +1133,20 @@ class AgentBuildings(ThermalBuildings):
         self._condition_store = None
         self._heating_intensity_avg = None
 
+        self.sum_performance_insulation = None
+        self.sum_performance_insulation_obligation = None
+        self.flow_by_certificate_couples_insulation = None
+        self.flow_by_certificate_couples_obligation = None
+        self.flow_by_certificate_couples_ampleur_insulation = None
+        self.flow_by_certificate_couples_ampleur_obligation = None
+        self.sum_performance_insulation_ampleur = None
+        self.sum_performance_insulation_ampleur_obligation = None
+        self.flow_by_certificate_couples_heater = None
+        self.sum_performance_changes_heater = None
+        self.renovation_details_long = None
+        self.renovation_details_long_obligation = None
+        self.merged_df_heater = None
+
         if belief_engineering_calculation is None:
             self._belief_engineering_calculation = False
         else:
@@ -1220,6 +1234,9 @@ class AgentBuildings(ThermalBuildings):
         self.sum_performance_insulation_ampleur_obligation = None
         self.flow_by_certificate_couples_heater = None
         self.sum_performance_changes_heater = None
+        self.renovation_details_long = None
+        self.renovation_details_long_obligation = None
+        self.merged_df_heater = None
 
         ini = {
             'subsidies_details': {},
@@ -4536,6 +4553,47 @@ class AgentBuildings(ThermalBuildings):
             self.flow_by_certificate_couples_ampleur_obligation = flow_by_certificate_couples_ampleur
             self.sum_performance_insulation_ampleur_obligation = sum_performance_insulation_ampleur
 
+        # detailed renovation flow by socio-economic and technical characteristics, used to build df_renovations_final.csv
+        mapping_deciles = {'D1': 'Q1', 'D2': 'Q1', 'D3': 'Q2', 'D4': 'Q2', 'D5': 'Q3', 'D6': 'Q3', 'D7': 'Q4',
+                           'D8': 'Q4', 'D9': 'Q5', 'D10': 'Q5'}
+        # choice tuples are ordered as itertools.product(Wall, Floor, Roof, Windows) with the all-False combo removed
+        mapping_operations_2 = {0: 'Wi', 1: 'R', 2: 'RWi', 3: 'F', 4: 'FWi', 5: 'FR', 6: 'FRWi', 7: 'Wa', 8: 'WaWi',
+                                9: 'WR', 10: 'WaRWi', 11: 'WaF', 12: 'WaFWi', 13: 'WaFR', 14: 'WaFRWi'}
+        mapping_operations = {'Wi': 'Windows', 'R': 'othersingleinsulation', 'RWi': '2insulations',
+                              'F': 'othersingleinsulation', 'FWi': '2insulations', 'FR': '2insulations',
+                              'FRWi': '3insulations', 'Wa': 'othersingleinsulation', 'WaWi': '2insulations',
+                              'WR': '2insulations', 'WaRWi': '3insulations', 'WaF': '2insulations',
+                              'WaFWi': '3insulations', 'WaFR': '3insulations', 'WaFRWi': '4insulations'}
+
+        certificate_before = reindex_mi(certificate_before, stock.index)
+        group_levels = ['Occupancy status', 'Housing type', 'Heater replacement', 'Category before heater',
+                        'Category before insulation', 'Category after insulation', 'Income', 'Operation type']
+
+        renovation_details = []
+        for i, choice in enumerate(market_flow.columns):
+            certificate_after_choice = reindex_mi(certificate_after[choice], stock.index)
+            temp = concat([certificate_before_heater.rename('Category before heater'),
+                          certificate_before.rename('Category before insulation'),
+                          certificate_after_choice.rename('Category after insulation'),
+                          market_flow[choice].rename('Value')], axis=1, join='inner')
+            temp = temp.reset_index()
+
+            income = temp['Income owner'].copy()
+            mask_decile = income.str.startswith('D')
+            income[mask_decile] = income[mask_decile].map(mapping_deciles)
+            temp['Income'] = income
+
+            temp['Operation type'] = mapping_operations[mapping_operations_2[i]]
+
+            renovation_details.append(temp.groupby(group_levels)['Value'].sum())
+
+        renovation_details_long = concat(renovation_details).groupby(level=group_levels).sum()
+
+        if not call_from_obligation:
+            self.renovation_details_long = renovation_details_long
+        else:
+            self.renovation_details_long_obligation = renovation_details_long
+
     def insulation_replacement(self, stock_ini, prices, cost_insulation_raw, frequency_insulation,
                                policies_insulation=None, financing_cost=None,
                                calib_renovation=None, min_performance=None,
@@ -4842,9 +4900,11 @@ class AgentBuildings(ThermalBuildings):
         certificate_before_heater = reindex_mi(certificate_before_heater, index)
         certificate_after_heater = reindex_mi(certificate_after_heater, index)
 
-        temp = concat([flow.rename('flow'), certificate_before_heater.rename('before'),
-                       certificate_after_heater.rename('after')], axis=1, join='inner')
-        flow_by_certificate_couples = temp.groupby(['before', 'after'])['flow'].sum()
+        temp = concat([flow.rename('Flow'), certificate_before_heater.rename('certificate_before_heater'),
+                       certificate_after_heater.rename('certificate_after_heater')], axis=1, join='inner')
+        self.merged_df_heater = temp
+
+        flow_by_certificate_couples = temp.groupby(['certificate_before_heater', 'certificate_after_heater'])['Flow'].sum()
 
         sum_performance_changes = sum(
             value for (before, after), value in flow_by_certificate_couples.items()
@@ -5450,6 +5510,59 @@ class AgentBuildings(ThermalBuildings):
         temp = self.stock.groupby(self.certificate).sum()
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
+
+        # consumption by EPC label / heating system / energy, real vs standard (feeds conso_dpe_reel.csv)
+        consumption_std_dpe = self.consumption_heating(freq='year', climate=None, pef_elec=pef_elec)
+        consumption_std_dpe = reindex_mi(consumption_std_dpe, self.stock.index) * self.surface * self.stock
+        consumption_std_dpe = consumption_std_dpe.reset_index().rename(columns={0: 'consumption_standard'})
+
+        consumption_real_dpe = self.consumption_heating(freq='year', climate=climate, temp_sink=self._temp_sink,
+                                                         pef_elec=pef_elec)
+        consumption_real_dpe = reindex_mi(consumption_real_dpe, self.stock.index) * self.surface
+        consumption_real_dpe = self.consumption_actual(prices, consumption=consumption_real_dpe,
+                                                        bill_rebate=bill_rebate, pef_elec=pef_elec) * self.stock
+        consumption_real_dpe = consumption_real_dpe.reset_index().rename(columns={0: 'consumption_real'})
+
+        stock_dpe = self.stock.reset_index().rename(columns={0: 'Stock buildings'})
+        certificate_dpe = self.certificate.reset_index().rename(columns={0: 'epc'})
+
+        df_dpe = stock_dpe.merge(certificate_dpe[['epc']], left_index=True, right_index=True, how='left')
+        df_dpe = df_dpe.merge(consumption_std_dpe[['consumption_standard']], left_index=True, right_index=True,
+                              how='left')
+        df_dpe = df_dpe.merge(consumption_real_dpe[['consumption_real']], left_index=True, right_index=True,
+                              how='left')
+
+        df_dpe = df_dpe[['epc', 'Heating system', 'Stock buildings', 'consumption_standard', 'consumption_real']]
+        df_dpe = df_dpe.dropna(subset=['consumption_standard', 'consumption_real'])
+        df_dpe['consumption_real'] *= self.coefficient_global
+
+        coefficient_backup_dpe = coefficient_backup.reset_index()[['Heating system', 0]].groupby(
+            'Heating system').mean()
+        df_dpe = df_dpe.merge(coefficient_backup_dpe.reset_index(), on='Heating system', how='left')
+        df_dpe = df_dpe[['epc', 'Heating system', 'Stock buildings', 'consumption_standard', 'consumption_real']]
+
+        mapping_system_energy = {'Electricity-Heat pump water': 'Electricity',
+                                 'Heating-District heating': 'District heating',
+                                 'Natural gas-Performance boiler': 'Gas',
+                                 'Electricity-Direct electric': 'Electricity',
+                                 'Wood fuel-Performance boiler': 'Wood',
+                                 'Electricity-Heat pump air': 'Electricity',
+                                 'Oil fuel-Performance boiler': 'Oil',
+                                 'Oil fuel-Standard boiler': 'Oil',
+                                 'Oil fuel-Collective boiler': 'Oil',
+                                 'Natural gas-Standard boiler': 'Gas',
+                                 'Natural gas-Collective boiler': 'Gas',
+                                 'Wood fuel-Standard boiler': 'Wood'}
+        df_dpe['Energy'] = df_dpe['Heating system'].map(mapping_system_energy)
+        df_dpe['year'] = self.year
+
+        df_final_grouped = df_dpe.groupby(['epc', 'Heating system', 'Energy', 'year']).sum(numeric_only=True)
+        df_final_grouped = df_final_grouped.loc[(df_final_grouped != 0).any(axis=1)]
+        df_final_grouped['consumption_standard'] /= 10 ** 9
+        df_final_grouped['consumption_real'] /= 10 ** 9
+        df_final_grouped = df_final_grouped.rename(columns={'consumption_standard': 'Consumption standard (TWh)',
+                                                            'consumption_real': 'Consumption  real (TWh)'})
+        df_final_grouped = df_final_grouped.reset_index()
 
         output['Stock efficient (Million)'] = output.get('Stock A (Million)', 0) + output.get('Stock B (Million)', 0)
         output['Stock low-efficient (Million)'] = output.get('Stock G (Million)', 0) + output.get('Stock F (Million)', 0)
@@ -6584,9 +6697,55 @@ class AgentBuildings(ThermalBuildings):
 
             output['Cost-benefits analysis (Billion euro)'] = output['CBA benefits (Billion euro)'] + output['CBA cost (Billion euro)']
 
+        # detailed renovation flows, feeds df_renovations_final.csv
+        if self.renovation_details_long is not None:
+            df_renovations_total = self.renovation_details_long.reset_index()
+            df_renovations_total['Year'] = self.year
+            df_renovations_total['Obligation'] = 'No'
+
+            if self.renovation_details_long_obligation is not None:
+                df_renovations_obligation = self.renovation_details_long_obligation.reset_index()
+                df_renovations_obligation['Year'] = self.year
+                df_renovations_obligation['Obligation'] = 'Yes'
+                df_renovations_total = concat([df_renovations_total, df_renovations_obligation], ignore_index=True)
+
+            df_renovations_total['epc before heater'] = df_renovations_total['Category before heater'].replace(EPC2INT)
+            df_renovations_total['epc before insulation'] = df_renovations_total['Category before insulation'].replace(EPC2INT)
+            df_renovations_total['epc after insulation'] = df_renovations_total['Category after insulation'].replace(EPC2INT)
+            df_renovations_total['steps_heater'] = - (df_renovations_total['epc before insulation'] - df_renovations_total['epc before heater'])
+            df_renovations_total['steps_insulation'] = - (df_renovations_total['epc after insulation'] - df_renovations_total['epc before insulation'])
+            df_renovations_total['steps_insulation_with_heater'] = - (df_renovations_total['epc after insulation'] - df_renovations_total['epc before heater'])
+            df_renovations_total = df_renovations_total.drop(columns=['epc before heater', 'epc before insulation',
+                                                                       'epc after insulation'])
+        else:
+            df_renovations_total = DataFrame(columns=['Occupancy status', 'Housing type', 'Heater replacement',
+                                                       'Category before heater', 'Category before insulation',
+                                                       'Category after insulation', 'Income', 'Operation type',
+                                                       'Value', 'Year', 'Obligation', 'steps_heater',
+                                                       'steps_insulation', 'steps_insulation_with_heater'])
+
+        # detailed heater-only flows, feeds df_heaters_final.csv
+        if self.merged_df_heater is not None:
+            merged_df_heater = self.merged_df_heater.reset_index()
+            merged_df_heater = merged_df_heater.drop(columns=[c for c in
+                                                               ['Wall', 'Floor', 'Roof', 'Windows', 'Existing', 'Income owner']
+                                                               if c in merged_df_heater.columns])
+            merged_df_heater = merged_df_heater.groupby(
+                ['Occupancy status', 'Housing type', 'Heating system final', 'Heating system',
+                 'certificate_before_heater', 'certificate_after_heater'])['Flow'].sum().reset_index()
+            merged_df_heater['epc before heater'] = merged_df_heater['certificate_before_heater'].replace(EPC2INT)
+            merged_df_heater['epc after heater'] = merged_df_heater['certificate_after_heater'].replace(EPC2INT)
+            merged_df_heater['steps_heater'] = - (merged_df_heater['epc after heater'] - merged_df_heater['epc before heater'])
+            merged_df_heater['Year'] = self.year
+            merged_df_heater = merged_df_heater.drop(columns=['epc before heater', 'epc after heater'])
+        else:
+            merged_df_heater = DataFrame(columns=['Occupancy status', 'Housing type', 'Heating system final',
+                                                  'Heating system', 'Flow', 'certificate_before_heater',
+                                                  'certificate_after_heater', 'steps_heater', 'Year'])
+
         output = Series(output).rename(self.year)
         stock = stock.rename(self.year)
-        return stock, output
+        return stock, output, df_renovations_total, merged_df_heater, df_final_grouped
 
     def parse_output_run_cba(self, prices, inputs, step=1, taxes=None, bill_rebate=0, pef_elec=None):
         output = dict()
