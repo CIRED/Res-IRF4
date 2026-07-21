@@ -6316,11 +6316,10 @@ class AgentBuildings(ThermalBuildings):
                 temp.index = temp.index.map(lambda x: 'Annuities {} - {} - {}'.format(x[0], x[1], x[2]))
                 output.update(temp.T)
 
-                """duration = 10
+                duration = 10
                 years = [y for y in self.expenditure_store.keys() if y > self.year - duration]
                 annuities_cumulated = sum([self.expenditure_store[y]['annuities'] for y in years])
                 annuities_cumulated += annuities_year
-                """
 
                 consumption_std = reindex_mi(self.consumption_heating(full_output=False, pef_elec=pef_elec), self.stock.index)
                 consumption_std *= reindex_mi(self._surface, self.stock.index)
@@ -6345,6 +6344,27 @@ class AgentBuildings(ThermalBuildings):
                 temp = consumption.groupby(lvls).sum().copy()
                 temp.index = temp.index.map(
                     lambda x: 'Consumption {} - {} - {} (kWh)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
+                # effort rate including renovation loan repayments, feeds 'Ratio expenditure' columns
+                stock_lvls = self.stock.groupby(lvls).sum()
+                income_lvls = reindex_mi(self._income_tenant, stock_lvls.index) * stock_lvls
+                expenditure = concat((annuities_cumulated, energy_exp_std, energy_exp, income_lvls), axis=1,
+                                     keys=['annuities_cumulated', 'energy_expenditures_std', 'energy_expenditures',
+                                           'income'])
+                expenditure['ratio_total_std'] = (expenditure['energy_expenditures_std'] +
+                                                  expenditure['annuities_cumulated']) / expenditure['income']
+                expenditure['ratio_total'] = (expenditure['energy_expenditures'] +
+                                              expenditure['annuities_cumulated']) / expenditure['income']
+
+                self.expenditure_store.update({self.year: {'annuities': annuities_year}})
+
+                temp = expenditure['ratio_total_std'].dropna()
+                temp.index = temp.index.map(lambda x: 'Ratio expenditure std {} - {} - {} (%)'.format(x[0], x[1], x[2]))
+                output.update(temp.T)
+
+                temp = expenditure['ratio_total'].dropna()
+                temp.index = temp.index.map(lambda x: 'Ratio expenditure {} - {} - {} (%)'.format(x[0], x[1], x[2]))
                 output.update(temp.T)
 
                 consumption = self.consumption_actual(prices, bill_rebate=bill_rebate, pef_elec=pef_elec)
