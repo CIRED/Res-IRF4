@@ -1210,6 +1210,17 @@ class AgentBuildings(ThermalBuildings):
         self._only_heater = None
         self._flow_obligation = {}
 
+        self.sum_performance_insulation = None
+        self.sum_performance_insulation_obligation = None
+        self.flow_by_certificate_couples_insulation = None
+        self.flow_by_certificate_couples_obligation = None
+        self.flow_by_certificate_couples_ampleur_insulation = None
+        self.flow_by_certificate_couples_ampleur_obligation = None
+        self.sum_performance_insulation_ampleur = None
+        self.sum_performance_insulation_ampleur_obligation = None
+        self.flow_by_certificate_couples_heater = None
+        self.sum_performance_changes_heater = None
+
         ini = {
             'subsidies_details': {},
             'subsidies_count': {},
@@ -4440,12 +4451,98 @@ class AgentBuildings(ThermalBuildings):
         health_cost_saved = (health_cost_before - health_cost_after.T).T
         return health_cost_saved
 
+    def certificate_flow_insulation(self, stock, renovation_rate, market_share, certificate_before_heater,
+                                    certificate_before, certificate_after, call_from_obligation=False):
+        """Calculate the renovation flow for each possible pair of certificates (before heater / after insulation),
+        the number of high-performance renovations, and the number of deep ("ampleur") renovations.
+
+        Certificate before considers the change of heating system, but flows are insulation flows.
+
+        Parameters
+        ----------
+        stock: Series
+        renovation_rate: Series
+        market_share: DataFrame
+        certificate_before_heater: Series
+        certificate_before: Series
+        certificate_after: DataFrame
+        call_from_obligation: bool, default False
+            Store results under the *_obligation attributes instead of the regular ones.
+
+        Returns
+        -------
+        None
+        """
+
+        if call_from_obligation:
+            # everyone in the obligation flow renovates
+            renovation_rate = Series(1, index=renovation_rate.index)
+
+        renovation_flow = stock * renovation_rate
+
+        market_flow = market_share.copy()
+        for choice in market_share.columns:
+            market_flow[choice] = renovation_flow.values * market_share[choice].values
+        market_flow = market_flow.fillna(0)
+
+        # certificate_before_heater/certificate_after are indexed on a reduced (deduplicated) set of levels;
+        # broadcast them onto the full household index before combining with market_flow
+        certificate_before_heater = reindex_mi(certificate_before_heater, stock.index)
+
+        flow_by_certificate_couples, flow_by_certificate_couples_ampleur = {}, {}
+        for choice in market_flow.columns:
+            ampleur = sum(choice) >= 2
+            certificate_after_choice = reindex_mi(certificate_after[choice], stock.index)
+            temp = concat([certificate_before_heater.rename('before'), certificate_after_choice.rename('after'),
+                           market_flow[choice].rename('flow')], axis=1, join='inner')
+            grouped = temp.groupby(['before', 'after'])['flow'].sum()
+            for category_change, flow in grouped.items():
+                flow_by_certificate_couples[category_change] = flow_by_certificate_couples.get(category_change,
+                                                                                                0) + flow
+                if ampleur:
+                    flow_by_certificate_couples_ampleur[category_change] = flow_by_certificate_couples_ampleur.get(
+                        category_change, 0) + flow
+
+        assert round(sum(flow_by_certificate_couples.values()), 0) == round(renovation_flow.sum(), 0), \
+            'Flow between certificate pairs problem'
+
+        # number of high-performance renovations: reaching A/B, or reaching C from F/G
+        sum_performance_insulation = sum(
+            value for (before, after), value in flow_by_certificate_couples.items()
+            if (before in ['C', 'D', 'E', 'F', 'G'] and after in ['A', 'B']) or (before in ['F', 'G'] and after == 'C'))
+
+        flow_by_certificate_couples = Series(flow_by_certificate_couples, dtype='float64').sort_index(level=[0, 1])
+
+        if not call_from_obligation:
+            self.flow_by_certificate_couples_insulation = flow_by_certificate_couples
+            self.sum_performance_insulation = sum_performance_insulation
+        else:
+            self.flow_by_certificate_couples_obligation = flow_by_certificate_couples
+            self.sum_performance_insulation_obligation = sum_performance_insulation
+
+        # number of deep ("ampleur") renovations: certificate jump of at least 2 steps (e.g. E -> C)
+        certificate_rank = {'A': 7, 'B': 6, 'C': 5, 'D': 4, 'E': 3, 'F': 2, 'G': 1}
+        sum_performance_insulation_ampleur = sum(
+            value for (before, after), value in flow_by_certificate_couples_ampleur.items()
+            if certificate_rank[after] - certificate_rank[before] >= 2)
+
+        flow_by_certificate_couples_ampleur = Series(flow_by_certificate_couples_ampleur,
+                                                     dtype='float64').sort_index(level=[0, 1])
+
+        if not call_from_obligation:
+            self.flow_by_certificate_couples_ampleur_insulation = flow_by_certificate_couples_ampleur
+            self.sum_performance_insulation_ampleur = sum_performance_insulation_ampleur
+        else:
+            self.flow_by_certificate_couples_ampleur_obligation = flow_by_certificate_couples_ampleur
+            self.sum_performance_insulation_ampleur_obligation = sum_performance_insulation_ampleur
+
     def insulation_replacement(self, stock_ini, prices, cost_insulation_raw, frequency_insulation,
                                policies_insulation=None, financing_cost=None,
                                calib_renovation=None, min_performance=None,
                                exogenous_social=None, prices_before=None, supply=None, carbon_value=None,
                                carbon_content=None, calculate_condition=True, bill_rebate=0,
-                               credit_constraint=True, health_cost=None, default_quality=None, pef_elec=None):
+                               credit_constraint=True, health_cost=None, default_quality=None, pef_elec=None,
+                               call_from_obligation=False):
         """Calculate insulation retrofit in the dwelling stock.
 
         1. Intensive margin
@@ -4710,6 +4807,9 @@ class AgentBuildings(ThermalBuildings):
                                                   consumption_saved_actual, consumption_saved_no_rebound,
                                                   amount_debt, amount_saving, discount, subsidies_loan, eligible)
 
+            self.certificate_flow_insulation(stock, renovation_rate, market_share, certificate_before_heater,
+                                             certificate_before, certificate_after, call_from_obligation)
+
             return renovation_rate, market_share
         else:
             renovation_rate = Series(0, index=stock_ini.index)
@@ -4717,6 +4817,41 @@ class AgentBuildings(ThermalBuildings):
             market_share.iloc[:, -1] = 1
 
             return renovation_rate, market_share
+
+    def certificate_flow_heater(self, pef_elec=None):
+        """Calculate the flow for each possible pair of certificates for households that only switch heating
+        system (no insulation work).
+
+        Parameters
+        ----------
+        pef_elec: float, optional
+            Primary energy factor for electricity.
+
+        Returns
+        -------
+        None
+        """
+        flow = self._only_heater
+        index = flow.index
+        _, _, certificate_before_heater = self.consumption_heating_store(index, level_heater='Heating system',
+                                                                          pef_elec=pef_elec)
+        _, _, certificate_after_heater = self.consumption_heating_store(index, level_heater='Heating system final',
+                                                                         pef_elec=pef_elec)
+
+        # certificates are indexed on a reduced (deduplicated) set of levels; broadcast onto the full flow index
+        certificate_before_heater = reindex_mi(certificate_before_heater, index)
+        certificate_after_heater = reindex_mi(certificate_after_heater, index)
+
+        temp = concat([flow.rename('flow'), certificate_before_heater.rename('before'),
+                       certificate_after_heater.rename('after')], axis=1, join='inner')
+        flow_by_certificate_couples = temp.groupby(['before', 'after'])['flow'].sum()
+
+        sum_performance_changes = sum(
+            value for (before, after), value in flow_by_certificate_couples.items()
+            if (before in ['C', 'D', 'E', 'F', 'G'] and after in ['A', 'B']) or (before in ['F', 'G'] and after == 'C'))
+
+        self.flow_by_certificate_couples_heater = flow_by_certificate_couples
+        self.sum_performance_changes_heater = sum_performance_changes
 
     def flow_retrofit(self, prices, cost_heater, cost_insulation, frequency_insulation,
                       policies_heater=None, policies_insulation=None, calib_heater=None, district_heating=None,
@@ -4923,6 +5058,7 @@ class AgentBuildings(ThermalBuildings):
         self.logger.debug('Store information retrofit')
         self._replaced_by = replaced_by.copy()
         self._only_heater = only_heater.copy()
+        self.certificate_flow_heater(pef_elec=pef_elec)
 
         # removing heater replacement level
         replaced_by = replaced_by.groupby(
@@ -5045,7 +5181,8 @@ class AgentBuildings(ThermalBuildings):
                                                           min_performance=obligation.min_performance,
                                                           credit_constraint=False,
                                                           health_cost=health_cost,
-                                                          pef_elec=pef_elec)
+                                                          pef_elec=pef_elec,
+                                                          call_from_obligation=True)
 
             if obligation.intensive == 'market_share':
                 # market_share endogenously calculated by insulation_replacement
@@ -5646,6 +5783,54 @@ class AgentBuildings(ThermalBuildings):
             output['Insulation (Thousand households)'] = temp[~condition].sum() / 10**3
             output['Insulation and switch decarbonize (Thousand households)'] = temp[condition].sum() / 10**3
             output['Decarbonize measures (Thousand households)'] = output['Switch decarbonize (Thousand households)'] + output['Insulation (Thousand households)'] + output['Insulation and switch decarbonize (Thousand households)']
+
+            # EPC transition matrices and high-performance / deep ("ampleur") renovation counts
+            tmp1, tmp2, tmp3 = 0, 0, 0
+
+            if self.flow_by_certificate_couples_insulation is not None:
+                tmp1 = self.sum_performance_insulation / 10 ** 3
+                output['High-performance renovation (Thousand households)'] = tmp1
+                flow_by_certificate_couples = self.flow_by_certificate_couples_insulation / 10 ** 3
+                output.update({'Renovation from {} to '.format(i) + '{} (Thousand households)'.format(j): flow_by_certificate_couples.loc[(i, j)]
+                               for (i, j) in flow_by_certificate_couples.index})
+
+            if self.flow_by_certificate_couples_obligation is not None:
+                tmp2 = self.sum_performance_insulation_obligation / 10 ** 3
+                output['Obligatory High-performance renovation (Thousand households)'] = tmp2
+                flow_by_certificate_couples_obligation = self.flow_by_certificate_couples_obligation / 10 ** 3
+                output.update({'Obligatory renovation from {} to '.format(i) + '{} (Thousand households)'.format(j): flow_by_certificate_couples_obligation.loc[(i, j)]
+                               for (i, j) in flow_by_certificate_couples_obligation.index})
+
+            if self.flow_by_certificate_couples_heater is not None:
+                tmp3 = self.sum_performance_changes_heater / 10 ** 3
+                output['High-performance flow for heater replacement only (Thousand households)'] = tmp3
+                flow_by_certificate_couples_heater = self.flow_by_certificate_couples_heater / 10 ** 3
+                output.update({'Heater replacement only - {} to '.format(i) + '{} (Thousand households)'.format(j): flow_by_certificate_couples_heater.loc[(i, j)]
+                               for (i, j) in flow_by_certificate_couples_heater.index})
+
+            temp_total_performance = tmp1 + tmp2 + tmp3
+            if temp_total_performance > 0:
+                output['Total High-performance renovation (Thousand households)'] = temp_total_performance
+
+            tmp1, tmp2 = 0, 0
+
+            if self.flow_by_certificate_couples_ampleur_insulation is not None:
+                tmp1 = self.sum_performance_insulation_ampleur / 10 ** 3
+                output['Renovation ampleur (Thousand households)'] = tmp1
+                flow_by_certificate_couples_ampleur = self.flow_by_certificate_couples_ampleur_insulation / 10 ** 3
+                output.update({'Renovation >= 2 operations from {} to '.format(i) + '{} (Thousand households)'.format(j): flow_by_certificate_couples_ampleur.loc[(i, j)]
+                               for (i, j) in flow_by_certificate_couples_ampleur.index})
+
+            if self.flow_by_certificate_couples_ampleur_obligation is not None:
+                tmp2 = self.sum_performance_insulation_ampleur_obligation / 10 ** 3
+                output['Obligatory Renovation ampleur (Thousand households)'] = tmp2
+                flow_by_certificate_couples_ampleur_obligation = self.flow_by_certificate_couples_ampleur_obligation / 10 ** 3
+                output.update({'Obligatory renovation ampleur from {} to '.format(i) + '{} (Thousand households)'.format(j): flow_by_certificate_couples_ampleur_obligation.loc[(i, j)]
+                               for (i, j) in flow_by_certificate_couples_ampleur_obligation.index})
+
+            temp_total_ampleur = tmp1 + tmp2
+            if temp_total_ampleur > 0:
+                output['Total Renovation ampleur (Thousand households)'] = temp_total_ampleur
 
             temp = self._replaced_by.groupby(['Housing type', 'Occupancy status']).sum()
             temp = (temp.sum(axis=1) / self._stock_ref.groupby(temp.index.names).sum()).dropna()
