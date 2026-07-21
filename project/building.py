@@ -5339,6 +5339,10 @@ class AgentBuildings(ThermalBuildings):
         temp.index = temp.index.map(lambda x: 'Stock {} (Million)'.format(x))
         output.update(temp.T / 10 ** 6)
 
+        temp = self.stock.groupby(['Heating system', 'Housing type']).sum()
+        temp.index = ['Stock {} '.format(y) + '{} (Million)'.format(x) for (x, y) in temp.index]
+        output.update(temp.T / 10 ** 6)
+
         # energy expenditures considering back-up cost
         prices_reindex = prices.reindex(self.energy).set_axis(self.stock.index, axis=0)
         energy_expenditure = consumption * coefficient_backup * prices_reindex
@@ -6307,6 +6311,13 @@ class AgentBuildings(ThermalBuildings):
             temp = subsidies_total.groupby(['Housing type', 'Occupancy status']).sum()
             temp.index = temp.index.map(lambda x: 'Subsidies total {} - {} (Million euro)'.format(x[0], x[1]))
             output.update(temp.T / 10 ** 6 / step)
+
+            temp = subsidies_total.groupby(['Income owner']).sum()
+            temp.index = temp.index.map(lambda x: 'Subsidies total {} (Million euro)'.format(x))
+            output.update(temp.T / 10 ** 6 / step)
+
+            temp = subsidies_total[subsidies_total.index.get_level_values('Occupancy status') == 'Social-housing'].sum() / subsidies_total.sum()
+            output['Share of subsidies going to Social-housing (Million euro)'] = temp.sum()
 
             """
             self.store_over_years[self.year].update(
