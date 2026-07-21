@@ -1,5 +1,2 @@
-﻿Insulation,
-Wall,160
-Floor,53
-Roof,83
-Windows,542
+Year,Wall,Floor,Roof,Windows
+2017,160,53,83,542

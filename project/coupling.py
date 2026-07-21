@@ -112,7 +112,7 @@ def ini_res_irf(config=None, path=None, level_logger='DEBUG'):
 
     buildings, _, o, _, _, _ = stock_turnover(buildings, prices, taxes,
                                      inputs_dynamics['cost_heater'],
-                                     inputs_dynamics['cost_insulation'],
+                                     inputs_dynamics['cost_insulation'].loc[year],
                                      inputs_dynamics['frequency_insulation'],
                                      p_heater, p_insulation, f_built, year,
                                      inputs_dynamics['post_inputs'],
@@ -248,7 +248,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
 
         if technical_progress is not None:
             if technical_progress.get('insulation') is not None:
-                cost_insulation *= (1 + technical_progress['insulation'].loc[year])
+                cost_insulation.loc[year] *= (1 + technical_progress['insulation'].loc[year])
             if technical_progress.get('heater') is not None:
                 heat_pump = [i for i in resources_data['index']['Heat pumps'] if i in cost_heater.index]
                 cost_heater.loc[heat_pump] *= (1 + technical_progress['heater'].loc[year])
@@ -259,7 +259,7 @@ def simu_res_irf(buildings, start, end, energy_prices, taxes, cost_heater, cost_
 
         buildings, s, o, _, _, _ = stock_turnover(buildings, prices, taxes,
                                          cost_heater,
-                                         cost_insulation, frequency_insulation,
+                                         cost_insulation.loc[year], frequency_insulation,
                                          p_heater, p_insulation, f_built, year,
                                          post_inputs,
                                          premature_replacement=premature_replacement,

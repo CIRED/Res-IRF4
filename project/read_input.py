@@ -751,7 +751,9 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'lifetime_heater': get_series(config['technical']['lifetime_heater'], header=[0])})
 
-    inputs.update({'cost_insulation': get_series(config['technical']['cost_insulation'], header=[0])})
+    cost_insulation = get_pandas(config['technical']['cost_insulation'],
+                                 lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Insulation', axis=1))
+    inputs.update({'cost_insulation': cost_insulation})
 
     inputs.update({'frequency_insulation': config['renovation']['frequency_insulation']})
 
@@ -1211,6 +1213,9 @@ def parse_inputs(inputs, taxes, config, stock):
 
     if inputs.get('pef_elec') is not None:
         parsed_inputs['pef_elec'] = fill_missing_years(inputs['pef_elec'], config['start'], config['end'])
+
+    idx_years = range(config['start'], config['end'])
+    parsed_inputs['cost_insulation'] = inputs['cost_insulation'].reindex(idx_years, method='ffill')
 
     return parsed_inputs
 
