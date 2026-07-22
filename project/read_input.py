@@ -871,7 +871,7 @@ def read_inputs(config, other_inputs=generic_input):
     rotation_rate = get_pandas(config['macro']['rotation_rate'], lambda x: pd.read_csv(x, index_col=[0])).squeeze().rename(None)
     inputs.update({'rotation_rate': rotation_rate})
 
-    surface = get_pandas(config['technical']['surface'], lambda x: pd.read_csv(x, index_col=[0, 1, 2]).squeeze().rename(None))
+    surface = get_pandas(config['technical']['surface'], lambda x: pd.read_csv(x, index_col=[0, 1, 2, 3]).squeeze().rename(None))
     inputs.update({'surface': surface})
 
     ratio_surface = get_pandas(config['technical']['ratio_surface'], lambda x: pd.read_csv(x, index_col=[0]))
@@ -1062,7 +1062,8 @@ def parse_inputs(inputs, taxes, config, stock):
         s = inputs['flow_construction'].index.min()
         parsed_inputs['flow_construction'] = inputs['flow_construction'].reindex(range(s, config['end'])).fillna(method='ffill')
         parsed_inputs['flow_construction'] = parsed_inputs['flow_construction'].loc[idx]
-    parsed_inputs['surface'] = pd.concat([parsed_inputs['surface']] * len(idx), axis=1, keys=idx)
+    parsed_inputs['surface'] = parsed_inputs['surface'].unstack(level='Year').sort_index(axis=1).reindex(
+        columns=idx, method='ffill')
 
     if 'share_single_family_construction' in inputs.keys():
         s = inputs['share_single_family_construction'].index.min()

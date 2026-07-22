@@ -5417,8 +5417,8 @@ class AgentBuildings(ThermalBuildings):
         output.update(temp.T)
 
         output.update({'Consumption Heat pump (TWh)': consumption_hp})
-        output.update({'Consumption Direct electric (TWh)': output['Consumption Electricity-Direct electric (TWh)']})
-        output.update({'Consumption District heating (TWh)': output['Consumption Heating (TWh)']})
+        output.update({'Consumption Direct electric (TWh)': output.get('Consumption Electricity-Direct electric (TWh)', 0)})
+        output.update({'Consumption District heating (TWh)': output.get('Consumption Heating (TWh)', 0)})
 
         consumption_energy_climate = None
         if climate is not None:
