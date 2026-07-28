@@ -445,7 +445,6 @@ def run(path=None, folder=None):
         results = []
         for config_val, n in zip(configuration.values(), configuration.keys()):
             save_path = os.path.join(folder, n)
-            # 让主程序亲自调用 res_irf，这样 cProfile 就能看清里面的一切了！
             res = res_irf(config_val, save_path) 
             results.append(res)
         result = {i[0]: i[1] for i in results}
