@@ -741,7 +741,9 @@ def read_inputs(config, other_inputs=generic_input):
 
     inputs.update({'energy_vat': get_series(config['energy']['energy_vat'], header=None)})
 
-    inputs.update({'vat_heater': get_series(config['macro']['vat_heating_system'], header=[0])})
+    vat_heater = get_pandas(config['macro']['vat_heating_system'],
+                            lambda x: pd.read_csv(x, index_col=[0]).rename_axis('Year').rename_axis('Heating system final', axis=1))
+    inputs.update({'vat_heater': vat_heater})
 
     inputs.update({'cost_heater': get_series(config['technical']['cost_heater'], header=[0])})
 
@@ -1217,6 +1219,7 @@ def parse_inputs(inputs, taxes, config, stock):
 
     idx_years = range(config['start'], config['end'])
     parsed_inputs['cost_insulation'] = inputs['cost_insulation'].reindex(idx_years, method='ffill')
+    parsed_inputs['vat_heater'] = inputs['vat_heater'].reindex(idx_years, method='ffill')
 
     return parsed_inputs
 

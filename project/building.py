@@ -1800,6 +1800,8 @@ class AgentBuildings(ThermalBuildings):
         subsidies_details = {}
 
         vat_base = self.vat_heater
+        if isinstance(vat_base, DataFrame):
+            vat_base = vat_base.loc[self.year]
         if isinstance(vat_base, Series):
             vat_base = vat_base.reindex(cost_heater.columns)
 
