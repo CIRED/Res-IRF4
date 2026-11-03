@@ -4500,12 +4500,12 @@ class AgentBuildings(ThermalBuildings):
             # everyone in the obligation flow renovates
             renovation_rate = Series(1, index=renovation_rate.index)
 
+        # align on the stock index (same convention as flow_retrofit): renovation_rate and market_share may not
+        # cover the same segments as the (filtered) stock, and a positional product would then fail on shape
+        renovation_rate = renovation_rate.reindex(stock.index).fillna(0)
         renovation_flow = stock * renovation_rate
 
-        market_flow = market_share.copy()
-        for choice in market_share.columns:
-            market_flow[choice] = renovation_flow.values * market_share[choice].values
-        market_flow = market_flow.fillna(0)
+        market_flow = market_share.reindex(stock.index).mul(renovation_flow, axis=0).fillna(0)
 
         # certificate_before_heater/certificate_after are indexed on a reduced (deduplicated) set of levels;
         # broadcast them onto the full household index before combining with market_flow
